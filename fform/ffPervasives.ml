@@ -22,6 +22,7 @@ include Camomile.UPervasives
 exception Unimplemented
 
 let ident x = x
+let konst x y = x
 let uncurry f (x, y) = f x y
 let curry f x y = f (x, y)
 
@@ -42,4 +43,27 @@ module List = struct
 	| [] -> None
 	| x :: xs -> match f x with Some y -> Some y
 				  | None -> find_image f xs
+end
+
+module Char = struct
+    include Char
+
+    let is_space ch =
+	match ch with ' ' | '\n' | '\t' -> true
+		    | _ -> false
+end
+
+module String = struct
+    include String
+
+    let rindex_from s i ch =
+	if i = String.length s then rindex s ch else
+	rindex_from s i ch
+
+    let split_on_char ch s =
+	let rec split_before j accu =
+	    if j <= 0 then accu else
+	    let i = try rindex_from s j ch with Not_found -> 0 in
+	    split_before (i - 1) (String.sub s i j :: accu) in
+	split_before (String.length s) []
 end

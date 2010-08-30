@@ -16,11 +16,24 @@
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-val default : 'a -> 'a option -> 'a
-val default_opt : 'a option -> 'a option -> 'a option
-val fold : ('a -> 'b -> 'b) -> 'a option -> 'b -> 'b
-val iter : ('a -> unit) -> 'a option -> unit
-val map : ('a -> 'b) -> 'a option -> 'b option
-val for_all : ('a -> bool) -> 'a option -> bool
-val exists  : ('a -> bool) -> 'a option -> bool
-val filter  : ('a -> bool) -> 'a option -> 'a option
+open FfPervasives
+
+module String_set = Set.Make(String)
+
+let dtags =
+    try
+	let xs = String.split_on_char ':' (Unix.getenv "FFORM_DTAGS") in
+	List.fold String_set.add xs String_set.empty
+    with Not_found ->
+	String_set.empty
+
+let dlog_en_for tag = String_set.mem tag dtags
+
+let dlogf_for tag ?loc fmt =
+    let print msg =
+	let puts = output_string stderr in
+	Option.iter (fun loc -> puts (Location.to_string loc ^ ": ")) loc;
+	puts msg;
+	puts "\n" in
+    Printf.ksprintf print fmt
+

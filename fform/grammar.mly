@@ -118,8 +118,8 @@ let mkloc lb ub =
 %%
 
 main:
-    structure_body EOF
-    { Input.Trm_where (mkloc $startpos $endpos, List.rev $1) }
+    BEGIN structure_body EOF
+    { Input.Trm_where (mkloc $startpos $endpos, List.rev $2) }
   ;
 
 signature_body:

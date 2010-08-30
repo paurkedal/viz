@@ -22,6 +22,7 @@ include module type of UPervasives
 exception Unimplemented
 
 val ident : 'a -> 'a
+val konst : 'a -> 'b -> 'a
 val uncurry : ('a -> 'b -> 'g) -> 'a * 'b -> 'g
 val curry : ('a * 'b -> 'g) -> 'a -> 'b -> 'g
 
@@ -37,4 +38,16 @@ module List : sig
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
     val find_image : ('a -> 'b option) -> 'a list -> 'b option
+end
+
+module Char : sig
+    include module type of Char
+
+    val is_space : char -> bool
+end
+
+module String : sig
+    include module type of String
+
+    val split_on_char : char -> string -> string list
 end

@@ -19,6 +19,7 @@
 let default x0 = function None -> x0 | Some x -> x
 let default_opt x0 = function None -> x0 | x -> x
 let fold f = function None -> fun x -> x | Some x -> f x
+let iter f = function None -> () | Some x -> f x
 let map f = function None -> None | Some x -> Some (f x)
 let for_all f = function None -> true | Some x -> f x
 let exists f = function None -> false | Some x -> f x

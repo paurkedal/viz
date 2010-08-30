@@ -54,6 +54,15 @@ module Bound = struct
 	| 0xa -> skip_newline
 	| _   -> skip_n 1
 
+    let to_string (pos, _) =
+	let buf = Buffer.create 8 in
+	Buffer.add_string buf pos.pos_fname;
+	Buffer.add_char buf ':';
+	Buffer.add_string buf (string_of_int pos.pos_lnum);
+	Buffer.add_char buf ':';
+	Buffer.add_string buf (string_of_int (pos.pos_cnum - pos.pos_bol));
+	Buffer.contents buf
+
     let of_lexing_position pos = (pos, -1)
 
     let to_lexing_position (pos, _) = pos
@@ -84,6 +93,8 @@ let between (lb, lbcol) (ub, ubcol) =
 	loc_ub_cnum = ub.pos_cnum;
 	loc_ub_col = ubcol;
     }
+
+let at locb = between locb locb
 
 let dummy = between Bound.dummy Bound.dummy
 

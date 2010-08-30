@@ -41,6 +41,8 @@ module Bound : sig
 
     val skip_char : UChar.t -> t -> t
 
+    val to_string : t -> string
+
     (** Convert from [Lexing.position].  Note that the result will not have a
      ** column number. *)
     val of_lexing_position : Lexing.position -> t
@@ -53,6 +55,8 @@ end
 type t
 
 val between : Bound.t -> Bound.t -> t
+
+val at : Bound.t -> t
 
 val dummy : t
 

@@ -16,11 +16,6 @@
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-val default : 'a -> 'a option -> 'a
-val default_opt : 'a option -> 'a option -> 'a option
-val fold : ('a -> 'b -> 'b) -> 'a option -> 'b -> 'b
-val iter : ('a -> unit) -> 'a option -> unit
-val map : ('a -> 'b) -> 'a option -> 'b option
-val for_all : ('a -> bool) -> 'a option -> bool
-val exists  : ('a -> bool) -> 'a option -> bool
-val filter  : ('a -> bool) -> 'a option -> 'a option
+val dlog_en_for : string -> bool
+val dlogf_for : string -> ?loc : Location.t
+	     -> ('a, unit, string, unit) format4 -> 'a
