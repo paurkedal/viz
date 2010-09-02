@@ -30,6 +30,12 @@ let ( *< ) f g x = f (g x)
 let ( *> ) f g x = g (f x)
 let ( @< ) f x = f x
 
+let int_of_char ch =
+    let i = Char.code ch in
+    if 0x30 <= i && i <= 0x39 then i - 0x30 else
+    raise (Failure "int_of_char")
+
+
 module List = struct
     include List
 

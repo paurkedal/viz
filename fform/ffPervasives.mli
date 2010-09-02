@@ -30,6 +30,8 @@ val ( *< ) : ('b -> 'g) -> ('a -> 'b) -> 'a -> 'g
 val ( *> ) : ('a -> 'b) -> ('b -> 'g) -> 'a -> 'g
 val ( @< ) : ('a -> 'b) -> 'a -> 'b
 
+val int_of_char : char -> int
+
 module List : sig
     include module type of List
 
