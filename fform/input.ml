@@ -28,3 +28,159 @@ let idr_2o (Idr name) = Idr ("2o" ^ name)
 let trm_ref loc name = Trm_ref (loc, idr_of_string name)
 
 let tuple_op = trm_ref Location.dummy "2o,"
+
+let lit_to_string = function
+    | Lit_unit -> "unit"
+    | Lit_int i -> string_of_int i
+    | Lit_float x -> string_of_float x
+    | Lit_string s -> String.escaped s
+
+module Fo = Formatter
+
+let p_min	=   0
+let p_colon	=  20
+let p_comma	=  30
+let p_cond	=  50
+let p_quant	=  99
+let p_logic n	= 100 + n
+let p_rel	= 180
+let p_arith n	= 200 + n
+let p_apply	= 240
+let p_script n	= 250 + n
+let p_qvar	= 290
+let p_max	= 300
+
+let print_name fo idr =
+    Fo.put fo `Name (idr_to_string idr)
+
+let rec put_infixl fo p_rule p_cur op x y =
+    if p_rule < p_cur then Fo.put fo `Operator "(";
+    print_inline fo p_rule x;
+    Fo.put_op fo op;
+    print_inline fo (p_rule + 1) x;
+    if p_rule < p_cur then Fo.put fo `Operator ")"
+
+and print_rel_left fo = function
+    | Trm_rel_left (_, Idr op, x, y) ->
+	print_rel_left fo x;
+	Fo.put_op fo op;
+	print_inline fo (p_rel + 1) y
+    | x ->
+	print_inline fo (p_rel + 1) x
+
+and print_inline fo p = function
+    | Trm_ref (_, idr) -> print_name fo idr
+    | Trm_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
+    | Trm_label (_, Idr label, body) ->
+	Fo.put fo `Label (label ^ ":");
+	Fo.space fo;
+	print_inline fo p_apply body
+    | Trm_lambda (_, var, body) -> put_infixl fo p_cond p "↦" var body
+    | Trm_quantify (_, Idr op, var, body) ->
+	if p >= p_rel then Fo.put fo `Operator "(";
+	Fo.put fo `Operator op;
+	print_inline fo p_rel var;
+	Fo.put fo `Operator ".";
+	Fo.space fo;
+	print_inline fo p_rel body;
+	if p >= p_rel then Fo.put fo `Operator ")"
+    | Trm_rel (_, Idr op, x, y) ->
+	if p > p_rel then Fo.put fo `Operator "(";
+	print_rel_left fo x;
+	Fo.put_op fo op;
+	print_inline fo (p_rel + 1) y;
+	if p > p_rel then Fo.put fo `Operator ")"
+    | Trm_apply (_, f, x) ->
+	if p > p_apply then Fo.put fo `Operator "(";
+	print_inline fo p_apply f;
+	Fo.space fo;
+	print_inline fo (p_apply + 1) x;
+	if p > p_apply then Fo.put fo `Operator ")";
+    | Trm_where (_, defs) ->
+	Fo.put_kw fo "where";
+	Fo.enter_indent fo;
+	List.iter (print_def fo) defs;
+	Fo.leave_indent fo
+    | _ ->
+	Fo.put fo `Error "(unimplemented)"
+
+and print_predicate ?(default = print_is) fo = function
+    | Trm_let (_, var, def, body) ->
+	Fo.newline fo;
+	Fo.put_kw fo "given";
+	print_inline fo p_min var;
+	Fo.enter_indent fo;
+	print_predicate fo def;
+	Fo.leave_indent fo;
+	print_predicate fo body
+    | Trm_if (_, cond, cq, ccq) ->
+	Fo.newline fo;
+	Fo.put_kw fo "if";
+	print_inline fo p_min cond;
+	Fo.enter_indent fo;
+	print_predicate fo cq;
+	Fo.leave_indent fo;
+	print_predicate ~default:print_else fo ccq
+    | Trm_at (_, pat, cq, ccq) ->
+	Fo.newline fo;
+	Fo.put_kw fo "at";
+	print_inline fo p_min pat;
+	Fo.enter_indent fo;
+	print_predicate fo cq;
+	Fo.leave_indent fo;
+	Option.iter (print_predicate fo) ccq
+    | trm -> default fo trm
+and print_is fo trm =
+    Fo.put_kw fo "is";
+    print_inline fo p_min trm
+and print_else fo trm =
+    Fo.newline fo;
+    Fo.put_kw fo "else";
+    Fo.put_kw fo "is";
+    print_inline fo p_min trm
+
+and print_def fo def =
+    Fo.newline fo;
+    match def with
+    | Dec_type pat ->
+	Fo.put_kw fo "type";
+	print_inline fo p_min pat
+    | Dec_struct (pat, signat) ->
+	Fo.put_kw fo "struct";
+	print_inline fo (p_colon + 1) pat;
+	Fo.put_op fo ":";
+	print_inline fo (p_colon + 1) signat
+    | Def_struct (pat, body) ->
+	Fo.put_kw fo "struct";
+	print_inline fo p_min pat;
+	Fo.put_kw fo "is";
+	print_inline fo p_min body
+    | Dec_sig name ->
+	Fo.put_kw fo "sig";
+	print_name fo name
+    | Def_sig (name, body) ->
+	Fo.put_kw fo "sig";
+	print_name fo name;
+	Fo.put_kw fo "is";
+	print_inline fo p_min body
+    | Dec_val (name, typ) ->
+	Fo.put_kw fo "val";
+	print_name fo name;
+	Fo.put_op fo ":";
+	print_inline fo p_min typ
+    | Def_val (pat, pred) ->
+	Fo.put_kw fo "val";
+	print_inline fo p_min pat;
+	Fo.enter_indent fo;
+	print_predicate fo pred;
+	Fo.leave_indent fo
+    | Def_inj (name, typ) ->
+	Fo.put_kw fo "inj";
+	print_name fo name;
+	Fo.put_op fo ":";
+	print_inline fo p_min typ
+    | _ ->
+	Fo.put fo `Error "(unimplemented def)"
+
+let print fo =
+    print_inline fo p_min

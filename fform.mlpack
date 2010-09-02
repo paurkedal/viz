@@ -1,5 +1,6 @@
 fform/diag
 fform/ffPervasives
+fform/formatter
 fform/grammar
 fform/input
 fform/input_types

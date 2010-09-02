@@ -16,26 +16,37 @@
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-open Unicode
+type tag = [`Error | `Keyword | `Label | `Literal | `Name | `Operator]
 
-include module type of Input_types
+type t
 
-val idr_of_string : string -> idr
+val create : ?indent : int
+    -> ?enter : (t -> tag -> unit)
+    -> ?leave : (t -> tag -> unit)
+    -> unit -> t
 
-val idr_to_string : idr -> string
+val contents : t -> string
 
-val idr_of_ustring : UString.t -> idr
+val add_indent : t -> int -> unit
 
-val idr_to_ustring : idr -> UString.t
+val enter_indent : t -> unit
 
-(** Add a unary operator prefix. *)
-val idr_1o : idr -> idr
+val leave_indent : t -> unit
 
-(** Add a binary operator prefix. *)
-val idr_2o : idr -> idr
+val put_char : t -> char -> unit
 
-val trm_ref : loc -> string -> trm
+val put_string : t -> string -> unit
 
-val tuple_op : trm
+val newline : t -> unit
 
-val print : Formatter.t -> trm -> unit
+val space : t -> unit
+
+val put : t -> tag -> string -> unit
+
+(** A shortcut to format a binary operator.  This ensures a space before and
+ ** after the operator. *)
+val put_op : t -> string -> unit
+
+(** A shortcut to format a keyword.  This ensures that there is whitespace
+ ** before and after the keyword. *)
+val put_kw : t -> string -> unit
