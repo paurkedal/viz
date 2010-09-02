@@ -56,3 +56,4 @@ type trm =
     | Dec_val		of idr * trm
     | Def_val		of trm * trm
     | Def_inj		of idr * trm
+    | Dec_lex		of loc * Opkind.t * idr list

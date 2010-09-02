@@ -111,6 +111,7 @@ let mkloc lb ub =
 /* Atoms */
 %token <Input.lit> LITERAL
 %token <Input.idr> IDENTIFIER
+%token <Input.def> PREPARED_DEF
 
 %type <Input.trm> main
 %type <Input.trm> expr
@@ -152,6 +153,7 @@ modular_clause:
   | TYPE type_pattern IS type_expr { Input.Def_type ($2, $4) }
   | INJ IDENTIFIER COLON type_expr { Input.Def_inj ($2, $4) }
   | VAL term_pattern COLON type_expr { Input.Def_val ($2, $4) }
+  | LEX PREPARED_DEF { $2 }
   ;
 
 type_pattern: expr {$1};

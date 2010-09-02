@@ -59,3 +59,17 @@ let rec skip_n n stm =
 	skip stm;
 	skip_n (n - 1) stm
     end
+
+let skip_while f stm =
+    while Option.exists f (peek stm) do skip stm done
+
+let scan_while f stm =
+    let buf = UString.Buf.create 8 in
+    let loc_lb = locbound stm in
+    while
+	match peek stm with
+	| None -> false
+	| Some ch -> f ch && (UString.Buf.add_char buf ch; true)
+    do skip stm done;
+    let loc_ub = locbound stm in
+    (UString.Buf.contents buf, Location.between loc_lb loc_ub)

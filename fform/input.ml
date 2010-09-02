@@ -166,6 +166,10 @@ and print_def fo def =
 	print_name fo name;
 	Fo.put_op fo ":";
 	print_inline fo Opkind.p_min typ
+    | Dec_lex (_, ok, idrs) ->
+	Fo.put_kw fo "lex";
+	Fo.put fo `Name (Opkind.to_string ok);
+	List.iter (fun (Idr s) -> Fo.space fo; Fo.put fo `Operator s) idrs
     | _ ->
 	Fo.put fo `Error "(unimplemented def)"
 

@@ -23,6 +23,7 @@ module UChar : sig
 
     val is_idrchr : t -> bool
     val is_space : t -> bool
+    val is_hspace : t -> bool
     val are_tied : t -> t -> bool
 
     val ch_tab : t

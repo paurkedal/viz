@@ -36,3 +36,7 @@ val peek_at : int -> t -> elt option
 val skip : t -> unit
 
 val skip_n : int -> t -> unit
+
+val skip_while : (elt -> bool) -> t -> unit
+
+val scan_while : (elt -> bool) -> t -> UString.t * Location.t

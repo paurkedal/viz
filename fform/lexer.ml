@@ -33,12 +33,58 @@ type state = {
     mutable indent_stack : (int * Location.t) list;
     mutable stashed_token : (Grammar.token * Location.t) option;
     mutable keywords : kwinfo UString_trie.t;
+    mutable operators : Opkind.t UString_trie.t;
     mutable lookahead : int;
     mutable last_location : Location.t;
     mutable scanners : (state -> Grammar.token option) list;
 }
 
 let last_location state = state.last_location
+
+let mktoken_arr =
+    let a = Array.create Opkind.maxp_id
+	(fun _ -> raise (Failure "Invalid precedence")) in
+    List.iter (fun (p, mktoken) -> Array.set a p mktoken) [
+	Opkind.mixfix_quantifier.Opkind.ok_id, (fun a -> Grammar.QUANTIFIER a);
+	Opkind.preinfix_logic.(0).Opkind.ok_id, (fun a -> Grammar.LOGIC0 a);
+	Opkind.preinfix_logic.(1).Opkind.ok_id, (fun a -> Grammar.LOGIC1 a);
+	Opkind.preinfix_logic.(2).Opkind.ok_id, (fun a -> Grammar.LOGIC2 a);
+	Opkind.preinfix_logic.(3).Opkind.ok_id, (fun a -> Grammar.LOGIC3 a);
+	Opkind.preinfix_logic.(4).Opkind.ok_id, (fun a -> Grammar.LOGIC4 a);
+	Opkind.preinfix_logic.(5).Opkind.ok_id, (fun a -> Grammar.LOGIC5 a);
+	Opkind.preinfix_logic.(6).Opkind.ok_id, (fun a -> Grammar.LOGIC6 a);
+	Opkind.transfix_relation.Opkind.ok_id, (fun a -> Grammar.RELATION a);
+	Opkind.preinfix_arith.(0).Opkind.ok_id, (fun a -> Grammar.ARITH0 a);
+	Opkind.preinfix_arith.(1).Opkind.ok_id, (fun a -> Grammar.ARITH1 a);
+	Opkind.preinfix_arith.(2).Opkind.ok_id, (fun a -> Grammar.ARITH2 a);
+	Opkind.preinfix_arith.(3).Opkind.ok_id, (fun a -> Grammar.ARITH3 a);
+	Opkind.preinfix_arith.(4).Opkind.ok_id, (fun a -> Grammar.ARITH4 a);
+	Opkind.preinfix_arith.(5).Opkind.ok_id, (fun a -> Grammar.ARITH5 a);
+	Opkind.preinfix_arith.(6).Opkind.ok_id, (fun a -> Grammar.ARITH6 a);
+	Opkind.preinfix_arith.(7).Opkind.ok_id, (fun a -> Grammar.ARITH7 a);
+	Opkind.preinfix_arith.(8).Opkind.ok_id, (fun a -> Grammar.ARITH8 a);
+	Opkind.preinfix_arith.(9).Opkind.ok_id, (fun a -> Grammar.ARITH9 a);
+	Opkind.suffix_arith.(0).Opkind.ok_id, (fun a -> Grammar.ARITH0_S a);
+	Opkind.suffix_arith.(1).Opkind.ok_id, (fun a -> Grammar.ARITH1_S a);
+	Opkind.suffix_arith.(2).Opkind.ok_id, (fun a -> Grammar.ARITH2_S a);
+	Opkind.suffix_arith.(3).Opkind.ok_id, (fun a -> Grammar.ARITH3_S a);
+	Opkind.suffix_arith.(4).Opkind.ok_id, (fun a -> Grammar.ARITH4_S a);
+	Opkind.suffix_arith.(5).Opkind.ok_id, (fun a -> Grammar.ARITH5_S a);
+	Opkind.suffix_arith.(6).Opkind.ok_id, (fun a -> Grammar.ARITH6_S a);
+	Opkind.suffix_arith.(7).Opkind.ok_id, (fun a -> Grammar.ARITH7_S a);
+	Opkind.suffix_arith.(8).Opkind.ok_id, (fun a -> Grammar.ARITH8_S a);
+	Opkind.suffix_arith.(9).Opkind.ok_id, (fun a -> Grammar.ARITH9_S a);
+	Opkind.infix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_I a);
+	Opkind.infix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_I a);
+	Opkind.infix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_I a);
+	Opkind.prefix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_P a);
+	Opkind.prefix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_P a);
+	Opkind.prefix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_P a);
+	Opkind.suffix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_S a);
+	Opkind.suffix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_S a);
+	Opkind.suffix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_S a);
+    ];
+    a
 
 let initial_intro_keywords = [
     "using",	Grammar.USING;
@@ -87,6 +133,8 @@ let initial_keywords =
     List.fold (addkw true)  initial_intro_keywords @<
     List.fold (addkw false) initial_plain_keywords @<
     UString_trie.empty
+
+let initial_operators = UString_trie.empty
 
 let rec skip_line state =
     match LStream.pop state.stream with
@@ -140,7 +188,8 @@ let pop_token state =
 	    then begin
 		if dlog_en then
 		    dlogf ~loc:(Location.at (LStream.locbound state.stream))
-			"Inserting END implied by BEGIN at %s"
+			"Inserting END/%d implied by BEGIN at %s"
+			(List.length state.indent_stack)
 			(Location.to_string loc);
 		state.indent_stack <- indent_stack';
 		Some (Grammar.END, loc)
@@ -148,10 +197,44 @@ let pop_token state =
 	    else None
 	end
 
-let scan_keyword state =
+let declare_operator state ok op =
+    let op' = UString_sequence.create (Input.idr_to_ustring op) in
+    if dlog_en then
+	dlogf "Declaring operator %s at %s." (Input.idr_to_string op)
+	      (Opkind.to_string ok);
+    state.operators <- UString_trie.add op' ok state.operators
+
+let scan_lexdef state lex_loc =
+    skip_space state;
+    let okname, okname_loc =
+	LStream.scan_while (not *< UChar.is_space) state.stream in
+    let loc_lb = LStream.locbound state.stream in
+    let ops_r = ref [] in
+    while
+	LStream.skip_while UChar.is_hspace state.stream;
+	begin match LStream.peek state.stream with
+	| None -> false
+	| Some ch -> ch != UChar.ch_nl
+	end
+    do
+	let opname, opname_loc =
+	    LStream.scan_while (not *< UChar.is_space) state.stream in
+	ops_r := Input.idr_of_ustring opname :: !ops_r
+    done;
+    let ops = List.rev !ops_r in
+    let opkind = Opkind.of_string (UString.to_utf8 okname) in
+    let loc_ub = LStream.locbound state.stream in
+    let loc = Location.between loc_lb loc_ub in
+    let lexdef = Input.Dec_lex (loc, opkind, ops) in
+    List.iter (declare_operator state opkind) ops;
+    assert (state.stashed_token = None);
+    state.stashed_token <- Some (Grammar.PREPARED_DEF lexdef, loc);
+    Some (Grammar.LEX, lex_loc)
+
+let triescan state trie =
     let la = UString_sequence.create
 			(LStream.peek_n state.lookahead state.stream) in
-    let f la kwi_opt (len, last_ch, res) =
+    let check_prefix la kwi_opt (len, last_ch, res) =
 	let this_ch = Option.default UChar.ch_space (Sequence.peek la) in
 	if UChar.are_tied last_ch this_ch
 	then (len + 1, this_ch, res)
@@ -161,32 +244,47 @@ let scan_keyword state =
 		| None -> res
 		| Some kwi -> Some (len, kwi) in
 	    (len + 1, this_ch, res') in
-    match UString_trie.prefix_optfold f la state.keywords
+    match UString_trie.prefix_optfold check_prefix la trie
 				      (0, UChar.ch_space, None) with
     | (_, _, None) -> None
-    | (_, _, Some (len, kwinfo)) ->
-	let tok = kwinfo.create_token (UString.of_sequence_n len la) in
+    | (_, _, Some (len, res)) ->
 	let loc_lb = LStream.locbound state.stream in
-	if kwinfo.is_intro && stacked_column state <> current_column state then
+	LStream.skip_n len state.stream;
+	let loc_ub = LStream.locbound state.stream in
+	Some (res, UString.of_sequence_n len la, Location.between loc_lb loc_ub)
+
+let scan_keyword state =
+    match triescan state state.keywords with
+    | None -> None
+    | Some (kwinfo, tokstr, loc) ->
+	let tok = kwinfo.create_token tokstr in
+	if tok = Grammar.LEX then scan_lexdef state loc else
+	let loc_lb = Location.lbound loc in
+	if kwinfo.is_intro
+		&& stacked_column state <> Location.Bound.column loc_lb then
 	  begin
-	    LStream.skip_n len state.stream;
-	    let loc_ub = LStream.locbound state.stream in
 	    let loc_begin = Location.between loc_lb loc_lb in
-	    let loc_kw = Location.between loc_lb loc_ub in
 	    assert (state.stashed_token = None);
-	    state.stashed_token <- Some (tok, loc_kw);
+	    state.stashed_token <- Some (tok, loc);
 	    push_end_token state loc_begin;
-	    if dlog_en then dlogf ~loc:loc_begin "Inserting BEGIN";
+	    if dlog_en then
+		dlogf ~loc:loc_begin "Inserting BEGIN/%d"
+				     (List.length state.indent_stack);
 	    Some (Grammar.BEGIN, loc_begin)
 	  end
 	else
 	  begin
-	    LStream.skip_n len state.stream;
-	    let loc_ub = LStream.locbound state.stream in
-	    let loc = Location.between loc_lb loc_ub in
-	    if dlog_en then dlogf ~loc "Matched keyword.";
+	    if dlog_en then dlogf ~loc "Scanned keyword.";
 	    Some (tok, loc)
 	  end
+
+let scan_operator state =
+    match triescan state state.operators with
+    | None -> None
+    | Some (opkind, tokstr, loc) ->
+	let mktoken = mktoken_arr.(opkind.Opkind.ok_id) in
+	if dlog_en then dlogf ~loc "Scanned operator.";
+	Some (mktoken (Input.idr_of_ustring tokstr), loc)
 
 let scan_identifier state =
     let buf = UString.Buf.create 8 in
@@ -210,7 +308,7 @@ let scan_identifier state =
 	    Some (scan ch)
 	end else None
 
-let fixed_scanners = [pop_token; scan_keyword]
+let fixed_scanners = [pop_token; scan_keyword; scan_operator]
 let default_scanners = [scan_identifier]
 
 let create_from_lstream stream =
@@ -220,6 +318,7 @@ let create_from_lstream stream =
 	indent_stack = [];
 	stashed_token = None;
 	keywords = initial_keywords;
+	operators = initial_operators;
 	lookahead = initial_lookahead;
 	last_location = Location.dummy;
 	scanners = default_scanners;

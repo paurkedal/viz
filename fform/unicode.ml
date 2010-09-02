@@ -39,6 +39,16 @@ module UChar = struct
 	| `Cc | `Zs | `Zl | `Zp (* | `Mc ? *) -> true
 	| _ -> false
 
+    let is_hspace ch =
+	match UCharInfo.general_category ch with
+	| `Cc ->
+	    begin match int_of_uchar ch with
+	    | 0x9 -> true
+	    | _ -> false
+	    end
+	| `Zs -> true
+	| _ -> false
+
     let are_tied ch0 ch1 = is_idrchr ch0 && is_idrchr ch1
 end
 
