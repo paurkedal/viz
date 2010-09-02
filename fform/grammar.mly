@@ -262,7 +262,7 @@ quantifier:
 
 relational_expr:
     arith { $1 }
-  | real_relational_expr RELATION arith { $1 }
+  | real_relational_expr { $1 }
   ;
 real_relational_expr:
     arith RELATION arith
