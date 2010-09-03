@@ -33,6 +33,8 @@ module UChar : sig
     val ch_underscore : t
 end
 
+module UChar_map : Map.S with type key = UChar.t
+
 module UString : sig
     include module type of UCS4 with type t = UCS4.t
 

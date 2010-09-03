@@ -52,6 +52,8 @@ module UChar = struct
     let are_tied ch0 ch1 = is_idrchr ch0 && is_idrchr ch1
 end
 
+module UChar_map = Map.Make (UChar)
+
 module UString = struct
     include UCS4
     let empty = init 0 (fun _ -> uchar_of_int 0)

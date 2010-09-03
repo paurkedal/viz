@@ -308,8 +308,78 @@ let scan_identifier state =
 	    Some (scan ch)
 	end else None
 
+let escape_map =
+    List.fold (fun (x, y) -> UChar_map.add (UChar.of_char x) (UChar.of_char y)) [
+	'"', '"'; '\\', '\\';
+	'n', '\n'; 'r', '\r'; 't', '\t';
+    ] UChar_map.empty
+
+let scan_string_literal state =
+    let buf = UString.Buf.create 8 in
+    LStream.skip state.stream;
+    let rec next () =
+	match LStream.pop state.stream with
+	| None -> raise Grammar.Error
+	| Some ch ->
+	    if ch = UChar.of_char '\\' then
+		begin match LStream.pop state.stream with
+		| None -> raise Grammar.Error
+		| Some ch' ->
+		    try
+			let ch'' = UChar_map.find ch' escape_map in
+			UString.Buf.add_char buf ch'';
+			next ()
+		    with Not_found -> raise Grammar.Error
+		end
+	    else if ch <> UChar.of_char '"' then begin
+		UString.Buf.add_char buf ch;
+		next ()
+	    end in
+    next ();
+    Input.Lit_string (UString.Buf.contents buf)
+
+let scan_int have_sign base state =
+    let rec f accu =
+	let ch = Option.default UChar.ch_space (LStream.peek state.stream) in
+	if not (UChar.is_idrchr ch) then accu else
+	let code = UChar.code ch in
+	let value =
+	    if 0x30 <= code && code <= 0x39 then code - 0x30 else
+	    if 0x61 <= code && code <= 0x66 then code - 0x61 + 10 else
+	    raise Grammar.Error in
+	LStream.skip state.stream;
+	f (value + base * accu) in
+    let n = (f 0) in
+    Input.Lit_int (if have_sign then -n else n)
+
+let scan_literal state =
+    let found lit =
+	Some (Grammar.LITERAL lit) in
+    let chcode_at n =
+	match LStream.peek_at n state.stream with
+	| None -> 0
+	| Some ch -> UChar.code ch in
+    let (n_sign, have_sign) =
+	if chcode_at 0 = 0x2d then (1, true) else (0, false) in
+    match chcode_at n_sign with
+    | 0x22 ->
+	if have_sign then None else found (scan_string_literal state)
+    | 0x30 ->
+	LStream.skip_n n_sign state.stream;
+	begin match chcode_at 1 with
+	| 0x62 (* 0b *) -> found (scan_int have_sign  2 state)
+	| 0x6f (* 0o *) -> found (scan_int have_sign  8 state)
+	| 0x78 (* 0x *) -> found (scan_int have_sign 16 state)
+	| _ -> found (scan_int have_sign 10 state)
+	end
+    | ch0 ->
+	LStream.skip_n n_sign state.stream;
+	if 0x30 <= ch0 && ch0 <= 0x39 then
+	    found (scan_int have_sign 10 state)
+	else None
+
 let fixed_scanners = [pop_token; scan_keyword; scan_operator]
-let default_scanners = [scan_identifier]
+let default_scanners = [scan_literal; scan_identifier]
 
 let create_from_lstream stream =
     {

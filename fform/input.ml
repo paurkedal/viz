@@ -16,12 +16,13 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Unicode
 include Input_types
 
 let idr_of_string name = Idr name
 let idr_to_string (Idr name) = name
-let idr_of_ustring name = Idr (Unicode.UString.to_utf8 name)
-let idr_to_ustring (Idr name) = Unicode.UString.of_utf8 name
+let idr_of_ustring name = Idr (UString.to_utf8 name)
+let idr_to_ustring (Idr name) = UString.of_utf8 name
 let idr_1o (Idr name) = Idr ("1o" ^ name)
 let idr_2o (Idr name) = Idr ("2o" ^ name)
 
@@ -33,7 +34,7 @@ let lit_to_string = function
     | Lit_unit -> "unit"
     | Lit_int i -> string_of_int i
     | Lit_float x -> string_of_float x
-    | Lit_string s -> String.escaped s
+    | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""
 
 module Fo = Formatter
 

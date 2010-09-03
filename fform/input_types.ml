@@ -19,6 +19,8 @@
 (* These type definitions are kept in a separate file without an interface file
  * to avoid duplicating all the constructor cases. *)
 
+open Unicode
+
 type loc = Location.t
 
 type idr = Idr of string
@@ -27,7 +29,7 @@ type lit =
     | Lit_unit
     | Lit_int of int
     | Lit_float of float
-    | Lit_string of string
+    | Lit_string of UString.t
 
 type trm =
     | Trm_ref		of loc * idr
