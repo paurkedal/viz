@@ -130,39 +130,39 @@ and print_else fo trm =
 and print_def fo def =
     Fo.newline fo;
     match def with
-    | Dec_type pat ->
+    | Dec_type (_, pat) ->
 	Fo.put_kw fo "type";
 	print_inline fo Opkind.p_min pat
-    | Dec_struct (pat, signat) ->
+    | Dec_struct (_, pat, signat) ->
 	Fo.put_kw fo "struct";
 	print_inline fo (Opkind.p_typing + 1) pat;
 	Fo.put_op fo ":";
 	print_inline fo (Opkind.p_typing + 1) signat
-    | Def_struct (pat, body) ->
+    | Def_struct (_, pat, body) ->
 	Fo.put_kw fo "struct";
 	print_inline fo Opkind.p_min pat;
 	Fo.put_kw fo "is";
 	print_inline fo Opkind.p_min body
-    | Dec_sig name ->
+    | Dec_sig (_, name) ->
 	Fo.put_kw fo "sig";
 	print_name fo name
-    | Def_sig (name, body) ->
+    | Def_sig (_, name, body) ->
 	Fo.put_kw fo "sig";
 	print_name fo name;
 	Fo.put_kw fo "is";
 	print_inline fo Opkind.p_min body
-    | Dec_val (name, typ) ->
+    | Dec_val (_, name, typ) ->
 	Fo.put_kw fo "val";
 	print_name fo name;
 	Fo.put_op fo ":";
 	print_inline fo Opkind.p_min typ
-    | Def_val (pat, pred) ->
+    | Def_val (_, pat, pred) ->
 	Fo.put_kw fo "val";
 	print_inline fo Opkind.p_min pat;
 	Fo.enter_indent fo;
 	print_predicate fo pred;
 	Fo.leave_indent fo
-    | Def_inj (name, typ) ->
+    | Def_inj (_, name, typ) ->
 	Fo.put_kw fo "inj";
 	print_name fo name;
 	Fo.put_op fo ":";

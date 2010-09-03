@@ -49,13 +49,13 @@ type trm =
     | Trm_where		of loc * def list
     | Trm_with		of loc * trm option * def list
  and def =
-    | Dec_type		of trm
-    | Def_type		of trm * trm
-    | Dec_struct	of trm * trm
-    | Def_struct	of trm * trm
-    | Dec_sig		of idr
-    | Def_sig		of idr * trm
-    | Dec_val		of idr * trm
-    | Def_val		of trm * trm
-    | Def_inj		of idr * trm
+    | Dec_type		of loc * trm
+    | Def_type		of loc * trm * trm
+    | Dec_struct	of loc * trm * trm
+    | Def_struct	of loc * trm * trm
+    | Dec_sig		of loc * idr
+    | Def_sig		of loc * idr * trm
+    | Dec_val		of loc * idr * trm
+    | Def_val		of loc * trm * trm
+    | Def_inj		of loc * idr * trm
     | Dec_lex		of loc * Opkind.t * idr list

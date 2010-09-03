@@ -140,19 +140,26 @@ signature_clause:
 structure_clause:
     modular_clause { $1 }
   | STRUCT structure_pattern BEGIN IS structure_expr END
-    { Input.Def_struct ($2, $5) }
-  | VAL term_pattern predicate { Input.Def_val ($2, $3) }
+    { Input.Def_struct (mkloc $startpos $endpos, $2, $5) }
+  | VAL term_pattern predicate
+    { Input.Def_val (mkloc $startpos $endpos, $2, $3) }
   ;
 
 modular_clause:
-    SIG IDENTIFIER { Input.Dec_sig $2 }
-  | SIG IDENTIFIER BEGIN IS signature_expr END { Input.Def_sig ($2, $5) }
+    SIG IDENTIFIER
+    { Input.Dec_sig (mkloc $startpos $endpos, $2) }
+  | SIG IDENTIFIER BEGIN IS signature_expr END
+    { Input.Def_sig (mkloc $startpos $endpos, $2, $5) }
   | STRUCT structure_pattern COLON signature_expr
-    { Input.Dec_struct ($2, $4) }
-  | TYPE type_pattern { Input.Dec_type $2 }
-  | TYPE type_pattern IS type_expr { Input.Def_type ($2, $4) }
-  | INJ IDENTIFIER COLON type_expr { Input.Def_inj ($2, $4) }
-  | VAL term_pattern COLON type_expr { Input.Def_val ($2, $4) }
+    { Input.Dec_struct (mkloc $startpos $endpos, $2, $4) }
+  | TYPE type_pattern
+    { Input.Dec_type (mkloc $startpos $endpos, $2) }
+  | TYPE type_pattern IS type_expr
+    { Input.Def_type (mkloc $startpos $endpos, $2, $4) }
+  | INJ IDENTIFIER COLON type_expr
+    { Input.Def_inj (mkloc $startpos $endpos, $2, $4) }
+  | VAL term_pattern COLON type_expr
+    { Input.Def_val (mkloc $startpos $endpos, $2, $4) }
   | LEX PREPARED_DEF { $2 }
   ;
 
