@@ -187,7 +187,7 @@ compound_predicate:
     atomic_predicate { $1 }
   | postif_predicate { $1 }
   | if_predicate { $1 }
-  | at_predicate { $1 }
+  | at_predicate { Input.Trm_at (mkloc $startpos $endpos, $1) }
   ;
 if_predicate:
     IF term predicate if_predicate
@@ -196,9 +196,9 @@ if_predicate:
   ;
 at_predicate:
     AT term_pattern predicate
-    { Input.Trm_at (mkloc $startpos $endpos, $2, $3, None) }
+    { [($2, $3)] }
   | AT term_pattern predicate at_predicate
-    { Input.Trm_at (mkloc $startpos $endpos, $2, $3, Some $4) }
+    { ($2, $3) :: $4 }
   ;
 postif_predicate:
     atomic_predicate BEGIN IF term END postif_predicate

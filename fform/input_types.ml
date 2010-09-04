@@ -45,7 +45,7 @@ type trm =
     | Trm_typing	of loc * trm * trm
     | Trm_raise		of loc * trm
     | Trm_if		of loc * trm * trm * trm
-    | Trm_at		of loc * trm * trm * trm option
+    | Trm_at		of loc * (trm * trm) list
     | Trm_where		of loc * def list
     | Trm_with		of loc * trm option * def list
  and def =

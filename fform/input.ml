@@ -109,14 +109,15 @@ and print_predicate ?(default = print_is) fo = function
 	print_predicate fo cq;
 	Fo.leave_indent fo;
 	print_predicate ~default:print_else fo ccq
-    | Trm_at (_, pat, cq, ccq) ->
-	Fo.newline fo;
-	Fo.put_kw fo "at";
-	print_inline fo Opkind.p_min pat;
-	Fo.enter_indent fo;
-	print_predicate fo cq;
-	Fo.leave_indent fo;
-	Option.iter (print_predicate fo) ccq
+    | Trm_at (_, cases) ->
+	List.iter (fun (pat, cq) ->
+	    Fo.newline fo;
+	    Fo.put_kw fo "at";
+	    print_inline fo Opkind.p_min pat;
+	    Fo.enter_indent fo;
+	    print_predicate fo cq;
+	    Fo.leave_indent fo;
+	) cases
     | trm -> default fo trm
 and print_is fo trm =
     Fo.put_kw fo "is";
