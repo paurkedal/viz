@@ -297,9 +297,10 @@ let scan_identifier state =
 	match LStream.peek state.stream with
 	| None -> finish ()
 	| Some next_ch ->
-	    UString.Buf.add_char buf next_ch;
-	    if UChar.are_tied prev_ch next_ch then scan next_ch
-	    else finish () in
+	    if UChar.are_tied prev_ch next_ch then begin
+		UString.Buf.add_char buf next_ch;
+		scan next_ch
+	    end else finish () in
     match LStream.peek state.stream with
     | None -> Some Grammar.EOF
     | Some ch ->

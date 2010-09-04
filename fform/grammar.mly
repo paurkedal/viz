@@ -203,7 +203,7 @@ at_predicate:
 postif_predicate:
     atomic_predicate BEGIN IF term END postif_predicate
     { Input.Trm_if (mkloc $startpos $endpos, $4, $1, $6) }
-  | atomic_predicate BEGIN OTHERWISE { $1 }
+  | atomic_predicate BEGIN OTHERWISE END { $1 }
   ;
 
 /* Participles */
