@@ -18,6 +18,7 @@
 
 open Printf
 module Fo = Formatter
+open FfPervasives
 
 exception Domain_error
 
@@ -190,16 +191,16 @@ let of_string s =
 	    end else
 	if n = 2 then
 	    begin match String.get s 0, String.get s 1 with
-	    | ('A', ch) -> preinfix_arith.(int_of_char ch)
-	    | ('L', ch) -> preinfix_logic.(int_of_char ch)
+	    | ('A', ch) -> preinfix_arith.(int_of_digit ch)
+	    | ('L', ch) -> preinfix_logic.(int_of_digit ch)
 	    | _ -> raise Domain_error
 	    end else
 	if n = 3 then
 	    begin match String.get s 0, String.get s 1, String.get s 2 with
-	    | ('A', ch, 'S') -> suffix_arith.(int_of_char ch)
-	    | ('S', ch, 'I') -> infix_script.(int_of_char ch)
-	    | ('S', ch, 'P') -> prefix_script.(int_of_char ch)
-	    | ('S', ch, 'S') -> suffix_script.(int_of_char ch)
+	    | ('A', ch, 'S') -> suffix_arith.(int_of_digit ch)
+	    | ('S', ch, 'I') -> infix_script.(int_of_digit ch)
+	    | ('S', ch, 'P') -> prefix_script.(int_of_digit ch)
+	    | ('S', ch, 'S') -> suffix_script.(int_of_digit ch)
 	    | _ -> raise Domain_error
 	    end else
 	raise Domain_error
