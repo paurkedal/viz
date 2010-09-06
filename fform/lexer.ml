@@ -144,19 +144,23 @@ let rec skip_line state =
 let skip_space state =
     (* Skip spaces and comments, update indentation. *)
     let start_locb = LStream.locbound state.stream in
-    while match LStream.peek state.stream with
-    | None -> false
-    | Some ch ->
-	if ch = UChar.ch_dash
-		&& Option.exists ((=) UChar.ch_dash)
-				 (LStream.peek_at 1 state.stream) then
-	    begin
-		skip_line state;
-		Option.exists UChar.is_space (LStream.peek state.stream)
-	    end
-	else
-	    UChar.is_space ch
-    do LStream.skip state.stream done;
+    let rec loop () =
+	match LStream.peek state.stream with
+	| None -> ()
+	| Some ch ->
+	    if UChar.is_space ch then
+		begin
+		    LStream.skip state.stream;
+		    loop ()
+		end else
+	    if ch = UChar.ch_dash
+		    && Option.exists ((=) UChar.ch_dash)
+				     (LStream.peek_at 1 state.stream) then
+		begin
+		    skip_line state;
+		    loop ()
+		end in
+    loop ();
     let end_locb = LStream.locbound state.stream in
     if Location.Bound.lineno start_locb < Location.Bound.lineno end_locb then
 	state.indent <- Location.Bound.column end_locb
