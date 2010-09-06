@@ -25,6 +25,7 @@ let ident x = x
 let konst x y = x
 let uncurry f (x, y) = f x y
 let curry f x y = f (x, y)
+let rec repeat n f x = if n = 0 then x else f (repeat (n - 1) f x)
 
 let ( *< ) f g x = f (g x)
 let ( *> ) f g x = g (f x)

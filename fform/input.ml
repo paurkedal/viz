@@ -26,6 +26,11 @@ let idr_to_ustring (Idr name) = UString.of_utf8 name
 let idr_1o (Idr name) = Idr ("1o" ^ name)
 let idr_2o (Idr name) = Idr ("2o" ^ name)
 
+let i_2o_comma = Idr "2o,"
+let i_2o_arrow = Idr "2o→"
+let i_2o_eq = Idr "2o="
+let i_2o_neq = Idr "2o≠"
+
 let trm_ref loc name = Trm_ref (loc, idr_of_string name)
 
 let tuple_op = trm_ref Location.dummy "2o,"
@@ -35,6 +40,32 @@ let lit_to_string = function
     | Lit_int i -> string_of_int i
     | Lit_float x -> string_of_float x
     | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""
+
+module Idr = struct
+    type t = idr
+    let compare (Idr x) (Idr y) = compare x y
+end
+module Idr_set = Set.Make (Idr)
+module Idr_map = Map.Make (Idr)
+
+let trm_location = function
+    | Trm_ref (loc, _) | Trm_literal (loc, _) | Trm_label (loc, _, _)
+    | Trm_lambda (loc, _, _) | Trm_quantify (loc, _, _, _)
+    | Trm_let (loc, _, _, _)
+    | Trm_rel (loc, _, _, _) | Trm_rel_left(loc, _, _, _)
+    | Trm_apply (loc, _, _) | Trm_project (loc, _, _) | Trm_typing (loc, _, _)
+    | Trm_raise (loc, _) | Trm_if (loc, _, _, _) | Trm_at (loc, _)
+    | Trm_where (loc, _) | Trm_with (loc, _, _) ->
+	loc
+
+let application_depth i f x =
+    let rec loop n xs = function
+	| Trm_apply (_, Trm_ref (_, f'), x') when f' = f ->
+	    loop (n + 1) [] (List.nth (x' :: xs) i)
+	| Trm_apply (_, f', x') ->
+	    loop n (x' :: xs) f'
+	| _ -> n in
+    loop 0 [] x
 
 module Fo = Formatter
 

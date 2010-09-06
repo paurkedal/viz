@@ -43,6 +43,7 @@ let () = dispatch begin function
 	ocaml_pkg "sexplib";
 	ocaml_pkg "menhirLib";
 	ocaml_pkg "camomile";
+	ocaml_pkg "camlp4";
 	()
     | _ -> ()
 end

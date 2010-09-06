@@ -30,6 +30,7 @@ module Bound = struct
     let path (b, _) = b.pos_fname
     let lineno (b, _) = b.pos_lnum
     let charno (b, _) = b.pos_cnum
+    let bol_charno (b, _) = b.pos_bol
     let column (_, c) = c
 
     let skip_n n (pos, col) =

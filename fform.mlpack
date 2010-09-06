@@ -4,6 +4,7 @@ fform/formatter
 fform/grammar
 fform/input
 fform/input_types
+fform/gen_ocaml
 fform/lexer
 fform/lStream
 fform/location

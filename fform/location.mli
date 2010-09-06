@@ -31,6 +31,8 @@ module Bound : sig
 
     val charno : t -> int
 
+    val bol_charno : t -> int
+
     val column : t -> int
 
     val skip_n : int -> t -> t
