@@ -52,8 +52,8 @@ let trm_location = function
     | Trm_ref (loc, _, _) | Trm_literal (loc, _) | Trm_label (loc, _, _)
     | Trm_lambda (loc, _, _) | Trm_quantify (loc, _, _, _)
     | Trm_let (loc, _, _, _)
-    | Trm_rel (loc, _, _, _) | Trm_rel_left(loc, _, _, _)
-    | Trm_apply (loc, _, _) | Trm_project (loc, _, _) | Trm_typing (loc, _, _)
+    | Trm_rel (loc, _, _) | Trm_apply (loc, _, _)
+    | Trm_project (loc, _, _) | Trm_typing (loc, _, _)
     | Trm_raise (loc, _) | Trm_if (loc, _, _, _) | Trm_at (loc, _)
     | Trm_where (loc, _) | Trm_with (loc, _, _) ->
 	loc
@@ -89,14 +89,6 @@ let rec put_infixl fo p_rule p_cur op x y =
     print_inline fo (p_rule + 1) x;
     if p_rule < p_cur then Fo.put fo `Operator ")"
 
-and print_rel_left fo = function
-    | Trm_rel_left (_, Idr op, x, y) ->
-	print_rel_left fo x;
-	Fo.put_op fo op;
-	print_inline fo (Opkind.p_rel + 1) y
-    | x ->
-	print_inline fo (Opkind.p_rel + 1) x
-
 and print_inline fo p = function
     | Trm_ref (_, idr, idrhint) ->
 	print_hinted_name fo idr idrhint
@@ -114,11 +106,13 @@ and print_inline fo p = function
 	Fo.space fo;
 	print_inline fo Opkind.p_rel body;
 	if p >= Opkind.p_rel then Fo.put fo `Operator ")"
-    | Trm_rel (_, Idr op, x, y) ->
+    | Trm_rel (_, x, rels) ->
 	if p > Opkind.p_rel then Fo.put fo `Operator "(";
-	print_rel_left fo x;
-	Fo.put_op fo op;
-	print_inline fo (Opkind.p_rel + 1) y;
+	print_inline fo (Opkind.p_rel + 1) x;
+	List.iter begin fun (_, Idr op, y) ->
+	    Fo.put_op fo op;
+	    print_inline fo (Opkind.p_rel + 1) y;
+	end rels;
 	if p > Opkind.p_rel then Fo.put fo `Operator ")"
     | Trm_apply (_, f, x) ->
 	if p > Opkind.p_apply then Fo.put fo `Operator "(";

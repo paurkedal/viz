@@ -275,13 +275,14 @@ quantifier:
 
 relational_expr:
     arith { $1 }
-  | real_relational_expr { $1 }
+  | arith relation_seq { Input.Trm_rel (mkloc $startpos $endpos, $1, $2) }
   ;
-real_relational_expr:
-    arith RELATION arith
-    { Input.Trm_rel (mkloc $startpos $endpos, Input.idr_2o $2, $1, $3) }
-  | real_relational_expr RELATION arith
-    { Input.Trm_rel_left (mkloc $startpos $endpos, Input.idr_2o $2, $1, $3) }
+relation_seq:
+    relation_comp { [$1] }
+  | relation_comp relation_seq { $1 :: $2 }
+  ;
+relation_comp:
+    RELATION arith { (mkloc $startpos($1) $endpos($1), Input.idr_2o $1, $2) }
   ;
 arith:
     application		{ $1 }

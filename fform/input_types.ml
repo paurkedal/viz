@@ -40,8 +40,7 @@ type trm =
     | Trm_lambda	of loc * trm * trm
     | Trm_quantify	of loc * idr * trm * trm
     | Trm_let		of loc * trm * trm * trm
-    | Trm_rel		of loc * idr * trm * trm
-    | Trm_rel_left	of loc * idr * trm * trm
+    | Trm_rel		of loc * trm * (loc * idr * trm) list
     | Trm_apply		of loc * trm * trm
     | Trm_project	of loc * idr * trm
     | Trm_typing	of loc * trm * trm

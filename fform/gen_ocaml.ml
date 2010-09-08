@@ -129,7 +129,7 @@ let rec gen_ctyp = function
 	let (idr, x') = gen_ctyp x in
 	let (_,   y') = gen_ctyp y in
 	(idr, <:ctyp< $x'$ $y'$ >>)
-    | Trm_rel (loc, r, x, y) when r = i_2o_eq ->
+    | Trm_rel (loc, x, [(_, r, y)]) when r = i_2o_eq ->
 	let _loc = convert_loc loc in
 	let (idr, x') = gen_ctyp x in
 	let (_,   y') = gen_ctyp y in
@@ -185,17 +185,19 @@ let rec gen_expr env = function
 	let dfi' = gen_expr env dfi in
 	let scp' = gen_expr env scp in
 	<:expr< let $pat'$ = $dfi'$ in $scp'$ >>
-    | Trm_rel (loc, relop, lhs, rhs) ->
-	let rec f loc relop lhs rhs =
-	    let _loc = convert_loc loc in
-	    match lhs with
-	    | Trm_rel_left (lloc, lrelop, llhs, lrhs) ->
-		let r = gen_apply2_idr env _loc relop lrhs rhs in
-		let lr = f lloc lrelop llhs lrhs in
-		<:expr< $lr$ && $r$ >>
-	    | _ ->
-		gen_apply2_idr env _loc relop lhs rhs in
-	f loc relop lhs rhs
+    | Trm_rel (loc, x, rels) ->
+	let _loc = convert_loc loc in
+	begin match
+	    List.fold begin fun (_, op, y) (accu, x) ->
+		let rel = gen_apply2_idr env _loc op x y in
+		match accu with
+		| Some accu' -> (Some <:expr< $accu'$ && $rel$ >>, y)
+		| None -> (Some rel, y)
+	    end rels (None, x)
+	with
+	| (Some accu, _) -> accu
+	| _ -> raise (Failure "Malformed relation expression.")
+	end
     | Trm_apply (loc, f, x) ->
 	let _loc = convert_loc loc in
 	let f' = gen_expr env f in
@@ -221,6 +223,10 @@ and gen_apply2_idr env _loc (Idr op) x0 x1 =
     let x1' = gen_expr env x1 in
     if op = "2o=" then <:expr< $x0'$ = $x1'$ >> else
     if op = "2o≠" then <:expr< $x0'$ <> $x1'$ >> else
+    if op = "2o<" then <:expr< $x0'$ < $x1'$ >> else
+    if op = "2o>" then <:expr< $x0'$ > $x1'$ >> else
+    if op = "2o≤" then <:expr< $x0'$ <= $x1'$ >> else
+    if op = "2o≥" then <:expr< $x0'$ >= $x1'$ >> else
     <:expr< $lid:op$ x0' x1' >>
 
 let collect_inj def inj_map =
