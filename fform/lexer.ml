@@ -236,9 +236,7 @@ let scan_lexdef state lex_loc =
     let loc = Location.between loc_lb loc_ub in
     let lexdef = Input.Dec_lex (loc, opkind, ops) in
     List.iter (declare_operator state opkind) ops;
-    assert (state.stashed_token = None);
-    state.stashed_token <- Some (Grammar.PREPARED_DEF lexdef, loc);
-    Some (Grammar.LEX, lex_loc)
+    (Grammar.PREPARED_DEF lexdef, loc)
 
 let triescan state trie =
     let la = UString_sequence.create
@@ -266,8 +264,10 @@ let scan_keyword state =
     match triescan state state.keywords with
     | None -> None
     | Some (kwinfo, tokstr, loc) ->
-	let tok = kwinfo.create_token tokstr in
-	if tok = Grammar.LEX then scan_lexdef state loc else
+	let (tok, _) =
+	    match kwinfo.create_token tokstr with
+	    | Grammar.LEX -> scan_lexdef state loc
+	    | tok -> (tok, loc) in
 	let loc_lb = Location.lbound loc in
 	if kwinfo.is_intro
 		&& stacked_column state <> Location.Bound.column loc_lb then
@@ -298,9 +298,18 @@ let scan_operator state =
 let scan_identifier state =
     let buf = UString.Buf.create 8 in
     let finish () =
-	let name = UString.Buf.contents buf in
-	let tok = Grammar.IDENTIFIER (Input.idr_of_ustring name) in
-	tok in
+	let s = UString.Buf.contents buf in
+	let n = UString.length s in
+	match int_of_uchar (UString.get s (n - 1)) with
+	| 0x60 (* ` *) ->
+	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
+	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_inj)
+	| 0x5f (* _ *) ->
+	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
+	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_univ)
+	| _ ->
+	    let idr = Input.idr_of_ustring s in
+	    Grammar.IDENTIFIER idr in
     let rec scan prev_ch =
 	LStream.skip state.stream;
 	match LStream.peek state.stream with

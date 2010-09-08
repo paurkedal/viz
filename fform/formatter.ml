@@ -61,6 +61,9 @@ let create ?(indent = 0) ?enter ?leave () =
 	fo_leave = Option.default (fun _ _ -> ()) leave;
     }
 
+let enter fo tag = fo.fo_enter fo tag
+let leave fo tag = fo.fo_leave fo tag
+
 let put_char fo ch =
     Buffer.add_char fo.fo_buf ch;
     fo.fo_column <- fo.fo_column + 1;

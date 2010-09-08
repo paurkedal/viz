@@ -24,18 +24,21 @@ let quantify loc qs e =
 let apply loc f x = Input.Trm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
-let apply_infix  loc name = apply2 loc (Input.Trm_ref (loc, Input.idr_2o name))
-let apply_prefix loc name = apply loc  (Input.Trm_ref (loc, Input.idr_1o name))
-let apply_suffix loc name = apply loc  (Input.Trm_ref (loc, Input.idr_1o name))
+let trm_1o loc name = Input.Trm_ref (loc, Input.idr_1o name, Input.Ih_none)
+let trm_2o loc name = Input.Trm_ref (loc, Input.idr_2o name, Input.Ih_none)
+
+let apply_infix  loc name = apply2 loc (trm_2o loc name)
+let apply_prefix loc name = apply  loc (trm_1o loc name)
+let apply_suffix loc name = apply  loc (trm_1o loc name)
 
 let apply_prefixq loc name (qx, x) =
-    apply loc (Input.Trm_ref (loc, Input.idr_1o name)) (quantify loc qx x)
+    apply  loc (trm_1o loc name) (quantify loc qx x)
 let apply_infixq loc name x (qy, y) =
-    apply2 loc (Input.Trm_ref (loc, Input.idr_2o name)) x (quantify loc qy y)
+    apply2 loc (trm_2o loc name) x (quantify loc qy y)
 
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)
-    apply loc (Input.Trm_ref (loc, name0))
+    apply loc (Input.Trm_ref (loc, name0, Input.Ih_none))
 
 let mkloc lb ub =
     Location.between (Location.Bound.of_lexing_position lb)
@@ -111,6 +114,7 @@ let mkloc lb ub =
 /* Atoms */
 %token <Input.lit> LITERAL
 %token <Input.idr> IDENTIFIER
+%token <Input.idr * Input.idrhint> HINTED_IDENTIFIER
 %token <Input.def> PREPARED_DEF
 
 %type <Input.trm> main
@@ -160,7 +164,7 @@ modular_clause:
     { Input.Def_inj (mkloc $startpos $endpos, $2, $4) }
   | VAL term_pattern COLON type_expr
     { Input.Def_val (mkloc $startpos $endpos, $2, $4) }
-  | LEX PREPARED_DEF { $2 }
+  | PREPARED_DEF { $1 }
   ;
 
 type_pattern: expr {$1};
@@ -275,9 +279,9 @@ relational_expr:
   ;
 real_relational_expr:
     arith RELATION arith
-    { Input.Trm_rel (mkloc $startpos $endpos, $2, $1, $3) }
+    { Input.Trm_rel (mkloc $startpos $endpos, Input.idr_2o $2, $1, $3) }
   | real_relational_expr RELATION arith
-    { Input.Trm_rel_left (mkloc $startpos $endpos, $2, $1, $3) }
+    { Input.Trm_rel_left (mkloc $startpos $endpos, Input.idr_2o $2, $1, $3) }
   ;
 arith:
     application		{ $1 }
@@ -340,7 +344,9 @@ qname:
   ;
 
 atomic_expr:
-    IDENTIFIER { Input.Trm_ref (mkloc $startpos $endpos, $1) }
+    IDENTIFIER { Input.Trm_ref (mkloc $startpos $endpos, $1, Input.Ih_none) }
+  | HINTED_IDENTIFIER
+    { let idr, hint = $1 in Input.Trm_ref (mkloc $startpos $endpos, idr, hint) }
   | LITERAL { Input.Trm_literal (mkloc $startpos $endpos, $1) }
   | LPAREN parenthesised RPAREN { $2 }
   | WHERE BEGIN structure_body END

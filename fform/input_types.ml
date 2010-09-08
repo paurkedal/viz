@@ -25,6 +25,8 @@ type loc = Location.t
 
 type idr = Idr of string
 
+type idrhint = Ih_none | Ih_univ | Ih_inj
+
 type lit =
     | Lit_unit
     | Lit_int of int
@@ -32,7 +34,7 @@ type lit =
     | Lit_string of UString.t
 
 type trm =
-    | Trm_ref		of loc * idr
+    | Trm_ref		of loc * idr * idrhint
     | Trm_literal	of loc * lit
     | Trm_label		of loc * idr * trm
     | Trm_lambda	of loc * trm * trm

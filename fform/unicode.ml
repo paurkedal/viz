@@ -25,13 +25,17 @@ module UChar = struct
     let ch_tab		= of_int 0x9
     let ch_nl		= of_int 0xa
     let ch_space	= of_int 0x20
+    let ch_apostrophe	= of_int 0x27
     let ch_dash		= of_int 0x2d
     let ch_underscore	= of_int 0x5f
+    let ch_grave_accent	= of_int 0x60
 
     let is_idrchr ch =
 	match UCharInfo.general_category ch with
 	| `Lu | `Ll | `Lt | `Mn | `Mc | `Me | `Nd | `Nl | `No | `Lm | `Lo -> true
 	| `Pc -> ch == ch_underscore
+	| `Po -> ch == ch_apostrophe
+	| `Sk -> ch == ch_grave_accent
 	| _ -> false
 
     let is_space ch =
@@ -55,7 +59,7 @@ end
 module UChar_map = Map.Make (UChar)
 
 module UString = struct
-    include UCS4
+    include UText
     let empty = init 0 (fun _ -> uchar_of_int 0)
 
     let of_list xs =
@@ -68,7 +72,7 @@ module UString = struct
 	Sequence.iter_n (Buf.add_char buf) max_length xs;
 	Buf.contents buf
 
-    module UString_encoding = CharEncoding.Make (UCS4)
+    module UString_encoding = CharEncoding.Make (UText)
 
     let of_utf8 = UString_encoding.decode CharEncoding.utf8
     let to_utf8 = UString_encoding.encode CharEncoding.utf8
@@ -82,9 +86,6 @@ module UString_sequence = struct
 	    if UString.compare_index ws ib ie > 0 then None else
 	    Some (UString.look ws ib, (ws, (UString.next ws ib), ie)) in
 	(f, (ws, UString.first ws, UString.last ws))
-
-    let length (_, (ws, ib, ie)) = ie - ib + 1
-    let position (_, (ws, ib, ie)) = ib
 end
 
 module UString_trie = struct

@@ -31,7 +31,7 @@ let i_2o_arrow = Idr "2o→"
 let i_2o_eq = Idr "2o="
 let i_2o_neq = Idr "2o≠"
 
-let trm_ref loc name = Trm_ref (loc, idr_of_string name)
+let trm_ref loc name = Trm_ref (loc, idr_of_string name, Ih_none)
 
 let tuple_op = trm_ref Location.dummy "2o,"
 
@@ -49,7 +49,7 @@ module Idr_set = Set.Make (Idr)
 module Idr_map = Map.Make (Idr)
 
 let trm_location = function
-    | Trm_ref (loc, _) | Trm_literal (loc, _) | Trm_label (loc, _, _)
+    | Trm_ref (loc, _, _) | Trm_literal (loc, _) | Trm_label (loc, _, _)
     | Trm_lambda (loc, _, _) | Trm_quantify (loc, _, _, _)
     | Trm_let (loc, _, _, _)
     | Trm_rel (loc, _, _, _) | Trm_rel_left(loc, _, _, _)
@@ -60,7 +60,7 @@ let trm_location = function
 
 let application_depth i f x =
     let rec loop n xs = function
-	| Trm_apply (_, Trm_ref (_, f'), x') when f' = f ->
+	| Trm_apply (_, Trm_ref (_, f', _), x') when f' = f ->
 	    loop (n + 1) [] (List.nth (x' :: xs) i)
 	| Trm_apply (_, f', x') ->
 	    loop n (x' :: xs) f'
@@ -71,6 +71,16 @@ module Fo = Formatter
 
 let print_name fo idr =
     Fo.put fo `Name (idr_to_string idr)
+
+let print_hinted_name fo idr idrhint =
+    Fo.enter fo `Name;
+    Fo.put_string fo (idr_to_string idr);
+    begin match idrhint with
+    | Ih_none -> ()
+    | Ih_univ -> Fo.put_string fo "_"
+    | Ih_inj -> Fo.put_string fo "`"
+    end;
+    Fo.leave fo `Name
 
 let rec put_infixl fo p_rule p_cur op x y =
     if p_rule < p_cur then Fo.put fo `Operator "(";
@@ -88,7 +98,8 @@ and print_rel_left fo = function
 	print_inline fo (Opkind.p_rel + 1) x
 
 and print_inline fo p = function
-    | Trm_ref (_, idr) -> print_name fo idr
+    | Trm_ref (_, idr, idrhint) ->
+	print_hinted_name fo idr idrhint
     | Trm_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
     | Trm_label (_, Idr label, body) ->
 	Fo.put fo `Label (label ^ ":");

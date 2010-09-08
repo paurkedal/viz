@@ -29,6 +29,10 @@ val contents : t -> string
 
 val add_indent : t -> int -> unit
 
+val enter : t -> tag -> unit
+
+val leave : t -> tag -> unit
+
 val enter_indent : t -> unit
 
 val leave_indent : t -> unit

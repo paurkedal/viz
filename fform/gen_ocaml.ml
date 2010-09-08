@@ -118,13 +118,17 @@ let fresh_var =
 	sprintf "_x%d" i
 
 let rec gen_ctyp = function
-    | Trm_ref (loc, Idr c) ->
+    | Trm_ref (loc, Idr c, Ih_none) ->
 	let _loc = convert_loc loc in
-	(Idr c, <:ctyp< $lid:c$ >>)
-    | Trm_apply (loc, x, Trm_ref (_, Idr y)) ->
+	if String.get c 0 = '\'' then
+	    (Idr c, <:ctyp< '$lid: String.sub c 1 (String.length c - 1)$ >>)
+	else
+	    (Idr c, <:ctyp< $lid:c$ >>)
+    | Trm_apply (loc, x, y) ->
 	let _loc = convert_loc loc in
 	let (idr, x') = gen_ctyp x in
-	(idr, <:ctyp< $x'$ '$y$ >>)
+	let (_,   y') = gen_ctyp y in
+	(idr, <:ctyp< $x'$ $y'$ >>)
     | Trm_rel (loc, r, x, y) when r = i_2o_eq ->
 	let _loc = convert_loc loc in
 	let (idr, x') = gen_ctyp x in
@@ -145,8 +149,12 @@ let gen_literal_expr _loc = function
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
     | Lit_string x -> let s = UString.to_utf8 x in <:expr< $str:s$ >>
 
-let rec gen_pattern env = function
-    | Trm_ref (loc, Idr idr) ->
+let rec gen_pattern ?(isf = false) env = function
+    | Trm_ref (loc, Idr idr, hint) when  hint = Ih_inj
+				     || (hint = Ih_none && isf) ->
+	let _loc = convert_loc loc in
+	<:patt< $uid:String.capitalize idr ^ "_"$ >>
+    | Trm_ref (loc, Idr idr, hint) when hint <> Ih_inj ->
 	let _loc = convert_loc loc in
 	<:patt< $lid:idr$ >>
     | Trm_literal (loc, lit) ->
@@ -154,13 +162,13 @@ let rec gen_pattern env = function
 	gen_literal_patt _loc lit
     | Trm_apply (loc, f, x) ->
 	let _loc = convert_loc loc in
-	let f' = gen_pattern env f in
-	let x' = gen_pattern env x in
+	let f' = gen_pattern ~isf:true  env f in
+	let x' = gen_pattern ~isf:false env x in
 	<:patt< $f'$ $x'$ >>
     | trm -> raise (Error (trm_location trm, "Unimplemented pattern."))
 
 let rec gen_expr env = function
-    | Trm_ref (loc, Idr name) ->
+    | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
 	<:expr< $lid:name$ >>
     | Trm_literal (loc, lit) ->
@@ -219,17 +227,22 @@ let collect_inj def inj_map =
     match def with
     | Def_inj (loc, Idr injname, typ) ->
 	let _loc = convert_loc loc in
-	let rec flatten_types pts = function
-	    | Trm_apply (_, Trm_apply (_, Trm_ref (_, c), pt), r)
-	      when c = i_2o_arrow ->
+	let rec flatten_arrow pts = function
+	    | Trm_apply (_, Trm_apply (_, Trm_ref (_, c, _), pt), rt)
+		    when c = i_2o_arrow ->
 		let (_, pt') = gen_ctyp pt in
-		flatten_types (pt' :: pts) r
-	    | Trm_ref (_, rt) -> (rt, List.rev pts)
-	    | _ -> raise (Error (loc, "Invalid type experssion.")) in
-	let (rt, pts) = flatten_types [] typ in
-	let injs = try Idr_map.find rt inj_map with Not_found -> [] in
+		flatten_arrow (pt' :: pts) rt
+	    | rt -> (rt, List.rev pts) in
+	let rec flatten_apply tps = function
+	    | Trm_apply (_, typ, tp) -> flatten_apply (tp :: tps) typ
+	    | Trm_ref (_, c, _) -> (c, List.rev tps)
+	    | trm ->
+		raise (Error (trm_location trm, "Not a type constructor.")) in
+	let (rt, pts) = flatten_arrow [] typ in
+	let (rc, tps) = flatten_apply [] rt in
+	let injs = try Idr_map.find rc inj_map with Not_found -> [] in
 	let inj = <:ctyp< $uid:ctor_name injname$ of $list:pts$ >> in
-	Idr_map.add rt (inj :: injs) inj_map
+	Idr_map.add rc (inj :: injs) inj_map
     | _ -> inj_map
 
 let gen_val_def = function
@@ -251,7 +264,7 @@ let gen_val_def = function
 		let _loc = convert_loc loc in
 		let x' = gen_pattern builder.Struct_builder.env x in
 		decons_formal <:expr< fun $x'$ -> $body'$ >> f
-	    | Trm_ref (loc, f) ->
+	    | Trm_ref (loc, f, Ih_none) ->
 		(f, body')
 	    | _ -> raise (Error (loc, "Invalid pattern in formals.")) in
 	let (f, body'') = decons_formal body' pat in
@@ -269,11 +282,13 @@ let gen_val_def = function
 		let parms = repeat r
 		    (fun vs -> let v = fresh_var () in v :: vs)
 		    [] in
-		let args' = List.map (fun v -> <:ident< $lid:v$ >>) parms in
-		let body' = List.fold
-		    (fun param body' -> <:expr< fun $lid:param$ -> $body'$ >>)
-		    parms <:expr< $uid:c$ ($list:args'$) >> in
-		<:binding< $lid:v$ = $body'$ >>
+		let e0 =
+		    List.fold (fun v e -> <:expr< $e$ $lid:v$ >>)
+			      parms <:expr< $uid:c$ >> in
+		let e1 =
+		    List.fold (fun p e -> <:expr< fun $lid:p$ -> $e$ >>)
+			      parms e0 in
+		<:binding< $lid:v$ = $e1$ >>
 	    end in
 	Struct_builder.add_def _loc idr binding' (At_inj r) builder
 

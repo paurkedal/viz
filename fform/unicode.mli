@@ -31,12 +31,13 @@ module UChar : sig
     val ch_space : t
     val ch_dash : t
     val ch_underscore : t
+    val ch_grave_accent : t
 end
 
 module UChar_map : Map.S with type key = UChar.t
 
 module UString : sig
-    include module type of UCS4 with type t = UCS4.t
+    include module type of UText with type t = UText.t
 
     val empty : t
 
@@ -52,9 +53,6 @@ module UString_sequence : sig
     type t = (UChar.t, UString.t * UString.index * UString.index) Sequence.t
 
     val create : UString.t -> t
-
-    val length : t -> int
-    val position : t -> int
 end
 
 module UString_trie : sig
