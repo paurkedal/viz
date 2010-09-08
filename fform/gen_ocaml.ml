@@ -31,7 +31,7 @@ type approx_type =
     | At_val
     | At_inj of int
 
-let ctor_name s = String.capitalize s ^ "_"
+let ctor_name s = String.capitalize s
 
 module Struct_builder = struct
     type accu =
@@ -117,6 +117,14 @@ let fresh_var =
 	next_index := i + 1;
 	sprintf "_x%d" i
 
+let flatten_tycon_apply typ =
+    let rec loop tps = function
+	| Trm_apply (_, typ, tp) -> loop (tp :: tps) typ
+	| Trm_ref (_, c, _) -> (c, List.rev tps)
+	| trm ->
+	    raise (Error (trm_location trm, "Not a type constructor.")) in
+    loop [] typ
+
 let rec gen_ctyp = function
     | Trm_ref (loc, Idr c, Ih_none) ->
 	let _loc = convert_loc loc in
@@ -131,9 +139,11 @@ let rec gen_ctyp = function
 	(idr, <:ctyp< $x'$ $y'$ >>)
     | Trm_rel (loc, x, [(_, r, y)]) when r = i_2o_eq ->
 	let _loc = convert_loc loc in
+	let (tycon, typrms) = flatten_tycon_apply x in
+	let typrms' = List.map (snd *< gen_ctyp) typrms in
 	let (idr, x') = gen_ctyp x in
 	let (_,   y') = gen_ctyp y in
-	(idr, <:ctyp< $x'$ == $y'$ >>)
+	(idr, Ast.TyDcl (_loc, idr_to_string tycon, typrms', y', []))
     | trm ->
 	raise (Error (trm_location trm, "Ivalid type expression."))
 
@@ -153,7 +163,7 @@ let rec gen_pattern ?(isf = false) env = function
     | Trm_ref (loc, Idr idr, hint) when  hint = Ih_inj
 				     || (hint = Ih_none && isf) ->
 	let _loc = convert_loc loc in
-	<:patt< $uid:String.capitalize idr ^ "_"$ >>
+	<:patt< $uid:ctor_name idr$ >>
     | Trm_ref (loc, Idr idr, hint) when hint <> Ih_inj ->
 	let _loc = convert_loc loc in
 	<:patt< $lid:idr$ >>
@@ -239,13 +249,8 @@ let collect_inj def inj_map =
 		let (_, pt') = gen_ctyp pt in
 		flatten_arrow (pt' :: pts) rt
 	    | rt -> (rt, List.rev pts) in
-	let rec flatten_apply tps = function
-	    | Trm_apply (_, typ, tp) -> flatten_apply (tp :: tps) typ
-	    | Trm_ref (_, c, _) -> (c, List.rev tps)
-	    | trm ->
-		raise (Error (trm_location trm, "Not a type constructor.")) in
 	let (rt, pts) = flatten_arrow [] typ in
-	let (rc, tps) = flatten_apply [] rt in
+	let (rc, tps) = flatten_tycon_apply rt in
 	let injs = try Idr_map.find rc inj_map with Not_found -> [] in
 	let inj = <:ctyp< $uid:ctor_name injname$ of $list:pts$ >> in
 	Idr_map.add rc (inj :: injs) inj_map
@@ -259,7 +264,9 @@ let gen_val_def = function
 	let ctyp' =
 	    try
 		let injs = Idr_map.find idr builder.Struct_builder.inj_map in
-		<:ctyp< $ctyp$ == [ $list:injs$ ] >>
+		let (Idr tycon, typrms) = flatten_tycon_apply typ in
+		let typrms' = List.map (snd *< gen_ctyp) typrms in
+		Ast.TyDcl (_loc, tycon, typrms', <:ctyp< [ $list:injs$ ] >>, [])
 	    with Not_found -> ctyp in
 	Struct_builder.add_ctyp idr ctyp' builder
     | Def_val (loc, pat, body) -> fun builder ->
