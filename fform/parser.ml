@@ -16,6 +16,8 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Printf
+
 let rtok_token (token, loc) = token
 let rtok_bpos  (token, loc) =
     Location.Bound.to_lexing_position (Location.lbound loc)
@@ -27,12 +29,16 @@ let grammar_main =
 	rtok_token rtok_bpos rtok_epos
 	Grammar.main
 
+let print_error loc msg =
+    eprintf "%s: %s\n" (Location.to_string loc) msg
+
 let parse_file path =
     let state = Lexer.create_from_file path in
     let lexer = Lexer.lexer state in
-    try
-	Some (grammar_main lexer)
-    with Grammar.Error ->
-	output_string stderr (Location.to_string (Lexer.last_location state));
-	output_string stderr ": Syntax error.\n";
+    try Some (grammar_main lexer) with
+    | Lexer.Error_at (loc, msg) ->
+	print_error loc msg;
+	None
+    | Grammar.Error ->
+	print_error (Lexer.last_location state) "Syntax error.";
 	None

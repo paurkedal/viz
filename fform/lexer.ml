@@ -19,6 +19,8 @@
 open FfPervasives
 open Unicode
 
+exception Error_at of Location.t * string
+
 let dlog_en = Diag.dlog_en_for "Fform.Lexer"
 let dlogf fmt ?loc = Diag.dlogf_for "Fform.Lexer" ?loc fmt
 
@@ -226,7 +228,10 @@ let scan_lexdef state lex_loc =
 	ops_r := Input.idr_of_ustring opname :: !ops_r
     done;
     let ops = List.rev !ops_r in
-    let opkind = Opkind.of_string (UString.to_utf8 okname) in
+    let opkind =
+	try Opkind.of_string (UString.to_utf8 okname)
+	with Opkind.Domain_error ->
+	    raise (Error_at (okname_loc, "Not an operator kind.")) in
     let loc_ub = LStream.locbound state.stream in
     let loc = Location.between loc_lb loc_ub in
     let lexdef = Input.Dec_lex (loc, opkind, ops) in

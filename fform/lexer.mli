@@ -18,6 +18,8 @@
 
 open Unicode
 
+exception Error_at of Location.t * string
+
 type state
 
 val last_location : state -> Location.t

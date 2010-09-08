@@ -193,6 +193,7 @@ let of_string s =
 	    begin match String.get s 0, String.get s 1 with
 	    | ('A', ch) -> preinfix_arith.(int_of_digit ch)
 	    | ('L', ch) -> preinfix_logic.(int_of_digit ch)
+	    | ('S', ch) -> infix_script.(int_of_digit ch)
 	    | _ -> raise Domain_error
 	    end else
 	if n = 3 then
