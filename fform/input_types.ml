@@ -29,6 +29,7 @@ type idrhint = Ih_none | Ih_univ | Ih_inj
 
 type lit =
     | Lit_unit
+    | Lit_bool of bool
     | Lit_int of int
     | Lit_float of float
     | Lit_string of UString.t

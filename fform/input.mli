@@ -34,6 +34,8 @@ val idr_1o : idr -> idr
 (** Add a binary operator prefix. *)
 val idr_2o : idr -> idr
 
+val idr_1b : idr -> idr -> idr
+
 val i_2o_comma : idr
 val i_2o_arrow : idr
 val i_2o_eq : idr

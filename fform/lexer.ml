@@ -122,6 +122,8 @@ let initial_plain_keywords = [
     "↦",	Grammar.MAPSTO;
     "/>",	Grammar.MAPSTO;
     ".",	Grammar.DOT;
+    "true",	Grammar.LITERAL (Input.Lit_bool true);
+    "false",	Grammar.LITERAL (Input.Lit_bool false);
 ]
 let initial_lookahead = 40
 
@@ -304,7 +306,7 @@ let scan_identifier state =
 	| 0x60 (* ` *) ->
 	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
 	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_inj)
-	| 0x5f (* _ *) ->
+	| 0x5f (* _ *) when n > 1 ->
 	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
 	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_univ)
 	| _ ->

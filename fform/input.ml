@@ -25,6 +25,7 @@ let idr_of_ustring name = Idr (UString.to_utf8 name)
 let idr_to_ustring (Idr name) = UString.of_utf8 name
 let idr_1o (Idr name) = Idr ("1o" ^ name)
 let idr_2o (Idr name) = Idr ("2o" ^ name)
+let idr_1b (Idr s0) (Idr s1) = Idr ("1b" ^ s0 ^ s1)
 
 let i_2o_comma = Idr "2o,"
 let i_2o_arrow = Idr "2o→"
@@ -37,6 +38,7 @@ let tuple_op = trm_ref Location.dummy "2o,"
 
 let lit_to_string = function
     | Lit_unit -> "unit"
+    | Lit_bool x -> if x then "true" else "false"
     | Lit_int i -> string_of_int i
     | Lit_float x -> string_of_float x
     | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""

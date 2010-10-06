@@ -61,7 +61,7 @@ module Struct_builder = struct
 	    | Accu_ctyp ctyps ->
 		<:str_item< type $list:List.rev ctyps$ >>
 	    | Accu_binding bindings ->
-		<:str_item< value $list:List.rev bindings$ >>
+		<:str_item< value rec $list:List.rev bindings$ >>
 	    | _ ->
 		raise (Failure "Nothing to flush.") in
 	{ builder with
@@ -149,12 +149,14 @@ let rec gen_ctyp = function
 
 let gen_literal_patt _loc = function
     | Lit_unit     -> <:patt< () >>
+    | Lit_bool x   -> if x then <:patt< True >> else <:patt< False >>
     | Lit_int x    -> let s = string_of_int x in <:patt< $int:s$ >>
     | Lit_float x  -> let s = string_of_float x in <:patt< $flo:s$ >>
     | Lit_string x -> let s = UString.to_utf8 x in <:patt< $str:s$ >>
 
 let gen_literal_expr _loc = function
     | Lit_unit     -> <:expr< () >>
+    | Lit_bool x   -> if x then <:expr< True >> else <:expr< False >>
     | Lit_int x    -> let s = string_of_int x in <:expr< $int:s$ >>
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
     | Lit_string x -> let s = UString.to_utf8 x in <:expr< $str:s$ >>
@@ -223,6 +225,7 @@ let rec gen_expr env = function
 	let _loc = convert_loc loc in
 	let cases' = gen_cases env _loc cases in
 	<:expr< fun [ $list:cases'$ ] >>
+    | trm -> raise (Error (trm_location trm, "Unimplemented expression."))
 and gen_cases env _loc = List.map
     (fun (pat, cq) ->
 	let pat' = gen_pattern env pat in

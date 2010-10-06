@@ -67,6 +67,7 @@ let mkloc lb ub =
 %token NOTATION
 
 %token LPAREN RPAREN
+%token <Input.idr> LBRACKET RBRACKET
 %token COLON COMMA
 %token IF ELSE OTHERWISE
 %token AT
@@ -350,6 +351,12 @@ atomic_expr:
     { let idr, hint = $1 in Input.Trm_ref (mkloc $startpos $endpos, idr, hint) }
   | LITERAL { Input.Trm_literal (mkloc $startpos $endpos, $1) }
   | LPAREN parenthesised RPAREN { $2 }
+  | LBRACKET parenthesised RBRACKET
+    {
+	let locb = mkloc $startpos $endpos($1) in
+	let f = Input.Trm_ref (locb, Input.idr_1b $1 $3, Input.Ih_none) in
+	Input.Trm_apply (mkloc $startpos $endpos, f, $2)
+    }
   | WHERE BEGIN structure_body END
     { Input.Trm_where (mkloc $startpos $endpos, $3) }
   | WITH  BEGIN signature_body END
