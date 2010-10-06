@@ -23,18 +23,19 @@ let idr_of_string name = Idr name
 let idr_to_string (Idr name) = name
 let idr_of_ustring name = Idr (UString.to_utf8 name)
 let idr_to_ustring (Idr name) = UString.of_utf8 name
-let idr_1o (Idr name) = Idr ("1o" ^ name)
-let idr_2o (Idr name) = Idr ("2o" ^ name)
-let idr_1b (Idr s0) (Idr s1) = Idr ("1b" ^ s0 ^ s1)
+let idr_1o_c name = Idr ("1'" ^ name)
+let idr_1o (Idr name) = idr_1o_c name
+let idr_2o_c name = Idr ("2'" ^ name)
+let idr_2o (Idr name) = idr_2o_c name
+let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
+let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
 
-let i_2o_comma = Idr "2o,"
-let i_2o_arrow = Idr "2o→"
-let i_2o_eq = Idr "2o="
-let i_2o_neq = Idr "2o≠"
+let i_2o_comma	= idr_2o_c ","
+let i_2o_arrow	= idr_2o_c "→"
+let i_2o_eq	= idr_2o_c "="
+let i_2o_neq	= idr_2o_c "≠"
 
-let trm_ref loc name = Trm_ref (loc, idr_of_string name, Ih_none)
-
-let tuple_op = trm_ref Location.dummy "2o,"
+let tuple_op = Trm_ref (Location.dummy, idr_2o_c ",", Ih_none)
 
 let lit_to_string = function
     | Lit_unit -> "unit"

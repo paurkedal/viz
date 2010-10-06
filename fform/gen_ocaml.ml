@@ -161,6 +161,37 @@ let gen_literal_expr _loc = function
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
     | Lit_string x -> let s = UString.to_utf8 x in <:expr< $str:s$ >>
 
+let gen_opname _loc = function
+    | "1'¬" -> <:expr< not >>
+    | "2'∧" -> <:expr< (&&) >>
+    | "2'∨" -> <:expr< (||) >>
+    | "2'=" -> <:expr< (=) >>
+    | "2'≠" -> <:expr< (<>) >>
+    | "2'<" -> <:expr< (<) >>
+    | "2'>" -> <:expr< (>) >>
+    | "2'≤" -> <:expr< (<=) >>
+    | "2'≥" -> <:expr< (>=) >>
+    | "2'+" -> <:expr< (+) >>
+    | "1'-" -> <:expr< (~-) >>
+    | "2'-" -> <:expr< (-) >>
+    | "2'*" -> <:expr< ( * ) >>
+    | "2'/" -> <:expr< (/) >>
+    | "2'mod" -> <:expr< (mod) >>
+    | s ->
+	let buf = Buffer.create 0 in
+	Buffer.add_char buf '_';
+	Buffer.add_string buf (String.sub s 0 2);
+	Buffer.add_char buf '_';
+	for i = 2 to String.length s - 1 do
+	    bprintf buf "%02x" (Char.code s.[i])
+	done;
+	<:expr< $lid:Buffer.contents buf$ >>
+let gen_name _loc name =
+    if String.length name > 2 && ('1' <= name.[0] && name.[0] <= '3')
+	    && name.[1] = '\''
+    then gen_opname _loc name
+    else <:expr< $lid:name$ >>
+
 let rec gen_pattern ?(isf = false) env = function
     | Trm_ref (loc, Idr idr, hint) when  hint = Ih_inj
 				     || (hint = Ih_none && isf) ->
@@ -182,7 +213,7 @@ let rec gen_pattern ?(isf = false) env = function
 let rec gen_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
-	<:expr< $lid:name$ >>
+	gen_name _loc name
     | Trm_literal (loc, lit) ->
 	let _loc = convert_loc loc in
 	gen_literal_expr _loc lit
@@ -232,15 +263,10 @@ and gen_cases env _loc = List.map
 	let cq' = gen_expr env cq in
 	<:match_case< $pat'$ -> $cq'$ >>)
 and gen_apply2_idr env _loc (Idr op) x0 x1 =
+    let f = gen_name _loc op in
     let x0' = gen_expr env x0 in
     let x1' = gen_expr env x1 in
-    if op = "2o=" then <:expr< $x0'$ = $x1'$ >> else
-    if op = "2o≠" then <:expr< $x0'$ <> $x1'$ >> else
-    if op = "2o<" then <:expr< $x0'$ < $x1'$ >> else
-    if op = "2o>" then <:expr< $x0'$ > $x1'$ >> else
-    if op = "2o≤" then <:expr< $x0'$ <= $x1'$ >> else
-    if op = "2o≥" then <:expr< $x0'$ >= $x1'$ >> else
-    <:expr< $lid:op$ x0' x1' >>
+    <:expr< $f$ $x0'$ $x1'$ >>
 
 let collect_inj def inj_map =
     match def with

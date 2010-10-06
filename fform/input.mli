@@ -30,11 +30,14 @@ val idr_to_ustring : idr -> UString.t
 
 (** Add a unary operator prefix. *)
 val idr_1o : idr -> idr
+val idr_1o_c : string -> idr
 
 (** Add a binary operator prefix. *)
 val idr_2o : idr -> idr
+val idr_2o_c : string -> idr
 
 val idr_1b : idr -> idr -> idr
+val idr_1b_c : string -> string -> idr
 
 val i_2o_comma : idr
 val i_2o_arrow : idr
@@ -45,8 +48,6 @@ module Idr_set : Set.S with type elt = idr
 module Idr_map : Map.S with type key = idr
 
 val trm_location : trm -> loc
-
-val trm_ref : loc -> string -> trm
 
 val tuple_op : trm
 
