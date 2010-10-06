@@ -18,6 +18,17 @@
 
 open Ocamlbuild_plugin
 
+let ffoc1_path = "bin/ffoc1.native"
+
+let ffoc1_cmd src dst env builder =
+    Cmd (S[A ffoc1_path; A"-o"; Px(env dst); P(env src)])
+
+let ffoc1_rules () =
+    rule "Fform/OC, Stage 1: ff -> ml"
+	~deps:["%.ff"; ffoc1_path]
+	~prods:["%.ml"]
+	(ffoc1_cmd "%.ff" "%.ml")
+
 let run_and_read = Ocamlbuild_pack.My_unix.run_and_read
 
 let ocamlfind_query pkg =
@@ -35,6 +46,7 @@ let () = dispatch begin function
 	Options.use_menhir := true;
 	()
     | After_rules ->
+	ffoc1_rules ();
 	flag ["ocaml"; "link"] & A"-linkpkg";
 	flag ["ocaml"; "compile"; "use_threads"] & A"-thread";
 	flag ["ocaml"; "link";    "use_threads"] & A"-thread";
