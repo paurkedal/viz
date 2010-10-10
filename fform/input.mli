@@ -31,14 +31,17 @@ val idr_to_ustring : idr -> UString.t
 (** Add a unary operator prefix. *)
 val idr_1o : idr -> idr
 val idr_1o_c : string -> idr
+val idr_1o_symbol : idr -> string
 
 (** Add a binary operator prefix. *)
 val idr_2o : idr -> idr
 val idr_2o_c : string -> idr
+val idr_2o_symbol : idr -> string
 
 val idr_1b : idr -> idr -> idr
 val idr_1b_c : string -> string -> idr
 
+val i_2o_colon : idr
 val i_2o_comma : idr
 val i_2o_arrow : idr
 val i_2o_eq : idr

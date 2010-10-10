@@ -44,7 +44,6 @@ type trm =
     | Trm_rel		of loc * trm * (loc * idr * trm) list
     | Trm_apply		of loc * trm * trm
     | Trm_project	of loc * idr * trm
-    | Trm_typing	of loc * trm * trm
     | Trm_raise		of loc * trm
     | Trm_if		of loc * trm * trm * trm
     | Trm_at		of loc * (trm * trm) list
@@ -53,11 +52,11 @@ type trm =
  and def =
     | Dec_type		of loc * trm
     | Def_type		of loc * trm * trm
-    | Dec_struct	of loc * trm * trm
+    | Dec_struct	of loc * trm
     | Def_struct	of loc * trm * trm
     | Dec_sig		of loc * idr
     | Def_sig		of loc * idr * trm
-    | Dec_val		of loc * idr * trm
+    | Dec_val		of loc * trm
     | Def_val		of loc * trm * trm
-    | Def_inj		of loc * idr * trm
+    | Dec_inj		of loc * trm
     | Dec_lex		of loc * Opkind.t * idr list

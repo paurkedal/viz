@@ -44,7 +44,7 @@ let p_comma	=  2
 let p_cond	=  3
 let p_quant	=  4
 let p_logic n	= 10 + n
-let p_rel	= 18
+let p_rel	= 19
 let p_arith n	= 20 + n
 let p_apply	= 30
 let p_script n	= 32 + n
@@ -107,7 +107,7 @@ let print_unimplemented (ok, opname) fs p fo =
 
 (* Operator Kind Definitions *)
 
-let preinfix_logic = Array.init 7
+let preinfix_logic = Array.init 9
     (fun n -> {
 	ok_name = sprintf "L%d" n;
 	ok_arities = [1; 2];

@@ -17,10 +17,10 @@
  */
 
 %{
-let quantify loc qs e =
+let rec quantify loc qs e =
     match qs with
     | [] -> e
-    | (q, v) :: qs' -> Input.Trm_quantify (loc, q, v, e)
+    | (l, q, v) :: qs' -> Input.Trm_quantify (loc, q, v, quantify l qs' e)
 let apply loc f x = Input.Trm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
@@ -68,14 +68,14 @@ let mkloc lb ub =
 
 %token LPAREN RPAREN
 %token <Input.idr> LBRACKET RBRACKET
-%token COLON COMMA
 %token IF ELSE OTHERWISE
 %token AT
 %token MAPSTO
 %token DOT
 
 /* Logic Operators */
-%token <Input.idr> LOGIC0 LOGIC1 LOGIC2 LOGIC3 LOGIC4 LOGIC5 LOGIC6 QUANTIFIER
+%token <Input.idr> LOGIC0 LOGIC1 LOGIC2 LOGIC3
+%token <Input.idr> LOGIC4 LOGIC5 LOGIC6 LOGIC7 LOGIC8 QUANTIFIER
 %left  LOGIC0
 %right LOGIC1
 %left  LOGIC2
@@ -83,6 +83,8 @@ let mkloc lb ub =
 %left  LOGIC4
 %right LOGIC5
 %left  LOGIC6
+%right LOGIC7
+%left  LOGIC8
 
 /* Relation Operators */
 %token <Input.idr> RELATION
@@ -146,6 +148,11 @@ structure_clause:
     modular_clause { $1 }
   | STRUCT structure_pattern BEGIN IS structure_expr END
     { Input.Def_struct (mkloc $startpos $endpos, $2, $5) }
+  | STRUCT structure_pattern BEGIN structure_body END
+    {
+	let body = Input.Trm_where (mkloc $startpos($4) $endpos($4), $4) in
+	Input.Def_struct (mkloc $startpos $endpos, $2, body)
+    }
   | VAL term_pattern predicate
     { Input.Def_val (mkloc $startpos $endpos, $2, $3) }
   ;
@@ -155,16 +162,16 @@ modular_clause:
     { Input.Dec_sig (mkloc $startpos $endpos, $2) }
   | SIG IDENTIFIER BEGIN IS signature_expr END
     { Input.Def_sig (mkloc $startpos $endpos, $2, $5) }
-  | STRUCT structure_pattern COLON signature_expr
-    { Input.Dec_struct (mkloc $startpos $endpos, $2, $4) }
+  | STRUCT structure_pattern
+    { Input.Dec_struct (mkloc $startpos $endpos, $2) }
   | TYPE type_pattern
     { Input.Dec_type (mkloc $startpos $endpos, $2) }
-  | TYPE type_pattern IS type_expr
-    { Input.Def_type (mkloc $startpos $endpos, $2, $4) }
-  | INJ IDENTIFIER COLON type_expr
-    { Input.Def_inj (mkloc $startpos $endpos, $2, $4) }
-  | VAL term_pattern COLON type_expr
-    { Input.Def_val (mkloc $startpos $endpos, $2, $4) }
+  | TYPE type_pattern BEGIN IS type_expr END
+    { Input.Def_type (mkloc $startpos $endpos, $2, $5) }
+  | INJ term_pattern
+    { Input.Dec_inj (mkloc $startpos $endpos, $2) }
+  | VAL term_pattern
+    { Input.Dec_val (mkloc $startpos $endpos, $2) }
   | PREPARED_DEF { $1 }
   ;
 
@@ -179,11 +186,7 @@ term: expr {$1};
 
 /* Predicates */
 
-predicate:
-    atomic_predicate { $1 }
-  | DO term { $2 }
-  | BEGIN participle_seq compound_predicate END { $2 $3 }
-  ;
+predicate: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
     IS term { $2 }
   | RAISE term { Input.Trm_raise (mkloc $startpos $endpos, $2) }
@@ -264,6 +267,14 @@ logic_expr:
     { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
   | LOGIC6 qseq logic_expr
     { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+  | logic_expr LOGIC7 qseq logic_expr
+    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+  | LOGIC7 qseq logic_expr
+    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+  | logic_expr LOGIC8 qseq logic_expr
+    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+  | LOGIC8 qseq logic_expr
+    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
   ;
 
 qseq:
@@ -271,7 +282,7 @@ qseq:
   | qseq quantifier { $2 :: $1 }
   ;
 quantifier:
-    QUANTIFIER relational_expr DOT { ($1, $2) }
+    QUANTIFIER expr DOT { (mkloc $startpos $endpos, $1, $2) }
   ;
 
 relational_expr:
@@ -361,16 +372,9 @@ atomic_expr:
     { Input.Trm_where (mkloc $startpos $endpos, $3) }
   | WITH  BEGIN signature_body END
     { Input.Trm_with (mkloc $startpos $endpos, None, $3) }
+  | WHAT predicate { $2 }
   ;
 parenthesised:
     /* empty */ { Input.Trm_literal (mkloc $startpos $endpos, Input.Lit_unit) }
   | expr { $1 }
-  | expr COLON expr { Input.Trm_typing (mkloc $startpos $endpos, $1, $3) }
-  | tuple COMMA expr { apply2 (mkloc $startpos $endpos) Input.tuple_op $1 $3 }
-  | WHAT predicate { $2 }
   ;
-tuple:
-    expr { $1 }
-  | tuple COMMA expr { apply2 (mkloc $startpos $endpos) Input.tuple_op $1 $3 }
-  ;
-

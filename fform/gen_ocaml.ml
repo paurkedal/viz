@@ -117,6 +117,16 @@ let fresh_var =
 	next_index := i + 1;
 	sprintf "_x%d" i
 
+let extract_term_typing = function
+    | Trm_apply (_, Trm_apply (_, Trm_ref (_, colon, _), x), y)
+	    when colon = i_2o_colon ->
+	(x, y)
+    | trm -> raise (Error (trm_location trm, "Type judgement expected."))
+let extract_idr_typing expr =
+    match extract_term_typing expr with
+    | Trm_ref (_, idr, _), y -> (idr, y)
+    | x, y -> raise (Error (trm_location x, "Identifier expected."))
+
 let flatten_tycon_apply typ =
     let rec loop tps = function
 	| Trm_apply (_, typ, tp) -> loop (tp :: tps) typ
@@ -210,6 +220,12 @@ let rec gen_pattern ?(isf = false) env = function
 	<:patt< $f'$ $x'$ >>
     | trm -> raise (Error (trm_location trm, "Unimplemented pattern."))
 
+let rec gen_sig_expr env = function
+    | Trm_ref (loc, Idr name, Ih_none) ->
+	let _loc = convert_loc loc in
+	<:module_type< $uid: String.capitalize name$ >>
+    | trm ->
+	raise (Error (trm_location trm, "Invalid signature expression."))
 let rec gen_struct_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
@@ -220,10 +236,18 @@ let rec gen_struct_expr env = function
     | Trm_lambda (loc, pat, body) ->
 	let _loc = convert_loc loc in
 	begin match pat with
-	| Trm_rel (locx, Trm_ref (_, x, _), [locs, op, s]) when op = typing_op ->
-	    let body' = gen_struct_expr body in
-	    <:module_expr< functor ($uid:x'$ : $s'$) -> $body'$ >>
+	| Trm_apply (locp, Trm_apply (locx, Trm_ref (_, colon, _),
+					    Trm_ref (_, Idr m, _)),
+			   sgt)
+		when colon = i_2o_colon ->
+	    let sgt' = gen_sig_expr env sgt in
+	    let body' = gen_struct_expr env body in
+	    <:module_expr< functor ($uid:m$ : $sgt'$) -> $body'$ >>
+	| _ ->
+	    raise (Error (trm_location pat, "Invalid functor parameter."))
 	end
+    | trm ->
+	raise (Error (trm_location trm, "Invalid structure expression."))
 and gen_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
@@ -234,7 +258,7 @@ and gen_expr env = function
     | Trm_project (loc, Idr field, m) ->
 	let _loc = convert_loc loc in
 	let m' = gen_struct_expr env m in
-	<:expr< $m'$.$gen_name _loc field$ >>
+	<:expr< let module M_ = $mexp: m'$ in M_.$lid:field$ >>
     | Trm_lambda (loc, pat, body) ->
 	let _loc = convert_loc loc in
 	let pat' = gen_pattern env pat in
@@ -288,8 +312,9 @@ and gen_apply2_idr env _loc (Idr op) x0 x1 =
 
 let collect_inj def inj_map =
     match def with
-    | Def_inj (loc, Idr injname, typ) ->
+    | Dec_inj (loc, trm) ->
 	let _loc = convert_loc loc in
+	let (Idr injname, typ) = extract_idr_typing trm in
 	let rec flatten_arrow pts = function
 	    | Trm_apply (_, Trm_apply (_, Trm_ref (_, c, _), pt), rt)
 		    when c = i_2o_arrow ->
@@ -330,8 +355,9 @@ let gen_val_def = function
 	let (f, body'') = decons_formal body' pat in
 	let binding' = <:binding< $lid:idr_to_string f$ = $body''$ >> in
 	Struct_builder.add_def _loc f binding' At_val builder
-    | Def_inj (loc, idr, typ) -> fun builder ->
+    | Dec_inj (loc, typing) -> fun builder ->
 	let _loc = convert_loc loc in
+	let idr, typ = extract_idr_typing typing in
 	let v = idr_to_string idr in
 	let c = ctor_name v in
 	let r = application_depth 1 i_2o_arrow typ in
@@ -351,6 +377,8 @@ let gen_val_def = function
 		<:binding< $lid:v$ = $e1$ >>
 	    end in
 	Struct_builder.add_def _loc idr binding' (At_inj r) builder
+    | Def_type(loc, _, _) -> fun builder ->
+	raise (Error (loc, "Not implemented."))
 
 let gen_toplevel = function
     | Trm_where (loc, defs) ->

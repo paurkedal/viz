@@ -19,17 +19,28 @@
 open Unicode
 include Input_types
 
+let starts_with p s =
+    let np = String.length p in
+    np <= String.length s && p = String.sub s 0 np
+
 let idr_of_string name = Idr name
 let idr_to_string (Idr name) = name
 let idr_of_ustring name = Idr (UString.to_utf8 name)
 let idr_to_ustring (Idr name) = UString.of_utf8 name
 let idr_1o_c name = Idr ("1'" ^ name)
 let idr_1o (Idr name) = idr_1o_c name
+let idr_1o_symbol (Idr name) =
+    if starts_with "1'" name then String.sub name 2 (String.length name - 2)
+    else raise (Failure ("Expected a unary operator identifier: " ^ name))
 let idr_2o_c name = Idr ("2'" ^ name)
 let idr_2o (Idr name) = idr_2o_c name
+let idr_2o_symbol (Idr name) =
+    if starts_with "2'" name then String.sub name 2 (String.length name - 2)
+    else raise (Failure ("Expected a binary operator identifier: " ^ name))
 let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
 let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
 
+let i_2o_colon	= idr_2o_c ":"
 let i_2o_comma	= idr_2o_c ","
 let i_2o_arrow	= idr_2o_c "→"
 let i_2o_eq	= idr_2o_c "="
@@ -56,7 +67,7 @@ let trm_location = function
     | Trm_lambda (loc, _, _) | Trm_quantify (loc, _, _, _)
     | Trm_let (loc, _, _, _)
     | Trm_rel (loc, _, _) | Trm_apply (loc, _, _)
-    | Trm_project (loc, _, _) | Trm_typing (loc, _, _)
+    | Trm_project (loc, _, _)
     | Trm_raise (loc, _) | Trm_if (loc, _, _, _) | Trm_at (loc, _)
     | Trm_where (loc, _) | Trm_with (loc, _, _) ->
 	loc
@@ -115,8 +126,8 @@ and print_inline fo p = function
     | Trm_rel (_, x, rels) ->
 	if p > Opkind.p_rel then Fo.put fo `Operator "(";
 	print_inline fo (Opkind.p_rel + 1) x;
-	List.iter begin fun (_, Idr op, y) ->
-	    Fo.put_op fo op;
+	List.iter begin fun (_, opname, y) ->
+	    Fo.put_op fo (idr_2o_symbol opname);
 	    print_inline fo (Opkind.p_rel + 1) y;
 	end rels;
 	if p > Opkind.p_rel then Fo.put fo `Operator ")"
@@ -179,11 +190,14 @@ and print_def fo def =
     | Dec_type (_, pat) ->
 	Fo.put_kw fo "type";
 	print_inline fo Opkind.p_min pat
-    | Dec_struct (_, pat, signat) ->
+    | Def_type (_, pat, typ) ->
+	Fo.put_kw fo "type";
+	print_inline fo Opkind.p_min pat;
+	Fo.put_kw fo "is";
+	print_inline fo Opkind.p_min typ
+    | Dec_struct (_, pat) ->
 	Fo.put_kw fo "struct";
-	print_inline fo (Opkind.p_typing + 1) pat;
-	Fo.put_op fo ":";
-	print_inline fo (Opkind.p_typing + 1) signat
+	print_inline fo (Opkind.p_typing + 1) pat
     | Def_struct (_, pat, body) ->
 	Fo.put_kw fo "struct";
 	print_inline fo Opkind.p_min pat;
@@ -197,28 +211,22 @@ and print_def fo def =
 	print_name fo name;
 	Fo.put_kw fo "is";
 	print_inline fo Opkind.p_min body
-    | Dec_val (_, name, typ) ->
+    | Dec_val (_, typing) ->
 	Fo.put_kw fo "val";
-	print_name fo name;
-	Fo.put_op fo ":";
-	print_inline fo Opkind.p_min typ
+	print_inline fo Opkind.p_min typing
     | Def_val (_, pat, pred) ->
 	Fo.put_kw fo "val";
 	print_inline fo Opkind.p_min pat;
 	Fo.enter_indent fo;
 	print_predicate fo pred;
 	Fo.leave_indent fo
-    | Def_inj (_, name, typ) ->
+    | Dec_inj (_, typing) ->
 	Fo.put_kw fo "inj";
-	print_name fo name;
-	Fo.put_op fo ":";
-	print_inline fo Opkind.p_min typ
+	print_inline fo Opkind.p_min typing
     | Dec_lex (_, ok, idrs) ->
 	Fo.put_kw fo "lex";
 	Fo.put fo `Name (Opkind.to_string ok);
 	List.iter (fun (Idr s) -> Fo.space fo; Fo.put fo `Operator s) idrs
-    | _ ->
-	Fo.put fo `Error "(unimplemented def)"
 
 let print fo =
     print_inline fo Opkind.p_min

@@ -55,6 +55,8 @@ let mktoken_arr =
 	Opkind.preinfix_logic.(4).Opkind.ok_id, (fun a -> Grammar.LOGIC4 a);
 	Opkind.preinfix_logic.(5).Opkind.ok_id, (fun a -> Grammar.LOGIC5 a);
 	Opkind.preinfix_logic.(6).Opkind.ok_id, (fun a -> Grammar.LOGIC6 a);
+	Opkind.preinfix_logic.(7).Opkind.ok_id, (fun a -> Grammar.LOGIC7 a);
+	Opkind.preinfix_logic.(8).Opkind.ok_id, (fun a -> Grammar.LOGIC8 a);
 	Opkind.transfix_relation.Opkind.ok_id, (fun a -> Grammar.RELATION a);
 	Opkind.preinfix_arith.(0).Opkind.ok_id, (fun a -> Grammar.ARITH0 a);
 	Opkind.preinfix_arith.(1).Opkind.ok_id, (fun a -> Grammar.ARITH1 a);
@@ -117,8 +119,6 @@ let initial_plain_keywords = [
     "what",	Grammar.WHAT;
     "(",	Grammar.LPAREN;
     ")",	Grammar.RPAREN;
-    ":",	Grammar.COLON;
-    ",",	Grammar.COMMA;
     "↦",	Grammar.MAPSTO;
     "/>",	Grammar.MAPSTO;
     "true",	Grammar.LITERAL (Input.Lit_bool true);
