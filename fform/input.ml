@@ -104,6 +104,9 @@ and print_inline fo p = function
     | Trm_quantify (_, Idr op, var, body) ->
 	if p >= Opkind.p_rel then Fo.put fo `Operator "(";
 	Fo.put fo `Operator op;
+	let op_u = UString.of_string op in
+	if UChar.is_idrchr (UString.get op_u (UString.length op_u - 1)) then
+	    Fo.space fo;
 	print_inline fo Opkind.p_rel var;
 	Fo.put fo `Operator ".";
 	Fo.space fo;
@@ -123,6 +126,9 @@ and print_inline fo p = function
 	Fo.space fo;
 	print_inline fo (Opkind.p_apply + 1) x;
 	if p > Opkind.p_apply then Fo.put fo `Operator ")";
+    | Trm_project (_, Idr field, m) ->
+	print_inline fo Opkind.p_project m;
+	Fo.put fo `Name ("." ^ field)
     | Trm_where (_, defs) ->
 	Fo.put_kw fo "where";
 	Fo.enter_indent fo;

@@ -48,6 +48,7 @@ let p_rel	= 18
 let p_arith n	= 20 + n
 let p_apply	= 30
 let p_script n	= 32 + n
+let p_project	= 35
 let p_max	= 36
 
 

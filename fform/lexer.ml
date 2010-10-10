@@ -121,7 +121,6 @@ let initial_plain_keywords = [
     ",",	Grammar.COMMA;
     "↦",	Grammar.MAPSTO;
     "/>",	Grammar.MAPSTO;
-    ".",	Grammar.DOT;
     "true",	Grammar.LITERAL (Input.Lit_bool true);
     "false",	Grammar.LITERAL (Input.Lit_bool false);
 ]
@@ -241,7 +240,7 @@ let scan_lexdef state lex_loc =
     (Grammar.PREPARED_DEF lexdef, loc)
 
 let triescan state trie =
-    let la = UString_sequence.create
+    let la = Sequence.of_list
 			(LStream.peek_n state.lookahead state.stream) in
     let check_prefix la kwi_opt (len, last_ch, res) =
 	let this_ch = Option.default UChar.ch_space (Sequence.peek la) in
@@ -264,7 +263,25 @@ let triescan state trie =
 
 let scan_keyword state =
     match triescan state state.keywords with
-    | None -> None
+    | None ->
+	(* Special handling of ".<identifier>" and ".<space>". *)
+	begin match LStream.peek_n 2 state.stream with
+	| [ch0; ch1] when UChar.code ch0 = 0x2e ->
+	    let loc_lb = LStream.locbound state.stream in
+	    LStream.skip state.stream;
+	    if UChar.is_idrchr ch1 then
+		let (name, loc) =
+		    LStream.scan_while UChar.is_idrchr state.stream in
+		let idr = Input.idr_of_ustring name in
+		let loc' = Location.between loc_lb (Location.ubound loc) in
+		Some (Grammar.PROJECT idr, loc')
+	    else if UChar.is_space ch1 then
+		let loc_ub = LStream.locbound state.stream in
+		Some (Grammar.DOT, Location.between loc_lb loc_ub)
+	    else
+		None
+	| _ -> None
+	end
     | Some (kwinfo, tokstr, loc) ->
 	let (tok, _) =
 	    match kwinfo.create_token tokstr with

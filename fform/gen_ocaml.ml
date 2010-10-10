@@ -210,13 +210,31 @@ let rec gen_pattern ?(isf = false) env = function
 	<:patt< $f'$ $x'$ >>
     | trm -> raise (Error (trm_location trm, "Unimplemented pattern."))
 
-let rec gen_expr env = function
+let rec gen_struct_expr env = function
+    | Trm_ref (loc, Idr name, Ih_none) ->
+	let _loc = convert_loc loc in
+	<:module_expr< $uid: String.capitalize name$ >>
+    | Trm_apply (loc, f, m) ->
+	let _loc = convert_loc loc in
+	<:module_expr< $gen_struct_expr env f$ $gen_struct_expr env m$ >>
+    | Trm_lambda (loc, pat, body) ->
+	let _loc = convert_loc loc in
+	begin match pat with
+	| Trm_rel (locx, Trm_ref (_, x, _), [locs, op, s]) when op = typing_op ->
+	    let body' = gen_struct_expr body in
+	    <:module_expr< functor ($uid:x'$ : $s'$) -> $body'$ >>
+	end
+and gen_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
 	gen_name _loc name
     | Trm_literal (loc, lit) ->
 	let _loc = convert_loc loc in
 	gen_literal_expr _loc lit
+    | Trm_project (loc, Idr field, m) ->
+	let _loc = convert_loc loc in
+	let m' = gen_struct_expr env m in
+	<:expr< $m'$.$gen_name _loc field$ >>
     | Trm_lambda (loc, pat, body) ->
 	let _loc = convert_loc loc in
 	let pat' = gen_pattern env pat in

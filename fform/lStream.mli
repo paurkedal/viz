@@ -29,9 +29,13 @@ val pop : t -> elt option
 
 val peek : t -> elt option
 
-val peek_n : int -> t -> UString.t
+val peek_n : int -> t -> elt list
 
 val peek_at : int -> t -> elt option
+
+val peek_code : t -> int
+
+val peek_n_code : int -> t -> int list
 
 val skip : t -> unit
 

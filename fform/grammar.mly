@@ -96,7 +96,7 @@ let mkloc lb ub =
 %token <Input.idr> SCRIPT0_P SCRIPT0_S SCRIPT0_I
 %token <Input.idr> SCRIPT1_P SCRIPT1_S SCRIPT1_I
 %token <Input.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I
-%token <Input.idr> FIELD_REF
+%token <Input.idr> PROJECT
 
 %left  ARITH0 ARITH0_S
 %right ARITH1 ARITH1_S
@@ -328,7 +328,7 @@ application:
   | FENCE arith FENCE { apply_fence (mkloc $startpos $endpos) $1 $3 $2 }
   ;
 script:
-    qname		    { $1 }
+    projection		    { $1 }
   | SCRIPT0_P script	    { apply_prefix (mkloc $startpos $endpos) $1 $2 }
   | script SCRIPT0_S	    { apply_suffix (mkloc $startpos $endpos) $2 $1 }
   | script SCRIPT0_I script { apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
@@ -340,9 +340,9 @@ script:
   | script SCRIPT2_I script { apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
   ;
 
-qname:
+projection:
     atomic_expr { $1 }
-  | qname FIELD_REF { Input.Trm_project (mkloc $startpos $endpos, $2, $1) }
+  | projection PROJECT { Input.Trm_project (mkloc $startpos $endpos, $2, $1) }
   ;
 
 atomic_expr:

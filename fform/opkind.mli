@@ -58,5 +58,6 @@ val p_rel : int
 val p_arith : int -> int
 val p_apply : int
 val p_script : int -> int
+val p_project : int
 val p_max : int
 

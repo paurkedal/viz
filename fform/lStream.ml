@@ -41,13 +41,21 @@ let pop stm =
 
 let peek stm = Stream.peek stm.stream
 
-let peek_n n stm = UString.of_list (Stream.npeek n stm.stream)
+let peek_n n stm = Stream.npeek n stm.stream
 
 let peek_at i stm =
     let rec f i = function
 	| [] -> None
 	| x :: xs -> if i = 0 then Some x else f (i - 1) xs
     in f i (Stream.npeek (i + 1) stm.stream)
+
+let peek_code stm =
+    match Stream.peek stm.stream with
+    | None -> 0
+    | Some ch -> UChar.code ch
+
+let peek_n_code n stm =
+    List.map UChar.code (Stream.npeek n stm.stream)
 
 let skip stm =
     let ch = Stream.next stm.stream in
