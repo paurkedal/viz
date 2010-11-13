@@ -32,8 +32,14 @@ let grammar_main =
 let print_error loc msg =
     eprintf "%s: %s\n" (Location.to_string loc) msg
 
+let stdlex =
+    let state = Lexer.create_from_file "fflib/stdlex.ff" in
+    let lexer = Lexer.lexer state in
+    grammar_main lexer
+
 let parse_file path =
     let state = Lexer.create_from_file path in
+    Lexer.lexopen state stdlex;
     let lexer = Lexer.lexer state in
     try Some (grammar_main lexer) with
     | Lexer.Error_at (loc, msg) ->

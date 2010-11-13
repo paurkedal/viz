@@ -29,3 +29,5 @@ val create_from_lstream : LStream.t -> state
 val create_from_file : string -> state
 
 val lexer : state -> unit -> Grammar.token * Location.t
+
+val lexopen : state -> Input.trm -> unit

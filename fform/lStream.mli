@@ -21,6 +21,8 @@ open Unicode
 type t
 type elt = UChar.t
 
+val null : t
+
 val open_in : string -> t
 
 val locbound : t -> Location.Bound.t

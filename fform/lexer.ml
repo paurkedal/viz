@@ -238,6 +238,18 @@ let scan_lexdef state lex_loc =
     List.iter (declare_operator state opkind) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
+let lexopen state = function
+    | Input.Trm_where (_, defs) -> List.iter
+	begin function
+	    | Input.Dec_lex (loc, ok, ops) ->
+		List.iter (declare_operator state ok) ops
+	    | _ -> ()
+	end
+	defs
+    | trm ->
+	let loc = Input.trm_location trm in
+	raise (Error_at (loc, "Lexical open needs a structure."))
+
 let triescan state trie =
     let la = Sequence.of_list
 			(LStream.peek_n state.lookahead state.stream) in
@@ -418,19 +430,21 @@ let scan_literal state =
 let fixed_scanners = [pop_token; scan_keyword; scan_operator]
 let default_scanners = [scan_literal; scan_identifier]
 
+let default_state_template = {
+    stream = LStream.null;
+    indent = -1;
+    indent_stack = [];
+    stashed_token = None;
+    keywords = initial_keywords;
+    operators = initial_operators;
+    lookahead = initial_lookahead;
+    last_location = Location.dummy;
+    scanners = default_scanners;
+}
 let create_from_lstream stream =
-    {
-	stream = stream;
-	indent = -1;
-	indent_stack = [];
-	stashed_token = None;
-	keywords = initial_keywords;
-	operators = initial_operators;
-	lookahead = initial_lookahead;
-	last_location = Location.dummy;
-	scanners = default_scanners;
-    }
-let create_from_file path = create_from_lstream (LStream.open_in path)
+    {default_state_template with stream = stream}
+let create_from_file path =
+    create_from_lstream (LStream.open_in path)
 
 let lexer state () =
     skip_space state;

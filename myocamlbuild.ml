@@ -25,7 +25,7 @@ let ffoc1_cmd src dst env builder =
 
 let ffoc1_rules () =
     rule "Fform/OC, Stage 1: ff -> ml"
-	~deps:["%.ff"; ffoc1_path]
+	~deps:["fflib/stdlex.ff"; "%.ff"; ffoc1_path]
 	~prods:["%.ml"]
 	(ffoc1_cmd "%.ff" "%.ml")
 

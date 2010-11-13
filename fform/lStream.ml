@@ -25,6 +25,8 @@ type t = {
     mutable locb : Location.Bound.t;
 }
 
+let null = {stream = Stream.of_list []; locb = Location.Bound.dummy}
+
 let open_in path =
     let utf8_stream = Stream.of_channel (open_in path) in
     let stm = CharEncoding.ustream_of CharEncoding.utf8 utf8_stream in
