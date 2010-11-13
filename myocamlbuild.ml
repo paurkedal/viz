@@ -18,7 +18,7 @@
 
 open Ocamlbuild_plugin
 
-let ffoc1_path = "bin/ffoc1.native"
+let ffoc1_path = "bin/ffoc1pp.native"
 
 let ffoc1_cmd src dst env builder =
     Cmd (S[A ffoc1_path; A"-o"; Px(env dst); P(env src)])

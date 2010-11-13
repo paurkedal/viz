@@ -1,8 +1,8 @@
 open Printf
-open Fform
+open Ffoc1
 open Camlp4.PreCast
 
-let usage = "fformoc -o OUTPUT INPUT"
+let usage = "ffoc1 [--print | -o OUTPUT] INPUT"
 
 let _ =
     let opt_setter r x =

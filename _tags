@@ -1,6 +1,6 @@
 <**/*.{ml,mli,native,byte,d.byte,top}>: use_camlp4, use_camomile, use_dynlink, use_extlib, use_menhirLib
 
-<fform/*.{cmo,cmx}>: for-pack(Fform)
-<fform/gen_ocaml.ml>: camlp4orf
+<ffoc1/*.{cmo,cmx}>: for-pack(Ffoc1)
+<ffoc1/gen_ocaml.ml>: camlp4orf
 
 <tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
