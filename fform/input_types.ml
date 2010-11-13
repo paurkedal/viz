@@ -50,6 +50,8 @@ type trm =
     | Trm_where		of loc * def list
     | Trm_with		of loc * trm option * def list
  and def =
+    | Sct_include	of loc * trm
+    | Sct_open		of loc * trm
     | Dec_type		of loc * trm
     | Def_type		of loc * trm * trm
     | Dec_struct	of loc * trm

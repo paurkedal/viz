@@ -45,11 +45,11 @@ let mkloc lb ub =
 		     (Location.Bound.of_lexing_position ub)
 %}
 
-%token ERROR EOF
+%token EOF
 %token BEGIN END
 
-%token USING USING_LIB
-%token IMPORT
+%token OPEN
+%token INCLUDE
 %token SIG
 %token STRUCT
 %token TYPE VAL INJ
@@ -158,7 +158,11 @@ structure_clause:
   ;
 
 modular_clause:
-    SIG IDENTIFIER
+    OPEN projection
+    { Input.Sct_open (mkloc $startpos $endpos, $2) }
+  | INCLUDE projection
+    { Input.Sct_include (mkloc $startpos $endpos, $2) }
+  | SIG IDENTIFIER
     { Input.Dec_sig (mkloc $startpos $endpos, $2) }
   | SIG IDENTIFIER BEGIN IS signature_expr END
     { Input.Def_sig (mkloc $startpos $endpos, $2, $5) }

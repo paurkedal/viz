@@ -69,6 +69,11 @@ module Struct_builder = struct
 	    accu = Accu_none;
 	}
 
+    let add_str_item item builder =
+	let builder' = if builder.accu <> Accu_none then flush builder
+		       else builder in
+	{ builder' with items = item :: builder.items; }
+
     let rec add_ctyp idr ctyp builder =
 	match builder.accu with
 	| Accu_none ->
@@ -116,6 +121,20 @@ let fresh_var =
 	let i = !next_index in
 	next_index := i + 1;
 	sprintf "_x%d" i
+
+let gen_name _loc is_uid (Idr name) =
+    if is_uid then
+	<:ident< $uid: String.capitalize name$ >>
+    else
+	<:ident< $lid: name$ >>
+let rec gen_ident is_uid = function
+    | Trm_project (loc, field, m) ->
+	let _loc = convert_loc loc in
+	<:ident< $gen_ident true m$ . $gen_name _loc is_uid field$ >>
+    | Trm_ref (loc, idr, hint) ->
+	let _loc = convert_loc loc in
+	gen_name _loc (hint = Ih_inj) idr
+    | trm -> raise (Error (trm_location trm, "Not a path."))
 
 let extract_term_typing = function
     | Trm_apply (_, Trm_apply (_, Trm_ref (_, colon, _), x), y)
@@ -329,6 +348,13 @@ let collect_inj def inj_map =
     | _ -> inj_map
 
 let gen_val_def = function
+    | Sct_open (loc, path) ->
+	let _loc = convert_loc loc in
+	Struct_builder.add_str_item <:str_item< open $gen_ident true path$ >>
+    | Sct_include (loc, path) ->
+	let _loc = convert_loc loc in
+	Struct_builder.add_str_item
+		<:str_item< include $id: gen_ident true path$ >>
     | Dec_lex _ -> ident
     | Dec_type (loc, typ) -> fun builder ->
 	let _loc = convert_loc loc in
