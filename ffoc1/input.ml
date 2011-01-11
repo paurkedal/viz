@@ -47,6 +47,7 @@ let i_2o_eq	= idr_2o_c "="
 let i_2o_neq	= idr_2o_c "≠"
 
 let tuple_op = Trm_ref (Location.dummy, idr_2o_c ",", Ih_none)
+let that_trm = Trm_ref (Location.dummy, idr_of_string "that", Ih_none)
 
 let lit_to_string = function
     | Lit_unit -> "unit"
@@ -187,14 +188,9 @@ and print_else fo trm =
 and print_def fo def =
     Fo.newline fo;
     match def with
-    | Dec_type (_, pat) ->
+    | Sct_type (_, eqn) ->
 	Fo.put_kw fo "type";
-	print_inline fo Opkind.p_min pat
-    | Def_type (_, pat, typ) ->
-	Fo.put_kw fo "type";
-	print_inline fo Opkind.p_min pat;
-	Fo.put_kw fo "is";
-	print_inline fo Opkind.p_min typ
+	print_inline fo Opkind.p_min eqn
     | Dec_struct (_, pat) ->
 	Fo.put_kw fo "struct";
 	print_inline fo (Opkind.p_typing + 1) pat

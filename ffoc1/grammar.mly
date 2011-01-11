@@ -52,12 +52,11 @@ let mkloc lb ub =
 %token INCLUDE
 %token SIG
 %token STRUCT
-%token TYPE VAL INJ
-%token WHERE WITH WHAT
+%token TYPE LET VAL INJ
+%token WHERE WITH WHAT WHICH
 
-%token IS
+%token BE
 %token DO
-%token GIVEN
 %token RAISE
 %token UPON
 
@@ -146,13 +145,15 @@ signature_clause:
 
 structure_clause:
     modular_clause { $1 }
-  | STRUCT structure_pattern BEGIN IS structure_expr END
+  | STRUCT structure_pattern BEGIN BE structure_expr END
     { Input.Def_struct (mkloc $startpos $endpos, $2, $5) }
   | STRUCT structure_pattern BEGIN structure_body END
     {
 	let body = Input.Trm_where (mkloc $startpos($4) $endpos($4), $4) in
 	Input.Def_struct (mkloc $startpos $endpos, $2, body)
     }
+  | LET term_pattern predicate
+    { Input.Def_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
   | VAL term_pattern predicate
     { Input.Def_val (mkloc $startpos $endpos, $2, $3) }
   ;
@@ -160,18 +161,16 @@ structure_clause:
 modular_clause:
     OPEN projection
     { Input.Sct_open (mkloc $startpos $endpos, $2) }
-  | INCLUDE projection
+  | INCLUDE expr
     { Input.Sct_include (mkloc $startpos $endpos, $2) }
   | SIG IDENTIFIER
     { Input.Dec_sig (mkloc $startpos $endpos, $2) }
-  | SIG IDENTIFIER BEGIN IS signature_expr END
+  | SIG IDENTIFIER BEGIN BE signature_expr END
     { Input.Def_sig (mkloc $startpos $endpos, $2, $5) }
   | STRUCT structure_pattern
     { Input.Dec_struct (mkloc $startpos $endpos, $2) }
-  | TYPE type_pattern
-    { Input.Dec_type (mkloc $startpos $endpos, $2) }
-  | TYPE type_pattern BEGIN IS type_expr END
-    { Input.Def_type (mkloc $startpos $endpos, $2, $5) }
+  | TYPE type_equation
+    { Input.Sct_type (mkloc $startpos $endpos, $2) }
   | INJ term_pattern
     { Input.Dec_inj (mkloc $startpos $endpos, $2) }
   | VAL term_pattern
@@ -179,7 +178,7 @@ modular_clause:
   | PREPARED_DEF { $1 }
   ;
 
-type_pattern: expr {$1};
+type_equation: expr {$1};
 term_pattern: expr {$1};
 signature_expr: expr {$1};
 structure_expr: expr {$1};
@@ -192,11 +191,13 @@ term: expr {$1};
 
 predicate: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
-    IS term { $2 }
+    BE term { $2 }
   | RAISE term { Input.Trm_raise (mkloc $startpos $endpos, $2) }
   ;
 compound_predicate:
     atomic_predicate { $1 }
+  | atomic_predicate WHICH predicate
+    { Input.Trm_let (mkloc $startpos $endpos, Input.that_trm, $1, $3) }
   | postif_predicate { $1 }
   | if_predicate { $1 }
   | at_predicate { Input.Trm_at (mkloc $startpos $endpos, $1) }
@@ -225,7 +226,7 @@ participle_seq:
   | participle_seq participle { fun x -> $1 ($2 x) }
   ;
 participle:
-    GIVEN term_pattern predicate
+    LET term_pattern predicate
     { fun x -> Input.Trm_let (mkloc $startpos $endpos, $2, $3, x) }
   ;
 

@@ -53,6 +53,7 @@ module Idr_map : Map.S with type key = idr
 val trm_location : trm -> loc
 
 val tuple_op : trm
+val that_trm : trm
 
 val application_depth : int -> idr -> trm -> int
 

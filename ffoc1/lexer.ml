@@ -108,11 +108,11 @@ let initial_intro_keywords = [
     "sig",	Grammar.SIG;
     "struct",	Grammar.STRUCT;
     "type",	Grammar.TYPE;
+    "let",	Grammar.LET;
     "val",	Grammar.VAL;
     "inj",	Grammar.INJ;
-    "is",	Grammar.IS;
+    "be",	Grammar.BE;
     "do",	Grammar.DO;
-    "given",	Grammar.GIVEN;
     "raise",	Grammar.RAISE;
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
@@ -136,6 +136,7 @@ let initial_continued_keywords = [
     "where",	Grammar.WHERE;
     "with",	Grammar.WITH;
     "what",	Grammar.WHAT;
+    "which",	Grammar.WHICH;
 ]
 let initial_lookahead = 40
 
@@ -356,10 +357,13 @@ let scan_identifier state =
     let finish () =
 	let s = UString.Buf.contents buf in
 	let n = UString.length s in
-	match int_of_uchar (UString.get s (n - 1)) with
-	| 0x60 (* ` *) ->
-	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
+	match LStream.peek_code state.st_stream with
+	| 0x25 (* % *) ->
+	    LStream.skip state.st_stream;
+	    let idr = Input.idr_of_ustring s in
 	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_inj)
+	| _ ->
+	match int_of_uchar (UString.get s (n - 1)) with
 	| 0x5f (* _ *) when n > 1 ->
 	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
 	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_univ)

@@ -356,7 +356,7 @@ let gen_val_def = function
 	Struct_builder.add_str_item
 		<:str_item< include $id: gen_ident true path$ >>
     | Dec_lex _ -> ident
-    | Dec_type (loc, typ) -> fun builder ->
+    | Sct_type (loc, typ) -> fun builder ->
 	let _loc = convert_loc loc in
 	let (idr, ctyp) = gen_ctyp typ in
 	let ctyp' =
@@ -403,8 +403,6 @@ let gen_val_def = function
 		<:binding< $lid:v$ = $e1$ >>
 	    end in
 	Struct_builder.add_def _loc idr binding' (At_inj r) builder
-    | Def_type(loc, _, _) -> fun builder ->
-	raise (Error (loc, "Not implemented."))
 
 let gen_toplevel = function
     | Trm_where (loc, defs) ->
