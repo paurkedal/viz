@@ -25,23 +25,30 @@ let dlog_en = Diag.dlog_en_for "Fform.Lexer"
 let dlogf fmt ?loc = Diag.dlogf_for "Fform.Lexer" ?loc fmt
 
 type kwinfo = {
-    create_token : UString.t -> Grammar.token;
-    is_intro : bool;
+    ki_mktoken : UString.t -> Grammar.token;
+    ki_is_intro : bool;
 }
 
 type state = {
-    stream : LStream.t;
-    mutable indent : int;
-    mutable indent_stack : (int * Location.t) list;
-    mutable stashed_token : (Grammar.token * Location.t) option;
-    mutable keywords : kwinfo UString_trie.t;
-    mutable operators : Opkind.t UString_trie.t;
-    mutable lookahead : int;
-    mutable last_location : Location.t;
-    mutable scanners : (state -> Grammar.token option) list;
+    st_stream : LStream.t;
+
+    (* The current indentation, and stack of past indentations. *)
+    mutable st_indent : int;
+    mutable st_indent_stack : (int * Location.t) list;
+
+    (* Token to be emitted before reading any further. *)
+    mutable st_stash : (Grammar.token * Location.t) option;
+
+    (* The currently active keywords and operators. *)
+    mutable st_keywords : kwinfo UString_trie.t;
+    mutable st_operators : Opkind.t UString_trie.t;
+
+    mutable st_lookahead : int;
+    mutable st_last_location : Location.t;
+    mutable st_scanners : (state -> Grammar.token option) list;
 }
 
-let last_location state = state.last_location
+let last_location state = state.st_last_location
 
 let mktoken_arr =
     let a = Array.create Opkind.maxp_id
@@ -128,8 +135,8 @@ let initial_lookahead = 40
 let initial_keywords =
     let addkw is_intro (name, token) =
 	let kwinfo = {
-	    create_token = (fun _ -> token);
-	    is_intro = is_intro;
+	    ki_mktoken = (fun _ -> token);
+	    ki_is_intro = is_intro;
 	} in
 	UString_trie.add_utf8 name kwinfo in
     List.fold (addkw true)  initial_intro_keywords @<
@@ -139,65 +146,65 @@ let initial_keywords =
 let initial_operators = UString_trie.empty
 
 let rec skip_line state =
-    match LStream.pop state.stream with
+    match LStream.pop state.st_stream with
     | None -> ()
     | Some ch -> if int_of_uchar ch != 0xa then skip_line state
 
 let skip_space state =
     (* Skip spaces and comments, update indentation. *)
-    let start_locb = LStream.locbound state.stream in
+    let start_locb = LStream.locbound state.st_stream in
     let rec loop () =
-	match LStream.peek state.stream with
+	match LStream.peek state.st_stream with
 	| None -> ()
 	| Some ch ->
 	    if UChar.is_space ch then
 		begin
-		    LStream.skip state.stream;
+		    LStream.skip state.st_stream;
 		    loop ()
 		end else
 	    if ch = UChar.ch_dash
 		    && Option.exists ((=) UChar.ch_dash)
-				     (LStream.peek_at 1 state.stream) then
+				     (LStream.peek_at 1 state.st_stream) then
 		begin
 		    skip_line state;
 		    loop ()
 		end in
     loop ();
-    let end_locb = LStream.locbound state.stream in
+    let end_locb = LStream.locbound state.st_stream in
     if Location.Bound.lineno start_locb < Location.Bound.lineno end_locb then
-	state.indent <- Location.Bound.column end_locb
+	state.st_indent <- Location.Bound.column end_locb
 
 let stacked_column state =
-    match state.indent_stack with
+    match state.st_indent_stack with
     | [] -> -1
     | (col, _) :: _ -> col
 
 let current_column state =
-    let locb = LStream.locbound state.stream in
+    let locb = LStream.locbound state.st_stream in
     Location.Bound.column locb
 
 let push_end_token state loc =
     let col = Location.Bound.column (Location.lbound loc) in
-    state.indent_stack <- (col, loc) :: state.indent_stack
+    state.st_indent_stack <- (col, loc) :: state.st_indent_stack
 
 let pop_token state =
-    match state.stashed_token with
+    match state.st_stash with
     | Some (_, loc) as res ->
-	state.stashed_token <- None;
+	state.st_stash <- None;
 	if dlog_en then dlogf ~loc "Returning stashed token.";
 	res
     | None ->
-	begin match state.indent_stack with
+	begin match state.st_indent_stack with
 	| [] -> None
-	| (col, loc) :: indent_stack' ->
+	| (col, loc) :: st_indent_stack' ->
 	    if current_column state < col
 	    then begin
 		if dlog_en then
-		    dlogf ~loc:(Location.at (LStream.locbound state.stream))
+		    dlogf ~loc:(Location.at (LStream.locbound state.st_stream))
 			"Inserting END/%d implied by BEGIN at %s"
-			(List.length state.indent_stack)
+			(List.length state.st_indent_stack)
 			(Location.to_string loc);
-		state.indent_stack <- indent_stack';
+		state.st_indent_stack <- st_indent_stack';
 		Some (Grammar.END, loc)
 	    end
 	    else None
@@ -208,23 +215,23 @@ let declare_operator state ok op =
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (Input.idr_to_string op)
 	      (Opkind.to_string ok);
-    state.operators <- UString_trie.add op' ok state.operators
+    state.st_operators <- UString_trie.add op' ok state.st_operators
 
 let scan_lexdef state lex_loc =
     skip_space state;
     let okname, okname_loc =
-	LStream.scan_while (not *< UChar.is_space) state.stream in
-    let loc_lb = LStream.locbound state.stream in
+	LStream.scan_while (not *< UChar.is_space) state.st_stream in
+    let loc_lb = LStream.locbound state.st_stream in
     let ops_r = ref [] in
     while
-	LStream.skip_while UChar.is_hspace state.stream;
-	begin match LStream.peek state.stream with
+	LStream.skip_while UChar.is_hspace state.st_stream;
+	begin match LStream.peek state.st_stream with
 	| None -> false
 	| Some ch -> ch != UChar.ch_nl
 	end
     do
 	let opname, opname_loc =
-	    LStream.scan_while (not *< UChar.is_space) state.stream in
+	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
 	ops_r := Input.idr_of_ustring opname :: !ops_r
     done;
     let ops = List.rev !ops_r in
@@ -232,7 +239,7 @@ let scan_lexdef state lex_loc =
 	try Opkind.of_string (UString.to_utf8 okname)
 	with Opkind.Domain_error ->
 	    raise (Error_at (okname_loc, "Not an operator kind.")) in
-    let loc_ub = LStream.locbound state.stream in
+    let loc_ub = LStream.locbound state.st_stream in
     let loc = Location.between loc_lb loc_ub in
     let lexdef = Input.Dec_lex (loc, opkind, ops) in
     List.iter (declare_operator state opkind) ops;
@@ -252,14 +259,14 @@ let lexopen state = function
 
 let triescan state trie =
     let la = Sequence.of_list
-			(LStream.peek_n state.lookahead state.stream) in
-    let check_prefix la kwi_opt (len, last_ch, res) =
+			(LStream.peek_n state.st_lookahead state.st_stream) in
+    let check_prefix la ki_opt (len, last_ch, res) =
 	let this_ch = Option.default UChar.ch_space (Sequence.peek la) in
 	if UChar.are_tied last_ch this_ch
 	then (len + 1, this_ch, res)
 	else
 	    let res' =
-		match kwi_opt with
+		match ki_opt with
 		| None -> res
 		| Some kwi -> Some (len, kwi) in
 	    (len + 1, this_ch, res') in
@@ -267,27 +274,27 @@ let triescan state trie =
 				      (0, UChar.ch_space, None) with
     | (_, _, None) -> None
     | (_, _, Some (len, res)) ->
-	let loc_lb = LStream.locbound state.stream in
-	LStream.skip_n len state.stream;
-	let loc_ub = LStream.locbound state.stream in
+	let loc_lb = LStream.locbound state.st_stream in
+	LStream.skip_n len state.st_stream;
+	let loc_ub = LStream.locbound state.st_stream in
 	Some (res, UString.of_sequence_n len la, Location.between loc_lb loc_ub)
 
 let scan_keyword state =
-    match triescan state state.keywords with
+    match triescan state state.st_keywords with
     | None ->
 	(* Special handling of ".<identifier>" and ".<space>". *)
-	begin match LStream.peek_n 2 state.stream with
+	begin match LStream.peek_n 2 state.st_stream with
 	| [ch0; ch1] when UChar.code ch0 = 0x2e ->
-	    let loc_lb = LStream.locbound state.stream in
-	    LStream.skip state.stream;
+	    let loc_lb = LStream.locbound state.st_stream in
+	    LStream.skip state.st_stream;
 	    if UChar.is_idrchr ch1 then
 		let (name, loc) =
-		    LStream.scan_while UChar.is_idrchr state.stream in
+		    LStream.scan_while UChar.is_idrchr state.st_stream in
 		let idr = Input.idr_of_ustring name in
 		let loc' = Location.between loc_lb (Location.ubound loc) in
 		Some (Grammar.PROJECT idr, loc')
 	    else if UChar.is_space ch1 then
-		let loc_ub = LStream.locbound state.stream in
+		let loc_ub = LStream.locbound state.st_stream in
 		Some (Grammar.DOT, Location.between loc_lb loc_ub)
 	    else
 		None
@@ -295,20 +302,20 @@ let scan_keyword state =
 	end
     | Some (kwinfo, tokstr, loc) ->
 	let (tok, _) =
-	    match kwinfo.create_token tokstr with
+	    match kwinfo.ki_mktoken tokstr with
 	    | Grammar.LEX -> scan_lexdef state loc
 	    | tok -> (tok, loc) in
 	let loc_lb = Location.lbound loc in
-	if kwinfo.is_intro
+	if kwinfo.ki_is_intro
 		&& stacked_column state <> Location.Bound.column loc_lb then
 	  begin
 	    let loc_begin = Location.between loc_lb loc_lb in
-	    assert (state.stashed_token = None);
-	    state.stashed_token <- Some (tok, loc);
+	    assert (state.st_stash = None);
+	    state.st_stash <- Some (tok, loc);
 	    push_end_token state loc_begin;
 	    if dlog_en then
 		dlogf ~loc:loc_begin "Inserting BEGIN/%d"
-				     (List.length state.indent_stack);
+				     (List.length state.st_indent_stack);
 	    Some (Grammar.BEGIN, loc_begin)
 	  end
 	else
@@ -318,7 +325,7 @@ let scan_keyword state =
 	  end
 
 let scan_operator state =
-    match triescan state state.operators with
+    match triescan state state.st_operators with
     | None -> None
     | Some (opkind, tokstr, loc) ->
 	let mktoken = mktoken_arr.(opkind.Opkind.ok_id) in
@@ -341,15 +348,15 @@ let scan_identifier state =
 	    let idr = Input.idr_of_ustring s in
 	    Grammar.IDENTIFIER idr in
     let rec scan prev_ch =
-	LStream.skip state.stream;
-	match LStream.peek state.stream with
+	LStream.skip state.st_stream;
+	match LStream.peek state.st_stream with
 	| None -> finish ()
 	| Some next_ch ->
 	    if UChar.are_tied prev_ch next_ch then begin
 		UString.Buf.add_char buf next_ch;
 		scan next_ch
 	    end else finish () in
-    match LStream.peek state.stream with
+    match LStream.peek state.st_stream with
     | None -> Some Grammar.EOF
     | Some ch ->
 	if UChar.is_idrchr ch then begin
@@ -365,13 +372,13 @@ let escape_map =
 
 let scan_string_literal state =
     let buf = UString.Buf.create 8 in
-    LStream.skip state.stream;
+    LStream.skip state.st_stream;
     let rec next () =
-	match LStream.pop state.stream with
+	match LStream.pop state.st_stream with
 	| None -> raise Grammar.Error
 	| Some ch ->
 	    if ch = UChar.of_char '\\' then
-		begin match LStream.pop state.stream with
+		begin match LStream.pop state.st_stream with
 		| None -> raise Grammar.Error
 		| Some ch' ->
 		    try
@@ -389,14 +396,14 @@ let scan_string_literal state =
 
 let scan_int have_sign base state =
     let rec f accu =
-	let ch = Option.default UChar.ch_space (LStream.peek state.stream) in
+	let ch = Option.default UChar.ch_space (LStream.peek state.st_stream) in
 	if not (UChar.is_idrchr ch) then accu else
 	let code = UChar.code ch in
 	let value =
 	    if 0x30 <= code && code <= 0x39 then code - 0x30 else
 	    if 0x61 <= code && code <= 0x66 then code - 0x61 + 10 else
 	    raise Grammar.Error in
-	LStream.skip state.stream;
+	LStream.skip state.st_stream;
 	f (value + base * accu) in
     let n = (f 0) in
     Input.Lit_int (if have_sign then -n else n)
@@ -405,7 +412,7 @@ let scan_literal state =
     let found lit =
 	Some (Grammar.LITERAL lit) in
     let chcode_at n =
-	match LStream.peek_at n state.stream with
+	match LStream.peek_at n state.st_stream with
 	| None -> 0
 	| Some ch -> UChar.code ch in
     let (n_sign, have_sign) =
@@ -414,7 +421,7 @@ let scan_literal state =
     | 0x22 ->
 	if have_sign then None else found (scan_string_literal state)
     | 0x30 ->
-	LStream.skip_n n_sign state.stream;
+	LStream.skip_n n_sign state.st_stream;
 	begin match chcode_at 1 with
 	| 0x62 (* 0b *) -> found (scan_int have_sign  2 state)
 	| 0x6f (* 0o *) -> found (scan_int have_sign  8 state)
@@ -422,7 +429,7 @@ let scan_literal state =
 	| _ -> found (scan_int have_sign 10 state)
 	end
     | ch0 ->
-	LStream.skip_n n_sign state.stream;
+	LStream.skip_n n_sign state.st_stream;
 	if 0x30 <= ch0 && ch0 <= 0x39 then
 	    found (scan_int have_sign 10 state)
 	else None
@@ -431,18 +438,18 @@ let fixed_scanners = [pop_token; scan_keyword; scan_operator]
 let default_scanners = [scan_literal; scan_identifier]
 
 let default_state_template = {
-    stream = LStream.null;
-    indent = -1;
-    indent_stack = [];
-    stashed_token = None;
-    keywords = initial_keywords;
-    operators = initial_operators;
-    lookahead = initial_lookahead;
-    last_location = Location.dummy;
-    scanners = default_scanners;
+    st_stream = LStream.null;
+    st_indent = -1;
+    st_indent_stack = [];
+    st_stash = None;
+    st_keywords = initial_keywords;
+    st_operators = initial_operators;
+    st_lookahead = initial_lookahead;
+    st_last_location = Location.dummy;
+    st_scanners = default_scanners;
 }
-let create_from_lstream stream =
-    {default_state_template with stream = stream}
+let create_from_lstream st_stream =
+    {default_state_template with st_stream = st_stream}
 let create_from_file path =
     create_from_lstream (LStream.open_in path)
 
@@ -450,19 +457,19 @@ let lexer state () =
     skip_space state;
     match List.find_image (fun f -> f state) fixed_scanners with
     | Some (tok, loc) ->
-	state.last_location <- loc;
+	state.st_last_location <- loc;
 	(tok, loc)
     | None ->
-	let loc_lb = LStream.locbound state.stream in
+	let loc_lb = LStream.locbound state.st_stream in
 	let tok =
-	    match List.find_image (fun f -> f state) state.scanners with
+	    match List.find_image (fun f -> f state) state.st_scanners with
 	    | Some x -> x
 	    | None ->
-		state.last_location <- Location.at loc_lb;
+		state.st_last_location <- Location.at loc_lb;
 		raise Grammar.Error
 	    in
-	let loc_ub = LStream.locbound state.stream in
+	let loc_ub = LStream.locbound state.st_stream in
 	let loc = Location.between loc_lb loc_ub in
-	state.last_location <- loc;
+	state.st_last_location <- loc;
 	if dlog_en then dlogf ~loc "Scanned token.";
 	(tok, loc)
