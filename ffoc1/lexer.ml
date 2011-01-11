@@ -27,6 +27,7 @@ let dlogf fmt ?loc = Diag.dlogf_for "Fform.Lexer" ?loc fmt
 type kwinfo = {
     ki_mktoken : UString.t -> Grammar.token;
     ki_is_intro : bool;
+    ki_continued : bool;
 }
 
 type state = {
@@ -38,6 +39,10 @@ type state = {
 
     (* Token to be emitted before reading any further. *)
     mutable st_stash : (Grammar.token * Location.t) option;
+
+    (* True after a "what", "which", "where", or "with".  This prevents popping
+     * the indent_stack, so that one can use unindentation. *)
+    mutable st_continued : bool;
 
     (* The currently active keywords and operators. *)
     mutable st_keywords : kwinfo UString_trie.t;
@@ -120,9 +125,6 @@ let initial_intro_keywords = [
     "at",	Grammar.AT;
 ]
 let initial_plain_keywords = [
-    "where",	Grammar.WHERE;
-    "with",	Grammar.WITH;
-    "what",	Grammar.WHAT;
     "(",	Grammar.LPAREN;
     ")",	Grammar.RPAREN;
     "↦",	Grammar.MAPSTO;
@@ -130,17 +132,24 @@ let initial_plain_keywords = [
     "true",	Grammar.LITERAL (Input.Lit_bool true);
     "false",	Grammar.LITERAL (Input.Lit_bool false);
 ]
+let initial_continued_keywords = [
+    "where",	Grammar.WHERE;
+    "with",	Grammar.WITH;
+    "what",	Grammar.WHAT;
+]
 let initial_lookahead = 40
 
 let initial_keywords =
-    let addkw is_intro (name, token) =
+    let addkw is_intro is_continued (name, token) =
 	let kwinfo = {
 	    ki_mktoken = (fun _ -> token);
 	    ki_is_intro = is_intro;
+	    ki_continued = is_continued;
 	} in
 	UString_trie.add_utf8 name kwinfo in
-    List.fold (addkw true)  initial_intro_keywords @<
-    List.fold (addkw false) initial_plain_keywords @<
+    List.fold (addkw true  false) initial_intro_keywords @<
+    List.fold (addkw false false) initial_plain_keywords @<
+    List.fold (addkw false true)  initial_continued_keywords @<
     UString_trie.empty
 
 let initial_operators = UString_trie.empty
@@ -180,6 +189,7 @@ let stacked_column state =
     | (col, _) :: _ -> col
 
 let current_column state =
+    if LStream.peek state.st_stream == None then -1 else
     let locb = LStream.locbound state.st_stream in
     Location.Bound.column locb
 
@@ -194,6 +204,12 @@ let pop_token state =
 	if dlog_en then dlogf ~loc "Returning stashed token.";
 	res
     | None ->
+	if state.st_continued then begin
+	    if dlog_en then
+		dlogf ~loc:(Location.at (LStream.locbound state.st_stream))
+		      "Continued block.";
+	    None
+	end else
 	begin match state.st_indent_stack with
 	| [] -> None
 	| (col, loc) :: st_indent_stack' ->
@@ -306,9 +322,11 @@ let scan_keyword state =
 	    | Grammar.LEX -> scan_lexdef state loc
 	    | tok -> (tok, loc) in
 	let loc_lb = Location.lbound loc in
-	if kwinfo.ki_is_intro
+	if state.st_continued
+	     || kwinfo.ki_is_intro
 		&& stacked_column state <> Location.Bound.column loc_lb then
 	  begin
+	    state.st_continued <- kwinfo.ki_continued;
 	    let loc_begin = Location.between loc_lb loc_lb in
 	    assert (state.st_stash = None);
 	    state.st_stash <- Some (tok, loc);
@@ -320,6 +338,7 @@ let scan_keyword state =
 	  end
 	else
 	  begin
+	    state.st_continued <- kwinfo.ki_continued;
 	    if dlog_en then dlogf ~loc "Scanned keyword.";
 	    Some (tok, loc)
 	  end
@@ -442,6 +461,7 @@ let default_state_template = {
     st_indent = -1;
     st_indent_stack = [];
     st_stash = None;
+    st_continued = false;
     st_keywords = initial_keywords;
     st_operators = initial_operators;
     st_lookahead = initial_lookahead;

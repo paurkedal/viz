@@ -126,7 +126,7 @@ let mkloc lb ub =
 %%
 
 main:
-    BEGIN structure_body EOF
+    BEGIN structure_body END EOF
     { Input.Trm_where (mkloc $startpos $endpos, List.rev $2) }
   ;
 
