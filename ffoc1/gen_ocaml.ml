@@ -18,7 +18,7 @@
 
 open Camlp4.PreCast
 open Diag
-open Input
+open Cst
 open Unicode
 open FfPervasives
 open Printf

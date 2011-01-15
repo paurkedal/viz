@@ -29,7 +29,7 @@ let _ =
     | Some term ->
 	if !do_print then begin
 	    let fo = Formatter.create () in
-	    Input.print fo term;
+	    Cst.print fo term;
 	    printf "%s\n" (Formatter.contents fo)
 	end else begin
 	    try

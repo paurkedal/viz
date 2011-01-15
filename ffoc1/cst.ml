@@ -17,7 +17,7 @@
  *)
 
 open Unicode
-include Input_types
+include Cst_types
 
 let starts_with p s =
     let np = String.length p in

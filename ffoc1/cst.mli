@@ -18,7 +18,7 @@
 
 open Unicode
 
-include module type of Input_types
+include module type of Cst_types
 
 val idr_of_string : string -> idr
 

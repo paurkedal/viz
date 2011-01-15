@@ -16,4 +16,4 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-val parse_file : string -> Input.trm option
+val parse_file : string -> Cst.trm option

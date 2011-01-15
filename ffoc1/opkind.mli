@@ -38,7 +38,7 @@ val of_string : string -> t
 val to_string : t -> string
 
 (* The operator kinds.  These correspond to the similarly named terminals of the
- * grammar of type [Input.trm]. *)
+ * grammar of type [Cst.trm]. *)
 val   mixfix_quantifier : t
 val preinfix_logic      : t array
 val transfix_relation   : t

@@ -30,4 +30,4 @@ val create_from_file : string -> state
 
 val lexer : state -> unit -> Grammar.token * Location.t
 
-val lexopen : state -> Input.trm -> unit
+val lexopen : state -> Cst.trm -> unit

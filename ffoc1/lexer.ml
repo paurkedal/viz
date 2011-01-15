@@ -129,8 +129,8 @@ let initial_plain_keywords = [
     ")",	Grammar.RPAREN;
     "↦",	Grammar.MAPSTO;
     "/>",	Grammar.MAPSTO;
-    "true",	Grammar.LITERAL (Input.Lit_bool true);
-    "false",	Grammar.LITERAL (Input.Lit_bool false);
+    "true",	Grammar.LITERAL (Cst.Lit_bool true);
+    "false",	Grammar.LITERAL (Cst.Lit_bool false);
 ]
 let initial_continued_keywords = [
     "where",	Grammar.WHERE;
@@ -228,9 +228,9 @@ let pop_token state =
 	end
 
 let declare_operator state ok op =
-    let op' = UString_sequence.create (Input.idr_to_ustring op) in
+    let op' = UString_sequence.create (Cst.idr_to_ustring op) in
     if dlog_en then
-	dlogf "Declaring operator %s at %s." (Input.idr_to_string op)
+	dlogf "Declaring operator %s at %s." (Cst.idr_to_string op)
 	      (Opkind.to_string ok);
     state.st_operators <- UString_trie.add op' ok state.st_operators
 
@@ -249,7 +249,7 @@ let scan_lexdef state lex_loc =
     do
 	let opname, opname_loc =
 	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
-	ops_r := Input.idr_of_ustring opname :: !ops_r
+	ops_r := Cst.idr_of_ustring opname :: !ops_r
     done;
     let ops = List.rev !ops_r in
     let opkind =
@@ -258,20 +258,20 @@ let scan_lexdef state lex_loc =
 	    raise (Error_at (okname_loc, "Not an operator kind.")) in
     let loc_ub = LStream.locbound state.st_stream in
     let loc = Location.between loc_lb loc_ub in
-    let lexdef = Input.Dec_lex (loc, opkind, ops) in
+    let lexdef = Cst.Dec_lex (loc, opkind, ops) in
     List.iter (declare_operator state opkind) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
 let lexopen state = function
-    | Input.Trm_where (_, defs) -> List.iter
+    | Cst.Trm_where (_, defs) -> List.iter
 	begin function
-	    | Input.Dec_lex (loc, ok, ops) ->
+	    | Cst.Dec_lex (loc, ok, ops) ->
 		List.iter (declare_operator state ok) ops
 	    | _ -> ()
 	end
 	defs
     | trm ->
-	let loc = Input.trm_location trm in
+	let loc = Cst.trm_location trm in
 	raise (Error_at (loc, "Lexical open needs a structure."))
 
 let triescan state trie =
@@ -307,7 +307,7 @@ let scan_keyword state =
 	    if UChar.is_idrchr ch1 then
 		let (name, loc) =
 		    LStream.scan_while UChar.is_idrchr state.st_stream in
-		let idr = Input.idr_of_ustring name in
+		let idr = Cst.idr_of_ustring name in
 		let loc' = Location.between loc_lb (Location.ubound loc) in
 		Some (Grammar.PROJECT idr, loc')
 	    else if UChar.is_space ch1 then
@@ -350,7 +350,7 @@ let scan_operator state =
     | Some (opkind, tokstr, loc) ->
 	let mktoken = mktoken_arr.(opkind.Opkind.ok_id) in
 	if dlog_en then dlogf ~loc "Scanned operator.";
-	Some (mktoken (Input.idr_of_ustring tokstr), loc)
+	Some (mktoken (Cst.idr_of_ustring tokstr), loc)
 
 let scan_identifier state =
     let buf = UString.Buf.create 8 in
@@ -360,15 +360,15 @@ let scan_identifier state =
 	match LStream.peek_code state.st_stream with
 	| 0x25 (* % *) ->
 	    LStream.skip state.st_stream;
-	    let idr = Input.idr_of_ustring s in
-	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_inj)
+	    let idr = Cst.idr_of_ustring s in
+	    Grammar.HINTED_IDENTIFIER (idr, Cst.Ih_inj)
 	| _ ->
 	match int_of_uchar (UString.get s (n - 1)) with
 	| 0x5f (* _ *) when n > 1 ->
-	    let idr = Input.idr_of_ustring (UString.sub s 0 (n - 1)) in
-	    Grammar.HINTED_IDENTIFIER (idr, Input.Ih_univ)
+	    let idr = Cst.idr_of_ustring (UString.sub s 0 (n - 1)) in
+	    Grammar.HINTED_IDENTIFIER (idr, Cst.Ih_univ)
 	| _ ->
-	    let idr = Input.idr_of_ustring s in
+	    let idr = Cst.idr_of_ustring s in
 	    Grammar.IDENTIFIER idr in
     let rec scan prev_ch =
 	LStream.skip state.st_stream;
@@ -415,7 +415,7 @@ let scan_string_literal state =
 		next ()
 	    end in
     next ();
-    Input.Lit_string (UString.Buf.contents buf)
+    Cst.Lit_string (UString.Buf.contents buf)
 
 let scan_int have_sign base state =
     let rec f accu =
@@ -429,7 +429,7 @@ let scan_int have_sign base state =
 	LStream.skip state.st_stream;
 	f (value + base * accu) in
     let n = (f 0) in
-    Input.Lit_int (if have_sign then -n else n)
+    Cst.Lit_int (if have_sign then -n else n)
 
 let scan_literal state =
     let found lit =
