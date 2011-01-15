@@ -55,6 +55,18 @@ module Bound = struct
 	| 0xa -> skip_newline
 	| _   -> skip_n 1
 
+    let compare (pos, col) (pos', col') =
+	let cmp_fname = String.compare pos.pos_fname pos'.pos_fname in
+	if cmp_fname <> 0 then cmp_fname else
+	if pos.pos_lnum < pos'.pos_lnum then -1 else
+	if pos.pos_lnum > pos'.pos_lnum then  1 else
+	if pos.pos_cnum < pos'.pos_cnum then -1 else
+	if pos.pos_cnum > pos'.pos_cnum then  1 else
+	0
+
+    let min b b' = if compare b b' <= 0 then b else b'
+    let max b b' = if compare b b' >  0 then b else b'
+
     let to_string (pos, _) =
 	let buf = Buffer.create 8 in
 	Buffer.add_string buf pos.pos_fname;
@@ -116,6 +128,16 @@ let ubound loc =
 	pos_bol = loc.loc_ub_bol;
 	pos_cnum = loc.loc_ub_cnum;
     }, loc.loc_ub_col
+
+let span = function
+    | [] -> invalid_arg "Location.span"
+    | loc :: locs ->
+	let rec loop lb ub = function
+	    | [] -> between lb ub
+	    | loc :: locs ->
+		loop (Bound.min lb (lbound loc))
+		     (Bound.max ub (ubound loc)) locs in
+	loop (lbound loc) (ubound loc) locs
 
 let to_string loc =
     let buf = Buffer.create 8 in

@@ -43,6 +43,12 @@ module Bound : sig
 
     val skip_char : UChar.t -> t -> t
 
+    val compare : t -> t -> int
+
+    val min : t -> t -> t
+
+    val max : t -> t -> t
+
     val to_string : t -> string
 
     (** Convert from [Lexing.position].  Note that the result will not have a
@@ -57,6 +63,8 @@ end
 type t
 
 val between : Bound.t -> Bound.t -> t
+
+val span : t list -> t
 
 val at : Bound.t -> t
 
