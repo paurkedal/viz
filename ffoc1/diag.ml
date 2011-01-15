@@ -18,6 +18,10 @@
 
 open FfPervasives
 
+exception Error_at of Location.t * string
+
+let errf_at loc msg = Printf.ksprintf (fun s -> raise (Error_at (loc, s))) msg
+
 module String_set = Set.Make(String)
 
 let dtags =

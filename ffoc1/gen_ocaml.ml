@@ -17,12 +17,11 @@
  *)
 
 open Camlp4.PreCast
+open Diag
 open Input
 open Unicode
 open FfPervasives
 open Printf
-
-exception Error of Location.t * string
 
 type approx_type =
     | At_sig
@@ -134,24 +133,23 @@ let rec gen_ident is_uid = function
     | Trm_ref (loc, idr, hint) ->
 	let _loc = convert_loc loc in
 	gen_name _loc (hint = Ih_inj) idr
-    | trm -> raise (Error (trm_location trm, "Not a path."))
+    | trm -> errf_at (trm_location trm) "Not a path."
 
 let extract_term_typing = function
     | Trm_apply (_, Trm_apply (_, Trm_ref (_, colon, _), x), y)
 	    when colon = i_2o_colon ->
 	(x, y)
-    | trm -> raise (Error (trm_location trm, "Type judgement expected."))
+    | trm -> errf_at (trm_location trm) "Type judgement expected."
 let extract_idr_typing expr =
     match extract_term_typing expr with
     | Trm_ref (_, idr, _), y -> (idr, y)
-    | x, y -> raise (Error (trm_location x, "Identifier expected."))
+    | x, y -> errf_at (trm_location x) "Identifier expected."
 
 let flatten_tycon_apply typ =
-    let rec loop tps = function
-	| Trm_apply (_, typ, tp) -> loop (tp :: tps) typ
-	| Trm_ref (_, c, _) -> (c, List.rev tps)
-	| trm ->
-	    raise (Error (trm_location trm, "Not a type constructor.")) in
+    let rec loop args = function
+	| Trm_apply (_, con, arg) -> loop (arg :: args) con
+	| Trm_ref (_, con, _) -> (con, List.rev args)
+	| trm -> errf_at (trm_location trm) "Not a type constructor." in
     loop [] typ
 
 let rec gen_ctyp = function
@@ -174,7 +172,7 @@ let rec gen_ctyp = function
 	let (_,   y') = gen_ctyp y in
 	(idr, Ast.TyDcl (_loc, idr_to_string tycon, typrms', y', []))
     | trm ->
-	raise (Error (trm_location trm, "Ivalid type expression."))
+	errf_at (trm_location trm) "Ivalid type expression."
 
 let gen_literal_patt _loc = function
     | Lit_unit     -> <:patt< () >>
@@ -237,14 +235,15 @@ let rec gen_pattern ?(isf = false) env = function
 	let f' = gen_pattern ~isf:true  env f in
 	let x' = gen_pattern ~isf:false env x in
 	<:patt< $f'$ $x'$ >>
-    | trm -> raise (Error (trm_location trm, "Unimplemented pattern."))
+    | trm -> errf_at (trm_location trm) "Unimplemented pattern."
 
 let rec gen_sig_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
 	<:module_type< $uid: String.capitalize name$ >>
     | trm ->
-	raise (Error (trm_location trm, "Invalid signature expression."))
+	errf_at (trm_location trm) "Invalid signature expression %s."
+		(trm_to_string trm)
 let rec gen_struct_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
@@ -263,10 +262,11 @@ let rec gen_struct_expr env = function
 	    let body' = gen_struct_expr env body in
 	    <:module_expr< functor ($uid:m$ : $sgt'$) -> $body'$ >>
 	| _ ->
-	    raise (Error (trm_location pat, "Invalid functor parameter."))
+	    errf_at (trm_location pat) "Invalid functor parameter."
 	end
     | trm ->
-	raise (Error (trm_location trm, "Invalid structure expression."))
+	errf_at (trm_location trm) "Invalid structure expression %s."
+		(trm_to_string trm)
 and gen_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
@@ -317,7 +317,7 @@ and gen_expr env = function
 	let _loc = convert_loc loc in
 	let cases' = gen_cases env _loc cases in
 	<:expr< fun [ $list:cases'$ ] >>
-    | trm -> raise (Error (trm_location trm, "Unimplemented expression."))
+    | trm -> errf_at (trm_location trm) "Unimplemented expression."
 and gen_cases env _loc = List.map
     (fun (pat, cq) ->
 	let pat' = gen_pattern env pat in
@@ -377,7 +377,7 @@ let gen_val_def = function
 		decons_formal <:expr< fun $x'$ -> $body'$ >> f
 	    | Trm_ref (loc, f, Ih_none) ->
 		(f, body')
-	    | _ -> raise (Error (loc, "Invalid pattern in formals.")) in
+	    | _ -> errf_at (loc) "Invalid pattern in formals." in
 	let (f, body'') = decons_formal body' pat in
 	let binding' = <:binding< $lid:idr_to_string f$ = $body''$ >> in
 	Struct_builder.add_def _loc f binding' At_val builder
@@ -412,4 +412,4 @@ let gen_toplevel = function
 	let builder' = List.fold gen_val_def defs builder in
 	Struct_builder.get_str_item _loc builder'
     | trm ->
-	raise (Error (trm_location trm, "Expecting a structure."))
+	errf_at (trm_location trm) "Expecting a structure."

@@ -1,5 +1,6 @@
 open Printf
 open Ffoc1
+open Diag
 open Camlp4.PreCast
 
 let usage = "ffoc1 [--print | -o OUTPUT] INPUT"
@@ -34,7 +35,7 @@ let _ =
 	    try
 		let oc_ast = Gen_ocaml.gen_toplevel term in
 		Printers.OCaml.print_implem ?output_file:!out_path_opt oc_ast
-	    with Gen_ocaml.Error (loc, msg) ->
+	    with Error_at (loc, msg) ->
 		eprintf "%s: %s\n" (Location.to_string loc) msg;
 		exit 65 (* EX_DATAERR *)
 	end

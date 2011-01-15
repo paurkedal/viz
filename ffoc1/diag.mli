@@ -16,6 +16,10 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+exception Error_at of Location.t * string
+
+val errf_at : Location.t -> ('b, unit, string, 'a) format4 -> 'b
+
 val dlog_en_for : string -> bool
 val dlogf_for : string -> ?loc : Location.t
 	     -> ('a, unit, string, unit) format4 -> 'a
