@@ -50,8 +50,8 @@ let mkloc lb ub =
 
 %token OPEN
 %token INCLUDE
+%token IN
 %token SIG
-%token STRUCT
 %token TYPE LET VAL INJ
 %token WHERE WITH WHAT WHICH
 
@@ -141,16 +141,19 @@ structure_body:
 
 signature_clause:
     modular_clause { $1 }
+  | IN structure_pattern BEGIN signature_body END
+    {
+	let body = Input.Trm_with (mkloc $startpos($4) $endpos($4), None, $4) in
+	Input.Sct_in (mkloc $startpos $endpos, $2, body)
+    }
   ;
 
 structure_clause:
     modular_clause { $1 }
-  | STRUCT structure_pattern BEGIN BE structure_expr END
-    { Input.Def_struct (mkloc $startpos $endpos, $2, $5) }
-  | STRUCT structure_pattern BEGIN structure_body END
+  | IN structure_pattern BEGIN structure_body END
     {
 	let body = Input.Trm_where (mkloc $startpos($4) $endpos($4), $4) in
-	Input.Def_struct (mkloc $startpos $endpos, $2, body)
+	Input.Sct_in (mkloc $startpos $endpos, $2, body)
     }
   | LET term_pattern predicate
     { Input.Def_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
@@ -167,8 +170,6 @@ modular_clause:
     { Input.Dec_sig (mkloc $startpos $endpos, $2) }
   | SIG IDENTIFIER BEGIN BE signature_expr END
     { Input.Def_sig (mkloc $startpos $endpos, $2, $5) }
-  | STRUCT structure_pattern
-    { Input.Dec_struct (mkloc $startpos $endpos, $2) }
   | TYPE type_equation
     { Input.Sct_type (mkloc $startpos $endpos, $2) }
   | INJ term_pattern

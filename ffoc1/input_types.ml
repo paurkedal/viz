@@ -53,8 +53,7 @@ type trm =
     | Sct_include	of loc * trm
     | Sct_open		of loc * trm
     | Sct_type		of loc * trm
-    | Dec_struct	of loc * trm
-    | Def_struct	of loc * trm * trm
+    | Sct_in		of loc * trm * trm
     | Dec_sig		of loc * idr
     | Def_sig		of loc * idr * trm
     | Dec_val		of loc * trm

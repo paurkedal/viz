@@ -105,8 +105,8 @@ let mktoken_arr =
 let initial_intro_keywords = [
     "open",	Grammar.OPEN;
     "include",	Grammar.INCLUDE;
+    "in",	Grammar.IN;
     "sig",	Grammar.SIG;
-    "struct",	Grammar.STRUCT;
     "type",	Grammar.TYPE;
     "let",	Grammar.LET;
     "val",	Grammar.VAL;

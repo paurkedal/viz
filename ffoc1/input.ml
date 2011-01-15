@@ -141,11 +141,13 @@ and print_inline fo p = function
     | Trm_project (_, Idr field, m) ->
 	print_inline fo Opkind.p_project m;
 	Fo.put fo `Name ("." ^ field)
+    | Trm_with (_, base, defs) ->
+	Option.iter (print_inline fo p) base;
+	Fo.put_kw fo "with";
+	print_defs fo defs
     | Trm_where (_, defs) ->
 	Fo.put_kw fo "where";
-	Fo.enter_indent fo;
-	List.iter (print_def fo) defs;
-	Fo.leave_indent fo
+	print_defs fo defs
     | _ ->
 	Fo.put fo `Error "(unimplemented)"
 
@@ -177,36 +179,46 @@ and print_predicate ?(default = print_is) fo = function
 	) cases
     | trm -> default fo trm
 and print_is fo trm =
-    Fo.put_kw fo "is";
+    Fo.put_kw fo "be";
     print_inline fo Opkind.p_min trm
 and print_else fo trm =
     Fo.newline fo;
     Fo.put_kw fo "else";
-    Fo.put_kw fo "is";
+    Fo.put_kw fo "be";
     print_inline fo Opkind.p_min trm
 
 and print_def fo def =
     Fo.newline fo;
     match def with
+    | Sct_include (_, path) ->
+	Fo.put_kw fo "include";
+	print_inline fo Opkind.p_min path
+    | Sct_open (_, path) ->
+	Fo.put_kw fo "open";
+	print_inline fo Opkind.p_min path
     | Sct_type (_, eqn) ->
 	Fo.put_kw fo "type";
 	print_inline fo Opkind.p_min eqn
-    | Dec_struct (_, pat) ->
-	Fo.put_kw fo "struct";
-	print_inline fo (Opkind.p_typing + 1) pat
-    | Def_struct (_, pat, body) ->
-	Fo.put_kw fo "struct";
+    | Sct_in (_, pat, body) ->
+	Fo.put_kw fo "in";
+	Fo.enter_indent fo;
 	print_inline fo Opkind.p_min pat;
-	Fo.put_kw fo "is";
-	print_inline fo Opkind.p_min body
+	Fo.leave_indent fo;
+	begin match body with
+	| Trm_with (_, None, defs) -> print_defs fo defs
+	| Trm_where (_, defs) -> print_defs fo defs
+	| _ -> Fo.put_kw fo "include"; print_inline fo Opkind.p_min body
+	end
     | Dec_sig (_, name) ->
 	Fo.put_kw fo "sig";
 	print_name fo name
     | Def_sig (_, name, body) ->
 	Fo.put_kw fo "sig";
 	print_name fo name;
-	Fo.put_kw fo "is";
-	print_inline fo Opkind.p_min body
+	begin match body with
+	| Trm_with (_, None, defs) -> print_defs fo defs
+	| _ -> Fo.put_kw fo "include"; print_inline fo Opkind.p_min body
+	end
     | Dec_val (_, typing) ->
 	Fo.put_kw fo "val";
 	print_inline fo Opkind.p_min typing
@@ -223,6 +235,15 @@ and print_def fo def =
 	Fo.put_kw fo "lex";
 	Fo.put fo `Name (Opkind.to_string ok);
 	List.iter (fun (Idr s) -> Fo.space fo; Fo.put fo `Operator s) idrs
+and print_defs fo defs =
+    Fo.enter_indent fo;
+    List.iter (print_def fo) defs;
+    Fo.leave_indent fo
 
 let print fo =
     print_inline fo Opkind.p_min
+
+let trm_to_string trm =
+    let fo = Formatter.create () in
+    print fo trm;
+    Formatter.contents fo

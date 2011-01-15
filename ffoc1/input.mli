@@ -58,3 +58,4 @@ val that_trm : trm
 val application_depth : int -> idr -> trm -> int
 
 val print : Formatter.t -> trm -> unit
+val trm_to_string : trm -> string
