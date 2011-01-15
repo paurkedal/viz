@@ -19,6 +19,7 @@
 open Camlp4.PreCast
 open Diag
 open Cst
+open Cst_utils
 open Unicode
 open FfPervasives
 open Printf
@@ -135,23 +136,6 @@ let rec gen_ident is_uid = function
 	gen_name _loc (hint = Ih_inj) idr
     | trm -> errf_at (trm_location trm) "Not a path."
 
-let extract_term_typing = function
-    | Trm_apply (_, Trm_apply (_, Trm_ref (_, colon, _), x), y)
-	    when colon = i_2o_colon ->
-	(x, y)
-    | trm -> errf_at (trm_location trm) "Type judgement expected."
-let extract_idr_typing expr =
-    match extract_term_typing expr with
-    | Trm_ref (_, idr, _), y -> (idr, y)
-    | x, y -> errf_at (trm_location x) "Identifier expected."
-
-let flatten_tycon_apply typ =
-    let rec loop args = function
-	| Trm_apply (_, con, arg) -> loop (arg :: args) con
-	| Trm_ref (_, con, _) -> (con, List.rev args)
-	| trm -> errf_at (trm_location trm) "Not a type constructor." in
-    loop [] typ
-
 let rec gen_ctyp = function
     | Trm_ref (loc, Idr c, Ih_none) ->
 	let _loc = convert_loc loc in
@@ -166,7 +150,7 @@ let rec gen_ctyp = function
 	(idr, <:ctyp< $x'$ $y'$ >>)
     | Trm_rel (loc, x, [(_, r, y)]) when r = i_2o_eq ->
 	let _loc = convert_loc loc in
-	let (tycon, typrms) = flatten_tycon_apply x in
+	let (tycon, typrms) = flatten_tycon_application x in
 	let typrms' = List.map (snd *< gen_ctyp) typrms in
 	let (idr, x') = gen_ctyp x in
 	let (_,   y') = gen_ctyp y in
@@ -248,6 +232,10 @@ let rec gen_struct_expr env = function
     | Trm_ref (loc, Idr name, Ih_none) ->
 	let _loc = convert_loc loc in
 	<:module_expr< $uid: String.capitalize name$ >>
+    | Trm_apply (loc, Trm_apply (loc1, Trm_ref (_, op, _), m), s)
+	    when op = i_2o_colon ->
+	let _loc = convert_loc loc in
+	<:module_expr< ($gen_struct_expr env m$ : $gen_sig_expr env s$) >>
     | Trm_apply (loc, f, m) ->
 	let _loc = convert_loc loc in
 	<:module_expr< $gen_struct_expr env f$ $gen_struct_expr env m$ >>
@@ -341,7 +329,7 @@ let collect_inj def inj_map =
 		flatten_arrow (pt' :: pts) rt
 	    | rt -> (rt, List.rev pts) in
 	let (rt, pts) = flatten_arrow [] typ in
-	let (rc, tps) = flatten_tycon_apply rt in
+	let (rc, tps) = flatten_tycon_application rt in
 	let injs = try Idr_map.find rc inj_map with Not_found -> [] in
 	let inj = <:ctyp< $uid:ctor_name injname$ of $list:pts$ >> in
 	Idr_map.add rc (inj :: injs) inj_map
@@ -355,6 +343,19 @@ let gen_val_def = function
 	let _loc = convert_loc loc in
 	Struct_builder.add_str_item
 		<:str_item< include $id: gen_ident true path$ >>
+    | Sct_in (loc, pat, body) ->
+	let _loc = convert_loc loc in
+	let pat, body = move_typing (pat, body) in
+	let pat, body = move_applications (pat, body) in
+	begin match pat with
+	| Trm_ref (_, Idr name, _) -> fun builder ->
+	    let body' = gen_struct_expr builder.Struct_builder.env body in
+	    Struct_builder.add_str_item
+		<:str_item< module $uid: String.capitalize name$ = $body'$ >>
+		builder
+	| _ ->
+	    errf_at loc "Invalid head %s of module pattern." (trm_to_string pat)
+	end
     | Dec_lex _ -> ident
     | Sct_type (loc, typ) -> fun builder ->
 	let _loc = convert_loc loc in
@@ -362,7 +363,7 @@ let gen_val_def = function
 	let ctyp' =
 	    try
 		let injs = Idr_map.find idr builder.Struct_builder.inj_map in
-		let (Idr tycon, typrms) = flatten_tycon_apply typ in
+		let (Idr tycon, typrms) = flatten_tycon_application typ in
 		let typrms' = List.map (snd *< gen_ctyp) typrms in
 		Ast.TyDcl (_loc, tycon, typrms', <:ctyp< [ $list:injs$ ] >>, [])
 	    with Not_found -> ctyp in
