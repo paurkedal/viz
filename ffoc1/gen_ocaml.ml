@@ -143,11 +143,11 @@ let rec gen_ident is_uid = function
 	<:ident< $gen_ident true m$ . $gen_name is_uid field$ >>
     | Ctrm_ref (cidr, hint) ->
 	gen_name (hint = Ih_inj) cidr
-    | ctrm -> errf_at (trm_location ctrm) "Not a path."
+    | ctrm -> errf_at (ctrm_loc ctrm) "Not a path."
 
 let rec gen_ctyp = function
     | Ctrm_ref (cidr, Ih_none) ->
-	let _loc = convert_loc (cidr_location cidr) in
+	let _loc = convert_loc (cidr_loc cidr) in
 	let s = cidr_to_string cidr in
 	if String.get s 0 = '\'' then
 	    let s' = String.sub s 1 (String.length s - 1) in
@@ -167,7 +167,7 @@ let rec gen_ctyp = function
 	let (_,   y') = gen_ctyp y in
 	(name, Ast.TyDcl (_loc, cidr_to_string tycon, typrms', y', []))
     | ctrm ->
-	errf_at (trm_location ctrm) "Ivalid type expression."
+	errf_at (ctrm_loc ctrm) "Ivalid type expression."
 
 let gen_literal_patt _loc = function
     | Lit_unit     -> <:patt< () >>
@@ -232,15 +232,15 @@ let rec gen_pattern ?(isf = false) env = function
 	let f' = gen_pattern ~isf:true  env f in
 	let x' = gen_pattern ~isf:false env x in
 	<:patt< $f'$ $x'$ >>
-    | ctrm -> errf_at (trm_location ctrm) "Unimplemented pattern."
+    | ctrm -> errf_at (ctrm_loc ctrm) "Unimplemented pattern."
 
 let rec gen_sig_expr env = function
     | Ctrm_ref (Cidr (loc, idr), Ih_none) ->
 	let _loc = convert_loc loc in
 	<:module_type< $uid: idr_to_uc idr$ >>
     | ctrm ->
-	errf_at (trm_location ctrm) "Invalid signature expression %s."
-		(trm_to_string ctrm)
+	errf_at (ctrm_loc ctrm) "Invalid signature expression %s."
+		(ctrm_to_string ctrm)
 let rec gen_struct_expr env = function
     | Ctrm_ref (Cidr (loc, idr), Ih_none) ->
 	let _loc = convert_loc loc in
@@ -262,11 +262,11 @@ let rec gen_struct_expr env = function
 	    let body' = gen_struct_expr env body in
 	    <:module_expr< functor ($uid: cidr_to_uc m$ : $sgt'$) -> $body'$ >>
 	| _ ->
-	    errf_at (trm_location pat) "Invalid functor parameter."
+	    errf_at (ctrm_loc pat) "Invalid functor parameter."
 	end
     | ctrm ->
-	errf_at (trm_location ctrm) "Invalid structure expression %s."
-		(trm_to_string ctrm)
+	errf_at (ctrm_loc ctrm) "Invalid structure expression %s."
+		(ctrm_to_string ctrm)
 and gen_expr env = function
     | Ctrm_ref (cidr, Ih_none) ->
 	gen_value_name cidr
@@ -316,7 +316,7 @@ and gen_expr env = function
 	let _loc = convert_loc loc in
 	let cases' = gen_cases env _loc cases in
 	<:expr< fun [ $list:cases'$ ] >>
-    | ctrm -> errf_at (trm_location ctrm) "Unimplemented expression."
+    | ctrm -> errf_at (ctrm_loc ctrm) "Unimplemented expression."
 and gen_cases env _loc = List.map
     (fun (pat, cq) ->
 	let pat' = gen_pattern env pat in
@@ -365,7 +365,7 @@ let gen_val_def = function
 		<:str_item< module $uid: cidr_to_uc name$ = $body'$ >>
 		builder
 	| _ ->
-	    errf_at loc "Invalid head %s of module pattern." (trm_to_string pat)
+	    errf_at loc "Invalid head %s of module pattern." (ctrm_to_string pat)
 	end
     | Cdef_lex _ -> ident
     | Cdef_type (loc, typ) -> fun builder ->
@@ -424,4 +424,4 @@ let gen_toplevel = function
 	let builder' = List.fold gen_val_def defs builder in
 	Struct_builder.get_str_item _loc builder'
     | ctrm ->
-	errf_at (trm_location ctrm) "Expecting a structure."
+	errf_at (ctrm_loc ctrm) "Expecting a structure."

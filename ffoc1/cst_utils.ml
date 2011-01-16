@@ -24,12 +24,12 @@ let extract_term_typing = function
     | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
 	    when cidr_is_2o_colon op ->
 	(x, y)
-    | ctrm -> errf_at (trm_location ctrm) "Type judgement expected."
+    | ctrm -> errf_at (ctrm_loc ctrm) "Type judgement expected."
 
 let extract_cidr_typing expr =
     match extract_term_typing expr with
     | Ctrm_ref (cidr, _), y -> (cidr, y)
-    | x, y -> errf_at (trm_location x) "Identifier expected."
+    | x, y -> errf_at (ctrm_loc x) "Identifier expected."
 
 let move_typing (src, dst) =
     match src with
@@ -49,5 +49,5 @@ let flatten_tycon_application typ =
     let rec loop args = function
 	| Ctrm_apply (_, con, arg) -> loop (arg :: args) con
 	| Ctrm_ref (con, _) -> (con, List.rev args)
-	| ctrm -> errf_at (trm_location ctrm) "Not a type constructor." in
+	| ctrm -> errf_at (ctrm_loc ctrm) "Not a type constructor." in
     loop [] typ

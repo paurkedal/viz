@@ -30,15 +30,15 @@ let rec quantify loc qs e =
 let apply loc f x = Ctrm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
-let trm_1o loc name = Ctrm_ref (Cidr (loc, Cst.idr_1o name), Ih_none)
-let trm_2o loc name = Ctrm_ref (Cidr (loc, Cst.idr_2o name), Ih_none)
+let ctrm_1o loc name = Ctrm_ref (Cidr (loc, Cst.idr_1o name), Ih_none)
+let ctrm_2o loc name = Ctrm_ref (Cidr (loc, Cst.idr_2o name), Ih_none)
 
 let apply_infix lb ub lbf ubf f =
-    apply2 (mkloc lb ub) (trm_2o (mkloc lbf ubf) f)
+    apply2 (mkloc lb ub) (ctrm_2o (mkloc lbf ubf) f)
 let apply_prefix lb ub lbf ubf f =
-    apply (mkloc lb ub) (trm_1o (mkloc lbf ubf) f)
+    apply (mkloc lb ub) (ctrm_1o (mkloc lbf ubf) f)
 let apply_suffix lb ub lbf ubf f =
-    apply (mkloc lb ub) (trm_1o (mkloc lbf ubf) f)
+    apply (mkloc lb ub) (ctrm_1o (mkloc lbf ubf) f)
 
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)

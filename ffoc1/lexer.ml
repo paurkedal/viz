@@ -273,7 +273,7 @@ let lexopen state = function
 	end
 	defs
     | ctrm ->
-	let loc = Cst.trm_location ctrm in
+	let loc = Cst.ctrm_loc ctrm in
 	raise (Error_at (loc, "Lexical open needs a structure."))
 
 let triescan state trie =

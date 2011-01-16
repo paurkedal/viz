@@ -40,7 +40,7 @@ let idr_2o_symbol (Idr name) =
 let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
 let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
 
-let cidr_location (Cidr (loc, _)) = loc
+let cidr_loc (Cidr (loc, _)) = loc
 let cidr_to_idr (Cidr (_, idr)) = idr
 let cidr_to_string (Cidr (_, Idr s)) = s
 
@@ -67,7 +67,7 @@ end
 module Idr_set = Set.Make (Idr)
 module Idr_map = Map.Make (Idr)
 
-let trm_location = function
+let ctrm_loc = function
     | Ctrm_ref (Cidr (loc, _), _) | Ctrm_literal (loc, _) | Ctrm_label (loc, _, _)
     | Ctrm_lambda (loc, _, _) | Ctrm_quantify (loc, _, _, _)
     | Ctrm_let (loc, _, _, _)
@@ -256,7 +256,7 @@ and print_defs fo defs =
 let print fo =
     print_inline fo Opkind.p_min
 
-let trm_to_string ctrm =
+let ctrm_to_string ctrm =
     let fo = Formatter.create () in
     print fo ctrm;
     Formatter.contents fo

@@ -40,19 +40,19 @@ val idr_2o_symbol : idr -> string
 val idr_1b : idr -> idr -> idr
 val idr_1b_c : string -> string -> idr
 
-val cidr_location : cidr -> loc
+val cidr_loc : cidr -> loc
 val cidr_to_idr : cidr -> idr
 val cidr_to_string : cidr -> string
 
 module Idr_set : Set.S with type elt = idr
 module Idr_map : Map.S with type key = idr
 
-val trm_location : ctrm -> loc
+val ctrm_loc : ctrm -> loc
 
 val application_depth : int -> idr -> ctrm -> int
 
 val print : Formatter.t -> ctrm -> unit
-val trm_to_string : ctrm -> string
+val ctrm_to_string : ctrm -> string
 
 
 (* Specific Symbols *)
