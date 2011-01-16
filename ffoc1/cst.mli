@@ -41,21 +41,24 @@ val idr_2o_symbol : idr -> string
 val idr_1b : idr -> idr -> idr
 val idr_1b_c : string -> string -> idr
 
-val i_2o_colon : idr
-val i_2o_comma : idr
-val i_2o_arrow : idr
-val i_2o_eq : idr
-val i_2o_neq : idr
+val cidr_location : cidr -> loc
+val cidr_to_idr : cidr -> idr
+val cidr_to_string : cidr -> string
 
 module Idr_set : Set.S with type elt = idr
 module Idr_map : Map.S with type key = idr
 
 val trm_location : trm -> loc
 
-val tuple_op : trm
-val that_trm : trm
-
 val application_depth : int -> idr -> trm -> int
 
 val print : Formatter.t -> trm -> unit
 val trm_to_string : trm -> string
+
+
+(* Specific Symbols *)
+val idr_2o_arrow : idr
+val cidr_is_2o_colon : cidr -> bool
+val cidr_is_2o_comma : cidr -> bool
+val cidr_is_2o_arrow : cidr -> bool
+val cidr_is_2o_eq : cidr -> bool

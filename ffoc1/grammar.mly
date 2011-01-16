@@ -17,6 +17,10 @@
  */
 
 %{
+let mkloc lb ub =
+    Location.between (Location.Bound.of_lexing_position lb)
+		     (Location.Bound.of_lexing_position ub)
+
 let rec quantify loc qs e =
     match qs with
     | [] -> e
@@ -24,25 +28,19 @@ let rec quantify loc qs e =
 let apply loc f x = Cst.Trm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
-let trm_1o loc name = Cst.Trm_ref (loc, Cst.idr_1o name, Cst.Ih_none)
-let trm_2o loc name = Cst.Trm_ref (loc, Cst.idr_2o name, Cst.Ih_none)
+let trm_1o loc name = Cst.Trm_ref (Cst.Cidr (loc, Cst.idr_1o name), Cst.Ih_none)
+let trm_2o loc name = Cst.Trm_ref (Cst.Cidr (loc, Cst.idr_2o name), Cst.Ih_none)
 
-let apply_infix  loc name = apply2 loc (trm_2o loc name)
-let apply_prefix loc name = apply  loc (trm_1o loc name)
-let apply_suffix loc name = apply  loc (trm_1o loc name)
-
-let apply_prefixq loc name (qx, x) =
-    apply  loc (trm_1o loc name) (quantify loc qx x)
-let apply_infixq loc name x (qy, y) =
-    apply2 loc (trm_2o loc name) x (quantify loc qy y)
+let apply_infix lb ub lbf ubf f =
+    apply2 (mkloc lb ub) (trm_2o (mkloc lbf ubf) f)
+let apply_prefix lb ub lbf ubf f =
+    apply (mkloc lb ub) (trm_1o (mkloc lbf ubf) f)
+let apply_suffix lb ub lbf ubf f =
+    apply (mkloc lb ub) (trm_1o (mkloc lbf ubf) f)
 
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)
-    apply loc (Cst.Trm_ref (loc, name0, Cst.Ih_none))
-
-let mkloc lb ub =
-    Location.between (Location.Bound.of_lexing_position lb)
-		     (Location.Bound.of_lexing_position ub)
+    apply loc (Cst.Trm_ref (Cst.Cidr (loc, name0), Cst.Ih_none))
 %}
 
 %token EOF
@@ -166,9 +164,9 @@ modular_clause:
     { Cst.Sct_open (mkloc $startpos $endpos, $2) }
   | INCLUDE expr
     { Cst.Sct_include (mkloc $startpos $endpos, $2) }
-  | SIG IDENTIFIER
+  | SIG identifier
     { Cst.Dec_sig (mkloc $startpos $endpos, $2) }
-  | SIG IDENTIFIER BEGIN BE signature_expr END
+  | SIG identifier BEGIN BE signature_expr END
     { Cst.Def_sig (mkloc $startpos $endpos, $2, $5) }
   | TYPE type_equation
     { Cst.Sct_type (mkloc $startpos $endpos, $2) }
@@ -198,7 +196,9 @@ atomic_predicate:
 compound_predicate:
     atomic_predicate { $1 }
   | atomic_predicate WHICH predicate
-    { Cst.Trm_let (mkloc $startpos $endpos, Cst.that_trm, $1, $3) }
+    { let that = Cst.Cidr (mkloc $startpos($2) $endpos($2), Cst.Idr "that") in
+      let that_trm = Cst.Trm_ref (that, Cst.Ih_none) in
+      Cst.Trm_let (mkloc $startpos $endpos, that_trm, $3, $1) }
   | postif_predicate { $1 }
   | if_predicate { $1 }
   | at_predicate { Cst.Trm_at (mkloc $startpos $endpos, $1) }
@@ -243,44 +243,65 @@ conditional:
 qlogic_expr:
     qseq logic_expr { quantify (mkloc $startpos $endpos) $1 $2 }
   ;
+/* Replacing (qseq logic_expr) with (qlogic_expr) below causes shift/reduce
+ * conflicts unless inlined, and positions are not supported when inlining.
+ * Thus, the verbosity. */
 logic_expr:
     relational_expr { $1 }
   | logic_expr LOGIC0 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC0 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC1 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC1 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC2 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC2 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC3 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC3 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC4 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC4 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC5 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC5 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC6 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC6 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC7 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC7 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   | logic_expr LOGIC8 qseq logic_expr
-    { apply_infixq (mkloc $startpos $endpos) $2 $1 ($3, $4) }
+    { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
+      apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC8 qseq logic_expr
-    { apply_prefixq (mkloc $startpos $endpos) $1 ($2, $3) }
+    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
+      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
   ;
 
 qseq:
@@ -288,7 +309,9 @@ qseq:
   | qseq quantifier { $2 :: $1 }
   ;
 quantifier:
-    QUANTIFIER expr DOT { (mkloc $startpos $endpos, $1, $2) }
+    QUANTIFIER expr DOT
+    { (mkloc $startpos $endpos,
+       Cst.Cidr (mkloc $startpos($1) $endpos($1), $1), $2) }
   ;
 
 relational_expr:
@@ -300,78 +323,129 @@ relation_seq:
   | relation_comp relation_seq { $1 :: $2 }
   ;
 relation_comp:
-    RELATION arith { (mkloc $startpos($1) $endpos($1), Cst.idr_2o $1, $2) }
+    RELATION arith
+    { (mkloc $startpos $endpos,
+       Cst.Cidr (mkloc $startpos($1) $endpos($1), Cst.idr_2o $1), $2) }
   ;
 arith:
-    application		{ $1 }
-  | ARITH0 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH0_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH0 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH1 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH1_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH1 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH2 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH2_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH2 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | LABEL  arith	{ Cst.Trm_label (mkloc $startpos $endpos, $1, $2) }
-  | ARITH3 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH3_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH3 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH4 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH4_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH4 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH5 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH5_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH5 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH6 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH6_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH6 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH7 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH7_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH7 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH8 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH8_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH8 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | ARITH9 arith	{ apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | arith ARITH9_S	{ apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | arith ARITH9 arith	{ apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
+    application
+    { $1 }
+  | ARITH0 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH0_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH0 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH1 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH1_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH1 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH2 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH2_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH2 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | LABEL  arith
+    { let label = Cst.Cidr (mkloc $startpos($1) $endpos($1), $1) in
+      Cst.Trm_label (mkloc $startpos $endpos, label, $2) }
+  | ARITH3 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH3_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH3 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH4 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH4_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH4 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH5 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH5_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH5 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH6 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH6_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH6 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH7 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH7_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH7 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH8 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH8_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH8 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | ARITH9 arith
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | arith ARITH9_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | arith ARITH9 arith
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
   ;
 application:
     script { $1 }
   | application script { apply (mkloc $startpos $endpos) $1 $2 }
   | application LABEL script
-    { let loc = mkloc $startpos $endpos
-      in apply loc $1 (Cst.Trm_label (loc, $2, $3)) }
+    {
+	let loc = mkloc $startpos $endpos in
+	let label = Cst.Cidr (mkloc $startpos($2) $endpos($2), $2) in
+	apply loc $1 (Cst.Trm_label (loc, label, $3))
+    }
   | FENCE arith FENCE { apply_fence (mkloc $startpos $endpos) $1 $3 $2 }
   ;
 script:
-    projection		    { $1 }
-  | SCRIPT0_P script	    { apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | script SCRIPT0_S	    { apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | script SCRIPT0_I script { apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | SCRIPT1_P script	    { apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | script SCRIPT1_S	    { apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | script SCRIPT1_I script { apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
-  | SCRIPT2_P script	    { apply_prefix (mkloc $startpos $endpos) $1 $2 }
-  | script SCRIPT2_S	    { apply_suffix (mkloc $startpos $endpos) $2 $1 }
-  | script SCRIPT2_I script { apply_infix (mkloc $startpos $endpos) $2 $1 $3 }
+    projection
+    { $1 }
+  | SCRIPT0_P script
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | script SCRIPT0_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | script SCRIPT0_I script
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | SCRIPT1_P script
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | script SCRIPT1_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | script SCRIPT1_I script
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | SCRIPT2_P script
+    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+  | script SCRIPT2_S
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
+  | script SCRIPT2_I script
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
   ;
 
 projection:
     atomic_expr { $1 }
-  | projection PROJECT { Cst.Trm_project (mkloc $startpos $endpos, $2, $1) }
+  | projection PROJECT
+    { let p = Cst.Cidr (mkloc $startpos($2) $endpos($2), $2) in
+      Cst.Trm_project (mkloc $startpos $endpos, p, $1) }
   ;
 
 atomic_expr:
-    IDENTIFIER { Cst.Trm_ref (mkloc $startpos $endpos, $1, Cst.Ih_none) }
+    identifier { Cst.Trm_ref ($1, Cst.Ih_none) }
   | HINTED_IDENTIFIER
-    { let idr, hint = $1 in Cst.Trm_ref (mkloc $startpos $endpos, idr, hint) }
+    { let idr, hint = $1 in
+      Cst.Trm_ref (Cst.Cidr (mkloc $startpos $endpos, idr), hint) }
   | LITERAL { Cst.Trm_literal (mkloc $startpos $endpos, $1) }
   | LPAREN parenthesised RPAREN { $2 }
   | LBRACKET parenthesised RBRACKET
     {
 	let locb = mkloc $startpos $endpos($1) in
-	let f = Cst.Trm_ref (locb, Cst.idr_1b $1 $3, Cst.Ih_none) in
+	let f = Cst.Trm_ref (Cst.Cidr (locb, Cst.idr_1b $1 $3), Cst.Ih_none) in
 	Cst.Trm_apply (mkloc $startpos $endpos, f, $2)
     }
   | WHERE BEGIN structure_body END
@@ -384,3 +458,5 @@ parenthesised:
     /* empty */ { Cst.Trm_literal (mkloc $startpos $endpos, Cst.Lit_unit) }
   | expr { $1 }
   ;
+
+identifier: IDENTIFIER { Cst.Cidr (mkloc $startpos $endpos, $1) };

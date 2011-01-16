@@ -16,7 +16,8 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-open Camlp4.PreCast
+module Ast = Camlp4.PreCast.Ast
+module Loc = Camlp4.PreCast.Loc
 open Diag
 open Cst
 open Cst_utils
@@ -30,8 +31,6 @@ type approx_type =
     | At_type
     | At_val
     | At_inj of int
-
-let ctor_name s = String.capitalize s
 
 module Struct_builder = struct
     type accu =
@@ -74,14 +73,14 @@ module Struct_builder = struct
 		       else builder in
 	{ builder' with items = item :: builder.items; }
 
-    let rec add_ctyp idr ctyp builder =
+    let rec add_ctyp cidr ctyp builder =
 	match builder.accu with
 	| Accu_none ->
 	    { builder with accu = Accu_ctyp [ctyp] }
 	| Accu_ctyp ctyps ->
 	    { builder with accu = Accu_ctyp (ctyp :: ctyps) }
 	| _ ->
-	    add_ctyp idr ctyp (flush builder)
+	    add_ctyp cidr ctyp (flush builder)
 
     let rec add_binding binding builder =
 	match builder.accu with
@@ -92,9 +91,11 @@ module Struct_builder = struct
 	| _ ->
 	    add_binding binding (flush builder)
 
-    let add_def _loc idr binding at builder =
+    let add_def _loc (Cidr (_, idr)) binding at builder =
 	{ add_binding binding builder with
 	    env = Idr_map.add idr at builder.env }
+
+    let find_injs (Cidr (_, idr)) builder = Idr_map.find idr builder.inj_map
 
     let get_str_item _loc builder =
 	let builder' =
@@ -122,7 +123,15 @@ let fresh_var =
 	next_index := i + 1;
 	sprintf "_x%d" i
 
-let gen_name _loc is_uid (Idr name) =
+let str_to_lid s = String.uncapitalize s
+let str_to_uid s = String.capitalize s
+let idr_to_uc (Idr s) = str_to_uid s
+let idr_to_lc (Idr s) = str_to_lid s
+let cidr_to_uc (Cidr (_, Idr s)) = str_to_uid s
+let cidr_to_lc (Cidr (_, Idr s)) = str_to_lid s
+
+let gen_name is_uid (Cidr (loc, Idr name)) =
+    let _loc = convert_loc loc in
     if is_uid then
 	<:ident< $uid: String.capitalize name$ >>
     else
@@ -130,31 +139,32 @@ let gen_name _loc is_uid (Idr name) =
 let rec gen_ident is_uid = function
     | Trm_project (loc, field, m) ->
 	let _loc = convert_loc loc in
-	<:ident< $gen_ident true m$ . $gen_name _loc is_uid field$ >>
-    | Trm_ref (loc, idr, hint) ->
-	let _loc = convert_loc loc in
-	gen_name _loc (hint = Ih_inj) idr
+	<:ident< $gen_ident true m$ . $gen_name is_uid field$ >>
+    | Trm_ref (cidr, hint) ->
+	gen_name (hint = Ih_inj) cidr
     | trm -> errf_at (trm_location trm) "Not a path."
 
 let rec gen_ctyp = function
-    | Trm_ref (loc, Idr c, Ih_none) ->
-	let _loc = convert_loc loc in
-	if String.get c 0 = '\'' then
-	    (Idr c, <:ctyp< '$lid: String.sub c 1 (String.length c - 1)$ >>)
+    | Trm_ref (cidr, Ih_none) ->
+	let _loc = convert_loc (cidr_location cidr) in
+	let s = cidr_to_string cidr in
+	if String.get s 0 = '\'' then
+	    let s' = String.sub s 1 (String.length s - 1) in
+	    (cidr, <:ctyp< '$lid: str_to_lid s'$ >>)
 	else
-	    (Idr c, <:ctyp< $lid:c$ >>)
+	    (cidr, <:ctyp< $lid: str_to_lid s$ >>)
     | Trm_apply (loc, x, y) ->
 	let _loc = convert_loc loc in
-	let (idr, x') = gen_ctyp x in
+	let (name, x') = gen_ctyp x in
 	let (_,   y') = gen_ctyp y in
-	(idr, <:ctyp< $x'$ $y'$ >>)
-    | Trm_rel (loc, x, [(_, r, y)]) when r = i_2o_eq ->
+	(name, <:ctyp< $x'$ $y'$ >>)
+    | Trm_rel (loc, x, [(_, r, y)]) when cidr_is_2o_eq r ->
 	let _loc = convert_loc loc in
 	let (tycon, typrms) = flatten_tycon_application x in
 	let typrms' = List.map (snd *< gen_ctyp) typrms in
-	let (idr, x') = gen_ctyp x in
+	let (name, x') = gen_ctyp x in
 	let (_,   y') = gen_ctyp y in
-	(idr, Ast.TyDcl (_loc, idr_to_string tycon, typrms', y', []))
+	(name, Ast.TyDcl (_loc, cidr_to_string tycon, typrms', y', []))
     | trm ->
 	errf_at (trm_location trm) "Ivalid type expression."
 
@@ -197,20 +207,22 @@ let gen_opname _loc = function
 	    bprintf buf "%02x" (Char.code s.[i])
 	done;
 	<:expr< $lid:Buffer.contents buf$ >>
-let gen_name _loc name =
+let gen_value_name (Cidr (loc, idr)) =
+    let _loc = convert_loc loc in
+    let name = idr_to_string idr in
     if String.length name > 2 && ('1' <= name.[0] && name.[0] <= '3')
 	    && name.[1] = '\''
     then gen_opname _loc name
-    else <:expr< $lid:name$ >>
+    else <:expr< $lid: idr_to_lc idr$ >>
 
 let rec gen_pattern ?(isf = false) env = function
-    | Trm_ref (loc, Idr idr, hint) when  hint = Ih_inj
-				     || (hint = Ih_none && isf) ->
+    | Trm_ref (Cidr (loc, idr), hint)
+	    when  hint = Ih_inj || (hint = Ih_none && isf) ->
 	let _loc = convert_loc loc in
-	<:patt< $uid:ctor_name idr$ >>
-    | Trm_ref (loc, Idr idr, hint) when hint <> Ih_inj ->
+	<:patt< $uid: idr_to_uc idr$ >>
+    | Trm_ref (Cidr (loc, idr), hint) when hint <> Ih_inj ->
 	let _loc = convert_loc loc in
-	<:patt< $lid:idr$ >>
+	<:patt< $lid: idr_to_lc idr$ >>
     | Trm_literal (loc, lit) ->
 	let _loc = convert_loc loc in
 	gen_literal_patt _loc lit
@@ -222,18 +234,18 @@ let rec gen_pattern ?(isf = false) env = function
     | trm -> errf_at (trm_location trm) "Unimplemented pattern."
 
 let rec gen_sig_expr env = function
-    | Trm_ref (loc, Idr name, Ih_none) ->
+    | Trm_ref (Cidr (loc, idr), Ih_none) ->
 	let _loc = convert_loc loc in
-	<:module_type< $uid: String.capitalize name$ >>
+	<:module_type< $uid: idr_to_uc idr$ >>
     | trm ->
 	errf_at (trm_location trm) "Invalid signature expression %s."
 		(trm_to_string trm)
 let rec gen_struct_expr env = function
-    | Trm_ref (loc, Idr name, Ih_none) ->
+    | Trm_ref (Cidr (loc, idr), Ih_none) ->
 	let _loc = convert_loc loc in
-	<:module_expr< $uid: String.capitalize name$ >>
-    | Trm_apply (loc, Trm_apply (loc1, Trm_ref (_, op, _), m), s)
-	    when op = i_2o_colon ->
+	<:module_expr< $uid: idr_to_uc idr$ >>
+    | Trm_apply (loc, Trm_apply (loc1, Trm_ref (op, _), m), s)
+	    when cidr_is_2o_colon op ->
 	let _loc = convert_loc loc in
 	<:module_expr< ($gen_struct_expr env m$ : $gen_sig_expr env s$) >>
     | Trm_apply (loc, f, m) ->
@@ -242,13 +254,13 @@ let rec gen_struct_expr env = function
     | Trm_lambda (loc, pat, body) ->
 	let _loc = convert_loc loc in
 	begin match pat with
-	| Trm_apply (locp, Trm_apply (locx, Trm_ref (_, colon, _),
-					    Trm_ref (_, Idr m, _)),
+	| Trm_apply (locp, Trm_apply (locx, Trm_ref (colon, _),
+					    Trm_ref (m, _)),
 			   sgt)
-		when colon = i_2o_colon ->
+		when cidr_is_2o_colon colon ->
 	    let sgt' = gen_sig_expr env sgt in
 	    let body' = gen_struct_expr env body in
-	    <:module_expr< functor ($uid:m$ : $sgt'$) -> $body'$ >>
+	    <:module_expr< functor ($uid: cidr_to_uc m$ : $sgt'$) -> $body'$ >>
 	| _ ->
 	    errf_at (trm_location pat) "Invalid functor parameter."
 	end
@@ -256,13 +268,12 @@ let rec gen_struct_expr env = function
 	errf_at (trm_location trm) "Invalid structure expression %s."
 		(trm_to_string trm)
 and gen_expr env = function
-    | Trm_ref (loc, Idr name, Ih_none) ->
-	let _loc = convert_loc loc in
-	gen_name _loc name
+    | Trm_ref (cidr, Ih_none) ->
+	gen_value_name cidr
     | Trm_literal (loc, lit) ->
 	let _loc = convert_loc loc in
 	gen_literal_expr _loc lit
-    | Trm_project (loc, Idr field, m) ->
+    | Trm_project (loc, Cidr (_, Idr field), m) ->
 	let _loc = convert_loc loc in
 	let m' = gen_struct_expr env m in
 	<:expr< let module M_ = $mexp: m'$ in M_.$lid:field$ >>
@@ -311,8 +322,8 @@ and gen_cases env _loc = List.map
 	let pat' = gen_pattern env pat in
 	let cq' = gen_expr env cq in
 	<:match_case< $pat'$ -> $cq'$ >>)
-and gen_apply2_idr env _loc (Idr op) x0 x1 =
-    let f = gen_name _loc op in
+and gen_apply2_idr env _loc op x0 x1 =
+    let f = gen_value_name op in
     let x0' = gen_expr env x0 in
     let x1' = gen_expr env x1 in
     <:expr< $f$ $x0'$ $x1'$ >>
@@ -321,17 +332,17 @@ let collect_inj def inj_map =
     match def with
     | Dec_inj (loc, trm) ->
 	let _loc = convert_loc loc in
-	let (Idr injname, typ) = extract_idr_typing trm in
+	let (name, typ) = extract_cidr_typing trm in
 	let rec flatten_arrow pts = function
-	    | Trm_apply (_, Trm_apply (_, Trm_ref (_, c, _), pt), rt)
-		    when c = i_2o_arrow ->
+	    | Trm_apply (_, Trm_apply (_, Trm_ref (op, _), pt), rt)
+		    when cidr_is_2o_arrow op ->
 		let (_, pt') = gen_ctyp pt in
 		flatten_arrow (pt' :: pts) rt
 	    | rt -> (rt, List.rev pts) in
 	let (rt, pts) = flatten_arrow [] typ in
-	let (rc, tps) = flatten_tycon_application rt in
+	let (Cidr (_, rc), tps) = flatten_tycon_application rt in
 	let injs = try Idr_map.find rc inj_map with Not_found -> [] in
-	let inj = <:ctyp< $uid:ctor_name injname$ of $list:pts$ >> in
+	let inj = <:ctyp< $uid: cidr_to_uc name$ of $list:pts$ >> in
 	Idr_map.add rc (inj :: injs) inj_map
     | _ -> inj_map
 
@@ -348,10 +359,10 @@ let gen_val_def = function
 	let pat, body = move_typing (pat, body) in
 	let pat, body = move_applications (pat, body) in
 	begin match pat with
-	| Trm_ref (_, Idr name, _) -> fun builder ->
+	| Trm_ref (name, _) -> fun builder ->
 	    let body' = gen_struct_expr builder.Struct_builder.env body in
 	    Struct_builder.add_str_item
-		<:str_item< module $uid: String.capitalize name$ = $body'$ >>
+		<:str_item< module $uid: cidr_to_uc name$ = $body'$ >>
 		builder
 	| _ ->
 	    errf_at loc "Invalid head %s of module pattern." (trm_to_string pat)
@@ -359,15 +370,15 @@ let gen_val_def = function
     | Dec_lex _ -> ident
     | Sct_type (loc, typ) -> fun builder ->
 	let _loc = convert_loc loc in
-	let (idr, ctyp) = gen_ctyp typ in
+	let (name, ctyp) = gen_ctyp typ in
 	let ctyp' =
 	    try
-		let injs = Idr_map.find idr builder.Struct_builder.inj_map in
-		let (Idr tycon, typrms) = flatten_tycon_application typ in
+		let injs = Struct_builder.find_injs name builder in
+		let (Cidr (_, Idr c), typrms) = flatten_tycon_application typ in
 		let typrms' = List.map (snd *< gen_ctyp) typrms in
-		Ast.TyDcl (_loc, tycon, typrms', <:ctyp< [ $list:injs$ ] >>, [])
+		Ast.TyDcl (_loc, c, typrms', <:ctyp< [ $list:injs$ ] >>, [])
 	    with Not_found -> ctyp in
-	Struct_builder.add_ctyp idr ctyp' builder
+	Struct_builder.add_ctyp name ctyp' builder
     | Def_val (loc, pat, body) -> fun builder ->
 	let _loc = convert_loc loc in
 	let body' = gen_expr builder.Struct_builder.env body in
@@ -376,18 +387,18 @@ let gen_val_def = function
 		let _loc = convert_loc loc in
 		let x' = gen_pattern builder.Struct_builder.env x in
 		decons_formal <:expr< fun $x'$ -> $body'$ >> f
-	    | Trm_ref (loc, f, Ih_none) ->
+	    | Trm_ref (f, Ih_none) ->
 		(f, body')
 	    | _ -> errf_at (loc) "Invalid pattern in formals." in
 	let (f, body'') = decons_formal body' pat in
-	let binding' = <:binding< $lid:idr_to_string f$ = $body''$ >> in
+	let binding' = <:binding< $lid: cidr_to_string f$ = $body''$ >> in
 	Struct_builder.add_def _loc f binding' At_val builder
     | Dec_inj (loc, typing) -> fun builder ->
 	let _loc = convert_loc loc in
-	let idr, typ = extract_idr_typing typing in
-	let v = idr_to_string idr in
-	let c = ctor_name v in
-	let r = application_depth 1 i_2o_arrow typ in
+	let name, typ = extract_cidr_typing typing in
+	let v = cidr_to_lc name in
+	let c = cidr_to_uc name in
+	let r = application_depth 1 idr_2o_arrow typ in
 	let binding' =
 	    if r = 0 then
 		<:binding< $lid:v$ = $uid:c$ >>
@@ -403,7 +414,7 @@ let gen_val_def = function
 			      parms e0 in
 		<:binding< $lid:v$ = $e1$ >>
 	    end in
-	Struct_builder.add_def _loc idr binding' (At_inj r) builder
+	Struct_builder.add_def _loc name binding' (At_inj r) builder
 
 let gen_toplevel = function
     | Trm_where (loc, defs) ->

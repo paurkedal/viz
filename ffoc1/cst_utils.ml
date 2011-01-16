@@ -20,20 +20,20 @@ open Cst
 open Diag
 
 let extract_term_typing = function
-    | Trm_apply (_, Trm_apply (_, Trm_ref (_, colon, _), x), y)
-	    when colon = i_2o_colon ->
+    | Trm_apply (_, Trm_apply (_, Trm_ref (op, _), x), y)
+	    when cidr_is_2o_colon op ->
 	(x, y)
     | trm -> errf_at (trm_location trm) "Type judgement expected."
 
-let extract_idr_typing expr =
+let extract_cidr_typing expr =
     match extract_term_typing expr with
-    | Trm_ref (_, idr, _), y -> (idr, y)
+    | Trm_ref (cidr, _), y -> (cidr, y)
     | x, y -> errf_at (trm_location x) "Identifier expected."
 
 let move_typing (src, dst) =
     match src with
-    | Trm_apply (l1, Trm_apply (l2, (Trm_ref (_, op, _) as colon), src'), rsig)
-	    when op = i_2o_colon ->
+    | Trm_apply (l1, Trm_apply (l2, (Trm_ref (op, _) as colon), src'), rsig)
+	    when cidr_is_2o_colon op ->
 	(src', Trm_apply (l1, Trm_apply (l2, colon, dst), rsig))
     | _ ->
 	(src, dst)
@@ -47,6 +47,6 @@ let rec move_applications (src, dst) =
 let flatten_tycon_application typ =
     let rec loop args = function
 	| Trm_apply (_, con, arg) -> loop (arg :: args) con
-	| Trm_ref (_, con, _) -> (con, List.rev args)
+	| Trm_ref (con, _) -> (con, List.rev args)
 	| trm -> errf_at (trm_location trm) "Not a type constructor." in
     loop [] typ

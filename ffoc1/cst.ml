@@ -40,14 +40,18 @@ let idr_2o_symbol (Idr name) =
 let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
 let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
 
-let i_2o_colon	= idr_2o_c ":"
-let i_2o_comma	= idr_2o_c ","
-let i_2o_arrow	= idr_2o_c "→"
-let i_2o_eq	= idr_2o_c "="
-let i_2o_neq	= idr_2o_c "≠"
+let cidr_location (Cidr (loc, _)) = loc
+let cidr_to_idr (Cidr (_, idr)) = idr
+let cidr_to_string (Cidr (_, Idr s)) = s
 
-let tuple_op = Trm_ref (Location.dummy, idr_2o_c ",", Ih_none)
-let that_trm = Trm_ref (Location.dummy, idr_of_string "that", Ih_none)
+let idr_2o_colon	= idr_2o_c ":"
+let idr_2o_arrow	= idr_2o_c "→"
+let idr_2o_comma	= idr_2o_c ","
+let idr_2o_eq		= idr_2o_c "="
+let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
+let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
+let cidr_is_2o_comma	(Cidr (_, idr)) = idr = idr_2o_comma
+let cidr_is_2o_eq	(Cidr (_, idr)) = idr = idr_2o_eq
 
 let lit_to_string = function
     | Lit_unit -> "unit"
@@ -64,7 +68,7 @@ module Idr_set = Set.Make (Idr)
 module Idr_map = Map.Make (Idr)
 
 let trm_location = function
-    | Trm_ref (loc, _, _) | Trm_literal (loc, _) | Trm_label (loc, _, _)
+    | Trm_ref (Cidr (loc, _), _) | Trm_literal (loc, _) | Trm_label (loc, _, _)
     | Trm_lambda (loc, _, _) | Trm_quantify (loc, _, _, _)
     | Trm_let (loc, _, _, _)
     | Trm_rel (loc, _, _) | Trm_apply (loc, _, _)
@@ -75,7 +79,7 @@ let trm_location = function
 
 let application_depth i f x =
     let rec loop n xs = function
-	| Trm_apply (_, Trm_ref (_, f', _), x') when f' = f ->
+	| Trm_apply (_, Trm_ref (Cidr (_, f'), _), x') when f' = f ->
 	    loop (n + 1) [] (List.nth (x' :: xs) i)
 	| Trm_apply (_, f', x') ->
 	    loop n (x' :: xs) f'
@@ -84,7 +88,7 @@ let application_depth i f x =
 
 module Fo = Formatter
 
-let print_name fo idr =
+let print_name fo (Cidr (_, idr)) =
     Fo.put fo `Name (idr_to_string idr)
 
 let print_hinted_name fo idr idrhint =
@@ -101,19 +105,19 @@ let rec put_infixl fo p_rule p_cur op x y =
     if p_rule < p_cur then Fo.put fo `Operator "(";
     print_inline fo p_rule x;
     Fo.put_op fo op;
-    print_inline fo (p_rule + 1) x;
+    print_inline fo (p_rule + 1) y;
     if p_rule < p_cur then Fo.put fo `Operator ")"
 
 and print_inline fo p = function
-    | Trm_ref (_, idr, idrhint) ->
+    | Trm_ref (Cidr (_, idr), idrhint) ->
 	print_hinted_name fo idr idrhint
     | Trm_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
-    | Trm_label (_, Idr label, body) ->
+    | Trm_label (_, Cidr (_, Idr label), body) ->
 	Fo.put fo `Label (label ^ ":");
 	Fo.space fo;
 	print_inline fo Opkind.p_apply body
     | Trm_lambda (_, var, body) -> put_infixl fo Opkind.p_cond p "↦" var body
-    | Trm_quantify (_, Idr op, var, body) ->
+    | Trm_quantify (_, Cidr (_, Idr op), var, body) ->
 	if p >= Opkind.p_rel then Fo.put fo `Operator "(";
 	Fo.put fo `Operator op;
 	let op_u = UString.of_string op in
@@ -127,18 +131,24 @@ and print_inline fo p = function
     | Trm_rel (_, x, rels) ->
 	if p > Opkind.p_rel then Fo.put fo `Operator "(";
 	print_inline fo (Opkind.p_rel + 1) x;
-	List.iter begin fun (_, opname, y) ->
+	List.iter begin fun (_, Cidr (_, opname), y) ->
 	    Fo.put_op fo (idr_2o_symbol opname);
 	    print_inline fo (Opkind.p_rel + 1) y;
 	end rels;
 	if p > Opkind.p_rel then Fo.put fo `Operator ")"
+    | Trm_apply (_, Trm_apply (_, Trm_ref (op, _), x), y)
+	    when cidr_is_2o_colon op ->
+	put_infixl fo Opkind.p_typing p ":" x y
+    | Trm_apply (_, Trm_apply (_, Trm_ref (op, _), x), y)
+	    when cidr_is_2o_arrow op ->
+	put_infixl fo (Opkind.p_logic 5) p "→" x y
     | Trm_apply (_, f, x) ->
 	if p > Opkind.p_apply then Fo.put fo `Operator "(";
 	print_inline fo Opkind.p_apply f;
 	Fo.space fo;
 	print_inline fo (Opkind.p_apply + 1) x;
 	if p > Opkind.p_apply then Fo.put fo `Operator ")";
-    | Trm_project (_, Idr field, m) ->
+    | Trm_project (_, Cidr (_, Idr field), m) ->
 	print_inline fo Opkind.p_project m;
 	Fo.put fo `Name ("." ^ field)
     | Trm_with (_, base, defs) ->
@@ -154,7 +164,7 @@ and print_inline fo p = function
 and print_predicate ?(default = print_is) fo = function
     | Trm_let (_, var, def, body) ->
 	Fo.newline fo;
-	Fo.put_kw fo "given";
+	Fo.put_kw fo "let";
 	print_inline fo Opkind.p_min var;
 	Fo.enter_indent fo;
 	print_predicate fo def;
@@ -177,7 +187,9 @@ and print_predicate ?(default = print_is) fo = function
 	    print_predicate fo cq;
 	    Fo.leave_indent fo;
 	) cases
-    | trm -> default fo trm
+    | trm ->
+	Fo.newline fo;
+	default fo trm
 and print_is fo trm =
     Fo.put_kw fo "be";
     print_inline fo Opkind.p_min trm
@@ -234,7 +246,8 @@ and print_def fo def =
     | Dec_lex (_, ok, idrs) ->
 	Fo.put_kw fo "lex";
 	Fo.put fo `Name (Opkind.to_string ok);
-	List.iter (fun (Idr s) -> Fo.space fo; Fo.put fo `Operator s) idrs
+	List.iter (fun (Cidr (_, Idr s)) -> Fo.space fo; Fo.put fo `Operator s)
+		  idrs
 and print_defs fo defs =
     Fo.enter_indent fo;
     List.iter (print_def fo) defs;

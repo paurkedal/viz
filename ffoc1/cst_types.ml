@@ -34,16 +34,18 @@ type lit =
     | Lit_float of float
     | Lit_string of UString.t
 
+type cidr = Cidr of loc * idr
+
 type trm =
-    | Trm_ref		of loc * idr * idrhint
+    | Trm_ref		of cidr * idrhint
     | Trm_literal	of loc * lit
-    | Trm_label		of loc * idr * trm
+    | Trm_label		of loc * cidr * trm
     | Trm_lambda	of loc * trm * trm
-    | Trm_quantify	of loc * idr * trm * trm
+    | Trm_quantify	of loc * cidr * trm * trm
     | Trm_let		of loc * trm * trm * trm
-    | Trm_rel		of loc * trm * (loc * idr * trm) list
+    | Trm_rel		of loc * trm * (loc * cidr * trm) list
     | Trm_apply		of loc * trm * trm
-    | Trm_project	of loc * idr * trm
+    | Trm_project	of loc * cidr * trm
     | Trm_raise		of loc * trm
     | Trm_if		of loc * trm * trm * trm
     | Trm_at		of loc * (trm * trm) list
@@ -54,9 +56,9 @@ type trm =
     | Sct_open		of loc * trm
     | Sct_type		of loc * trm
     | Sct_in		of loc * trm * trm
-    | Dec_sig		of loc * idr
-    | Def_sig		of loc * idr * trm
+    | Dec_sig		of loc * cidr
+    | Def_sig		of loc * cidr * trm
     | Dec_val		of loc * trm
     | Def_val		of loc * trm * trm
     | Dec_inj		of loc * trm
-    | Dec_lex		of loc * Opkind.t * idr list
+    | Dec_lex		of loc * Opkind.t * cidr list

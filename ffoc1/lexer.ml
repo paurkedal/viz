@@ -227,7 +227,7 @@ let pop_token state =
 	    else None
 	end
 
-let declare_operator state ok op =
+let declare_operator state ok (Cst.Cidr (_, op)) =
     let op' = UString_sequence.create (Cst.idr_to_ustring op) in
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (Cst.idr_to_string op)
@@ -249,7 +249,8 @@ let scan_lexdef state lex_loc =
     do
 	let opname, opname_loc =
 	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
-	ops_r := Cst.idr_of_ustring opname :: !ops_r
+	let op = Cst.Cidr (opname_loc, Cst.idr_of_ustring opname) in
+	ops_r := op :: !ops_r
     done;
     let ops = List.rev !ops_r in
     let opkind =
