@@ -18,6 +18,7 @@
 
 %{
 open Cst_types
+open Cst_core
 
 let mkloc lb ub =
     Location.between (Location.Bound.of_lexing_position lb)
@@ -30,8 +31,8 @@ let rec quantify loc qs e =
 let apply loc f x = Ctrm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
-let ctrm_1o loc name = Ctrm_ref (Cidr (loc, Cst.idr_1o name), Ih_none)
-let ctrm_2o loc name = Ctrm_ref (Cidr (loc, Cst.idr_2o name), Ih_none)
+let ctrm_1o loc name = Ctrm_ref (Cidr (loc, idr_1o name), Ih_none)
+let ctrm_2o loc name = Ctrm_ref (Cidr (loc, idr_2o name), Ih_none)
 
 let apply_infix lb ub lbf ubf f =
     apply2 (mkloc lb ub) (ctrm_2o (mkloc lbf ubf) f)
@@ -327,7 +328,7 @@ relation_seq:
 relation_comp:
     RELATION arith
     { (mkloc $startpos $endpos,
-       Cidr (mkloc $startpos($1) $endpos($1), Cst.idr_2o $1), $2) }
+       Cidr (mkloc $startpos($1) $endpos($1), idr_2o $1), $2) }
   ;
 arith:
     application
@@ -447,7 +448,7 @@ atomic_expr:
   | LBRACKET parenthesised RBRACKET
     {
 	let locb = mkloc $startpos $endpos($1) in
-	let f = Ctrm_ref (Cidr (locb, Cst.idr_1b $1 $3), Ih_none) in
+	let f = Ctrm_ref (Cidr (locb, idr_1b $1 $3), Ih_none) in
 	Ctrm_apply (mkloc $startpos $endpos, f, $2)
     }
   | WHERE BEGIN structure_body END

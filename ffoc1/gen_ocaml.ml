@@ -20,7 +20,7 @@ module Ast = Camlp4.PreCast.Ast
 module Loc = Camlp4.PreCast.Loc
 open Diag
 open Cst_types
-open Cst
+open Cst_core
 open Cst_utils
 open Unicode
 open FfPervasives

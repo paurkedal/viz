@@ -17,7 +17,7 @@
  *)
 
 open Cst_types
-open Cst
+open Cst_core
 open Diag
 
 let extract_term_typing = function

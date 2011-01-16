@@ -19,6 +19,7 @@
 open FfPervasives
 open Unicode
 open Cst_types
+open Cst_core
 
 exception Error_at of Location.t * string
 
@@ -229,9 +230,9 @@ let pop_token state =
 	end
 
 let declare_operator state ok (Cidr (_, op)) =
-    let op' = UString_sequence.create (Cst.idr_to_ustring op) in
+    let op' = UString_sequence.create (idr_to_ustring op) in
     if dlog_en then
-	dlogf "Declaring operator %s at %s." (Cst.idr_to_string op)
+	dlogf "Declaring operator %s at %s." (idr_to_string op)
 	      (Opkind.to_string ok);
     state.st_operators <- UString_trie.add op' ok state.st_operators
 
@@ -250,7 +251,7 @@ let scan_lexdef state lex_loc =
     do
 	let opname, opname_loc =
 	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
-	let op = Cidr (opname_loc, Cst.idr_of_ustring opname) in
+	let op = Cidr (opname_loc, idr_of_ustring opname) in
 	ops_r := op :: !ops_r
     done;
     let ops = List.rev !ops_r in
@@ -273,7 +274,7 @@ let lexopen state = function
 	end
 	defs
     | ctrm ->
-	let loc = Cst.ctrm_loc ctrm in
+	let loc = ctrm_loc ctrm in
 	raise (Error_at (loc, "Lexical open needs a structure."))
 
 let triescan state trie =
@@ -309,7 +310,7 @@ let scan_keyword state =
 	    if UChar.is_idrchr ch1 then
 		let (name, loc) =
 		    LStream.scan_while UChar.is_idrchr state.st_stream in
-		let idr = Cst.idr_of_ustring name in
+		let idr = idr_of_ustring name in
 		let loc' = Location.between loc_lb (Location.ubound loc) in
 		Some (Grammar.PROJECT idr, loc')
 	    else if UChar.is_space ch1 then
@@ -352,7 +353,7 @@ let scan_operator state =
     | Some (opkind, tokstr, loc) ->
 	let mktoken = mktoken_arr.(opkind.Opkind.ok_id) in
 	if dlog_en then dlogf ~loc "Scanned operator.";
-	Some (mktoken (Cst.idr_of_ustring tokstr), loc)
+	Some (mktoken (idr_of_ustring tokstr), loc)
 
 let scan_identifier state =
     let buf = UString.Buf.create 8 in
@@ -362,15 +363,15 @@ let scan_identifier state =
 	match LStream.peek_code state.st_stream with
 	| 0x25 (* % *) ->
 	    LStream.skip state.st_stream;
-	    let idr = Cst.idr_of_ustring s in
+	    let idr = idr_of_ustring s in
 	    Grammar.HINTED_IDENTIFIER (idr, Ih_inj)
 	| _ ->
 	match int_of_uchar (UString.get s (n - 1)) with
 	| 0x5f (* _ *) when n > 1 ->
-	    let idr = Cst.idr_of_ustring (UString.sub s 0 (n - 1)) in
+	    let idr = idr_of_ustring (UString.sub s 0 (n - 1)) in
 	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ)
 	| _ ->
-	    let idr = Cst.idr_of_ustring s in
+	    let idr = idr_of_ustring s in
 	    Grammar.IDENTIFIER idr in
     let rec scan prev_ch =
 	LStream.skip state.st_stream;
