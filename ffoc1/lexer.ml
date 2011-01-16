@@ -18,6 +18,7 @@
 
 open FfPervasives
 open Unicode
+open Cst_types
 
 exception Error_at of Location.t * string
 
@@ -129,8 +130,8 @@ let initial_plain_keywords = [
     ")",	Grammar.RPAREN;
     "↦",	Grammar.MAPSTO;
     "/>",	Grammar.MAPSTO;
-    "true",	Grammar.LITERAL (Cst.Lit_bool true);
-    "false",	Grammar.LITERAL (Cst.Lit_bool false);
+    "true",	Grammar.LITERAL (Lit_bool true);
+    "false",	Grammar.LITERAL (Lit_bool false);
 ]
 let initial_continued_keywords = [
     "where",	Grammar.WHERE;
@@ -227,7 +228,7 @@ let pop_token state =
 	    else None
 	end
 
-let declare_operator state ok (Cst.Cidr (_, op)) =
+let declare_operator state ok (Cidr (_, op)) =
     let op' = UString_sequence.create (Cst.idr_to_ustring op) in
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (Cst.idr_to_string op)
@@ -249,7 +250,7 @@ let scan_lexdef state lex_loc =
     do
 	let opname, opname_loc =
 	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
-	let op = Cst.Cidr (opname_loc, Cst.idr_of_ustring opname) in
+	let op = Cidr (opname_loc, Cst.idr_of_ustring opname) in
 	ops_r := op :: !ops_r
     done;
     let ops = List.rev !ops_r in
@@ -259,20 +260,20 @@ let scan_lexdef state lex_loc =
 	    raise (Error_at (okname_loc, "Not an operator kind.")) in
     let loc_ub = LStream.locbound state.st_stream in
     let loc = Location.between loc_lb loc_ub in
-    let lexdef = Cst.Dec_lex (loc, opkind, ops) in
+    let lexdef = Cdef_lex (loc, opkind, ops) in
     List.iter (declare_operator state opkind) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
 let lexopen state = function
-    | Cst.Trm_where (_, defs) -> List.iter
+    | Ctrm_where (_, defs) -> List.iter
 	begin function
-	    | Cst.Dec_lex (loc, ok, ops) ->
+	    | Cdef_lex (loc, ok, ops) ->
 		List.iter (declare_operator state ok) ops
 	    | _ -> ()
 	end
 	defs
-    | trm ->
-	let loc = Cst.trm_location trm in
+    | ctrm ->
+	let loc = Cst.trm_location ctrm in
 	raise (Error_at (loc, "Lexical open needs a structure."))
 
 let triescan state trie =
@@ -362,12 +363,12 @@ let scan_identifier state =
 	| 0x25 (* % *) ->
 	    LStream.skip state.st_stream;
 	    let idr = Cst.idr_of_ustring s in
-	    Grammar.HINTED_IDENTIFIER (idr, Cst.Ih_inj)
+	    Grammar.HINTED_IDENTIFIER (idr, Ih_inj)
 	| _ ->
 	match int_of_uchar (UString.get s (n - 1)) with
 	| 0x5f (* _ *) when n > 1 ->
 	    let idr = Cst.idr_of_ustring (UString.sub s 0 (n - 1)) in
-	    Grammar.HINTED_IDENTIFIER (idr, Cst.Ih_univ)
+	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ)
 	| _ ->
 	    let idr = Cst.idr_of_ustring s in
 	    Grammar.IDENTIFIER idr in
@@ -416,7 +417,7 @@ let scan_string_literal state =
 		next ()
 	    end in
     next ();
-    Cst.Lit_string (UString.Buf.contents buf)
+    Lit_string (UString.Buf.contents buf)
 
 let scan_int have_sign base state =
     let rec f accu =
@@ -430,7 +431,7 @@ let scan_int have_sign base state =
 	LStream.skip state.st_stream;
 	f (value + base * accu) in
     let n = (f 0) in
-    Cst.Lit_int (if have_sign then -n else n)
+    Lit_int (if have_sign then -n else n)
 
 let scan_literal state =
     let found lit =

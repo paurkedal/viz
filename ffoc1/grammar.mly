@@ -17,6 +17,8 @@
  */
 
 %{
+open Cst_types
+
 let mkloc lb ub =
     Location.between (Location.Bound.of_lexing_position lb)
 		     (Location.Bound.of_lexing_position ub)
@@ -24,12 +26,12 @@ let mkloc lb ub =
 let rec quantify loc qs e =
     match qs with
     | [] -> e
-    | (l, q, v) :: qs' -> Cst.Trm_quantify (loc, q, v, quantify l qs' e)
-let apply loc f x = Cst.Trm_apply (loc, f, x)
+    | (l, q, v) :: qs' -> Ctrm_quantify (loc, q, v, quantify l qs' e)
+let apply loc f x = Ctrm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
-let trm_1o loc name = Cst.Trm_ref (Cst.Cidr (loc, Cst.idr_1o name), Cst.Ih_none)
-let trm_2o loc name = Cst.Trm_ref (Cst.Cidr (loc, Cst.idr_2o name), Cst.Ih_none)
+let trm_1o loc name = Ctrm_ref (Cidr (loc, Cst.idr_1o name), Ih_none)
+let trm_2o loc name = Ctrm_ref (Cidr (loc, Cst.idr_2o name), Ih_none)
 
 let apply_infix lb ub lbf ubf f =
     apply2 (mkloc lb ub) (trm_2o (mkloc lbf ubf) f)
@@ -40,7 +42,7 @@ let apply_suffix lb ub lbf ubf f =
 
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)
-    apply loc (Cst.Trm_ref (Cst.Cidr (loc, name0), Cst.Ih_none))
+    apply loc (Ctrm_ref (Cidr (loc, name0), Ih_none))
 %}
 
 %token EOF
@@ -64,15 +66,15 @@ let apply_fence loc name0 name1 =
 %token NOTATION
 
 %token LPAREN RPAREN
-%token <Cst.idr> LBRACKET RBRACKET
+%token <Cst_types.idr> LBRACKET RBRACKET
 %token IF ELSE OTHERWISE
 %token AT
 %token MAPSTO
 %token DOT
 
 /* Logic Operators */
-%token <Cst.idr> LOGIC0 LOGIC1 LOGIC2 LOGIC3
-%token <Cst.idr> LOGIC4 LOGIC5 LOGIC6 LOGIC7 LOGIC8 QUANTIFIER
+%token <Cst_types.idr> LOGIC0 LOGIC1 LOGIC2 LOGIC3
+%token <Cst_types.idr> LOGIC4 LOGIC5 LOGIC6 LOGIC7 LOGIC8 QUANTIFIER
 %left  LOGIC0
 %right LOGIC1
 %left  LOGIC2
@@ -84,18 +86,18 @@ let apply_fence loc name0 name1 =
 %left  LOGIC8
 
 /* Relation Operators */
-%token <Cst.idr> RELATION
+%token <Cst_types.idr> RELATION
 
 /* Arithmetic Operators */
-%token <Cst.idr> ARITH0 ARITH0_S ARITH1 ARITH1_S
-%token <Cst.idr> ARITH2 ARITH2_S ARITH3 ARITH3_S
-%token <Cst.idr> ARITH4 ARITH4_S ARITH5 ARITH5_S
-%token <Cst.idr> ARITH6 ARITH6_S ARITH7 ARITH7_S
-%token <Cst.idr> ARITH8 ARITH8_S ARITH9 ARITH9_S LABEL FENCE
-%token <Cst.idr> SCRIPT0_P SCRIPT0_S SCRIPT0_I
-%token <Cst.idr> SCRIPT1_P SCRIPT1_S SCRIPT1_I
-%token <Cst.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I
-%token <Cst.idr> PROJECT
+%token <Cst_types.idr> ARITH0 ARITH0_S ARITH1 ARITH1_S
+%token <Cst_types.idr> ARITH2 ARITH2_S ARITH3 ARITH3_S
+%token <Cst_types.idr> ARITH4 ARITH4_S ARITH5 ARITH5_S
+%token <Cst_types.idr> ARITH6 ARITH6_S ARITH7 ARITH7_S
+%token <Cst_types.idr> ARITH8 ARITH8_S ARITH9 ARITH9_S LABEL FENCE
+%token <Cst_types.idr> SCRIPT0_P SCRIPT0_S SCRIPT0_I
+%token <Cst_types.idr> SCRIPT1_P SCRIPT1_S SCRIPT1_I
+%token <Cst_types.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I
+%token <Cst_types.idr> PROJECT
 
 %left  ARITH0 ARITH0_S
 %right ARITH1 ARITH1_S
@@ -112,19 +114,19 @@ let apply_fence loc name0 name1 =
 %left  SCRIPT2_P SCRIPT2_S SCRIPT2_I
 
 /* Atoms */
-%token <Cst.lit> LITERAL
-%token <Cst.idr> IDENTIFIER
-%token <Cst.idr * Cst.idrhint> HINTED_IDENTIFIER
-%token <Cst.def> PREPARED_DEF
+%token <Cst_types.lit> LITERAL
+%token <Cst_types.idr> IDENTIFIER
+%token <Cst_types.idr * Cst_types.idrhint> HINTED_IDENTIFIER
+%token <Cst_types.cdef> PREPARED_DEF
 
-%type <Cst.trm> main
-%type <Cst.trm> expr
+%type <Cst_types.ctrm> main
+%type <Cst_types.ctrm> expr
 %start main
 %%
 
 main:
     BEGIN structure_body END EOF
-    { Cst.Trm_where (mkloc $startpos $endpos, List.rev $2) }
+    { Ctrm_where (mkloc $startpos $endpos, List.rev $2) }
   ;
 
 signature_body:
@@ -141,8 +143,8 @@ signature_clause:
     modular_clause { $1 }
   | IN structure_pattern BEGIN signature_body END
     {
-	let body = Cst.Trm_with (mkloc $startpos($4) $endpos($4), None, $4) in
-	Cst.Sct_in (mkloc $startpos $endpos, $2, body)
+	let body = Ctrm_with (mkloc $startpos($4) $endpos($4), None, $4) in
+	Cdef_in (mkloc $startpos $endpos, $2, body)
     }
   ;
 
@@ -150,30 +152,30 @@ structure_clause:
     modular_clause { $1 }
   | IN structure_pattern BEGIN structure_body END
     {
-	let body = Cst.Trm_where (mkloc $startpos($4) $endpos($4), $4) in
-	Cst.Sct_in (mkloc $startpos $endpos, $2, body)
+	let body = Ctrm_where (mkloc $startpos($4) $endpos($4), $4) in
+	Cdef_in (mkloc $startpos $endpos, $2, body)
     }
   | LET term_pattern predicate
-    { Cst.Def_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
+    { Cdef_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
   | VAL term_pattern predicate
-    { Cst.Def_val (mkloc $startpos $endpos, $2, $3) }
+    { Cdef_val (mkloc $startpos $endpos, $2, $3) }
   ;
 
 modular_clause:
     OPEN projection
-    { Cst.Sct_open (mkloc $startpos $endpos, $2) }
+    { Cdef_open (mkloc $startpos $endpos, $2) }
   | INCLUDE expr
-    { Cst.Sct_include (mkloc $startpos $endpos, $2) }
+    { Cdef_include (mkloc $startpos $endpos, $2) }
   | SIG identifier
-    { Cst.Dec_sig (mkloc $startpos $endpos, $2) }
+    { Cdec_sig (mkloc $startpos $endpos, $2) }
   | SIG identifier BEGIN BE signature_expr END
-    { Cst.Def_sig (mkloc $startpos $endpos, $2, $5) }
+    { Cdef_sig (mkloc $startpos $endpos, $2, $5) }
   | TYPE type_equation
-    { Cst.Sct_type (mkloc $startpos $endpos, $2) }
+    { Cdef_type (mkloc $startpos $endpos, $2) }
   | INJ term_pattern
-    { Cst.Dec_inj (mkloc $startpos $endpos, $2) }
+    { Cdef_inj (mkloc $startpos $endpos, $2) }
   | VAL term_pattern
-    { Cst.Dec_val (mkloc $startpos $endpos, $2) }
+    { Cdec_val (mkloc $startpos $endpos, $2) }
   | PREPARED_DEF { $1 }
   ;
 
@@ -191,21 +193,21 @@ term: expr {$1};
 predicate: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
     BE term { $2 }
-  | RAISE term { Cst.Trm_raise (mkloc $startpos $endpos, $2) }
+  | RAISE term { Ctrm_raise (mkloc $startpos $endpos, $2) }
   ;
 compound_predicate:
     atomic_predicate { $1 }
   | atomic_predicate WHICH predicate
-    { let that = Cst.Cidr (mkloc $startpos($2) $endpos($2), Cst.Idr "that") in
-      let that_trm = Cst.Trm_ref (that, Cst.Ih_none) in
-      Cst.Trm_let (mkloc $startpos $endpos, that_trm, $3, $1) }
+    { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
+      let that_trm = Ctrm_ref (that, Ih_none) in
+      Ctrm_let (mkloc $startpos $endpos, that_trm, $3, $1) }
   | postif_predicate { $1 }
   | if_predicate { $1 }
-  | at_predicate { Cst.Trm_at (mkloc $startpos $endpos, $1) }
+  | at_predicate { Ctrm_at (mkloc $startpos $endpos, $1) }
   ;
 if_predicate:
     IF term predicate if_predicate
-    { Cst.Trm_if (mkloc $startpos $endpos, $2, $3, $4) }
+    { Ctrm_if (mkloc $startpos $endpos, $2, $3, $4) }
   | ELSE predicate { $2 }
   ;
 at_predicate:
@@ -216,7 +218,7 @@ at_predicate:
   ;
 postif_predicate:
     atomic_predicate BEGIN IF term END postif_predicate
-    { Cst.Trm_if (mkloc $startpos $endpos, $4, $1, $6) }
+    { Ctrm_if (mkloc $startpos $endpos, $4, $1, $6) }
   | atomic_predicate BEGIN OTHERWISE END { $1 }
   ;
 
@@ -228,7 +230,7 @@ participle_seq:
   ;
 participle:
     LET term_pattern predicate
-    { fun x -> Cst.Trm_let (mkloc $startpos $endpos, $2, $3, x) }
+    { fun x -> Ctrm_let (mkloc $startpos $endpos, $2, $3, x) }
   ;
 
 /* Expressions */
@@ -238,7 +240,7 @@ expr: conditional {$1};
 conditional:
     qlogic_expr {$1}
   | qlogic_expr MAPSTO conditional
-    { Cst.Trm_lambda (mkloc $startpos $endpos, $1, $3) }
+    { Ctrm_lambda (mkloc $startpos $endpos, $1, $3) }
   ;
 qlogic_expr:
     qseq logic_expr { quantify (mkloc $startpos $endpos) $1 $2 }
@@ -311,12 +313,12 @@ qseq:
 quantifier:
     QUANTIFIER expr DOT
     { (mkloc $startpos $endpos,
-       Cst.Cidr (mkloc $startpos($1) $endpos($1), $1), $2) }
+       Cidr (mkloc $startpos($1) $endpos($1), $1), $2) }
   ;
 
 relational_expr:
     arith { $1 }
-  | arith relation_seq { Cst.Trm_rel (mkloc $startpos $endpos, $1, $2) }
+  | arith relation_seq { Ctrm_rel (mkloc $startpos $endpos, $1, $2) }
   ;
 relation_seq:
     relation_comp { [$1] }
@@ -325,7 +327,7 @@ relation_seq:
 relation_comp:
     RELATION arith
     { (mkloc $startpos $endpos,
-       Cst.Cidr (mkloc $startpos($1) $endpos($1), Cst.idr_2o $1), $2) }
+       Cidr (mkloc $startpos($1) $endpos($1), Cst.idr_2o $1), $2) }
   ;
 arith:
     application
@@ -349,8 +351,8 @@ arith:
   | arith ARITH2 arith
     { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
   | LABEL  arith
-    { let label = Cst.Cidr (mkloc $startpos($1) $endpos($1), $1) in
-      Cst.Trm_label (mkloc $startpos $endpos, label, $2) }
+    { let label = Cidr (mkloc $startpos($1) $endpos($1), $1) in
+      Ctrm_label (mkloc $startpos $endpos, label, $2) }
   | ARITH3 arith
     { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
   | arith ARITH3_S
@@ -400,8 +402,8 @@ application:
   | application LABEL script
     {
 	let loc = mkloc $startpos $endpos in
-	let label = Cst.Cidr (mkloc $startpos($2) $endpos($2), $2) in
-	apply loc $1 (Cst.Trm_label (loc, label, $3))
+	let label = Cidr (mkloc $startpos($2) $endpos($2), $2) in
+	apply loc $1 (Ctrm_label (loc, label, $3))
     }
   | FENCE arith FENCE { apply_fence (mkloc $startpos $endpos) $1 $3 $2 }
   ;
@@ -431,32 +433,32 @@ script:
 projection:
     atomic_expr { $1 }
   | projection PROJECT
-    { let p = Cst.Cidr (mkloc $startpos($2) $endpos($2), $2) in
-      Cst.Trm_project (mkloc $startpos $endpos, p, $1) }
+    { let p = Cidr (mkloc $startpos($2) $endpos($2), $2) in
+      Ctrm_project (mkloc $startpos $endpos, p, $1) }
   ;
 
 atomic_expr:
-    identifier { Cst.Trm_ref ($1, Cst.Ih_none) }
+    identifier { Ctrm_ref ($1, Ih_none) }
   | HINTED_IDENTIFIER
     { let idr, hint = $1 in
-      Cst.Trm_ref (Cst.Cidr (mkloc $startpos $endpos, idr), hint) }
-  | LITERAL { Cst.Trm_literal (mkloc $startpos $endpos, $1) }
+      Ctrm_ref (Cidr (mkloc $startpos $endpos, idr), hint) }
+  | LITERAL { Ctrm_literal (mkloc $startpos $endpos, $1) }
   | LPAREN parenthesised RPAREN { $2 }
   | LBRACKET parenthesised RBRACKET
     {
 	let locb = mkloc $startpos $endpos($1) in
-	let f = Cst.Trm_ref (Cst.Cidr (locb, Cst.idr_1b $1 $3), Cst.Ih_none) in
-	Cst.Trm_apply (mkloc $startpos $endpos, f, $2)
+	let f = Ctrm_ref (Cidr (locb, Cst.idr_1b $1 $3), Ih_none) in
+	Ctrm_apply (mkloc $startpos $endpos, f, $2)
     }
   | WHERE BEGIN structure_body END
-    { Cst.Trm_where (mkloc $startpos $endpos, $3) }
+    { Ctrm_where (mkloc $startpos $endpos, $3) }
   | WITH  BEGIN signature_body END
-    { Cst.Trm_with (mkloc $startpos $endpos, None, $3) }
+    { Ctrm_with (mkloc $startpos $endpos, None, $3) }
   | WHAT predicate { $2 }
   ;
 parenthesised:
-    /* empty */ { Cst.Trm_literal (mkloc $startpos $endpos, Cst.Lit_unit) }
+    /* empty */ { Ctrm_literal (mkloc $startpos $endpos, Lit_unit) }
   | expr { $1 }
   ;
 
-identifier: IDENTIFIER { Cst.Cidr (mkloc $startpos $endpos, $1) };
+identifier: IDENTIFIER { Cidr (mkloc $startpos $endpos, $1) };

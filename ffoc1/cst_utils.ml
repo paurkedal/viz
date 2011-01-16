@@ -16,37 +16,38 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Cst_types
 open Cst
 open Diag
 
 let extract_term_typing = function
-    | Trm_apply (_, Trm_apply (_, Trm_ref (op, _), x), y)
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
 	    when cidr_is_2o_colon op ->
 	(x, y)
-    | trm -> errf_at (trm_location trm) "Type judgement expected."
+    | ctrm -> errf_at (trm_location ctrm) "Type judgement expected."
 
 let extract_cidr_typing expr =
     match extract_term_typing expr with
-    | Trm_ref (cidr, _), y -> (cidr, y)
+    | Ctrm_ref (cidr, _), y -> (cidr, y)
     | x, y -> errf_at (trm_location x) "Identifier expected."
 
 let move_typing (src, dst) =
     match src with
-    | Trm_apply (l1, Trm_apply (l2, (Trm_ref (op, _) as colon), src'), rsig)
+    | Ctrm_apply (l1, Ctrm_apply (l2, (Ctrm_ref (op, _) as colon), src'), rsig)
 	    when cidr_is_2o_colon op ->
-	(src', Trm_apply (l1, Trm_apply (l2, colon, dst), rsig))
+	(src', Ctrm_apply (l1, Ctrm_apply (l2, colon, dst), rsig))
     | _ ->
 	(src, dst)
 
 let rec move_applications (src, dst) =
     match src with
-    | Trm_apply (loc', src', arg) ->
-	move_applications (src', Trm_lambda (loc', arg, dst))
+    | Ctrm_apply (loc', src', arg) ->
+	move_applications (src', Ctrm_lambda (loc', arg, dst))
     | _ -> (src, dst)
 
 let flatten_tycon_application typ =
     let rec loop args = function
-	| Trm_apply (_, con, arg) -> loop (arg :: args) con
-	| Trm_ref (con, _) -> (con, List.rev args)
-	| trm -> errf_at (trm_location trm) "Not a type constructor." in
+	| Ctrm_apply (_, con, arg) -> loop (arg :: args) con
+	| Ctrm_ref (con, _) -> (con, List.rev args)
+	| ctrm -> errf_at (trm_location ctrm) "Not a type constructor." in
     loop [] typ

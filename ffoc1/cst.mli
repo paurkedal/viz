@@ -17,8 +17,7 @@
  *)
 
 open Unicode
-
-include module type of Cst_types
+open Cst_types
 
 val idr_of_string : string -> idr
 
@@ -48,12 +47,12 @@ val cidr_to_string : cidr -> string
 module Idr_set : Set.S with type elt = idr
 module Idr_map : Map.S with type key = idr
 
-val trm_location : trm -> loc
+val trm_location : ctrm -> loc
 
-val application_depth : int -> idr -> trm -> int
+val application_depth : int -> idr -> ctrm -> int
 
-val print : Formatter.t -> trm -> unit
-val trm_to_string : trm -> string
+val print : Formatter.t -> ctrm -> unit
+val trm_to_string : ctrm -> string
 
 
 (* Specific Symbols *)

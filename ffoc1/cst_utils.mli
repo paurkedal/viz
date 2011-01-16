@@ -16,24 +16,24 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-open Cst
+open Cst_types
 
-val extract_term_typing : trm -> trm * trm
+val extract_term_typing : ctrm -> ctrm * ctrm
 (** Assuming the top-level of [u] represents {[v : t]}, [extract_term_typing u]
  ** returns a tuple [(v, t)], else raises Error_at. *)
 
-val extract_cidr_typing : trm -> cidr * trm
+val extract_cidr_typing : ctrm -> cidr * ctrm
 (** Assuming the top-level of [u] represents {[v : t]}, where [v] is an
  ** identifier, [extract_idr_typing u] returns the tuple [(v, t)], otherwise
  ** raises Error_at. *)
 
-val move_typing : trm * trm -> trm * trm
+val move_typing : ctrm * ctrm -> ctrm * ctrm
 (** [move_typing (src, dst)] moves a typing ({[v : t]}) from the top-level of
  ** [src] to the top-level of [dst].  If [src] is not a typing, returns the
  ** pair unchanged. *)
 
-val move_applications : trm * trm -> trm * trm
+val move_applications : ctrm * ctrm -> ctrm * ctrm
 (** [move_applications (src, dst) recursively takes top-level applications of
  ** [src] and turns them into abstractions around [dst]. *)
 
-val flatten_tycon_application : trm -> cidr * trm list
+val flatten_tycon_application : ctrm -> cidr * ctrm list

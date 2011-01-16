@@ -36,29 +36,29 @@ type lit =
 
 type cidr = Cidr of loc * idr
 
-type trm =
-    | Trm_ref		of cidr * idrhint
-    | Trm_literal	of loc * lit
-    | Trm_label		of loc * cidr * trm
-    | Trm_lambda	of loc * trm * trm
-    | Trm_quantify	of loc * cidr * trm * trm
-    | Trm_let		of loc * trm * trm * trm
-    | Trm_rel		of loc * trm * (loc * cidr * trm) list
-    | Trm_apply		of loc * trm * trm
-    | Trm_project	of loc * cidr * trm
-    | Trm_raise		of loc * trm
-    | Trm_if		of loc * trm * trm * trm
-    | Trm_at		of loc * (trm * trm) list
-    | Trm_where		of loc * def list
-    | Trm_with		of loc * trm option * def list
- and def =
-    | Sct_include	of loc * trm
-    | Sct_open		of loc * trm
-    | Sct_type		of loc * trm
-    | Sct_in		of loc * trm * trm
-    | Dec_sig		of loc * cidr
-    | Def_sig		of loc * cidr * trm
-    | Dec_val		of loc * trm
-    | Def_val		of loc * trm * trm
-    | Dec_inj		of loc * trm
-    | Dec_lex		of loc * Opkind.t * cidr list
+type ctrm =
+    | Ctrm_ref		of cidr * idrhint
+    | Ctrm_literal	of loc * lit
+    | Ctrm_label	of loc * cidr * ctrm
+    | Ctrm_lambda	of loc * ctrm * ctrm
+    | Ctrm_quantify	of loc * cidr * ctrm * ctrm
+    | Ctrm_let		of loc * ctrm * ctrm * ctrm
+    | Ctrm_rel		of loc * ctrm * (loc * cidr * ctrm) list
+    | Ctrm_apply	of loc * ctrm * ctrm
+    | Ctrm_project	of loc * cidr * ctrm
+    | Ctrm_raise	of loc * ctrm
+    | Ctrm_if		of loc * ctrm * ctrm * ctrm
+    | Ctrm_at		of loc * (ctrm * ctrm) list
+    | Ctrm_where	of loc * cdef list
+    | Ctrm_with		of loc * ctrm option * cdef list
+ and cdef =
+    | Cdef_include	of loc * ctrm
+    | Cdef_open		of loc * ctrm
+    | Cdef_type		of loc * ctrm
+    | Cdef_in		of loc * ctrm * ctrm
+    | Cdec_sig		of loc * cidr
+    | Cdef_sig		of loc * cidr * ctrm
+    | Cdec_val		of loc * ctrm
+    | Cdef_val		of loc * ctrm * ctrm
+    | Cdef_inj		of loc * ctrm
+    | Cdef_lex		of loc * Opkind.t * cidr list

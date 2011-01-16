@@ -17,6 +17,7 @@
  *)
 
 open Unicode
+open Cst_types
 
 exception Error_at of Location.t * string
 
@@ -30,4 +31,4 @@ val create_from_file : string -> state
 
 val lexer : state -> unit -> Grammar.token * Location.t
 
-val lexopen : state -> Cst.trm -> unit
+val lexopen : state -> ctrm -> unit
