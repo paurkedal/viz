@@ -19,6 +19,11 @@
 open Ast_types
 open Ast_core
 
+val atyp_to_string : atyp -> string
+val aval_to_string : aval -> string
+val asig_to_string : asig -> string
+val amod_to_string : amod -> string
+
 val apath_to_avar : apath -> avar
 
 val result_type : atyp -> atyp

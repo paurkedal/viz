@@ -19,11 +19,13 @@
 (* These type definitions are kept in a separate file without an interface file
  * to avoid duplicating all the constructor cases. *)
 
+TYPE_CONV_PATH "Ffoc1.Cst_types"
+open Sexplib
 open Unicode
 
 type loc = Location.t
 
-type idr = Idr of string
+type idr = Idr of string with sexp
 
 type idrhint = Ih_none | Ih_univ | Ih_inj
 
@@ -33,6 +35,7 @@ type lit =
     | Lit_int of int
     | Lit_float of float
     | Lit_string of UString.t
+    with sexp
 
 type cidr = Cidr of loc * idr
 

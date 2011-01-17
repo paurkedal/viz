@@ -16,22 +16,29 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+TYPE_CONV_PATH "Ffoc1.Ast_types"
+open Sexplib
 open Cst_types
 
-type avar = Avar of loc * idr
+let loc_of_sexp sx = Location.dummy
+let sexp_of_loc loc = sexp_of_unit ()
 
-type apath = Apath of avar list * avar
+type avar = Avar of loc * idr with sexp
+
+type apath = Apath of avar list * avar with sexp
 
 type atyp =
     | Atyp_ref of apath
     | Atyp_uvar of avar
     | Atyp_apply of loc * atyp * atyp
     | Atyp_arrow of loc * atyp * atyp
+    with sexp
 
 type apat =
     | Apat_ref of apath
     | Apat_uvar of avar
     | Apat_apply of loc * apat * apat
+    with sexp
 
 type aval =
     | Aval_literal of loc * lit
@@ -42,10 +49,12 @@ type aval =
     | Aval_let of loc * (loc * apat * aval) list * aval
     | Aval_if of loc * aval * aval * aval
     | Aval_raise of loc * aval
+    with sexp
 
 type atypinfo =
     | Atypinfo_alias of atyp
     | Atypinfo_injs of (loc * avar * atyp) list
+    with sexp
 
 type asig =
     | Asig_ref of apath
@@ -61,6 +70,7 @@ type asig =
     | Adec_types of (loc * avar * atyp list * atypinfo) list
       (** Holds a non-empty list of mutually recursive type definitions. *)
     | Adec_val of loc * avar * atyp
+    with sexp
 
 type amod =
     | Amod_ref of apath
@@ -75,3 +85,4 @@ type amod =
     | Adef_sig of loc * avar * asig
     | Adef_types of (loc * avar * atyp list * atypinfo) list
     | Adef_vals of (loc * avar * aval) list
+    with sexp

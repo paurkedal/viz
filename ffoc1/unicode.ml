@@ -18,6 +18,7 @@
 
 open CamomileLibrary.Default.Camomile
 open FfPervasives
+open Sexplib
 
 module UChar = struct
     include UChar
@@ -99,6 +100,9 @@ module UString = struct
 
     let of_utf8 = UString_encoding.decode CharEncoding.utf8
     let to_utf8 = UString_encoding.encode CharEncoding.utf8
+
+    let t_of_sexp sx = of_utf8 (Conv.string_of_sexp sx)
+    let sexp_of_t s = (Conv.sexp_of_string (to_utf8 s))
 end
 
 module UString_sequence = struct

@@ -17,6 +17,7 @@
  *)
 
 open CamomileLibrary.Default.Camomile
+open Sexplib
 
 module UChar : sig
     include module type of UChar with type t = UChar.t
@@ -62,6 +63,9 @@ module UString : sig
 
     val of_utf8 : string -> t
     val to_utf8 : t -> string
+
+    val t_of_sexp : Sexp.t -> t
+    val sexp_of_t : t -> Sexp.t
 end
 
 module UString_sequence : sig

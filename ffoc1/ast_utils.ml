@@ -19,6 +19,16 @@
 open Ast_core
 open Ast_types
 open Diag
+open Sexplib
+
+let sexp_to_string sx =
+    let buf = Buffer.create 64 in
+    Sexp.to_buffer_hum buf sx;
+    Buffer.contents buf
+let atyp_to_string x = sexp_to_string (sexp_of_atyp x)
+let aval_to_string x = sexp_to_string (sexp_of_aval x)
+let asig_to_string x = sexp_to_string (sexp_of_asig x)
+let amod_to_string x = sexp_to_string (sexp_of_amod x)
 
 let apath_to_avar = function
     | Apath ([], v) -> v

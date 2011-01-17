@@ -40,6 +40,10 @@ let ocaml_pkg lib =
     flag ["ocaml"; "compile"; tag] & S[A"-package"; A lib];
     flag ["ocaml"; "link";    tag] & S[A"-package"; A lib]
 
+let ocaml_pp lib pa =
+    flag ["ocaml"; "pp"; pa]
+	(S [A "-I"; A (ocamlfind_query lib); A (pa ^ ".cmo")])
+
 let () = dispatch begin function
     | Before_options ->
 	Options.use_ocamlfind := true;
@@ -56,6 +60,8 @@ let () = dispatch begin function
 	ocaml_pkg "menhirLib";
 	ocaml_pkg "camomile";
 	ocaml_pkg "camlp4";
+	ocaml_pp "type-conv" "pa_type_conv";
+	ocaml_pp "sexplib" "pa_sexp_conv";
 	()
     | _ -> ()
 end
