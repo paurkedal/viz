@@ -168,9 +168,9 @@ let emit_type_binding (loc, v, params, ti) =
 	match ti with
 	| Atypinfo_alias typ -> emit_atyp typ
 	| Atypinfo_injs injs ->
-	    let emit_inj (loc, v, at) =
+	    let emit_inj (loc, v, inj_type) =
 		let _loc = p4loc loc in
-		let _, ats = Ast_utils.flatten_application at in
+		let rt, ats = Ast_utils.flatten_arrows inj_type in
 		let ots = List.map emit_atyp ats in
 		<:ctyp< $uid: avar_to_uid v$ of $list: ots$ >> in
 	    <:ctyp< [ $list: List.map emit_inj injs$ ] >> in

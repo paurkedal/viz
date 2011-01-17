@@ -180,7 +180,7 @@ let rec build_atcases atcases algtb = function
 	let finish_atcase = function
 	    | loc, av, ats, Atypinfo_injs [] ->
 		let ats, injs = Algt_builder.find_injs av algtb in
-		(loc, av, ats, Atypinfo_injs injs)
+		(loc, av, ats, Atypinfo_injs (List.rev injs))
 	    | atcase -> atcase in
 	(List.rev_map finish_atcase atcases, xs)
 

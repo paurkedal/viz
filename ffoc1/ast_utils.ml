@@ -38,6 +38,12 @@ let rec result_type = function
     | Atyp_arrow (_, _, at) -> result_type at
     | at -> at
 
+let flatten_arrows =
+    let rec loop ats = function
+	| Atyp_arrow (_, at, rt) -> loop (at :: ats) rt
+	| rt -> (rt, List.rev ats) in
+    loop []
+
 let flatten_application =
     let rec loop args = function
 	| Atyp_apply (_, at, arg) -> loop (arg :: args) at

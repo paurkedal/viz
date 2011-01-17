@@ -29,3 +29,5 @@ val apath_to_avar : apath -> avar
 val result_type : atyp -> atyp
 
 val flatten_application : atyp -> apath * atyp list
+
+val flatten_arrows : atyp -> atyp * atyp list
