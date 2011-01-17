@@ -123,11 +123,33 @@ let rec emit_apat = function
 	let _loc = p4loc loc in
 	<:patt< $emit_apat p0$ $emit_apat p1$ >>
 
+let emit_op _loc default = function
+    | "1'¬" -> <:expr< not >>
+    | "2'∧" -> <:expr< (&&) >>
+    | "2'∨" -> <:expr< (||) >>
+    | "2'=" -> <:expr< (=) >>
+    | "2'≠" -> <:expr< (<>) >>
+    | "2'<" -> <:expr< (<) >>
+    | "2'>" -> <:expr< (>) >>
+    | "2'≤" -> <:expr< (<=) >>
+    | "2'≥" -> <:expr< (>=) >>
+    | "2'+" -> <:expr< (+) >>
+    | "1'-" -> <:expr< (~-) >>
+    | "2'-" -> <:expr< (-) >>
+    | "2'*" -> <:expr< ( * ) >>
+    | "2'/" -> <:expr< (/) >>
+    | "2'mod" -> <:expr< (mod) >>
+    | _ -> default ()
+
 let rec emit_aval = function
     | Aval_literal (loc, lit) -> emit_aval_literal loc lit
     | Aval_ref p ->
 	let _loc = p4loc (apath_loc p) in
-	<:expr< $id: emit_apath_lid p$ >>
+	let default () = <:expr< $id: emit_apath_lid p$ >> in
+	begin match p with
+	| Apath ([], Avar (_, Idr s)) -> emit_op _loc default s
+	| _ -> default ()
+	end
     | Aval_apply (loc, x, y) ->
 	let _loc = p4loc loc in
 	<:expr< $emit_aval x$ $emit_aval y$ >>
