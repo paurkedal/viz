@@ -360,6 +360,12 @@ let scan_identifier state =
     let finish () =
 	let s = UString.Buf.contents buf in
 	let n = UString.length s in
+	let ch0 = UString.get s 0 in
+	match int_of_uchar ch0 with
+	| 0x27 (* ' *) ->
+	    let idr = idr_of_ustring (UString.after 1 s) in
+	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ)
+	| _ ->
 	match LStream.peek_code state.st_stream with
 	| 0x25 (* % *) ->
 	    LStream.skip state.st_stream;
@@ -371,8 +377,11 @@ let scan_identifier state =
 	    let idr = idr_of_ustring (UString.sub s 0 (n - 1)) in
 	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ)
 	| _ ->
+	if UChar.is_greek_alpha ch0 then
 	    let idr = idr_of_ustring s in
-	    Grammar.IDENTIFIER idr in
+	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ) else
+	let idr = idr_of_ustring s in
+	Grammar.IDENTIFIER idr in
     let rec scan prev_ch =
 	LStream.skip state.st_stream;
 	match LStream.peek state.st_stream with

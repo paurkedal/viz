@@ -54,13 +54,36 @@ module UChar = struct
 	| _ -> false
 
     let are_tied ch0 ch1 = is_idrchr ch0 && is_idrchr ch1
+
+    let is_ascii_digit ch = let i = uint_code ch in 0x30 <= i && i <= 0x39
+    let is_ascii_lower ch = let i = uint_code ch in 0x61 <= i && i <= 0x7a
+    let is_ascii_upper ch = let i = uint_code ch in 0x41 <= i && i <= 0x5a
+    let is_ascii_alpha ch = is_ascii_lower ch || is_ascii_upper ch
+    let is_ascii_alnum ch = is_ascii_alpha ch || is_ascii_digit ch
+
+    let is_greek_lower ch =
+	UCharInfo.general_category ch == `Ll && UCharInfo.script ch == `Greek
+    let is_greek_upper ch =
+	UCharInfo.general_category ch == `Lu && UCharInfo.script ch == `Greek
+    let is_greek_alpha ch =
+	match UCharInfo.general_category ch with
+	| `Ll | `Lu -> UCharInfo.script ch == `Greek
+	| _ -> false
+
+    let is_ocaml_idrfst ch = is_ascii_alpha ch || uint_code ch == 0x5f
+    let is_ocaml_idrcnt ch =
+	is_ascii_alnum ch ||
+	match uint_code ch with 0x27 | 0x5f -> true | _ -> false
 end
 
 module UChar_map = Map.Make (UChar)
 
 module UString = struct
     include UText
+
     let empty = init 0 (fun _ -> uchar_of_int 0)
+
+    let after i s = sub s i (length s - i)
 
     let of_list xs =
 	let buf = Buf.create 8 in

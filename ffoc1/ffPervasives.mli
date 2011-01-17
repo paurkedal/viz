@@ -59,4 +59,6 @@ module String : sig
     include module type of String
 
     val split_on_char : char -> string -> string list
+
+    val after : int -> string -> string
 end

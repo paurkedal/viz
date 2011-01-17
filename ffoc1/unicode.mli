@@ -26,6 +26,19 @@ module UChar : sig
     val is_hspace : t -> bool
     val are_tied : t -> t -> bool
 
+    val is_ascii_digit : t -> bool
+    val is_ascii_lower : t -> bool
+    val is_ascii_upper : t -> bool
+    val is_ascii_alpha : t -> bool
+    val is_ascii_alnum : t -> bool
+
+    val is_greek_lower : t -> bool
+    val is_greek_upper : t -> bool
+    val is_greek_alpha : t -> bool
+
+    val is_ocaml_idrfst : t -> bool
+    val is_ocaml_idrcnt : t -> bool
+
     val ch_tab : t
     val ch_nl : t
     val ch_space : t
@@ -40,6 +53,8 @@ module UString : sig
     include module type of UText with type t = UText.t
 
     val empty : t
+
+    val after : int -> t -> t
 
     val of_list : UChar.t list -> t
 
