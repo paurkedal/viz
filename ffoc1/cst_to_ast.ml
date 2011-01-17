@@ -65,15 +65,16 @@ let build_atyp_con_args =
 	| ct -> errf_at (ctrm_loc ct) "Expecting a type constructor." in
     loop []
 
-let rec build_apat = function
+let rec build_apat ?(fpos = false) = function
     | Ctrm_ref (cidr, Ih_inj) ->
 	Apat_ref (Apath ([], cidr_to_avar cidr))
     | Ctrm_ref (cidr, _) ->
-	Apat_uvar (cidr_to_avar cidr)
+	if fpos then Apat_ref (Apath ([], cidr_to_avar cidr))
+	else         Apat_uvar (cidr_to_avar cidr)
     | Ctrm_project _ as ctrm ->
 	Apat_ref (build_apath ctrm)
     | Ctrm_apply (loc, cx, cy) ->
-	Apat_apply (loc, build_apat cx, build_apat cy)
+	Apat_apply (loc, build_apat ~fpos:true cx, build_apat cy)
     | cx -> errf_at (ctrm_loc cx) "Invalid pattern."
 
 let rec build_aval = function
