@@ -37,3 +37,5 @@ val move_applications : ctrm * ctrm -> ctrm * ctrm
  ** [src] and turns them into abstractions around [dst]. *)
 
 val flatten_tycon_application : ctrm -> cidr * ctrm list
+
+val flatten_arrow : ctrm -> ctrm * ctrm list

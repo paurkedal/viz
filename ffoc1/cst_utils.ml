@@ -51,3 +51,11 @@ let flatten_tycon_application typ =
 	| Ctrm_ref (con, _) -> (con, List.rev args)
 	| ctrm -> errf_at (ctrm_loc ctrm) "Not a type constructor." in
     loop [] typ
+
+let rec flatten_arrow typ =
+    let rec loop pts = function
+	| Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), pt), rt)
+		when cidr_is_2o_arrow op ->
+	    loop (pt :: pts) rt
+	| rt -> (rt, List.rev pts) in
+    loop [] typ

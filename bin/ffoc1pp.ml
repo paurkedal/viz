@@ -12,11 +12,14 @@ let _ =
     let in_path_opt = ref None in
     let out_path_opt = ref None in
     let do_print = ref false in
+    let use_ast = ref true in
     let optspecs = Arg.align [
 	"-o", Arg.String (opt_setter out_path_opt),
 	    "PATH The output file.";
 	"--print", Arg.Unit (fun () -> do_print := true),
 	    " Print expression tree.";
+	"--old-codegen", Arg.Unit (fun () -> use_ast := false),
+	    " Use old code generator.";
     ] in
     Arg.parse optspecs (opt_setter in_path_opt) usage;
     let require what = function
@@ -33,8 +36,13 @@ let _ =
 	    printf "%s\n" (Formatter.contents fo)
 	end else begin
 	    try
-		let oc_ast = Gen_ocaml.gen_toplevel term in
-		Printers.OCaml.print_implem ?output_file:!out_path_opt oc_ast
+		let omod =
+		    if !use_ast then
+			let amod = Cst_to_ast.build_amod term in
+			Ast_to_p4.emit_toplevel amod
+		    else
+			Gen_ocaml.gen_toplevel term in
+		Printers.OCaml.print_implem ?output_file:!out_path_opt omod
 	    with Error_at (loc, msg) ->
 		eprintf "%s: %s\n" (Location.to_string loc) msg;
 		exit 65 (* EX_DATAERR *)

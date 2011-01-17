@@ -40,6 +40,12 @@ let idr_2o_symbol (Idr name) =
 let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
 let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
 
+let idr_1q_c name = Idr ("1'" ^ name)
+let idr_1q (Idr name) = idr_1q_c name
+let idr_1q_symbol (Idr name) =
+    if starts_with "1'" name then String.sub name 2 (String.length name - 2)
+    else raise (Failure ("Expected a quantifier operator identifier: " ^ name))
+
 let cidr_loc (Cidr (loc, _)) = loc
 let cidr_to_idr (Cidr (_, idr)) = idr
 let cidr_to_string (Cidr (_, Idr s)) = s
@@ -48,10 +54,15 @@ let idr_2o_colon	= idr_2o_c ":"
 let idr_2o_arrow	= idr_2o_c "→"
 let idr_2o_comma	= idr_2o_c ","
 let idr_2o_eq		= idr_2o_c "="
+let idr_1o_not		= idr_2o_c "¬"
+let idr_2o_and		= idr_2o_c "∧"
+let idr_2o_or		= idr_2o_c "∨"
+let idr_1q_functor	= idr_1q_c "Fun"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
 let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
 let cidr_is_2o_comma	(Cidr (_, idr)) = idr = idr_2o_comma
 let cidr_is_2o_eq	(Cidr (_, idr)) = idr = idr_2o_eq
+let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor
 
 let lit_to_string = function
     | Lit_unit -> "unit"

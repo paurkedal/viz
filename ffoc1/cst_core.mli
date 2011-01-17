@@ -40,6 +40,10 @@ val idr_2o_symbol : idr -> string
 val idr_1b : idr -> idr -> idr
 val idr_1b_c : string -> string -> idr
 
+val idr_1q : idr -> idr
+val idr_1q_c : string -> idr
+val idr_1q_symbol : idr -> string
+
 val cidr_loc : cidr -> loc
 val cidr_to_idr : cidr -> idr
 val cidr_to_string : cidr -> string
@@ -57,7 +61,11 @@ val ctrm_to_string : ctrm -> string
 
 (* Specific Symbols *)
 val idr_2o_arrow : idr
+val idr_1o_not : idr
+val idr_2o_and : idr
+val idr_2o_or : idr
 val cidr_is_2o_colon : cidr -> bool
 val cidr_is_2o_comma : cidr -> bool
 val cidr_is_2o_arrow : cidr -> bool
 val cidr_is_2o_eq : cidr -> bool
+val cidr_is_1q_functor : cidr -> bool

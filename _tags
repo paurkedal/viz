@@ -1,6 +1,7 @@
 <**/*.{ml,mli,native,byte,d.byte,top}>: use_camlp4, use_camomile, use_dynlink, use_extlib, use_menhirLib
 
 <ffoc1/*.{cmo,cmx}>: for-pack(Ffoc1)
+<ffoc1/ast_to_p4.ml>: camlp4orf
 <ffoc1/gen_ocaml.ml>: camlp4orf
 
 <tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit

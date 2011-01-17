@@ -42,6 +42,11 @@ module List = struct
 
     let push x xs = x :: xs
 
+    let rec last = function
+	| [] -> invalid_arg "List.last"
+	| [x] -> x
+	| x :: xs -> last xs
+
     let rec fold f = function
 	| [] -> fun accu -> accu
 	| x :: xs -> fun accu -> fold f xs (f x accu)
@@ -50,6 +55,24 @@ module List = struct
 	| [] -> None
 	| x :: xs -> match f x with Some y -> Some y
 				  | None -> find_image f xs
+
+    let split_where f xs =
+	let rec loop ys = function
+	    | [] -> ([], List.rev ys)
+	    | x :: xs' as xs ->
+		if f x then (xs, List.rev ys)
+		else loop (x :: ys) xs'
+	in loop [] xs
+
+    let map_while f xs =
+	let rec loop = function
+	    | [], ys -> ([], List.rev ys)
+	    | x :: xs as xs', ys ->
+		begin match f x with
+		| None -> (xs', List.rev ys)
+		| Some y -> loop (xs, y :: ys)
+		end
+	in loop (xs, [])
 end
 
 module Char = struct

@@ -38,9 +38,15 @@ module List : sig
 
     val push : 'a -> 'a list -> 'a list
 
+    val last : 'a list -> 'a
+
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
     val find_image : ('a -> 'b option) -> 'a list -> 'b option
+
+    val split_where : ('a -> bool) -> 'a list -> 'a list * 'a list
+
+    val map_while : ('a -> 'b option) -> 'a list -> 'a list * 'b list
 end
 
 module Char : sig
