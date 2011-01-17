@@ -21,6 +21,7 @@ open Cst_types
 open FfPervasives
 
 let avar_idr (Avar (_, idr)) = idr
+let avar_name (Avar (_, Idr s)) = s
 let avar_loc (Avar (loc, _)) = loc
 
 let apath_loc = function

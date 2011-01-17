@@ -20,6 +20,7 @@ open Ast_types
 open Cst_types
 
 val avar_idr : avar -> idr
+val avar_name : avar -> string
 
 val avar_loc : avar -> loc
 val apath_loc : apath -> loc

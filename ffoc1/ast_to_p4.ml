@@ -115,7 +115,7 @@ let emit_aval_literal loc lit =
 let rec emit_apat = function
     | Apat_ref p ->
 	let _loc = p4loc (apath_loc p) in
-	<:patt< $id: emit_apath_lid p$ >>
+	<:patt< $id: emit_apath_uid p$ >>
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	<:patt< $lid: avar_to_lid v$ >>

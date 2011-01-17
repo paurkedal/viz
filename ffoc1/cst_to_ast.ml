@@ -25,6 +25,10 @@ open FfPervasives
 
 let cidr_to_avar (Cidr (loc, idr)) = Avar (loc, idr)
 
+let apath_to_avar = function
+    | Apath ([], av) -> av
+    | ap -> errf_at (apath_loc ap) "Expecting an unqualified name."
+
 let build_avar = function
     | Ctrm_ref (cidr, idrhint) -> cidr_to_avar cidr
     | ctrm -> errf_at (ctrm_loc ctrm) "Expecting an identifier."
@@ -150,7 +154,8 @@ module Algt_builder = struct
 		let crt, _ = Cst_utils.flatten_arrow ct in
 		errf_at loc "The type %s has not been defined in this scope."
 			(ctrm_to_string crt) in
-	Idr_map.add (avar_idr af) (ats, (loc, af, at) :: injs) algtb
+	Idr_map.add (avar_idr (apath_to_avar ap))
+		    (ats, (loc, af, at) :: injs) algtb
 
     let find_injs av = Idr_map.find (avar_idr av)
 end
