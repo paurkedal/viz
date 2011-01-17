@@ -415,6 +415,8 @@ let gen_val_def = function
 		<:binding< $lid:v$ = $e1$ >>
 	    end in
 	Struct_builder.add_def _loc name binding' (At_inj r) builder
+    | Cdec_val (_, _) | Cdef_sig (_, _, _) | Cdec_sig (_, _) ->
+	raise (Failure "UNIMPLEMENTED")
 
 let gen_toplevel = function
     | Ctrm_where (loc, defs) ->
