@@ -126,34 +126,35 @@ let apply_fence loc name0 name1 =
 %%
 
 main:
-    BEGIN structure_body END EOF
+    BEGIN structure_clause_seq END EOF
     { Ctrm_where (mkloc $startpos $endpos, List.rev $2) }
   ;
 
-signature_body:
+signature_clause_seq:
     /* empty */ { [] }
-  | signature_body signature_clause { $2 :: $1 }
+  | signature_clause_seq signature_clause { $2 :: $1 }
   ;
 
-structure_body:
+structure_clause_seq:
     /* empty */ { [] }
-  | structure_body structure_clause { $2 :: $1 }
+  | structure_clause_seq structure_clause { $2 :: $1 }
   ;
 
 signature_clause:
     modular_clause { $1 }
-  | IN structure_pattern BEGIN signature_body END
+  | IN structure_pattern BEGIN signature_clause_seq END
     {
-	let body = Ctrm_with (mkloc $startpos($4) $endpos($4), None, $4) in
+	let body_loc = mkloc $startpos($4) $endpos($4) in
+	let body = Ctrm_with (body_loc, None, List.rev $4) in
 	Cdef_in (mkloc $startpos $endpos, $2, body)
     }
   ;
 
 structure_clause:
     modular_clause { $1 }
-  | IN structure_pattern BEGIN structure_body END
+  | IN structure_pattern BEGIN structure_clause_seq END
     {
-	let body = Ctrm_where (mkloc $startpos($4) $endpos($4), $4) in
+	let body = Ctrm_where (mkloc $startpos($4) $endpos($4), List.rev $4) in
 	Cdef_in (mkloc $startpos $endpos, $2, body)
     }
   | LET term_pattern predicate
@@ -451,10 +452,10 @@ atomic_expr:
 	let f = Ctrm_ref (Cidr (locb, idr_1b $1 $3), Ih_none) in
 	Ctrm_apply (mkloc $startpos $endpos, f, $2)
     }
-  | WHERE BEGIN structure_body END
-    { Ctrm_where (mkloc $startpos $endpos, $3) }
-  | WITH  BEGIN signature_body END
-    { Ctrm_with (mkloc $startpos $endpos, None, $3) }
+  | WHERE BEGIN structure_clause_seq END
+    { Ctrm_where (mkloc $startpos $endpos, List.rev $3) }
+  | WITH  BEGIN signature_clause_seq END
+    { Ctrm_with (mkloc $startpos $endpos, None, List.rev $3) }
   | WHAT predicate { $2 }
   ;
 parenthesised:

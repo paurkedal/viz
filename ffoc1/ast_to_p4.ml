@@ -193,6 +193,9 @@ and emit_adec = function
 	let (uloc, _, _, _) = List.last bindings in
 	let _loc = p4loc (Location.span [lloc; uloc]) in
 	<:sig_item< type $list: List.map emit_type_binding bindings$ >>
+    | Adec_val (loc, xv, xt) ->
+	let _loc = p4loc loc in
+	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
 
 let rec emit_amod = function
     | Amod_ref p ->

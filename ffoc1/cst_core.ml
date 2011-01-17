@@ -271,3 +271,8 @@ let ctrm_to_string ctrm =
     let fo = Formatter.create () in
     print fo ctrm;
     Formatter.contents fo
+
+let cdef_to_string cdef =
+    let fo = Formatter.create () in
+    print_def fo cdef;
+    Formatter.contents fo

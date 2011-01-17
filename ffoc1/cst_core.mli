@@ -57,6 +57,7 @@ val application_depth : int -> idr -> ctrm -> int
 
 val print : Formatter.t -> ctrm -> unit
 val ctrm_to_string : ctrm -> string
+val cdef_to_string : cdef -> string
 
 
 (* Specific Symbols *)

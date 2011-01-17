@@ -169,6 +169,8 @@ let rec build_atcases atcases algtb = function
 	    :: xs when cidr_is_2o_colon op ->
 	let algtb' = Algt_builder.add_inj loc cf ct algtb in
 	build_atcases atcases algtb' xs
+    | Cdef_inj (loc, _) :: _ ->
+	errf_at loc "A type judgement expected after \"inj\"."
     | xs ->
 	let finish_atcase = function
 	    | loc, av, ats, Atypinfo_injs [] ->
