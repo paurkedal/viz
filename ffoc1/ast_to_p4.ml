@@ -25,6 +25,10 @@ open Diag
 open FfPervasives
 open Unicode
 
+let apath_is idr = function
+    | Apath ([], Avar (_, idr')) -> idr = idr'
+    | _ -> false
+
 let p4loc loc =
     let lb = Location.lbound loc in
     let ub = Location.ubound loc in
@@ -119,6 +123,10 @@ let rec emit_apat = function
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	<:patt< $lid: avar_to_lid v$ >>
+    | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
+	    when apath_is Cst_core.idr_2o_comma op ->
+	let _loc = p4loc loc in
+	<:patt< ($emit_apat x$, $emit_apat y$) >>
     | Apat_apply (loc, p0, p1) ->
 	let _loc = p4loc loc in
 	<:patt< $emit_apat p0$ $emit_apat p1$ >>
@@ -150,6 +158,10 @@ let rec emit_aval = function
 	| Apath ([], Avar (_, Idr s)) -> emit_op _loc default s
 	| _ -> default ()
 	end
+    | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
+	    when apath_is Cst_core.idr_2o_comma op ->
+	let _loc = p4loc loc in
+	<:expr< ($emit_aval x$, $emit_aval y$) >>
     | Aval_apply (loc, x, y) ->
 	let _loc = p4loc loc in
 	<:expr< $emit_aval x$ $emit_aval y$ >>

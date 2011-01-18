@@ -61,6 +61,8 @@ val cdef_to_string : cdef -> string
 
 
 (* Specific Symbols *)
+val idr_2o_colon : idr
+val idr_2o_comma : idr
 val idr_2o_arrow : idr
 val idr_1o_not : idr
 val idr_2o_and : idr

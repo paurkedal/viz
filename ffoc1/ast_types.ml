@@ -52,6 +52,7 @@ type aval =
     with sexp
 
 type atypinfo =
+    | Atypinfo_abstract (* only in signature *)
     | Atypinfo_alias of atyp
     | Atypinfo_injs of (loc * avar * atyp) list
     with sexp
