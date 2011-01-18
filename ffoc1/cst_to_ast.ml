@@ -139,7 +139,7 @@ module Algt_builder = struct
     let empty = Idr_map.empty
 
     let add_type loc cp algtb =
-	let ati = Atypinfo_injs [] in
+	let ati = Atypinfo_abstract in
 	let av, ats = build_atyp_con_args cp in
 	let atcase = (loc, av, ats, ati) in
 	(atcase, Idr_map.add (avar_idr av) (ats, []) algtb)
@@ -161,27 +161,34 @@ module Algt_builder = struct
     let find_injs av = Idr_map.find (avar_idr av)
 end
 
-let rec build_atcases atcases algtb = function
+let rec build_atcases is_sig atcases algtb = function
     | Cdef_type (loc, Ctrm_rel (_, p, [(_, op, ct)])) :: xs
 	    when cidr_is_2o_eq op ->
 	let ati = Atypinfo_alias (build_atyp ct) in
 	let av, ats = build_atyp_con_args p in
 	let atcase = (loc, av, ats, ati) in
-	build_atcases (atcase :: atcases) algtb xs
+	build_atcases is_sig (atcase :: atcases) algtb xs
     | Cdef_type (loc, p) :: xs ->
 	let atcase, algtb' = Algt_builder.add_type loc p algtb in
-	build_atcases (atcase :: atcases) algtb' xs
+	build_atcases is_sig (atcase :: atcases) algtb' xs
     | Cdef_inj (loc, Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct))
 	    :: xs when cidr_is_2o_colon op ->
 	let algtb' = Algt_builder.add_inj loc cf ct algtb in
-	build_atcases atcases algtb' xs
+	build_atcases is_sig atcases algtb' xs
     | Cdef_inj (loc, _) :: _ ->
 	errf_at loc "A type judgement expected after \"inj\"."
     | xs ->
 	let finish_atcase = function
-	    | loc, av, ats, Atypinfo_injs [] ->
-		let ats, injs = Algt_builder.find_injs av algtb in
-		(loc, av, ats, Atypinfo_injs (List.rev injs))
+	    | loc, av, ats, Atypinfo_abstract ->
+		let typinfo =
+		    let ats, injs = Algt_builder.find_injs av algtb in
+		    if injs = [] then
+			if is_sig then Atypinfo_abstract else
+			errf_at loc
+				"The algebraic type %s needs at least one case."
+				(avar_name av)
+		    else Atypinfo_injs (List.rev injs)
+		in (loc, av, ats, typinfo)
 	    | atcase -> atcase in
 	(List.rev_map finish_atcase atcases, xs)
 
@@ -219,7 +226,7 @@ and build_adecs adecs = function
 	let adec = Adec_sig (loc, cidr_to_avar cidr, Some asig) in
 	build_adecs (adec :: adecs) xs
     | (Cdef_type _ :: _) as xs ->
-	let atcases, xs' = build_atcases [] Algt_builder.empty xs in
+	let atcases, xs' = build_atcases true [] Algt_builder.empty xs in
 	let adec = Adec_types atcases in
 	build_adecs (adec :: adecs) xs'
     | Cdec_val (loc, cdec) :: xs ->
@@ -268,7 +275,7 @@ and build_adefs adefs = function
     | Cdec_sig (loc, cidr) :: xs -> errf_at loc "UNIMPLEMENTED (sig1)"
     | Cdef_sig (loc, cidr, ctrm) :: xs -> errf_at loc "UNIMPLEMENTED (sig2)"
     | (Cdef_type _ :: _) as xs ->
-	let atcases, xs' = build_atcases [] Algt_builder.empty xs in
+	let atcases, xs' = build_atcases false [] Algt_builder.empty xs in
 	let adef = Adef_types atcases in
 	build_adefs (adef :: adefs) xs'
     | Cdec_val (loc, p) :: xs -> errf_at loc "UNIMPLEMENTED (val)"

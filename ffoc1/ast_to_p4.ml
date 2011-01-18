@@ -186,8 +186,12 @@ and emit_match_case (pat, cond_opt, body) =
 
 let emit_type_binding (loc, v, params, ti) =
     let _loc = p4loc loc in
+    match ti with
+    | Atypinfo_abstract -> <:ctyp< $lid: avar_to_lid v$ >>
+    | _ ->
     let rhs =
 	match ti with
+	| Atypinfo_abstract -> raise (Failure "Not reachable.")
 	| Atypinfo_alias typ -> emit_atyp typ
 	| Atypinfo_injs injs ->
 	    let emit_inj (loc, v, inj_type) =
