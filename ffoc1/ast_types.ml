@@ -23,6 +23,8 @@ open Cst_types
 let loc_of_sexp sx = Location.dummy
 let sexp_of_loc loc = sexp_of_unit ()
 
+type stratum = [`Type | `Value | `Signature | `Structure]
+
 type avar = Avar of loc * idr with sexp
 
 type apath = Apath of avar list * avar with sexp

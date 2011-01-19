@@ -31,3 +31,8 @@ val result_type : atyp -> atyp
 val flatten_application : atyp -> apath * atyp list
 
 val flatten_arrows : atyp -> atyp * atyp list
+
+val fold_atyp_paths : (apath -> 'a -> 'a) -> atyp -> 'a -> 'a
+val fold_aval_paths : (apath -> 'a -> 'a) -> aval -> 'a -> 'a
+val fold_asig_paths : (stratum -> apath -> 'a -> 'a) -> asig -> 'a -> 'a
+val fold_amod_paths : (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a
