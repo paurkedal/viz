@@ -6,3 +6,11 @@
 <ffoc1/{ast_types,cst_types}.ml>: camlp4o, pa_type_conv, pa_sexp_conv
 
 <tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
+
+
+# For now, process all Fform code with the Camlp4 preprocessor.
+<**/*.ff>: ffoc1pp
+
+# This is covered by the <**/*.ff> rule, but we may want to remove that rule
+# later.
+<fflib/*.{cmi,cmo,cmx,depends}>: ffoc1pp
