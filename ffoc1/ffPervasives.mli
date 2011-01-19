@@ -40,6 +40,8 @@ module List : sig
 
     val last : 'a list -> 'a
 
+    val compare_with : ('a -> 'a -> int) -> 'a list -> 'a list -> int
+
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
     val find_image : ('a -> 'b option) -> 'a list -> 'b option

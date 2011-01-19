@@ -47,6 +47,15 @@ module List = struct
 	| [x] -> x
 	| x :: xs -> last xs
 
+    let rec compare_with cmp xs ys =
+	match xs, ys with
+	| [], [] -> 0
+	| [], _ -> -1
+	| _, [] ->  1
+	| x :: xs', y :: ys' ->
+	    let c = cmp x y in
+	    if c <> 0 then c else compare_with cmp xs' ys'
+
     let rec fold f = function
 	| [] -> fun accu -> accu
 	| x :: xs -> fun accu -> fold f xs (f x accu)
