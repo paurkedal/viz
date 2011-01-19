@@ -126,15 +126,27 @@ let apply_fence loc name0 name1 =
 %%
 
 main:
-    BEGIN structure_clause_seq END EOF
-    { Ctrm_where (mkloc $startpos $endpos, List.rev $2) }
+    EOF { Ctrm_where (mkloc $startpos $endpos, []) }
+  | structure_block EOF { $1 }
+  | expr EOF { $1 }
   ;
 
+signature_block:
+    BEGIN signature_clause_seq END {
+	let body_loc = mkloc $startpos($2) $endpos($2) in
+	Ctrm_with (body_loc, None, List.rev $2)
+    }
+  ;
 signature_clause_seq:
     /* empty */ { [] }
   | signature_clause_seq signature_clause { $2 :: $1 }
   ;
-
+structure_block:
+    BEGIN structure_clause_seq END {
+	let body_loc = mkloc $startpos($2) $endpos($2) in
+	Ctrm_where (body_loc, List.rev $2)
+    }
+  ;
 structure_clause_seq:
     /* empty */ { [] }
   | structure_clause_seq structure_clause { $2 :: $1 }
@@ -142,21 +154,14 @@ structure_clause_seq:
 
 signature_clause:
     modular_clause { $1 }
-  | IN structure_pattern BEGIN signature_clause_seq END
-    {
-	let body_loc = mkloc $startpos($4) $endpos($4) in
-	let body = Ctrm_with (body_loc, None, List.rev $4) in
-	Cdef_in (mkloc $startpos $endpos, $2, body)
-    }
+  | IN structure_pattern signature_block
+    { Cdef_in (mkloc $startpos $endpos, $2, $3) }
   ;
 
 structure_clause:
     modular_clause { $1 }
-  | IN structure_pattern BEGIN structure_clause_seq END
-    {
-	let body = Ctrm_where (mkloc $startpos($4) $endpos($4), List.rev $4) in
-	Cdef_in (mkloc $startpos $endpos, $2, body)
-    }
+  | IN structure_pattern structure_block
+    { Cdef_in (mkloc $startpos $endpos, $2, $3) }
   | LET term_pattern predicate
     { Cdef_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
   | VAL term_pattern predicate
@@ -170,8 +175,8 @@ modular_clause:
     { Cdef_include (mkloc $startpos $endpos, $2) }
   | SIG identifier
     { Cdec_sig (mkloc $startpos $endpos, $2) }
-  | SIG identifier BEGIN BE signature_expr END
-    { Cdef_sig (mkloc $startpos $endpos, $2, $5) }
+  | SIG identifier signature_block
+    { Cdef_sig (mkloc $startpos $endpos, $2, $3) }
   | TYPE type_equation
     { Cdef_type (mkloc $startpos $endpos, $2) }
   | INJ term_pattern
@@ -183,10 +188,7 @@ modular_clause:
 
 type_equation: expr {$1};
 term_pattern: expr {$1};
-signature_expr: expr {$1};
-structure_expr: expr {$1};
 structure_pattern: expr {$1};
-type_expr: expr {$1};
 term: expr {$1};
 
 
@@ -452,10 +454,8 @@ atomic_expr:
 	let f = Ctrm_ref (Cidr (locb, idr_1b $1 $3), Ih_none) in
 	Ctrm_apply (mkloc $startpos $endpos, f, $2)
     }
-  | WHERE BEGIN structure_clause_seq END
-    { Ctrm_where (mkloc $startpos $endpos, List.rev $3) }
-  | WITH  BEGIN signature_clause_seq END
-    { Ctrm_with (mkloc $startpos $endpos, None, List.rev $3) }
+  | WHERE structure_block { $2 }
+  | WITH signature_block { $2 }
   | WHAT predicate { $2 }
   ;
 parenthesised:
