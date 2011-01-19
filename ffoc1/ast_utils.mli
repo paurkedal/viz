@@ -16,6 +16,8 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+(** Auxiliary Functions for the Abstract Syntax Tree *)
+
 open Ast_types
 open Ast_core
 

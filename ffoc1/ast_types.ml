@@ -16,6 +16,8 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+(** Type Definitions of the Abstract Syntax Tree *)
+
 TYPE_CONV_PATH "Ffoc1.Ast_types"
 open Sexplib
 open Cst_types

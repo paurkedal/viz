@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -16,9 +16,13 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+(** Source Code Location *)
+
 open Unicode
 
 module Bound : sig
+    (** A Source Code Location Boundary (Point) *)
+
     type t
 
     val init : string -> t
@@ -52,11 +56,11 @@ module Bound : sig
     val to_string : t -> string
 
     (** Convert from [Lexing.position].  Note that the result will not have a
-     ** column number. *)
+	column number. *)
     val of_lexing_position : Lexing.position -> t
 
     (** Convert to [Lexing.position].  Not that this throws away the column
-     ** number. *)
+	number. *)
     val to_lexing_position : t -> Lexing.position
 end
 

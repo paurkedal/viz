@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
+
+(** Interface for Tries *)
 
 module type S = sig
     type 'r key

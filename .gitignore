@@ -1,4 +1,5 @@
 *.byte
 *.native
+*.docdir
 /_build
 /fform/grammar.automaton
