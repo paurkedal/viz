@@ -228,8 +228,15 @@ let rec emit_asig = function
 	<:module_type<
 	    functor ( $uid: avar_to_uid xv$ : $emit_asig xsig$ ) ->
 		$emit_asig ysig$ >>
-    | Asig_with_type (loc, _, _) | Asig_with_sig (loc, _, _) ->
-	errf_at loc "UNIMPLEMENTED"
+    | Asig_with_type (loc, s, x, y) ->
+	let _loc = p4loc loc in
+	let constr = <:with_constr< type $emit_atyp x$ = $emit_atyp y$ >> in
+	<:module_type< $emit_asig s$ with $constr$ >>
+    | Asig_with_struct (loc, s, x, y) ->
+	let _loc = p4loc loc in
+	let constr = <:with_constr< module $uid: avar_to_uid x$
+					 = $emit_apath_uid y$ >> in
+	<:module_type< $emit_asig s$ with $constr$ >>
 and emit_adec = function
     | Adec_include (loc, s) ->
 	let _loc = p4loc loc in

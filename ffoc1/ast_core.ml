@@ -54,8 +54,8 @@ let rec asig_loc = function
     | Asig_ref p -> apath_loc p
     | Asig_decs (loc, bs) -> loc
     | Asig_product (loc, _, _, _) -> loc
-    | Asig_with_type (loc, _, _) -> loc
-    | Asig_with_sig (loc, _, _) -> loc
+    | Asig_with_type (loc, _, _, _) -> loc
+    | Asig_with_struct (loc, _, _, _) -> loc
 and adec_loc = function
     | Adec_include (loc, _) -> loc
     | Adec_open (loc, _) -> loc

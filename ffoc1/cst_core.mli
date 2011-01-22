@@ -71,8 +71,12 @@ val idr_2o_arrow : idr
 val idr_1o_not : idr
 val idr_2o_and : idr
 val idr_2o_or : idr
+val idr_1o_asterisk : idr
+val idr_2b_dotbracket : idr
 val cidr_is_2o_colon : cidr -> bool
 val cidr_is_2o_comma : cidr -> bool
 val cidr_is_2o_arrow : cidr -> bool
 val cidr_is_2o_eq : cidr -> bool
+val cidr_is_1o_asterisk : cidr -> bool
 val cidr_is_1q_functor : cidr -> bool
+val cidr_is_2b_dotbracket : cidr -> bool

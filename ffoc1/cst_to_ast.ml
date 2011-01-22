@@ -192,6 +192,29 @@ let rec build_atcases is_sig atcases algtb = function
 	    | atcase -> atcase in
 	(List.rev_map finish_atcase atcases, xs)
 
+let rec fold_on_comma f = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
+	    when cidr_is_2o_comma op ->
+	fold_on_comma f x *> f y
+    | x -> f x
+
+let build_constraints loc eqns =
+    fold_on_comma begin function
+	| Ctrm_rel (loc, x, [(_, op, y)]) when cidr_is_2o_eq op ->
+	    begin match x, y with
+	    | Ctrm_apply (_, Ctrm_ref (op, _), x),
+			  Ctrm_apply (_, Ctrm_ref (op', _), y)
+		    when cidr_is_1o_asterisk op && cidr_is_1o_asterisk op' ->
+		fun asig ->
+		    Asig_with_struct (loc, asig, build_avar x, build_apath y)
+	    | _ ->
+		fun asig ->
+		    Asig_with_type (loc, asig, build_atyp x, build_atyp y)
+	    end
+	| ctrm -> errf_at (ctrm_loc ctrm)
+			  "Invalid constraint in signature expression"
+    end eqns
+
 let rec build_asig = function
     | Ctrm_ref (cidr, _) ->
 	Asig_ref (Apath ([], cidr_to_avar cidr))
@@ -206,7 +229,9 @@ let rec build_asig = function
 	let axsig = build_asig cxsig in
 	let aysig = build_asig cysig in
 	Asig_product (loc, axvar, axsig, aysig)
-	(* FIXME: Asig_with_type and Asig_with_sig *)
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), csig), eqns)
+		when cidr_is_2b_dotbracket op ->
+	build_constraints loc eqns (build_asig csig)
     | ctrm -> errf_at (ctrm_loc ctrm) "Invalid signature expression."
 and build_adecs adecs = function
     | Cdef_include (loc, csig) :: xs ->
@@ -272,8 +297,11 @@ and build_adefs adefs = function
 	let p, m = Cst_utils.move_applications (p, m) in
 	let adef = Adef_in (loc, build_avar p, build_amod m) in
 	build_adefs (adef :: adefs) xs
-    | Cdec_sig (loc, cidr) :: xs -> errf_at loc "UNIMPLEMENTED (sig1)"
-    | Cdef_sig (loc, cidr, ctrm) :: xs -> errf_at loc "UNIMPLEMENTED (sig2)"
+    | Cdec_sig (loc, cidr) :: xs ->
+	errf_at loc "Missing signature definition."
+    | Cdef_sig (loc, cidr, ctrm) :: xs ->
+	let adef = Adef_sig (loc, cidr_to_avar cidr, build_asig ctrm) in
+	build_adefs (adef :: adefs) xs
     | (Cdef_type _ :: _) as xs ->
 	let atcases, xs' = build_atcases false [] Algt_builder.empty xs in
 	let adef = Adef_types atcases in

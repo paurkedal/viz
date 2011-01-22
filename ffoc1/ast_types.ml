@@ -65,8 +65,8 @@ type asig =
     | Asig_ref of apath
     | Asig_decs of loc * adec list
     | Asig_product of loc * avar * asig * asig
-    | Asig_with_type of loc * avar * atyp
-    | Asig_with_sig of loc * avar * asig
+    | Asig_with_type of loc * asig * atyp * atyp
+    | Asig_with_struct of loc * asig * avar * apath
  and adec =
     | Adec_include of loc * asig
     | Adec_open of loc * apath

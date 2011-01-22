@@ -60,11 +60,15 @@ let idr_1o_not		= idr_2o_c "¬"
 let idr_2o_and		= idr_2o_c "∧"
 let idr_2o_or		= idr_2o_c "∨"
 let idr_1q_functor	= idr_1q_c "Fun"
+let idr_2b_dotbracket	= idr_2b_c ".[" "]"
+let idr_1o_asterisk	= idr_1o_c "*"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
 let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
 let cidr_is_2o_comma	(Cidr (_, idr)) = idr = idr_2o_comma
 let cidr_is_2o_eq	(Cidr (_, idr)) = idr = idr_2o_eq
 let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor
+let cidr_is_1o_asterisk	(Cidr (_, idr)) = idr = idr_1o_asterisk
+let cidr_is_2b_dotbracket (Cidr (_, idr)) = idr = idr_2b_dotbracket
 
 let lit_to_string = function
     | Lit_unit -> "unit"

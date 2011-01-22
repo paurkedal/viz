@@ -104,8 +104,10 @@ let rec fold_asig_paths f = function
     | Asig_ref p -> f `Signature p
     | Asig_decs (_, decs) -> List.fold (fold_adec_paths f) decs
     | Asig_product (_, _, r, s) -> fold_asig_paths f r *> fold_asig_paths f s
-    | Asig_with_type (_, _, u) -> fold_atyp_paths (f `Type) u
-    | Asig_with_sig (_, _, s) -> fold_asig_paths f s
+    | Asig_with_type (_, s, _, u) ->
+	fold_asig_paths f s *> fold_atyp_paths (f `Type) u
+    | Asig_with_struct (_, s, _, p) ->
+	fold_asig_paths f s *> f `Structure p
 and fold_adec_paths f = function
     | Adec_include (_, s) -> fold_asig_paths f s
     | Adec_open (_, p) -> f `Signature p
