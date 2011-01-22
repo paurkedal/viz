@@ -199,7 +199,9 @@ and emit_match_case (pat, cond_opt, body) =
 let emit_type_binding (loc, v, params, ti) =
     let _loc = p4loc loc in
     match ti with
-    | Atypinfo_abstract -> <:ctyp< $lid: avar_to_lid v$ >>
+    | Atypinfo_abstract ->
+	List.fold (fun arg at -> <:ctyp< $at$ $emit_atyp arg$ >>) params
+		  <:ctyp< $lid: avar_to_lid v$ >>
     | _ ->
     let rhs =
 	match ti with

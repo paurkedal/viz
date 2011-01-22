@@ -60,7 +60,7 @@ let rec build_atyp = function
 
 let build_atyp_con_args =
     let rec loop args = function
-	| Ctrm_ref (Cidr (loc, idr), _) -> (Avar (loc, idr), List.rev args)
+	| Ctrm_ref (Cidr (loc, idr), _) -> (Avar (loc, idr), args)
 	| Ctrm_apply (loc, ct, arg) -> loop (build_atyp arg :: args) ct
 	| ct -> errf_at (ctrm_loc ct) "Expecting a type constructor." in
     loop []
