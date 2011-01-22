@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -169,6 +169,34 @@ let infix_script = Array.init 10
 	ok_print = print_infix;
 	ok_id = make_id ();
     })
+let suffix_project = {
+    ok_name = "PS";
+    ok_arities = [1];
+    ok_prec = p_project;
+    ok_print = print_unimplemented;
+    ok_id = make_id ();
+}
+let circumfix_lbracket = {
+    ok_name = "BL";
+    ok_arities = [1];
+    ok_prec = p_max;
+    ok_print = print_unimplemented;
+    ok_id = make_id ();
+}
+let circumfix_rbracket = {
+    ok_name = "BR";
+    ok_arities = [1];
+    ok_prec = p_max;
+    ok_print = print_unimplemented;
+    ok_id = make_id ();
+}
+let postcircumfix_lbracket = {
+    ok_name = "PL";
+    ok_arities = [2];
+    ok_prec = p_project;
+    ok_print = print_unimplemented;
+    ok_id = make_id ();
+}
 let identifier_quote = {
     ok_name = "I";
     ok_arities = [0];
@@ -193,8 +221,11 @@ let of_string s =
 	if n = 2 then
 	    begin match String.get s 0, String.get s 1 with
 	    | ('A', ch) -> preinfix_arith.(int_of_digit ch)
+	    | ('B', 'L') -> circumfix_lbracket
+	    | ('B', 'R') -> circumfix_rbracket
 	    | ('L', ch) -> preinfix_logic.(int_of_digit ch)
 	    | ('S', ch) -> infix_script.(int_of_digit ch)
+	    | ('P', 'L') -> postcircumfix_lbracket
 	    | _ -> raise Domain_error
 	    end else
 	if n = 3 then

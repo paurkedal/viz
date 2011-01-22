@@ -97,7 +97,7 @@ let apply_fence loc name0 name1 =
 %token <Cst_types.idr> ARITH8 ARITH8_S ARITH9 ARITH9_S LABEL FENCE
 %token <Cst_types.idr> SCRIPT0_P SCRIPT0_S SCRIPT0_I
 %token <Cst_types.idr> SCRIPT1_P SCRIPT1_S SCRIPT1_I
-%token <Cst_types.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I
+%token <Cst_types.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I PROJECT_LBRACKET
 %token <Cst_types.idr> PROJECT
 
 %left  ARITH0 ARITH0_S
@@ -112,7 +112,7 @@ let apply_fence loc name0 name1 =
 %right ARITH9 ARITH9_S
 %left  SCRIPT0_P SCRIPT0_S SCRIPT0_I
 %right SCRIPT1_P SCRIPT1_S SCRIPT1_I
-%left  SCRIPT2_P SCRIPT2_S SCRIPT2_I
+%left  SCRIPT2_P SCRIPT2_S SCRIPT2_I PROJECT_LBRACKET
 
 /* Atoms */
 %token <Cst_types.lit> LITERAL
@@ -439,6 +439,14 @@ projection:
   | projection PROJECT
     { let p = Cidr (mkloc $startpos($2) $endpos($2), $2) in
       Ctrm_project (mkloc $startpos $endpos, p, $1) }
+  | projection PROJECT_LBRACKET expr RBRACKET
+    {
+	let locb = mkloc $startpos($2) $endpos($2) in
+	let f = Ctrm_ref (Cidr (locb, idr_2b $2 $4), Ih_none) in
+	let loc = mkloc $startpos $endpos in
+	let loc1 = mkloc $startpos($1) $endpos($2) in
+	Ctrm_apply (loc, Ctrm_apply (loc1, f, $1), $3)
+    }
   ;
 
 atomic_expr:

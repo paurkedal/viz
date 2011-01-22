@@ -41,14 +41,18 @@ val to_string : t -> string
 
 (* The operator kinds.  These correspond to the similarly named terminals of the
  * grammar of type [Cst.ctrm]. *)
-val   mixfix_quantifier : t
-val preinfix_logic      : t array
-val transfix_relation   : t
-val preinfix_arith      : t array
-val   suffix_arith      : t array
-val    infix_script     : t array
-val   prefix_script     : t array
-val   suffix_script     : t array
+val    mixfix_quantifier : t
+val  preinfix_logic      : t array
+val  transfix_relation   : t
+val  preinfix_arith      : t array
+val    suffix_arith      : t array
+val     infix_script     : t array
+val    prefix_script     : t array
+val    suffix_script     : t array
+val    suffix_project    : t
+val circumfix_lbracket   : t
+val circumfix_rbracket   : t
+val postcircumfix_lbracket : t
 
 (* Precedence levels. *)
 val p_min : int

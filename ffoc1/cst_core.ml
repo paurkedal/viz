@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -39,6 +39,8 @@ let idr_2o_symbol (Idr name) =
     else raise (Failure ("Expected a binary operator identifier: " ^ name))
 let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
 let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
+let idr_2b_c lname rname = Idr ("2'" ^ lname ^ "'" ^ rname)
+let idr_2b (Idr lname) (Idr rname) = idr_2b_c lname rname
 
 let idr_1q_c name = Idr ("1'" ^ name)
 let idr_1q (Idr name) = idr_1q_c name

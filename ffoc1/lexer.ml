@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -101,6 +101,10 @@ let mktoken_arr =
 	Opkind.suffix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_S a);
 	Opkind.suffix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_S a);
 	Opkind.suffix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_S a);
+	Opkind.postcircumfix_lbracket.Opkind.ok_id,
+		(fun a -> Grammar.PROJECT_LBRACKET a);
+	Opkind.circumfix_lbracket.Opkind.ok_id, (fun a -> Grammar.LBRACKET a);
+	Opkind.circumfix_rbracket.Opkind.ok_id, (fun a -> Grammar.RBRACKET a);
     ];
     a
 
@@ -306,17 +310,18 @@ let scan_keyword state =
 	begin match LStream.peek_n 2 state.st_stream with
 	| [ch0; ch1] when UChar.code ch0 = 0x2e ->
 	    let loc_lb = LStream.locbound state.st_stream in
-	    LStream.skip state.st_stream;
-	    if UChar.is_idrchr ch1 then
+	    if UChar.is_idrchr ch1 then begin
+		LStream.skip state.st_stream;
 		let (name, loc) =
 		    LStream.scan_while UChar.is_idrchr state.st_stream in
 		let idr = idr_of_ustring name in
 		let loc' = Location.between loc_lb (Location.ubound loc) in
 		Some (Grammar.PROJECT idr, loc')
-	    else if UChar.is_space ch1 then
+	    end else if UChar.is_space ch1 then begin
+		LStream.skip state.st_stream;
 		let loc_ub = LStream.locbound state.st_stream in
 		Some (Grammar.DOT, Location.between loc_lb loc_ub)
-	    else
+	    end else
 		None
 	| _ -> None
 	end

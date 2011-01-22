@@ -41,6 +41,8 @@ val idr_2o_symbol : idr -> string
 
 val idr_1b : idr -> idr -> idr
 val idr_1b_c : string -> string -> idr
+val idr_2b : idr -> idr -> idr
+val idr_2b_c : string -> string -> idr
 
 val idr_1q : idr -> idr
 val idr_1q_c : string -> idr
