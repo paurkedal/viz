@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -19,6 +19,8 @@
 open CamomileLibrary.Default.Camomile
 open FfPervasives
 open Sexplib
+
+module UString_encoding = CharEncoding.Make (UText)
 
 module UChar = struct
     include UChar
@@ -75,6 +77,9 @@ module UChar = struct
     let is_ocaml_idrcnt ch =
 	is_ascii_alnum ch ||
 	match uint_code ch with 0x27 | 0x5f -> true | _ -> false
+
+    let to_utf8 ch =
+	UString_encoding.encode CharEncoding.utf8 (UText.init 1 (fun _ -> ch))
 end
 
 module UChar_map = Map.Make (UChar)
@@ -95,8 +100,6 @@ module UString = struct
 	let buf = Buf.create 8 in
 	Sequence.iter_n (Buf.add_char buf) max_length xs;
 	Buf.contents buf
-
-    module UString_encoding = CharEncoding.Make (UText)
 
     let of_utf8 = UString_encoding.decode CharEncoding.utf8
     let to_utf8 = UString_encoding.encode CharEncoding.utf8

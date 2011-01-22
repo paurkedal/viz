@@ -48,6 +48,8 @@ module UChar : sig
     val ch_dash : t
     val ch_underscore : t
     val ch_grave_accent : t
+
+    val to_utf8 : t -> string
 end
 
 module UChar_map : Map.S with type key = UChar.t
