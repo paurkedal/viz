@@ -44,13 +44,19 @@ module List : sig
 
     val compare_with : ('a -> 'a -> int) -> 'a list -> 'a list -> int
 
+    val init : int -> (int -> 'a) -> 'a list
+
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
     val find_image : ('a -> 'b option) -> 'a list -> 'b option
 
-    val split_where : ('a -> bool) -> 'a list -> 'a list * 'a list
+    val split_before : ('a -> bool) -> 'a list -> 'a list * 'a list
+
+    val split_after : ('a -> bool) -> 'a list -> 'a list * 'a list
 
     val map_while : ('a -> 'b option) -> 'a list -> 'a list * 'b list
+
+    val drop_while : ('a -> bool) -> 'a list -> 'a list
 end
 
 module Char : sig

@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -56,6 +56,12 @@ module List = struct
 	    let c = cmp x y in
 	    if c <> 0 then c else compare_with cmp xs' ys'
 
+    let init i f =
+	let rec loop i accu =
+	    if i < 0 then accu
+	    else loop (i - 1) (f i :: accu)
+	in loop (i - 1) []
+
     let rec fold f = function
 	| [] -> fun accu -> accu
 	| x :: xs -> fun accu -> fold f xs (f x accu)
@@ -65,13 +71,21 @@ module List = struct
 	| x :: xs -> match f x with Some y -> Some y
 				  | None -> find_image f xs
 
-    let split_where f xs =
+    let rec split_before f =
 	let rec loop ys = function
-	    | [] -> ([], List.rev ys)
-	    | x :: xs' as xs ->
-		if f x then (xs, List.rev ys)
-		else loop (x :: ys) xs'
-	in loop [] xs
+	    | [] -> raise Not_found
+	    | x :: xs ->
+		if f x then (List.rev ys, x :: xs)
+		else loop (x :: ys) xs
+	in loop []
+
+    let rec split_after f =
+	let rec loop ys = function
+	    | [] -> raise Not_found
+	    | x :: xs ->
+		if f x then (List.rev (x :: ys), xs)
+		else loop (x :: ys) xs
+	in loop []
 
     let map_while f xs =
 	let rec loop = function
@@ -82,6 +96,10 @@ module List = struct
 		| Some y -> loop (xs, y :: ys)
 		end
 	in loop (xs, [])
+
+    let rec drop_while f = function
+	| x :: xs -> if f x then drop_while f xs else x :: xs
+	| [] -> []
 end
 
 module Char = struct
