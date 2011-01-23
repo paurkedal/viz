@@ -124,7 +124,6 @@ let initial_intro_keywords = [
     "lex",	Grammar.LEX;
     "lexalias",	Grammar.LEXALIAS;
     "leximport",Grammar.LEXIMPORT;
-    "__notation__",Grammar.NOTATION;
     "if",	Grammar.IF;
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;

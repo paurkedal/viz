@@ -1,4 +1,4 @@
-/* Copyright 2010  Petter Urkedal
+/* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -64,7 +64,6 @@ let apply_fence loc name0 name1 =
 %token LEX
 %token LEXALIAS
 %token LEXIMPORT
-%token NOTATION
 
 %token LPAREN RPAREN
 %token <Cst_types.idr> LBRACKET RBRACKET
