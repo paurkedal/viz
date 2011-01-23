@@ -263,6 +263,7 @@ and build_adecs adecs = function
     | Cdef_inj (loc, _) :: xs ->
 	errf_at loc "Injections must follow a type."
     | Cdef_lex (loc, _, _) :: xs -> build_adecs adecs xs
+    | Cdef_lex_alias (loc, _, _) :: xs -> build_adecs adecs xs
     | [] -> List.rev adecs
 
 
@@ -368,6 +369,6 @@ and build_adefs adefs = function
 	build_adefs (break_rec_and_push_avcases avcases adefs) xs'
     | Cdef_inj (loc, p) :: xs ->
 	errf_at loc "Injections must follow a type definition."
-    | Cdef_lex _ :: xs ->
-	build_adefs adefs xs
+    | Cdef_lex _ :: xs -> build_adefs adefs xs
+    | Cdef_lex_alias _ :: xs -> build_adefs adefs xs
     | [] -> List.rev adefs

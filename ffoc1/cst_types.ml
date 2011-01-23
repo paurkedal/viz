@@ -67,3 +67,4 @@ type ctrm =
     | Cdef_val		of loc * ctrm * ctrm
     | Cdef_inj		of loc * ctrm
     | Cdef_lex		of loc * Opkind.t * cidr list
+    | Cdef_lex_alias	of loc * cidr * cidr list

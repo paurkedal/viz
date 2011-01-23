@@ -48,7 +48,7 @@ type state = {
 
     (* The currently active keywords and operators. *)
     mutable st_keywords : kwinfo UString_trie.t;
-    mutable st_operators : Opkind.t UString_trie.t;
+    mutable st_operators : (Opkind.t * idr) UString_trie.t;
 
     mutable st_lookahead : int;
     mutable st_last_location : Location.t;
@@ -122,8 +122,8 @@ let initial_intro_keywords = [
     "raise",	Grammar.RAISE;
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
-    "lexalias",	Grammar.LEXALIAS;
-    "leximport",Grammar.LEXIMPORT;
+    "lex alias",Grammar.LEXALIAS;
+    "lex open",	Grammar.LEXOPEN;
     "if",	Grammar.IF;
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
@@ -237,13 +237,22 @@ let declare_operator state ok (Cidr (_, op)) =
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (idr_to_string op)
 	      (Opkind.to_string ok);
-    state.st_operators <- UString_trie.add op' ok state.st_operators
+    state.st_operators <- UString_trie.add op' (ok, op) state.st_operators
 
-let scan_lexdef state lex_loc =
-    skip_space state;
-    let okname, okname_loc =
-	LStream.scan_while (not *< UChar.is_space) state.st_stream in
-    let loc_lb = LStream.locbound state.st_stream in
+let alias_operator state (Cidr (log_orig, op_orig)) (Cidr (_, op)) =
+    let op_orig' = UString_sequence.create (idr_to_ustring op_orig) in
+    let op' = UString_sequence.create (idr_to_ustring op) in
+    let ok =
+	match UString_trie.find op_orig' state.st_operators with
+	| None ->
+	    raise (Error_at (log_orig, "Cannot alias undefined operator."))
+	| Some (ok, _) -> ok in
+    if dlog_en then
+	dlogf "Aliasing operator %s as %s."
+	      (idr_to_string op) (idr_to_string op_orig);
+    state.st_operators <- UString_trie.add op' (ok, op_orig) state.st_operators
+
+let scan_lexops state =
     let ops_r = ref [] in
     while
 	LStream.skip_while UChar.is_hspace state.st_stream;
@@ -257,7 +266,14 @@ let scan_lexdef state lex_loc =
 	let op = Cidr (opname_loc, idr_of_ustring opname) in
 	ops_r := op :: !ops_r
     done;
-    let ops = List.rev !ops_r in
+    List.rev !ops_r
+
+let scan_lexdef state lex_loc =
+    skip_space state;
+    let okname, okname_loc =
+	LStream.scan_while (not *< UChar.is_space) state.st_stream in
+    let loc_lb = LStream.locbound state.st_stream in
+    let ops = scan_lexops state in
     let opkind =
 	try Opkind.of_string (UString.to_utf8 okname)
 	with Opkind.Domain_error ->
@@ -268,11 +284,25 @@ let scan_lexdef state lex_loc =
     List.iter (declare_operator state opkind) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
+let scan_lexalias state lex_alias_loc =
+    skip_space state;
+    let loc_lb = LStream.locbound state.st_stream in
+    match scan_lexops state with
+    | [] -> raise (Error_at (lex_alias_loc, "Missing operator to alias."))
+    | op :: ops ->
+    let loc_ub = LStream.locbound state.st_stream in
+    let loc = Location.between loc_lb loc_ub in
+    let lexalias = Cdef_lex_alias (loc, op, ops) in
+    List.iter (alias_operator state op) ops;
+    (Grammar.PREPARED_DEF lexalias, loc)
+
 let lexopen state = function
     | Ctrm_where (_, defs) -> List.iter
 	begin function
 	    | Cdef_lex (loc, ok, ops) ->
 		List.iter (declare_operator state ok) ops
+	    | Cdef_lex_alias (loc, op, ops) ->
+		List.iter (alias_operator state op) ops
 	    | _ -> ()
 	end
 	defs
@@ -328,6 +358,7 @@ let scan_keyword state =
 	let (tok, _) =
 	    match kwinfo.ki_mktoken tokstr with
 	    | Grammar.LEX -> scan_lexdef state loc
+	    | Grammar.LEXALIAS -> scan_lexalias state loc
 	    | tok -> (tok, loc) in
 	let loc_lb = Location.lbound loc in
 	if state.st_continued
@@ -354,10 +385,10 @@ let scan_keyword state =
 let scan_operator state =
     match triescan state state.st_operators with
     | None -> None
-    | Some (opkind, tokstr, loc) ->
+    | Some ((opkind, idr), tokstr, loc) ->
 	let mktoken = mktoken_arr.(opkind.Opkind.ok_id) in
 	if dlog_en then dlogf ~loc "Scanned operator.";
-	Some (mktoken (idr_of_ustring tokstr), loc)
+	Some (mktoken idr, loc)
 
 let scan_identifier state =
     let buf = UString.Buf.create 8 in

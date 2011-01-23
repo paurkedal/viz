@@ -265,6 +265,11 @@ and print_def fo cdef =
 	Fo.put fo `Name (Opkind.to_string ok);
 	List.iter (fun (Cidr (_, Idr s)) -> Fo.space fo; Fo.put fo `Operator s)
 		  idrs
+    | Cdef_lex_alias (_, idr, idrs) ->
+	Fo.put_kw fo "lex";
+	Fo.put_kw fo "alias";
+	List.iter (fun (Cidr (_, Idr s)) -> Fo.space fo; Fo.put fo `Operator s)
+		  (idr :: idrs)
 and print_defs fo defs =
     Fo.enter_indent fo;
     List.iter (print_def fo) defs;

@@ -63,7 +63,7 @@ let apply_fence loc name0 name1 =
 
 %token LEX
 %token LEXALIAS
-%token LEXIMPORT
+%token LEXOPEN
 
 %token LPAREN RPAREN
 %token <Cst_types.idr> LBRACKET RBRACKET

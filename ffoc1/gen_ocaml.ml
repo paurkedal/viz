@@ -369,7 +369,7 @@ let gen_val_def = function
 	| _ ->
 	    errf_at loc "Invalid head %s of module pattern." (ctrm_to_string pat)
 	end
-    | Cdef_lex _ -> ident
+    | Cdef_lex _ | Cdef_lex_alias _ -> ident
     | Cdef_type (loc, typ) -> fun builder ->
 	let _loc = convert_loc loc in
 	let (name, ctyp) = gen_ctyp typ in
