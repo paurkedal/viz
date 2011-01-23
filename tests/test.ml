@@ -2,6 +2,7 @@ open OUnit
 
 let suite = "fform" >::: [
     Test_grammar.tests;
+    Test_graphalgo.tests;
     Test_pervasives.tests;
     Test_unicode.tests;
 ]
