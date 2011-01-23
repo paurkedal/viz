@@ -265,6 +265,54 @@ and build_adecs adecs = function
     | Cdef_lex (loc, _, _) :: xs -> build_adecs adecs xs
     | [] -> List.rev adecs
 
+
+module Avcases_graph = struct
+    type graph = (Idr_set.t * (loc * avar * aval)) Idr_map.t
+    type vertex = idr
+    module Vertex_map = Idr_map
+
+    let empty : graph = Idr_map.empty
+
+    let fold_adjacent (g : graph) f v =
+	try
+	    let (vs, _) = Idr_map.find v g in
+	    Idr_set.fold f vs
+	with Not_found -> ident
+end
+
+module Avcases_algo = Graphalgo.ST_algo (Avcases_graph)
+
+let fold_aval_deps f aval =
+    let f' = function
+	| Apath ([], Avar (_, idr)) -> f idr
+	| Apath _ -> ident in
+    Ast_utils.fold_aval_paths f' aval
+
+let break_rec_and_push_avcases avcases =
+    (* Build dependency graph. *)
+    let add_vertex ((_, Avar (_, v), aval) as avcase) (g, vs) =
+	let deps = fold_aval_deps Idr_set.add aval Idr_set.empty in
+	let g = Idr_map.add v (deps, avcase) g in
+	(g, v :: vs) in
+    let (g, vs) = List.fold add_vertex avcases (Avcases_graph.empty, []) in
+    let vs = List.rev vs in
+
+    (* Remove dependecies not included in g. *)
+    let g = Idr_map.map
+	(fun (vs, avcase) ->
+	    (Idr_set.filter (fun v -> Idr_map.mem v g) vs, avcase)) g in
+
+    (* Emit the components as individual Adef_vals definitions. *)
+    let vertex_deps v   = match Idr_map.find v g with (deps, _) -> deps in
+    let vertex_avcase v = match Idr_map.find v g with (_, avcase) -> avcase in
+    let push_component vs adefs =
+	match vs with
+	| [v] when not (Idr_set.mem v (vertex_deps v)) ->
+	    let (loc, v, x) = vertex_avcase v in
+	    Adef_val (loc, v, x) :: adefs
+	| _ -> Adef_vals (List.map vertex_avcase vs) :: adefs in
+    Avcases_algo.fold_strongly_connected g push_component vs
+
 let rec build_amod = function
     | Ctrm_ref (cidr, _) ->
 	Amod_ref (Apath ([], cidr_to_avar cidr))
@@ -317,8 +365,7 @@ and build_adefs adefs = function
 		Some (loc, avar, aval)
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
-	let adef = Adef_vals avcases in
-	build_adefs (adef :: adefs) xs'
+	build_adefs (break_rec_and_push_avcases avcases adefs) xs'
     | Cdef_inj (loc, p) :: xs ->
 	errf_at loc "Injections must follow a type definition."
     | Cdef_lex _ :: xs ->

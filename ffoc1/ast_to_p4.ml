@@ -324,6 +324,9 @@ and emit_adef = function
 	let alias_bindings = List.concat (List.map emit_inj_aliases bindings) in
 	let odef_aliases = <:str_item< value $list: alias_bindings$ >> in
 	<:str_item< $list: [odef; odef_aliases]$ >>
+    | Adef_val (loc, v, x) ->
+	let _loc = p4loc loc in
+	<:str_item< value $lid: avar_to_lid v$ = $emit_aval x$ >>
     | Adef_vals bindings ->
 	let (lloc, _, _) = List.hd bindings in
 	let (uloc, _, _) = List.last bindings in
