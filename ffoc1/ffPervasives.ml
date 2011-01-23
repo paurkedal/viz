@@ -66,6 +66,12 @@ module List = struct
 	| [] -> fun accu -> accu
 	| x :: xs -> fun accu -> fold f xs (f x accu)
 
+    let rev_filter f =
+	let rec loop accu = function
+	    | [] -> accu
+	    | x :: xs -> if f x then loop (x :: accu) xs else loop accu xs
+	in loop []
+
     let rec find_image f = function
 	| [] -> None
 	| x :: xs -> match f x with Some y -> Some y

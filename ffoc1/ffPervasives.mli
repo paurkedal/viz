@@ -48,6 +48,8 @@ module List : sig
 
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
+    val rev_filter : ('a -> bool) -> 'a list -> 'a list
+
     val find_image : ('a -> 'b option) -> 'a list -> 'b option
 
     val split_before : ('a -> bool) -> 'a list -> 'a list * 'a list
