@@ -216,6 +216,28 @@ let emit_type_binding (loc, v, params, ti) =
 	    <:ctyp< [ $list: List.map emit_inj injs$ ] >> in
     Ast.TyDcl (_loc, avar_to_lid v, List.map emit_atyp params, rhs, [])
 
+let emit_inj_aliases (loc, v, params, ti) =
+    match ti with
+    | Atypinfo_injs injs ->
+	let emit_inj (loc, v, inj_type) =
+	    let _loc = p4loc loc in
+	    let locd = Location.dummy in
+	    let _, avars =
+		Ast_utils.fold_arg_types begin fun _ (i, avs) ->
+		    let name = Printf.sprintf "x%d" i in
+		    (i + 1, Avar (locd, Idr name) :: avs)
+		end inj_type (0, []) in
+	    let ov = <:expr< $uid: avar_to_uid v$ >> in
+	    let ov = List.fold
+		(fun v ov -> <:expr< $ov$ $lid: avar_to_lid v$ >>)
+		(List.rev avars) ov in
+	    let ov = List.fold
+		(fun v ov -> <:expr< fun $lid: avar_to_lid v$ -> $ov$ >>)
+		avars ov in
+	    <:binding< $lid: avar_to_lid v$ = $ov$ >> in
+	List.map emit_inj injs
+    | Atypinfo_abstract _ | Atypinfo_alias _ -> []
+
 let rec emit_asig = function
     | Asig_ref p ->
 	let _loc = p4loc (apath_loc p) in
@@ -297,7 +319,11 @@ and emit_adef = function
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
 	let _loc = p4loc (Location.span [lloc; uloc]) in
-	<:str_item< type $list: List.map emit_type_binding bindings$ >>
+	let odef =
+	    <:str_item< type $list: List.map emit_type_binding bindings$ >> in
+	let alias_bindings = List.concat (List.map emit_inj_aliases bindings) in
+	let odef_aliases = <:str_item< value $list: alias_bindings$ >> in
+	<:str_item< $list: [odef; odef_aliases]$ >>
     | Adef_vals bindings ->
 	let (lloc, _, _) = List.hd bindings in
 	let (uloc, _, _) = List.last bindings in

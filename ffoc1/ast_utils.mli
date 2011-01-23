@@ -29,6 +29,7 @@ val amod_to_string : amod -> string
 val apath_to_avar : apath -> avar
 
 val result_type : atyp -> atyp
+val fold_arg_types : (atyp -> 'a -> 'a) -> atyp -> 'a -> 'a
 
 val flatten_application : atyp -> apath * atyp list
 

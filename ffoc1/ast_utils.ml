@@ -36,8 +36,12 @@ let apath_to_avar = function
     | p -> errf_at (apath_loc p) "Expecting an unqualified identifier."
 
 let rec result_type = function
-    | Atyp_arrow (_, _, at) -> result_type at
-    | at -> at
+    | Atyp_arrow (_, _, rt) -> result_type rt
+    | rt -> rt
+
+let rec fold_arg_types f = function
+    | Atyp_arrow (_, at, rt) -> f at *> fold_arg_types f rt
+    | rt -> ident
 
 let flatten_arrows =
     let rec loop ats = function
