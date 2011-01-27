@@ -45,7 +45,6 @@ type ctrm =
     | Ctrm_ref		of cidr * idrhint
     | Ctrm_literal	of loc * lit
     | Ctrm_label	of loc * cidr * ctrm
-    | Ctrm_lambda	of loc * ctrm * ctrm
     | Ctrm_quantify	of loc * cidr * ctrm * ctrm
     | Ctrm_let		of loc * ctrm * ctrm * ctrm
     | Ctrm_rel		of loc * ctrm * (loc * cidr * ctrm) list

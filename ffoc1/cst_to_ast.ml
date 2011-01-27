@@ -84,6 +84,9 @@ let rec build_aval = function
 	Aval_ref (Apath ([], cidr_to_avar cidr))
     | Ctrm_project _ as ctrm ->
 	Aval_ref (build_apath ctrm)
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), cx), cy)
+	    when cidr_is_2o_mapsto op ->
+	build_aval (Ctrm_at (loc, [cx, cy]))
     | Ctrm_apply (loc, cx, cy) ->
 	Aval_apply (loc, build_aval cx, build_aval cy)
     | Ctrm_rel (loc, cx, (_, cf, cy) :: rest) ->
@@ -104,14 +107,6 @@ let rec build_aval = function
 	    | [] -> aconj in
 	build_conj (build_aval_rel cf cx cy) cy rest
     | Ctrm_rel (_, _, []) -> invalid_arg "build_aval"
-    (*
-    | Ctrm_lambda (loc, Ctrm_apply (_,
-	    Ctrm_apply (_, Ctrm_ref (op, _), cxv), cxt), cy)
-	    when cidr_is_2o_colon op ->
-	Aval_lambda (loc, build_avar cxv, Some (build_atyp cxt), build_aval cy)
-    *)
-    | Ctrm_lambda (loc, cx, cy) ->
-	Aval_at (loc, [build_apat cx, None, build_aval cy])
     | Ctrm_at (loc, cases) ->
 	let build_case (pat, cq) = (build_apat pat, None, build_aval cq) in
 	Aval_at (loc, List.map build_case cases)
@@ -326,7 +321,7 @@ let rec build_amod = function
 	Amod_coercion (loc, build_amod cx, build_asig cxsig)
     | Ctrm_apply (loc, cf, cx) ->
 	Amod_apply (loc, build_amod cf, build_amod cx)
-    | Ctrm_lambda (loc, cxvarsig, cymod) ->
+    | Ctrm_at (loc, [cxvarsig, cymod]) ->
 	let cxvar, cxsig = Cst_utils.extract_term_typing cxvarsig in
 	let axvar = build_avar cxvar in
 	let axsig = build_asig cxsig in

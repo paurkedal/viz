@@ -42,7 +42,7 @@ let move_typing (src, dst) =
 let rec move_applications (src, dst) =
     match src with
     | Ctrm_apply (loc', src', arg) ->
-	move_applications (src', Ctrm_lambda (loc', arg, dst))
+	move_applications (src', Ctrm_at (loc', [arg, dst]))
     | _ -> (src, dst)
 
 let flatten_tycon_application typ =

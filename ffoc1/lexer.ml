@@ -132,8 +132,6 @@ let initial_intro_keywords = [
 let initial_plain_keywords = [
     "(",	Grammar.LPAREN;
     ")",	Grammar.RPAREN;
-    "↦",	Grammar.MAPSTO;
-    "/>",	Grammar.MAPSTO;
     "true",	Grammar.LITERAL (Lit_bool true);
     "false",	Grammar.LITERAL (Lit_bool false);
 ]

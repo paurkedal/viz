@@ -54,6 +54,7 @@ let cidr_to_string (Cidr (_, Idr s)) = s
 
 let idr_2o_colon	= idr_2o_c ":"
 let idr_2o_arrow	= idr_2o_c "→"
+let idr_2o_mapsto	= idr_2o_c "↦"
 let idr_2o_comma	= idr_2o_c ","
 let idr_2o_eq		= idr_2o_c "="
 let idr_1o_not		= idr_2o_c "¬"
@@ -64,6 +65,7 @@ let idr_2b_dotbracket	= idr_2b_c ".[" "]"
 let idr_1o_asterisk	= idr_1o_c "*"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
 let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
+let cidr_is_2o_mapsto	(Cidr (_, idr)) = idr = idr_2o_mapsto
 let cidr_is_2o_comma	(Cidr (_, idr)) = idr = idr_2o_comma
 let cidr_is_2o_eq	(Cidr (_, idr)) = idr = idr_2o_eq
 let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor
@@ -86,7 +88,7 @@ module Idr_map = Map.Make (Idr)
 
 let ctrm_loc = function
     | Ctrm_ref (Cidr (loc, _), _) | Ctrm_literal (loc, _) | Ctrm_label (loc, _, _)
-    | Ctrm_lambda (loc, _, _) | Ctrm_quantify (loc, _, _, _)
+    | Ctrm_quantify (loc, _, _, _)
     | Ctrm_let (loc, _, _, _)
     | Ctrm_rel (loc, _, _) | Ctrm_apply (loc, _, _)
     | Ctrm_project (loc, _, _)
@@ -133,7 +135,6 @@ and print_inline fo p = function
 	Fo.put fo `Label (label ^ ":");
 	Fo.space fo;
 	print_inline fo Opkind.p_apply body
-    | Ctrm_lambda (_, var, body) -> put_infixl fo Opkind.p_cond p "↦" var body
     | Ctrm_quantify (_, Cidr (_, Idr op), var, body) ->
 	if p >= Opkind.p_rel then Fo.put fo `Operator "(";
 	Fo.put fo `Operator op;

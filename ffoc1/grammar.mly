@@ -69,7 +69,6 @@ let apply_fence loc name0 name1 =
 %token <Cst_types.idr> LBRACKET RBRACKET
 %token IF ELSE OTHERWISE
 %token AT
-%token MAPSTO
 %token DOT
 
 /* Logic Operators */
@@ -238,13 +237,8 @@ participle:
 
 /* Expressions */
 
-expr: conditional {$1};
+expr: qlogic_expr {$1};
 
-conditional:
-    qlogic_expr {$1}
-  | qlogic_expr MAPSTO conditional
-    { Ctrm_lambda (mkloc $startpos $endpos, $1, $3) }
-  ;
 qlogic_expr:
     qseq logic_expr { quantify (mkloc $startpos $endpos) $1 $2 }
   ;
