@@ -19,6 +19,8 @@
 %{
 open Cst_types
 open Cst_core
+open Leaf_types
+open Leaf_core
 
 let mkloc lb ub =
     Location.between (Location.Bound.of_lexing_position lb)
@@ -31,15 +33,19 @@ let rec quantify loc qs e =
 let apply loc f x = Ctrm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
-let ctrm_1o loc name = Ctrm_ref (Cidr (loc, idr_1o name), Ih_none)
-let ctrm_2o loc name = Ctrm_ref (Cidr (loc, idr_2o name), Ih_none)
+let ctrm_idr loc name = Ctrm_ref (Cidr (loc, name), Ih_none)
 
-let apply_infix lb ub lbf ubf f =
-    apply2 (mkloc lb ub) (ctrm_2o (mkloc lbf ubf) f)
-let apply_prefix lb ub lbf ubf f =
-    apply (mkloc lb ub) (ctrm_1o (mkloc lbf ubf) f)
+let apply_infix lb ub lbf ubf (_, f) =
+    apply2 (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+let apply_prefix lb ub lbf ubf (f, _) =
+    apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 let apply_suffix lb ub lbf ubf f =
-    apply (mkloc lb ub) (ctrm_1o (mkloc lbf ubf) f)
+    apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+
+let apply_infix_script lb ub lbf ubf f =
+    apply2 (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+let apply_prefix_script lb ub lbf ubf f =
+    apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)
@@ -66,14 +72,15 @@ let apply_fence loc name0 name1 =
 %token LEXOPEN
 
 %token LPAREN RPAREN
-%token <Cst_types.idr> LBRACKET RBRACKET
+%token <Leaf_types.idr> LBRACKET RBRACKET
 %token IF ELSE OTHERWISE
 %token AT
 %token DOT
 
 /* Logic Operators */
-%token <Cst_types.idr> LOGIC0 LOGIC1 LOGIC2 LOGIC3
-%token <Cst_types.idr> LOGIC4 LOGIC5 LOGIC6 LOGIC7 LOGIC8 QUANTIFIER
+%token <Leaf_types.idr * Leaf_types.idr> LOGIC0 LOGIC1 LOGIC2 LOGIC3
+%token <Leaf_types.idr * Leaf_types.idr> LOGIC4 LOGIC5 LOGIC6 LOGIC7 LOGIC8
+%token <Leaf_types.idr> QUANTIFIER
 %left  LOGIC0
 %right LOGIC1
 %left  LOGIC2
@@ -85,18 +92,20 @@ let apply_fence loc name0 name1 =
 %left  LOGIC8
 
 /* Relation Operators */
-%token <Cst_types.idr> RELATION
+%token <Leaf_types.idr> RELATION
 
 /* Arithmetic Operators */
-%token <Cst_types.idr> ARITH0 ARITH0_S ARITH1 ARITH1_S
-%token <Cst_types.idr> ARITH2 ARITH2_S ARITH3 ARITH3_S
-%token <Cst_types.idr> ARITH4 ARITH4_S ARITH5 ARITH5_S
-%token <Cst_types.idr> ARITH6 ARITH6_S ARITH7 ARITH7_S
-%token <Cst_types.idr> ARITH8 ARITH8_S ARITH9 ARITH9_S LABEL FENCE
-%token <Cst_types.idr> SCRIPT0_P SCRIPT0_S SCRIPT0_I
-%token <Cst_types.idr> SCRIPT1_P SCRIPT1_S SCRIPT1_I
-%token <Cst_types.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I PROJECT_LBRACKET
-%token <Cst_types.idr> PROJECT
+%token <Leaf_types.idr> ARITH0_S ARITH1_S ARITH2_S ARITH3_S
+%token <Leaf_types.idr> ARITH4_S ARITH5_S ARITH6_S ARITH7_S
+%token <Leaf_types.idr> ARITH8_S ARITH9_S
+%token <Leaf_types.idr * Leaf_types.idr> ARITH0 ARITH1 ARITH2 ARITH3
+%token <Leaf_types.idr * Leaf_types.idr> ARITH4 ARITH5 ARITH6 ARITH7
+%token <Leaf_types.idr * Leaf_types.idr> ARITH8 ARITH9
+%token <Leaf_types.idr> LABEL FENCE
+%token <Leaf_types.idr> SCRIPT0_P SCRIPT0_S SCRIPT0_I
+%token <Leaf_types.idr> SCRIPT1_P SCRIPT1_S SCRIPT1_I
+%token <Leaf_types.idr> SCRIPT2_P SCRIPT2_S SCRIPT2_I PROJECT_LBRACKET
+%token <Leaf_types.idr> PROJECT
 
 %left  ARITH0 ARITH0_S
 %right ARITH1 ARITH1_S
@@ -110,12 +119,12 @@ let apply_fence loc name0 name1 =
 %right ARITH9 ARITH9_S
 %left  SCRIPT0_P SCRIPT0_S SCRIPT0_I
 %right SCRIPT1_P SCRIPT1_S SCRIPT1_I
-%left  SCRIPT2_P SCRIPT2_S SCRIPT2_I PROJECT_LBRACKET
+%left  SCRIPT2_P SCRIPT2_S SCRIPT2_I
 
 /* Atoms */
-%token <Cst_types.lit> LITERAL
-%token <Cst_types.idr> IDENTIFIER
-%token <Cst_types.idr * Cst_types.idrhint> HINTED_IDENTIFIER
+%token <Leaf_types.lit> LITERAL
+%token <Leaf_types.idr> IDENTIFIER
+%token <Leaf_types.idr * Cst_types.idrhint> HINTED_IDENTIFIER
 %token <Cst_types.cdef> PREPARED_DEF
 
 %type <Cst_types.ctrm> main
@@ -324,7 +333,7 @@ relation_seq:
 relation_comp:
     RELATION arith
     { (mkloc $startpos $endpos,
-       Cidr (mkloc $startpos($1) $endpos($1), idr_2o $1), $2) }
+       Cidr (mkloc $startpos($1) $endpos($1), $1), $2) }
   ;
 arith:
     application
@@ -408,23 +417,23 @@ script:
     projection
     { $1 }
   | SCRIPT0_P script
-    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+    { apply_prefix_script $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
   | script SCRIPT0_S
     { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
   | script SCRIPT0_I script
-    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+    { apply_infix_script $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
   | SCRIPT1_P script
-    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+    { apply_prefix_script $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
   | script SCRIPT1_S
     { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
   | script SCRIPT1_I script
-    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+    { apply_infix_script $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
   | SCRIPT2_P script
-    { apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
+    { apply_prefix_script $startpos $endpos $startpos($1) $endpos($1) $1 $2 }
   | script SCRIPT2_S
     { apply_suffix $startpos $endpos $startpos($2) $endpos($2) $2 $1 }
   | script SCRIPT2_I script
-    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+    { apply_infix_script $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
   ;
 
 projection:

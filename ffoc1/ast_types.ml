@@ -20,6 +20,7 @@
 
 TYPE_CONV_PATH "Ffoc1.Ast_types"
 open Sexplib
+open Leaf_types
 open Cst_types
 
 let loc_of_sexp sx = Location.dummy

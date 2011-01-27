@@ -20,17 +20,24 @@ open FfPervasives
 open Unicode
 open Cst_types
 open Cst_core
+open Leaf_types
+open Leaf_core
 
 exception Error_at of Location.t * string
 
 let dlog_en = Diag.dlog_en_for "Fform.Lexer"
 let dlogf fmt ?loc = Diag.dlogf_for "Fform.Lexer" ?loc fmt
 
-type kwinfo = {
-    ki_mktoken : UString.t -> Grammar.token;
-    ki_is_intro : bool;
-    ki_continued : bool;
-}
+type tokeninfo =
+    | Ti_operator of Grammar.token * Opkind.t
+    | Ti_keyword of Grammar.token * Opkind.lexkind
+
+let tokeninfo_token = function
+    | Ti_operator (tok, _) -> tok
+    | Ti_keyword (tok, _) -> tok
+let tokeninfo_lexkind = function
+    | Ti_operator (_, ok) -> ok.Opkind.ok_lexkind
+    | Ti_keyword (_, lk) -> lk
 
 type state = {
     st_stream : LStream.t;
@@ -47,8 +54,7 @@ type state = {
     mutable st_continued : bool;
 
     (* The currently active keywords and operators. *)
-    mutable st_keywords : kwinfo UString_trie.t;
-    mutable st_operators : (Opkind.t * idr) UString_trie.t;
+    mutable st_keywords : tokeninfo UString_trie.t;
 
     mutable st_lookahead : int;
     mutable st_last_location : Location.t;
@@ -56,57 +62,6 @@ type state = {
 }
 
 let last_location state = state.st_last_location
-
-let mktoken_arr =
-    let a = Array.create Opkind.maxp_id
-	(fun _ -> raise (Failure "Invalid precedence")) in
-    List.iter (fun (p, mktoken) -> Array.set a p mktoken) [
-	Opkind.mixfix_quantifier.Opkind.ok_id, (fun a -> Grammar.QUANTIFIER a);
-	Opkind.preinfix_logic.(0).Opkind.ok_id, (fun a -> Grammar.LOGIC0 a);
-	Opkind.preinfix_logic.(1).Opkind.ok_id, (fun a -> Grammar.LOGIC1 a);
-	Opkind.preinfix_logic.(2).Opkind.ok_id, (fun a -> Grammar.LOGIC2 a);
-	Opkind.preinfix_logic.(3).Opkind.ok_id, (fun a -> Grammar.LOGIC3 a);
-	Opkind.preinfix_logic.(4).Opkind.ok_id, (fun a -> Grammar.LOGIC4 a);
-	Opkind.preinfix_logic.(5).Opkind.ok_id, (fun a -> Grammar.LOGIC5 a);
-	Opkind.preinfix_logic.(6).Opkind.ok_id, (fun a -> Grammar.LOGIC6 a);
-	Opkind.preinfix_logic.(7).Opkind.ok_id, (fun a -> Grammar.LOGIC7 a);
-	Opkind.preinfix_logic.(8).Opkind.ok_id, (fun a -> Grammar.LOGIC8 a);
-	Opkind.transfix_relation.Opkind.ok_id, (fun a -> Grammar.RELATION a);
-	Opkind.preinfix_arith.(0).Opkind.ok_id, (fun a -> Grammar.ARITH0 a);
-	Opkind.preinfix_arith.(1).Opkind.ok_id, (fun a -> Grammar.ARITH1 a);
-	Opkind.preinfix_arith.(2).Opkind.ok_id, (fun a -> Grammar.ARITH2 a);
-	Opkind.preinfix_arith.(3).Opkind.ok_id, (fun a -> Grammar.ARITH3 a);
-	Opkind.preinfix_arith.(4).Opkind.ok_id, (fun a -> Grammar.ARITH4 a);
-	Opkind.preinfix_arith.(5).Opkind.ok_id, (fun a -> Grammar.ARITH5 a);
-	Opkind.preinfix_arith.(6).Opkind.ok_id, (fun a -> Grammar.ARITH6 a);
-	Opkind.preinfix_arith.(7).Opkind.ok_id, (fun a -> Grammar.ARITH7 a);
-	Opkind.preinfix_arith.(8).Opkind.ok_id, (fun a -> Grammar.ARITH8 a);
-	Opkind.preinfix_arith.(9).Opkind.ok_id, (fun a -> Grammar.ARITH9 a);
-	Opkind.suffix_arith.(0).Opkind.ok_id, (fun a -> Grammar.ARITH0_S a);
-	Opkind.suffix_arith.(1).Opkind.ok_id, (fun a -> Grammar.ARITH1_S a);
-	Opkind.suffix_arith.(2).Opkind.ok_id, (fun a -> Grammar.ARITH2_S a);
-	Opkind.suffix_arith.(3).Opkind.ok_id, (fun a -> Grammar.ARITH3_S a);
-	Opkind.suffix_arith.(4).Opkind.ok_id, (fun a -> Grammar.ARITH4_S a);
-	Opkind.suffix_arith.(5).Opkind.ok_id, (fun a -> Grammar.ARITH5_S a);
-	Opkind.suffix_arith.(6).Opkind.ok_id, (fun a -> Grammar.ARITH6_S a);
-	Opkind.suffix_arith.(7).Opkind.ok_id, (fun a -> Grammar.ARITH7_S a);
-	Opkind.suffix_arith.(8).Opkind.ok_id, (fun a -> Grammar.ARITH8_S a);
-	Opkind.suffix_arith.(9).Opkind.ok_id, (fun a -> Grammar.ARITH9_S a);
-	Opkind.infix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_I a);
-	Opkind.infix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_I a);
-	Opkind.infix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_I a);
-	Opkind.prefix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_P a);
-	Opkind.prefix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_P a);
-	Opkind.prefix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_P a);
-	Opkind.suffix_script.(0).Opkind.ok_id, (fun a -> Grammar.SCRIPT0_S a);
-	Opkind.suffix_script.(1).Opkind.ok_id, (fun a -> Grammar.SCRIPT1_S a);
-	Opkind.suffix_script.(2).Opkind.ok_id, (fun a -> Grammar.SCRIPT2_S a);
-	Opkind.postcircumfix_lbracket.Opkind.ok_id,
-		(fun a -> Grammar.PROJECT_LBRACKET a);
-	Opkind.circumfix_lbracket.Opkind.ok_id, (fun a -> Grammar.LBRACKET a);
-	Opkind.circumfix_rbracket.Opkind.ok_id, (fun a -> Grammar.RBRACKET a);
-    ];
-    a
 
 let initial_intro_keywords = [
     "open",	Grammar.OPEN;
@@ -144,19 +99,12 @@ let initial_continued_keywords = [
 let initial_lookahead = 40
 
 let initial_keywords =
-    let addkw is_intro is_continued (name, token) =
-	let kwinfo = {
-	    ki_mktoken = (fun _ -> token);
-	    ki_is_intro = is_intro;
-	    ki_continued = is_continued;
-	} in
-	UString_trie.add_utf8 name kwinfo in
-    List.fold (addkw true  false) initial_intro_keywords @<
-    List.fold (addkw false false) initial_plain_keywords @<
-    List.fold (addkw false true)  initial_continued_keywords @<
+    let addkw lk (name, token) =
+	UString_trie.add_utf8 name (Ti_keyword (token, lk)) in
+    List.fold (addkw Opkind.Lex_intro) initial_intro_keywords @<
+    List.fold (addkw Opkind.Lex_regular) initial_plain_keywords @<
+    List.fold (addkw Opkind.Lex_continued) initial_continued_keywords @<
     UString_trie.empty
-
-let initial_operators = UString_trie.empty
 
 let rec skip_line state =
     match LStream.pop state.st_stream with
@@ -235,20 +183,24 @@ let declare_operator state ok (Cidr (_, op)) =
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (idr_to_string op)
 	      (Opkind.to_string ok);
-    state.st_operators <- UString_trie.add op' (ok, op) state.st_operators
+    let ti = Ti_operator (ok.Opkind.ok_create (op, []), ok) in
+    state.st_keywords <- UString_trie.add op' ti state.st_keywords
 
-let alias_operator state (Cidr (log_orig, op_orig)) (Cidr (_, op)) =
+let alias_operator state (Cidr (loc_orig, op_orig)) (Cidr (_, op)) =
     let op_orig' = UString_sequence.create (idr_to_ustring op_orig) in
     let op' = UString_sequence.create (idr_to_ustring op) in
-    let ok =
-	match UString_trie.find op_orig' state.st_operators with
+    let ti =
+	match UString_trie.find op_orig' state.st_keywords with
+	| Some (Ti_operator (_, ok)) ->
+	    Ti_operator (ok.Opkind.ok_create (op, []), ok)
+	| Some (Ti_keyword _) ->
+	    raise (Error_at (loc_orig, "Cannot alias keyword."))
 	| None ->
-	    raise (Error_at (log_orig, "Cannot alias undefined operator."))
-	| Some (ok, _) -> ok in
+	    raise (Error_at (loc_orig, "Cannot alias undefined operator.")) in
     if dlog_en then
 	dlogf "Aliasing operator %s as %s."
 	      (idr_to_string op) (idr_to_string op_orig);
-    state.st_operators <- UString_trie.add op' (ok, op_orig) state.st_operators
+    state.st_keywords <- UString_trie.add op' ti state.st_keywords
 
 let scan_lexops state =
     let ops_r = ref [] in
@@ -268,18 +220,19 @@ let scan_lexops state =
 
 let scan_lexdef state lex_loc =
     skip_space state;
-    let okname, okname_loc =
+    let okname_u, okname_loc =
 	LStream.scan_while (not *< UChar.is_space) state.st_stream in
     let loc_lb = LStream.locbound state.st_stream in
     let ops = scan_lexops state in
-    let opkind =
-	try Opkind.of_string (UString.to_utf8 okname)
-	with Opkind.Domain_error ->
-	    raise (Error_at (okname_loc, "Not an operator kind.")) in
+    let okname = UString.to_utf8 okname_u in
     let loc_ub = LStream.locbound state.st_stream in
     let loc = Location.between loc_lb loc_ub in
-    let lexdef = Cdef_lex (loc, opkind, ops) in
-    List.iter (declare_operator state opkind) ops;
+    let lexdef = Cdef_lex (loc, okname, ops) in
+    let ok =
+	try Opkind.of_string okname
+	with Opkind.Domain_error ->
+	    raise (Error_at (okname_loc, "Not an operator kind.")) in
+    List.iter (declare_operator state ok) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
 let scan_lexalias state lex_alias_loc =
@@ -297,7 +250,8 @@ let scan_lexalias state lex_alias_loc =
 let lexopen state = function
     | Ctrm_where (_, defs) -> List.iter
 	begin function
-	    | Cdef_lex (loc, ok, ops) ->
+	    | Cdef_lex (loc, okname, ops) ->
+		let ok = Opkind.of_string okname in
 		List.iter (declare_operator state ok) ops
 	    | Cdef_lex_alias (loc, op, ops) ->
 		List.iter (alias_operator state op) ops
@@ -352,18 +306,19 @@ let scan_keyword state =
 		None
 	| _ -> None
 	end
-    | Some (kwinfo, tokstr, loc) ->
+    | Some (ti, tokstr, loc) ->
 	let (tok, _) =
-	    match kwinfo.ki_mktoken tokstr with
-	    | Grammar.LEX -> scan_lexdef state loc
-	    | Grammar.LEXALIAS -> scan_lexalias state loc
-	    | tok -> (tok, loc) in
+	    match ti with
+	    | Ti_keyword (Grammar.LEX, _) -> scan_lexdef state loc
+	    | Ti_keyword (Grammar.LEXALIAS, _) -> scan_lexalias state loc
+	    | Ti_keyword (tok, _) | Ti_operator (tok, _) -> (tok, loc) in
 	let loc_lb = Location.lbound loc in
+	let lk = tokeninfo_lexkind ti in
 	if state.st_continued
-	     || kwinfo.ki_is_intro
+	     || lk = Opkind.Lex_intro
 		&& stacked_column state <> Location.Bound.column loc_lb then
 	  begin
-	    state.st_continued <- kwinfo.ki_continued;
+	    state.st_continued <- lk = Opkind.Lex_continued;
 	    let loc_begin = Location.between loc_lb loc_lb in
 	    assert (state.st_stash = None);
 	    state.st_stash <- Some (tok, loc);
@@ -375,18 +330,10 @@ let scan_keyword state =
 	  end
 	else
 	  begin
-	    state.st_continued <- kwinfo.ki_continued;
+	    state.st_continued <- lk = Opkind.Lex_continued;
 	    if dlog_en then dlogf ~loc "Scanned keyword.";
 	    Some (tok, loc)
 	  end
-
-let scan_operator state =
-    match triescan state state.st_operators with
-    | None -> None
-    | Some ((opkind, idr), tokstr, loc) ->
-	let mktoken = mktoken_arr.(opkind.Opkind.ok_id) in
-	if dlog_en then dlogf ~loc "Scanned operator.";
-	Some (mktoken idr, loc)
 
 let scan_identifier state =
     let buf = UString.Buf.create 8 in
@@ -502,7 +449,7 @@ let scan_literal state =
 	    found (scan_int have_sign 10 state)
 	else None
 
-let fixed_scanners = [pop_token; scan_keyword; scan_operator]
+let fixed_scanners = [pop_token; scan_keyword]
 let default_scanners = [scan_literal; scan_identifier]
 
 let default_state_template = {
@@ -512,7 +459,6 @@ let default_state_template = {
     st_stash = None;
     st_continued = false;
     st_keywords = initial_keywords;
-    st_operators = initial_operators;
     st_lookahead = initial_lookahead;
     st_last_location = Location.dummy;
     st_scanners = default_scanners;

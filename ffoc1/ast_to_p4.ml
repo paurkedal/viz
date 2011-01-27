@@ -18,6 +18,7 @@
 
 module Ast = Camlp4.PreCast.Ast
 module Loc = Camlp4.PreCast.Loc
+open Leaf_types
 open Cst_types
 open Ast_types
 open Ast_core

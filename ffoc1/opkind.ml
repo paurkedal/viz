@@ -19,10 +19,15 @@
 open Printf
 module Fo = Formatter
 open FfPervasives
+open Cst_types
+open Leaf_types
 
 exception Domain_error
+exception Invalid_definition of string
 
 type printer = int -> Formatter.t -> unit
+
+type lexkind = Lex_regular | Lex_intro | Lex_continued
 
 type t = {
     ok_name : string;
@@ -30,6 +35,8 @@ type t = {
     ok_prec : int;
     ok_print : t * string -> printer list -> printer;
     ok_id : int;
+    ok_lexkind : lexkind;
+    ok_create : idr * idr list -> Grammar.token;
 }
 
 let next_id = ref 0
@@ -107,6 +114,26 @@ let print_unimplemented (ok, opname) fs p fo =
 
 (* Operator Kind Definitions *)
 
+let name_raw = function
+    | (op, []) | (_, [op]) -> op
+    | _ -> raise (Invalid_definition "Expected a single identifier.")
+let name_0o = function
+    | (op, []) -> Leaf_core.idr_0o op
+    | (_, [o0]) -> o0
+    | _ -> raise (Invalid_definition "Expected a single identifier.")
+let name_1o = function
+    | (op, []) -> Leaf_core.idr_1o op
+    | (_, [o1]) -> o1
+    | _ -> raise (Invalid_definition "Expected a single identifier.")
+let name_2o = function
+    | (op, []) -> Leaf_core.idr_2o op
+    | (_, [o2]) -> o2
+    | _ -> raise (Invalid_definition "Expected a single identifier.")
+let name_1o2o = function
+    | (op, []) -> (Leaf_core.idr_1o op, Leaf_core.idr_2o op)
+    | (_, [o1; o2]) -> (o1, o2)
+    | _ -> raise (Invalid_definition "Expected two identifiers.")
+
 let preinfix_logic = Array.init 9
     (fun n -> {
 	ok_name = sprintf "L%d" n;
@@ -114,6 +141,20 @@ let preinfix_logic = Array.init 9
 	ok_prec = p_logic n;
 	ok_print = print_infix;
 	ok_id = make_id ();
+	ok_lexkind = Lex_regular;
+	ok_create =
+	    begin match n with
+	    | 0 -> fun spec -> Grammar.LOGIC0 (name_1o2o spec)
+	    | 1 -> fun spec -> Grammar.LOGIC1 (name_1o2o spec)
+	    | 2 -> fun spec -> Grammar.LOGIC2 (name_1o2o spec)
+	    | 3 -> fun spec -> Grammar.LOGIC3 (name_1o2o spec)
+	    | 4 -> fun spec -> Grammar.LOGIC4 (name_1o2o spec)
+	    | 5 -> fun spec -> Grammar.LOGIC5 (name_1o2o spec)
+	    | 6 -> fun spec -> Grammar.LOGIC6 (name_1o2o spec)
+	    | 7 -> fun spec -> Grammar.LOGIC7 (name_1o2o spec)
+	    | 8 -> fun spec -> Grammar.LOGIC8 (name_1o2o spec)
+	    | _ -> raise (Failure "Unreachable.")
+	    end;
     })
 let mixfix_quantifier = {
     ok_name = "Q";
@@ -121,6 +162,8 @@ let mixfix_quantifier = {
     ok_prec = p_rel;
     ok_print = print_quantifier;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.QUANTIFIER (name_1o spec));
 }
 let transfix_relation = {
     ok_name = "R";
@@ -128,6 +171,8 @@ let transfix_relation = {
     ok_prec = p_rel;
     ok_print = print_unimplemented;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.RELATION (name_2o spec));
 }
 let preinfix_arith = Array.init 10
     (fun n -> {
@@ -136,6 +181,21 @@ let preinfix_arith = Array.init 10
 	ok_prec = p_arith n;
 	ok_print = print_infix;
 	ok_id = make_id ();
+	ok_lexkind = Lex_regular;
+	ok_create =
+	    begin match n with
+	    | 0 -> fun spec -> Grammar.ARITH0 (name_1o2o spec)
+	    | 1 -> fun spec -> Grammar.ARITH1 (name_1o2o spec)
+	    | 2 -> fun spec -> Grammar.ARITH2 (name_1o2o spec)
+	    | 3 -> fun spec -> Grammar.ARITH3 (name_1o2o spec)
+	    | 4 -> fun spec -> Grammar.ARITH4 (name_1o2o spec)
+	    | 5 -> fun spec -> Grammar.ARITH5 (name_1o2o spec)
+	    | 6 -> fun spec -> Grammar.ARITH6 (name_1o2o spec)
+	    | 7 -> fun spec -> Grammar.ARITH7 (name_1o2o spec)
+	    | 8 -> fun spec -> Grammar.ARITH8 (name_1o2o spec)
+	    | 9 -> fun spec -> Grammar.ARITH9 (name_1o2o spec)
+	    | _ -> raise (Failure "Unreachable.")
+	    end;
     })
 let suffix_arith = Array.init 10
     (fun n -> {
@@ -144,30 +204,69 @@ let suffix_arith = Array.init 10
 	ok_prec = p_arith n;
 	ok_print = print_suffix;
 	ok_id = make_id ();
+	ok_lexkind = Lex_regular;
+	ok_create =
+	    begin match n with
+	    | 0 -> fun spec -> Grammar.ARITH0_S (name_1o spec)
+	    | 1 -> fun spec -> Grammar.ARITH1_S (name_1o spec)
+	    | 2 -> fun spec -> Grammar.ARITH2_S (name_1o spec)
+	    | 3 -> fun spec -> Grammar.ARITH3_S (name_1o spec)
+	    | 4 -> fun spec -> Grammar.ARITH4_S (name_1o spec)
+	    | 5 -> fun spec -> Grammar.ARITH5_S (name_1o spec)
+	    | 6 -> fun spec -> Grammar.ARITH6_S (name_1o spec)
+	    | 7 -> fun spec -> Grammar.ARITH7_S (name_1o spec)
+	    | 8 -> fun spec -> Grammar.ARITH8_S (name_1o spec)
+	    | 9 -> fun spec -> Grammar.ARITH9_S (name_1o spec)
+	    | _ -> raise (Failure "Unreachable.")
+	    end;
     })
-let prefix_script = Array.init 10
+let prefix_script = Array.init 3
     (fun n -> {
 	ok_name = sprintf "S%dP" n;
 	ok_arities = [1];
 	ok_prec = p_script n;
 	ok_print = print_prefix;
 	ok_id = make_id ();
+	ok_lexkind = Lex_regular;
+	ok_create =
+	    begin match n with
+	    | 0 -> fun spec -> Grammar.SCRIPT0_P (name_1o spec)
+	    | 1 -> fun spec -> Grammar.SCRIPT1_P (name_1o spec)
+	    | 2 -> fun spec -> Grammar.SCRIPT2_P (name_1o spec)
+	    | _ -> raise (Failure "Unreachable.")
+	    end;
     })
-let suffix_script = Array.init 10
+let suffix_script = Array.init 3
     (fun n -> {
 	ok_name = sprintf "S%dS" n;
 	ok_arities = [1];
 	ok_prec = p_script n;
 	ok_print = print_suffix;
 	ok_id = make_id ();
+	ok_lexkind = Lex_regular;
+	ok_create =
+	    begin match n with
+	    | 0 -> fun spec -> Grammar.SCRIPT0_S (name_1o spec)
+	    | 1 -> fun spec -> Grammar.SCRIPT1_S (name_1o spec)
+	    | 2 -> fun spec -> Grammar.SCRIPT2_S (name_1o spec)
+	    | _ -> raise (Failure "Unreachable.")
+	    end;
     })
-let infix_script = Array.init 10
+let infix_script = Array.init 3
     (fun n -> {
 	ok_name = sprintf "S%dI" n;
 	ok_arities = [2];
 	ok_prec = p_script n;
 	ok_print = print_infix;
 	ok_id = make_id ();
+	ok_lexkind = Lex_regular;
+	ok_create =
+	    begin match n with
+	    | 0 -> fun spec -> Grammar.SCRIPT0_I (name_2o spec)
+	    | 1 -> fun spec -> Grammar.SCRIPT1_I (name_2o spec)
+	    | 2 -> fun spec -> Grammar.SCRIPT2_I (name_2o spec)
+	    | _ -> raise (Failure "Unreachable.")
+	    end;
     })
 let suffix_project = {
     ok_name = "PS";
@@ -175,6 +274,8 @@ let suffix_project = {
     ok_prec = p_project;
     ok_print = print_unimplemented;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.PROJECT (name_raw spec));
 }
 let circumfix_lbracket = {
     ok_name = "BL";
@@ -182,6 +283,8 @@ let circumfix_lbracket = {
     ok_prec = p_max;
     ok_print = print_unimplemented;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.LBRACKET (name_raw spec));
 }
 let circumfix_rbracket = {
     ok_name = "BR";
@@ -189,6 +292,8 @@ let circumfix_rbracket = {
     ok_prec = p_max;
     ok_print = print_unimplemented;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.RBRACKET (name_raw spec));
 }
 let postcircumfix_lbracket = {
     ok_name = "PL";
@@ -196,6 +301,8 @@ let postcircumfix_lbracket = {
     ok_prec = p_project;
     ok_print = print_unimplemented;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.PROJECT_LBRACKET (name_raw spec));
 }
 let identifier_quote = {
     ok_name = "I";
@@ -203,6 +310,8 @@ let identifier_quote = {
     ok_prec = p_max;
     ok_print = print_unimplemented;
     ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.IDENTIFIER (name_2o spec));
 }
 
 let maxp_id = !next_id

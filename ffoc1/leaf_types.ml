@@ -16,21 +16,16 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** Core Functions for the Abstract Syntax Tree *)
+TYPE_CONV_PATH "Ffoc1.Cst_types"
+open Sexplib
+open Unicode
 
-open Ast_types
-open Cst_types
-open Leaf_types
+type idr = Idr of string with sexp
 
-val avar_idr : avar -> idr
-val avar_name : avar -> string
-
-val avar_loc : avar -> loc
-val apath_loc : apath -> loc
-val atyp_loc : atyp -> loc
-val aval_loc : aval -> loc
-val apat_loc : apat -> loc
-val asig_loc : asig -> loc
-val adec_loc : adec -> loc
-val amod_loc : amod -> loc
-val adef_loc : adef -> loc
+type lit =
+    | Lit_unit
+    | Lit_bool of bool
+    | Lit_int of int
+    | Lit_float of float
+    | Lit_string of UString.t
+    with sexp

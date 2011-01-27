@@ -62,7 +62,7 @@ lex alias ∃ E`
 lex alias ≠ !=
 lex alias ≤ <=
 lex alias ≥ >=
-lex alias ∈ in
+lex alias ∈ <:
 
 lex alias − -
 lex alias × *

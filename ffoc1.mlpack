@@ -11,6 +11,8 @@ ffoc1/ffPervasives
 ffoc1/formatter
 ffoc1/grammar
 ffoc1/graphalgo
+ffoc1/leaf_types
+ffoc1/leaf_core
 ffoc1/lexer
 ffoc1/lStream
 ffoc1/location
@@ -18,6 +20,7 @@ ffoc1/opkind
 ffoc1/option
 ffoc1/parser
 ffoc1/sequence
+ffoc1/syn_print
 ffoc1/trie
 ffoc1/trie_intf
 ffoc1/unicode

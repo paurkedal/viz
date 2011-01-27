@@ -20,6 +20,7 @@ open Cst_types
 open Cst_core
 open Ast_types
 open Ast_core
+open Leaf_types
 open Diag
 open FfPervasives
 
@@ -149,7 +150,7 @@ module Algt_builder = struct
 	    with Not_found ->
 		let crt, _ = Cst_utils.flatten_arrow ct in
 		errf_at loc "The type %s has not been defined in this scope."
-			(ctrm_to_string crt) in
+			(Syn_print.ctrm_to_string crt) in
 	Idr_map.add (avar_idr (apath_to_avar ap))
 		    (ats, (loc, af, at) :: injs) algtb
 

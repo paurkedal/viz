@@ -19,34 +19,8 @@
 (** Core Functions for the Concrete Syntax Tree *)
 
 open Unicode
+open Leaf_types
 open Cst_types
-
-val idr_of_string : string -> idr
-
-val idr_to_string : idr -> string
-
-val idr_of_ustring : UString.t -> idr
-
-val idr_to_ustring : idr -> UString.t
-
-(** Add a unary operator prefix. *)
-val idr_1o : idr -> idr
-val idr_1o_c : string -> idr
-val idr_1o_symbol : idr -> string
-
-(** Add a binary operator prefix. *)
-val idr_2o : idr -> idr
-val idr_2o_c : string -> idr
-val idr_2o_symbol : idr -> string
-
-val idr_1b : idr -> idr -> idr
-val idr_1b_c : string -> string -> idr
-val idr_2b : idr -> idr -> idr
-val idr_2b_c : string -> string -> idr
-
-val idr_1q : idr -> idr
-val idr_1q_c : string -> idr
-val idr_1q_symbol : idr -> string
 
 val cidr_loc : cidr -> loc
 val cidr_to_idr : cidr -> idr
@@ -58,10 +32,6 @@ module Idr_map : Map.S with type key = idr
 val ctrm_loc : ctrm -> loc
 
 val application_depth : int -> idr -> ctrm -> int
-
-val print : Formatter.t -> ctrm -> unit
-val ctrm_to_string : ctrm -> string
-val cdef_to_string : cdef -> string
 
 
 (* Specific Symbols *)

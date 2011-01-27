@@ -16,21 +16,38 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** Core Functions for the Abstract Syntax Tree *)
-
-open Ast_types
-open Cst_types
 open Leaf_types
+open Unicode
 
-val avar_idr : avar -> idr
-val avar_name : avar -> string
+val lit_to_string : lit -> string
 
-val avar_loc : avar -> loc
-val apath_loc : apath -> loc
-val atyp_loc : atyp -> loc
-val aval_loc : aval -> loc
-val apat_loc : apat -> loc
-val asig_loc : asig -> loc
-val adec_loc : adec -> loc
-val amod_loc : amod -> loc
-val adef_loc : adef -> loc
+val idr_of_string : string -> idr
+
+val idr_to_string : idr -> string
+
+val idr_of_ustring : UString.t -> idr
+
+val idr_to_ustring : idr -> UString.t
+
+val idr_0o : idr -> idr
+val idr_0o_c : string -> idr
+val idr_0o_symbol : idr -> string
+
+(** Add a unary operator prefix. *)
+val idr_1o : idr -> idr
+val idr_1o_c : string -> idr
+val idr_1o_symbol : idr -> string
+
+(** Add a binary operator prefix. *)
+val idr_2o : idr -> idr
+val idr_2o_c : string -> idr
+val idr_2o_symbol : idr -> string
+
+val idr_1b : idr -> idr -> idr
+val idr_1b_c : string -> string -> idr
+val idr_2b : idr -> idr -> idr
+val idr_2b_c : string -> string -> idr
+
+val idr_1q : idr -> idr
+val idr_1q_c : string -> idr
+val idr_1q_symbol : idr -> string

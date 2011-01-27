@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -16,21 +16,8 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** Core Functions for the Abstract Syntax Tree *)
-
-open Ast_types
 open Cst_types
-open Leaf_types
 
-val avar_idr : avar -> idr
-val avar_name : avar -> string
-
-val avar_loc : avar -> loc
-val apath_loc : apath -> loc
-val atyp_loc : atyp -> loc
-val aval_loc : aval -> loc
-val apat_loc : apat -> loc
-val asig_loc : asig -> loc
-val adec_loc : adec -> loc
-val amod_loc : amod -> loc
-val adef_loc : adef -> loc
+val print : Formatter.t -> ctrm -> unit
+val ctrm_to_string : ctrm -> string
+val cdef_to_string : cdef -> string

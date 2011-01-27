@@ -23,21 +23,11 @@
 
 TYPE_CONV_PATH "Ffoc1.Cst_types"
 open Sexplib
-open Unicode
+open Leaf_types
 
 type loc = Location.t
 
-type idr = Idr of string with sexp
-
 type idrhint = Ih_none | Ih_univ | Ih_inj
-
-type lit =
-    | Lit_unit
-    | Lit_bool of bool
-    | Lit_int of int
-    | Lit_float of float
-    | Lit_string of UString.t
-    with sexp
 
 type cidr = Cidr of loc * idr
 
@@ -65,5 +55,5 @@ type ctrm =
     | Cdec_val		of loc * ctrm
     | Cdef_val		of loc * ctrm * ctrm
     | Cdef_inj		of loc * ctrm
-    | Cdef_lex		of loc * Opkind.t * cidr list
+    | Cdef_lex		of loc * string * cidr list
     | Cdef_lex_alias	of loc * cidr * cidr list

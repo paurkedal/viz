@@ -18,6 +18,7 @@
 
 open Ast_types
 open Cst_types
+open Leaf_types
 open FfPervasives
 
 let avar_idr (Avar (_, idr)) = idr

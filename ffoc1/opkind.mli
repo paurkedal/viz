@@ -18,9 +18,14 @@
 
 (** Classification and Information about Operators *)
 
+open Unicode
+open Leaf_types
+
 exception Domain_error
 
 type printer = int -> Formatter.t -> unit
+
+type lexkind = Lex_regular | Lex_intro | Lex_continued
 
 type t = {
     ok_name : string;
@@ -28,6 +33,8 @@ type t = {
     ok_prec : int;
     ok_print : t * string -> printer list -> printer;
     ok_id : int;
+    ok_lexkind : lexkind;
+    ok_create : idr * idr list -> Grammar.token;
 }
 
 (** The maximum ok_id assignment plus one. *)
