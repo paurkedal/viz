@@ -11,7 +11,6 @@ ffoc1/ffPervasives
 ffoc1/formatter
 ffoc1/grammar
 ffoc1/graphalgo
-ffoc1/gen_ocaml
 ffoc1/lexer
 ffoc1/lStream
 ffoc1/location

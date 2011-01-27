@@ -64,15 +64,9 @@ let _ =
 	    printf "%s\n" (Formatter.contents fo)
 	end else begin
 	    try
-		if !do_depend then
-		    let amod = Cst_to_ast.build_amod term in
-		    print_depend in_path amod else
-		let omod =
-		    if !use_ast then
-			let amod = Cst_to_ast.build_amod term in
-			Ast_to_p4.emit_toplevel amod
-		    else
-			Gen_ocaml.gen_toplevel term in
+		let amod = Cst_to_ast.build_amod term in
+		if !do_depend then print_depend in_path amod else
+		let omod = Ast_to_p4.emit_toplevel amod in
 		Printers.OCaml.print_implem ?output_file:!out_path_opt omod
 	    with Error_at (loc, msg) ->
 		eprintf "%s: %s\n" (Location.to_string loc) msg;
