@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -50,6 +50,11 @@ let peek_at i stm =
 	| [] -> None
 	| x :: xs -> if i = 0 then Some x else f (i - 1) xs
     in f i (Stream.npeek (i + 1) stm.stream)
+
+let pop_code stm =
+    match pop stm with
+    | None -> 0
+    | Some ch -> UChar.code ch
 
 let peek_code stm =
     match Stream.peek stm.stream with

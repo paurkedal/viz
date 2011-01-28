@@ -37,6 +37,8 @@ val peek_n : int -> t -> elt list
 
 val peek_at : int -> t -> elt option
 
+val pop_code : t -> int
+
 val peek_code : t -> int
 
 val peek_n_code : int -> t -> int list
