@@ -182,7 +182,10 @@ let declare_operator state ok (Cidr (_, op)) =
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (idr_to_string op)
 	      (Opkind.to_string ok);
-    let ti = Ti_operator (ok.Opkind.ok_create (op, []), ok) in
+    let name_idrs = List.map (fun (Cidr (_, name)) -> name) names in
+    let ti =
+	try Ti_operator (ok.Opkind.ok_create (op, []), ok)
+	with Opkind.Invalid_definition msg -> raise (Error_at (loc, msg)) in
     state.st_keywords <- UString_trie.add op' ti state.st_keywords
 
 let alias_operator state (Cidr (loc_orig, op_orig)) (Cidr (_, op)) =

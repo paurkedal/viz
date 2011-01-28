@@ -22,6 +22,7 @@ open Unicode
 open Leaf_types
 
 exception Domain_error
+exception Invalid_definition of string
 
 type printer = int -> Formatter.t -> unit
 

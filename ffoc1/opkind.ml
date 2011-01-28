@@ -163,7 +163,7 @@ let mixfix_quantifier = {
     ok_print = print_quantifier;
     ok_id = make_id ();
     ok_lexkind = Lex_regular;
-    ok_create = (fun spec -> Grammar.QUANTIFIER (name_1o spec));
+    ok_create = (fun spec -> Grammar.QUANTIFIER (name_2o spec));
 }
 let transfix_relation = {
     ok_name = "R";
