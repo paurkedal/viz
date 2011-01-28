@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -42,7 +42,7 @@ let parse_file path =
     Lexer.lexopen state stdlex;
     let lexer = Lexer.lexer state in
     try Some (grammar_main lexer) with
-    | Lexer.Error_at (loc, msg) ->
+    | Diag.Error_at (loc, msg) ->
 	print_error loc msg;
 	None
     | Grammar.Error ->

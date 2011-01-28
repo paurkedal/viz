@@ -21,8 +21,6 @@
 open Unicode
 open Cst_types
 
-exception Error_at of Location.t * string
-
 type state
 
 val last_location : state -> Location.t

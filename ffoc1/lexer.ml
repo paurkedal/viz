@@ -18,12 +18,11 @@
 
 open FfPervasives
 open Unicode
+open Diag
 open Cst_types
 open Cst_core
 open Leaf_types
 open Leaf_core
-
-exception Error_at of Location.t * string
 
 let dlog_en = Diag.dlog_en_for "Fform.Lexer"
 let dlogf fmt ?loc = Diag.dlogf_for "Fform.Lexer" ?loc fmt
