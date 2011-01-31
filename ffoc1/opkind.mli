@@ -61,6 +61,7 @@ val    suffix_project    : t
 val circumfix_lbracket   : t
 val circumfix_rbracket   : t
 val postcircumfix_lbracket : t
+val identifier_quote     : t
 
 (* Precedence levels. *)
 val p_min : int

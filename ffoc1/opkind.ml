@@ -311,7 +311,7 @@ let identifier_quote = {
     ok_print = print_unimplemented;
     ok_id = make_id ();
     ok_lexkind = Lex_regular;
-    ok_create = (fun spec -> Grammar.IDENTIFIER (name_2o spec));
+    ok_create = (fun spec -> Grammar.IDENTIFIER (name_0o spec));
 }
 
 let maxp_id = !next_id
