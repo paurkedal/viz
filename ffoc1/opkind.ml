@@ -132,6 +132,8 @@ let name_2o = function
 let name_1o2o = function
     | (op, []) -> (Leaf_core.idr_1o op, Leaf_core.idr_2o op)
     | (_, [o1; o2]) -> (o1, o2)
+    | (_, [Idr o12]) when String.starts_with "12'" o12 ->
+	let s = String.after 3 o12 in (Idr ("1'" ^ s), Idr ("2'" ^ s))
     | _ -> raise (Invalid_definition "Expected two identifiers.")
 
 let preinfix_logic = Array.init 9
