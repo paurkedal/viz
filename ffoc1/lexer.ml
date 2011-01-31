@@ -177,14 +177,14 @@ let pop_token state =
 	    else None
 	end
 
-let declare_operator state ok (Cidr (_, op)) =
+let declare_operator state ok (Cidr (loc, op), names) =
     let op' = UString_sequence.create (idr_to_ustring op) in
     if dlog_en then
 	dlogf "Declaring operator %s at %s." (idr_to_string op)
 	      (Opkind.to_string ok);
     let name_idrs = List.map (fun (Cidr (_, name)) -> name) names in
     let ti =
-	try Ti_operator (ok.Opkind.ok_create (op, []), ok)
+	try Ti_operator (ok.Opkind.ok_create (op, name_idrs), ok)
 	with Opkind.Invalid_definition msg -> raise (Error_at (loc, msg)) in
     state.st_keywords <- UString_trie.add op' ti state.st_keywords
 
@@ -204,21 +204,45 @@ let alias_operator state (Cidr (loc_orig, op_orig)) (Cidr (_, op)) =
 	      (idr_to_string op) (idr_to_string op_orig);
     state.st_keywords <- UString_trie.add op' ti state.st_keywords
 
+let skip_hspace state =
+    LStream.skip_while UChar.is_hspace state.st_stream;
+    begin match LStream.peek state.st_stream with
+    | None -> false
+    | Some ch -> ch != UChar.ch_nl
+    end
+
 let scan_lexops state =
-    let ops_r = ref [] in
-    while
-	LStream.skip_while UChar.is_hspace state.st_stream;
-	begin match LStream.peek state.st_stream with
-	| None -> false
-	| Some ch -> ch != UChar.ch_nl
-	end
-    do
+    if not (skip_hspace state) then [] else
+    let rec scan_names (names : cidr list) =
+	if LStream.peek_code state.st_stream = 0x29 then names else
+	if not (skip_hspace state) then
+	    let loc = Location.at (LStream.locbound state.st_stream) in
+	    raise (Error_at (loc, "Missing end parenthesis.")) else
+	let f ch = not (UChar.is_space ch || UChar.code ch = 0x29) in
+	let s, loc = LStream.scan_while f state.st_stream in
+	let name = Cidr (loc, idr_of_ustring s) in
+	if dlog_en then
+	    dlogf ~loc:loc "Scanned operator name %s." (UString.to_utf8 s);
+	scan_names (name :: names) in
+    let rec scan_ops ops =
 	let opname, opname_loc =
 	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
 	let op = Cidr (opname_loc, idr_of_ustring opname) in
-	ops_r := op :: !ops_r
-    done;
-    List.rev !ops_r
+	if dlog_en then
+	    dlogf ~loc:opname_loc "Scanned operator %s in lexdef."
+		  (UString.to_utf8 opname);
+	let names, cont =
+	    if not (skip_hspace state) then ([], false) else
+	    if LStream.peek_code state.st_stream <> 0x28 then ([], true) else
+	    begin
+		LStream.skip state.st_stream;
+		let names = List.rev (scan_names []) in
+		LStream.skip state.st_stream;
+		(names, skip_hspace state)
+	    end in
+	let ops' = (op, names) :: ops in
+	if cont then scan_ops ops' else ops' in
+    List.rev (scan_ops [])
 
 let scan_lexdef state lex_loc =
     skip_space state;
@@ -237,26 +261,12 @@ let scan_lexdef state lex_loc =
     List.iter (declare_operator state ok) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
-let scan_lexalias state lex_alias_loc =
-    skip_space state;
-    let loc_lb = LStream.locbound state.st_stream in
-    match scan_lexops state with
-    | [] -> raise (Error_at (lex_alias_loc, "Missing operator to alias."))
-    | op :: ops ->
-    let loc_ub = LStream.locbound state.st_stream in
-    let loc = Location.between loc_lb loc_ub in
-    let lexalias = Cdef_lex_alias (loc, op, ops) in
-    List.iter (alias_operator state op) ops;
-    (Grammar.PREPARED_DEF lexalias, loc)
-
 let lexopen state = function
     | Ctrm_where (_, defs) -> List.iter
 	begin function
 	    | Cdef_lex (loc, okname, ops) ->
 		let ok = Opkind.of_string okname in
 		List.iter (declare_operator state ok) ops
-	    | Cdef_lex_alias (loc, op, ops) ->
-		List.iter (alias_operator state op) ops
 	    | _ -> ()
 	end
 	defs
@@ -312,7 +322,6 @@ let scan_keyword state =
 	let (tok, _) =
 	    match ti with
 	    | Ti_keyword (Grammar.LEX, _) -> scan_lexdef state loc
-	    | Ti_keyword (Grammar.LEXALIAS, _) -> scan_lexalias state loc
 	    | Ti_keyword (tok, _) | Ti_operator (tok, _) -> (tok, loc) in
 	let loc_lb = Location.lbound loc in
 	let lk = tokeninfo_lexkind ti in

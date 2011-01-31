@@ -41,29 +41,18 @@ lex BL [ { ⌈ ⌊ ⟦
 lex BR ] } ⌉ ⌋ ⟧
 lex S2L .[
 
+lex I	⊤ ⊥
+
 -- ASCII Variants
 -- ==============
 
-lex alias ⊢ /-
-lex alias ⊣ -/
-lex alias ⊨ /==
-lex alias ⊧ /=
-lex alias → ->
-lex alias ↔ <->
-lex alias ⇒ ==>
-lex alias ⇔ <=>
-lex alias ¬ not
-lex alias ∨ \/ or
-lex alias ∧ /\ and
+lex L0	|- (12'⊢)  -| (12'⊣) |= (12'⊧) |== (12'⊨)
+lex L5	-> (12'→) <-> (12'↔) /> (12'↦) ==> (12'⇒) <=> (12'⇔)
+lex L6	\/ (12'∨)
+lex L8	/\ (12'∧) not (12'¬)
 
-lex alias ∀ A`
-lex alias ∃ E`
+lex Q	A` (2'∀) E` (2'∃)
+lex R	!= (2'≠) <= (2'≤) >= (2'≥) <: (2'∈)
 
-lex alias ≠ !=
-lex alias ≤ <=
-lex alias ≥ >=
-lex alias ∈ <:
-
-lex alias − -
-lex alias × *
-lex alias ∘ o`
+lex A2	- (12'−)
+lex A6	* (12'×) o` (12'∘)

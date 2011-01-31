@@ -180,13 +180,19 @@ and print_def fo cdef =
     | Cdef_lex (_, okname, idrs) ->
 	Fo.put_kw fo "lex";
 	Fo.put fo `Name okname;
-	List.iter (fun (Cidr (_, Idr s)) -> Fo.space fo; Fo.put fo `Operator s)
-		  idrs
-    | Cdef_lex_alias (_, idr, idrs) ->
-	Fo.put_kw fo "lex";
-	Fo.put_kw fo "alias";
-	List.iter (fun (Cidr (_, Idr s)) -> Fo.space fo; Fo.put fo `Operator s)
-		  (idr :: idrs)
+	let put_lexdef (Cidr (_, Idr s), names) =
+	    Fo.space fo; Fo.put fo `Operator s;
+	    match names with
+	    | Cidr (_, Idr name) :: names ->
+		Fo.put fo `Keyword "(";
+		Fo.put fo `Name name;
+		let put_name (Cidr (_, Idr name)) =
+		    Fo.space fo;
+		    Fo.put fo `Name name in
+		List.iter put_name names;
+		Fo.put fo `Keyword ")"
+	    | [] -> () in
+	List.iter put_lexdef idrs
 and print_defs fo defs =
     Fo.enter_indent fo;
     List.iter (print_def fo) defs;

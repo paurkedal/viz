@@ -55,5 +55,4 @@ type ctrm =
     | Cdec_val		of loc * ctrm
     | Cdef_val		of loc * ctrm * ctrm
     | Cdef_inj		of loc * ctrm
-    | Cdef_lex		of loc * string * cidr list
-    | Cdef_lex_alias	of loc * cidr * cidr list
+    | Cdef_lex		of loc * string * (cidr * cidr list) list
