@@ -73,4 +73,6 @@ module String : sig
     val split_on_char : char -> string -> string list
 
     val after : int -> string -> string
+
+    val starts_with : string -> string -> bool
 end

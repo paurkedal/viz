@@ -131,4 +131,8 @@ module String = struct
 	split_before (String.length s) []
 
     let after i s = sub s i (String.length s - i)
+
+    let starts_with p s =
+	let np = String.length p in
+	np <= String.length s && p = String.sub s 0 np
 end

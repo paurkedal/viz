@@ -18,6 +18,7 @@
 
 open Unicode
 open Leaf_types
+open FfPervasives
 
 let lit_to_string = function
     | Lit_unit -> "unit"
@@ -26,9 +27,7 @@ let lit_to_string = function
     | Lit_float x -> string_of_float x
     | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""
 
-let starts_with p s =
-    let np = String.length p in
-    np <= String.length s && p = String.sub s 0 np
+let starts_with = String.starts_with
 
 let idr_of_string name = Idr name
 let idr_to_string (Idr name) = name
