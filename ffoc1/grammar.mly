@@ -169,9 +169,9 @@ structure_clause:
     modular_clause { $1 }
   | IN structure_pattern structure_block
     { Cdef_in (mkloc $startpos $endpos, $2, $3) }
-  | LET term_pattern predicate
+  | LET term_pattern predicate_block
     { Cdef_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
-  | VAL term_pattern predicate
+  | VAL term_pattern predicate_block
     { Cdef_val (mkloc $startpos $endpos, $2, $3) }
   ;
 
@@ -201,14 +201,14 @@ term: expr {$1};
 
 /* Predicates */
 
-predicate: BEGIN participle_seq compound_predicate END { $2 $3 };
+predicate_block: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
     BE term { $2 }
   | RAISE term { Ctrm_raise (mkloc $startpos $endpos, $2) }
   ;
 compound_predicate:
     atomic_predicate { $1 }
-  | atomic_predicate WHICH predicate
+  | atomic_predicate WHICH predicate_block
     { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
       let that_trm = Ctrm_ref (that, Ih_none) in
       Ctrm_let (mkloc $startpos $endpos, that_trm, $3, $1) }
@@ -217,14 +217,14 @@ compound_predicate:
   | at_predicate { Ctrm_at (mkloc $startpos $endpos, $1) }
   ;
 if_predicate:
-    IF term predicate if_predicate
+    IF term predicate_block if_predicate
     { Ctrm_if (mkloc $startpos $endpos, $2, $3, $4) }
-  | ELSE predicate { $2 }
+  | ELSE predicate_block { $2 }
   ;
 at_predicate:
-    AT term_pattern predicate
+    AT term_pattern predicate_block
     { [($2, $3)] }
-  | AT term_pattern predicate at_predicate
+  | AT term_pattern predicate_block at_predicate
     { ($2, $3) :: $4 }
   ;
 postif_predicate:
@@ -240,7 +240,7 @@ participle_seq:
   | participle_seq participle { fun x -> $1 ($2 x) }
   ;
 participle:
-    LET term_pattern predicate
+    LET term_pattern predicate_block
     { fun x -> Ctrm_let (mkloc $startpos $endpos, $2, $3, x) }
   ;
 
@@ -466,7 +466,7 @@ atomic_expr:
     }
   | WHERE structure_block { $2 }
   | WITH signature_block { $2 }
-  | WHAT predicate { $2 }
+  | WHAT predicate_block { $2 }
   ;
 parenthesised:
     /* empty */ { Ctrm_literal (mkloc $startpos $endpos, Lit_unit) }
