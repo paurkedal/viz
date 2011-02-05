@@ -18,6 +18,7 @@
 
 open FfPervasives
 open Unicode
+module UCharInfo = CamomileLibrary.Default.Camomile.UCharInfo
 open Diag
 open Cst_types
 open Cst_core
@@ -382,13 +383,31 @@ let scan_identifier state =
 		UString.Buf.add_char buf next_ch;
 		scan next_ch
 	    end else finish () in
-    match LStream.peek state.st_stream with
-    | None -> Some Grammar.EOF
-    | Some ch ->
-	if UChar.is_idrchr ch then begin
-	    UString.Buf.add_char buf ch;
-	    Some (scan ch)
-	end else None
+    match LStream.peek_n 2 state.st_stream with
+    | [] -> Some Grammar.EOF
+    | ch0 :: ch1 :: _ when UChar.is_ascii_digit ch0 && UChar.code ch1 = 0x27 ->
+	UString.Buf.add_char buf ch0;
+	UString.Buf.add_char buf ch1;
+	LStream.skip_n 2 state.st_stream;
+	let level = ref 0 in
+	LStream.skip_while
+	    begin fun ch ->
+		if match UCharInfo.general_category ch with
+		| `Ps | `Pi -> level := !level + 1; true
+		| `Pe | `Pf -> level := !level - 1; !level >= 0
+		| `Zs | `Zl | `Zp -> false
+		| _ -> true
+		then (UString.Buf.add_char buf ch; true)
+		else false
+	    end
+	    state.st_stream;
+	let idr = idr_of_ustring (UString.Buf.contents buf) in
+	if dlog_en then dlogf "Scanned identifier %s" (idr_to_string idr);
+	Some (Grammar.IDENTIFIER idr)
+    | ch0 :: _ when UChar.is_idrchr ch0 ->
+	UString.Buf.add_char buf ch0;
+	Some (scan ch0)
+    | _ -> None
 
 let escape_map =
     List.fold (fun (x, y) -> UChar_map.add (UChar.of_char x) (UChar.of_char y)) [
@@ -457,6 +476,7 @@ let scan_literal state =
     | ch0 ->
 	LStream.skip_n n_sign state.st_stream;
 	if 0x30 <= ch0 && ch0 <= 0x39 then
+	    if chcode_at 1 = 0x27 (* ' *) then None else
 	    found (scan_int have_sign 10 state)
 	else None
 
