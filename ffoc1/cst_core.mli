@@ -29,7 +29,10 @@ val cidr_to_string : cidr -> string
 module Idr_set : Set.S with type elt = idr
 module Idr_map : Map.S with type key = idr
 
+val cpred_loc : cpred -> loc
 val ctrm_loc : ctrm -> loc
+
+val cmonad_io : cmonad
 
 val application_depth : int -> idr -> ctrm -> int
 
@@ -44,6 +47,7 @@ val idr_2o_and : idr
 val idr_2o_or : idr
 val idr_1o_asterisk : idr
 val idr_2b_dotbracket : idr
+val idr_run_toplevel_io : idr
 val cidr_is_2o_colon : cidr -> bool
 val cidr_is_2o_comma : cidr -> bool
 val cidr_is_2o_arrow : cidr -> bool

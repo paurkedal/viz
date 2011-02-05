@@ -336,16 +336,25 @@ and emit_adef = function
 	let alias_bindings = List.concat (List.map emit_inj_aliases bindings) in
 	let odef_aliases = <:str_item< value $list: alias_bindings$ >> in
 	<:str_item< $list: [odef; odef_aliases]$ >>
-    | Adef_val (loc, v, x) ->
+    | Adef_val (loc, v, None, x) ->
 	let _loc = p4loc loc in
 	<:str_item< value $lid: avar_to_lid v$ = $emit_aval x$ >>
+    | Adef_val (loc, v, Some t, x) ->
+	let _loc = p4loc loc in
+	<:str_item< value $lid: avar_to_lid v$ : $emit_atyp t$
+			= $emit_aval x$ >>
     | Adef_vals bindings ->
-	let (lloc, _, _) = List.hd bindings in
-	let (uloc, _, _) = List.last bindings in
+	let (lloc, _, _, _) = List.hd bindings in
+	let (uloc, _, _, _) = List.last bindings in
 	let _loc = p4loc (Location.span [lloc; uloc]) in
-	let emit_value_binding (loc, v, x) =
+	let emit_value_binding (loc, v, t_opt, x) =
 	    let _loc = p4loc loc in
-	    <:binding< $lid: avar_to_lid v$ = $emit_aval x$ >> in
+	    match t_opt with
+	    | None ->
+		<:binding< $lid: avar_to_lid v$ = $emit_aval x$ >>
+	    | Some t ->
+		<:binding< $lid: avar_to_lid v$ : $emit_atyp t$
+			    = $emit_aval x$ >> in
 	<:str_item< value rec $list: List.map emit_value_binding bindings$ >>
 
 let emit_toplevel = function

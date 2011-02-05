@@ -69,11 +69,13 @@ let initial_intro_keywords = [
     "in",	Grammar.IN;
     "sig",	Grammar.SIG;
     "type",	Grammar.TYPE;
-    "let",	Grammar.LET;
-    "val",	Grammar.VAL;
+    "let",	Grammar.LET None;
+    "let!",	Grammar.LET (Some "");
+    "val",	Grammar.VAL None;
+    "val!",	Grammar.VAL (Some "");
     "inj",	Grammar.INJ;
     "be",	Grammar.BE;
-    "do",	Grammar.DO;
+    "do",	Grammar.DO "";
     "raise",	Grammar.RAISE;
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
@@ -93,8 +95,10 @@ let initial_plain_keywords = [
 let initial_continued_keywords = [
     "where",	Grammar.WHERE;
     "with",	Grammar.WITH;
-    "what",	Grammar.WHAT;
-    "which",	Grammar.WHICH;
+    "what",	Grammar.WHAT None;
+    "what!",	Grammar.WHAT (Some "");
+    "which",	Grammar.WHICH None;
+    "which!",	Grammar.WHICH (Some "");
 ]
 let initial_lookahead = 40
 

@@ -84,8 +84,13 @@ and adef_loc = function
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in
 	Location.span [lloc; uloc]
-    | Adef_val (loc, _, _) -> loc
+    | Adef_val (loc, _, _, _) -> loc
     | Adef_vals bs ->
-	let (lloc, _, _) = List.hd bs in
-	let (uloc, _, _) = List.last bs in
+	let (lloc, _, _, _) = List.hd bs in
+	let (uloc, _, _, _) = List.last bs in
 	Location.span [lloc; uloc]
+
+let apat_uvar_any loc = Apat_uvar (Avar (loc, Idr "_"))
+let apat_uvar_of_idr loc idr = Apat_uvar (Avar (loc, idr))
+let aval_ref_of_idr loc idr =
+    Aval_ref (Apath ([], Avar (loc, idr)))

@@ -34,3 +34,7 @@ val asig_loc : asig -> loc
 val adec_loc : adec -> loc
 val amod_loc : amod -> loc
 val adef_loc : adef -> loc
+
+val apat_uvar_any : loc -> apat
+val apat_uvar_of_idr : loc -> idr -> apat
+val aval_ref_of_idr : loc -> idr -> aval

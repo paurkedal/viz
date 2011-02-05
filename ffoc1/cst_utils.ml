@@ -20,6 +20,13 @@ open Cst_types
 open Cst_core
 open Diag
 
+let extract_ctrm_coercion = function
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
+	    when cidr_is_2o_colon op ->
+	(x, Some y)
+    | x ->
+	(x, None)
+
 let extract_term_typing = function
     | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
 	    when cidr_is_2o_colon op ->
@@ -39,10 +46,15 @@ let move_typing (src, dst) =
     | _ ->
 	(src, dst)
 
+let rec fold_ctrm_args f (trm, accu) =
+    match trm with
+    | Ctrm_apply (loc, trm', arg) -> fold_ctrm_args f (trm', f arg accu)
+    | _ -> (trm, accu)
+
 let rec move_applications (src, dst) =
     match src with
     | Ctrm_apply (loc', src', arg) ->
-	move_applications (src', Ctrm_at (loc', [arg, dst]))
+	move_applications (src', Cpred_at (loc', [arg, dst]))
     | _ -> (src, dst)
 
 let flatten_tycon_application typ =
@@ -59,3 +71,29 @@ let rec flatten_arrow typ =
 	    loop (pt :: pts) rt
 	| rt -> (rt, List.rev pts) in
     loop [] typ
+
+let rec cpred_is_pure = function
+    | Cpred_let (_, None, v, x, y) ->
+	cpred_is_pure x && cpred_is_pure y
+    | Cpred_let (_, Some _, v, x, y) ->
+	cpred_is_pure y
+    | Cpred_if (_, cond, cq, ccq) ->
+	ctrm_is_pure cond && cpred_is_pure cq && cpred_is_pure ccq
+    | Cpred_at (_, cases) ->
+	List.for_all (fun (_, cq) -> cpred_is_pure cq) cases
+    | Cpred_be (_, x) -> ctrm_is_pure x
+    | Cpred_do1 _ -> false
+    | Cpred_do2 _ -> false
+    | Cpred_raise _ -> false
+and ctrm_is_pure = function
+    | Ctrm_literal _ -> true
+    | Ctrm_ref _ -> true
+    | Ctrm_label (_, _, x) -> ctrm_is_pure x
+    | Ctrm_project _ -> true
+    | Ctrm_rel (_, x, rels) ->
+	ctrm_is_pure x && List.for_all (fun (_, op, y) -> ctrm_is_pure y) rels
+    | Ctrm_apply (_, x, y) -> ctrm_is_pure x && ctrm_is_pure y
+    | Ctrm_what (_, Some _, _) -> true
+    | Ctrm_what (_, None, x) -> cpred_is_pure x
+    | Ctrm_with _ | Ctrm_where _ | Ctrm_quantify _ ->
+	raise (Failure "Unreachable.")

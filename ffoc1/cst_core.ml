@@ -35,6 +35,7 @@ let idr_2o_or		= idr_2o_c "∨"
 let idr_1q_functor	= idr_1q_c "Fun"
 let idr_2b_dotbracket	= idr_2b_c ".[" "]"
 let idr_1o_asterisk	= idr_1o_c "*"
+let idr_run_toplevel_io	= Idr "__run_toplevel_io"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
 let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
 let cidr_is_2o_mapsto	(Cidr (_, idr)) = idr = idr_2o_mapsto
@@ -51,14 +52,28 @@ end
 module Idr_set = Set.Make (Idr)
 module Idr_map = Map.Make (Idr)
 
+let cmonad_io = ""
+
+let cpred_loc = function
+    | Cpred_let (loc, _, _, _, _)
+    | Cpred_if (loc, _, _, _)
+    | Cpred_at (loc, _)
+    | Cpred_be (loc, _)
+    | Cpred_raise (loc, _)
+    | Cpred_do1 (loc, _, _)
+    | Cpred_do2 (loc, _, _, _) ->
+	loc
 let ctrm_loc = function
-    | Ctrm_ref (Cidr (loc, _), _) | Ctrm_literal (loc, _) | Ctrm_label (loc, _, _)
+    | Ctrm_literal (loc, _)
+    | Ctrm_ref (Cidr (loc, _), _)
+    | Ctrm_label (loc, _, _)
     | Ctrm_quantify (loc, _, _, _)
-    | Ctrm_let (loc, _, _, _)
-    | Ctrm_rel (loc, _, _) | Ctrm_apply (loc, _, _)
+    | Ctrm_rel (loc, _, _)
+    | Ctrm_apply (loc, _, _)
     | Ctrm_project (loc, _, _)
-    | Ctrm_raise (loc, _) | Ctrm_if (loc, _, _, _) | Ctrm_at (loc, _)
-    | Ctrm_where (loc, _) | Ctrm_with (loc, _, _) ->
+    | Ctrm_what (loc, _, _)
+    | Ctrm_where (loc, _)
+    | Ctrm_with (loc, _, _) ->
 	loc
 
 let application_depth i f x =

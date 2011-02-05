@@ -20,6 +20,8 @@
 
 open Cst_types
 
+val extract_ctrm_coercion : ctrm -> ctrm * ctrm option
+
 val extract_term_typing : ctrm -> ctrm * ctrm
 (** Assuming the top-level of [u] represents [v : t], then [extract_term_typing
     u] returns a tuple [(v, t)], else raises Error_at. *)
@@ -29,15 +31,20 @@ val extract_cidr_typing : ctrm -> cidr * ctrm
     identifier, [extract_idr_typing u] returns the tuple [(v, t)], otherwise
     raises Error_at. *)
 
+val fold_ctrm_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
+
 val move_typing : ctrm * ctrm -> ctrm * ctrm
 (** [move_typing (src, dst)] moves a typing ([v : t]) from the top-level of
     [src] to the top-level of [dst].  If [src] is not a typing, returns the pair
     unchanged. *)
 
-val move_applications : ctrm * ctrm -> ctrm * ctrm
+val move_applications : ctrm * cpred -> ctrm * cpred
 (** [move_applications (src, dst)] recursively takes top-level applications of
     [src] and turns them into abstractions around [dst]. *)
 
 val flatten_tycon_application : ctrm -> cidr * ctrm list
 
 val flatten_arrow : ctrm -> ctrm * ctrm list
+
+val cpred_is_pure : cpred -> bool
+val ctrm_is_pure : ctrm -> bool

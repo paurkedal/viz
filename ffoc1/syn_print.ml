@@ -95,24 +95,27 @@ and print_inline fo p = function
     | _ ->
 	Fo.put fo `Error "(unimplemented)"
 
-and print_predicate ?(default = print_is) fo = function
-    | Ctrm_let (_, var, cdef, body) ->
+and print_predicate fo = function
+    | Cpred_let (_, cm_opt, var, cdef, body) ->
 	Fo.newline fo;
-	Fo.put_kw fo "let";
+	begin match cm_opt with
+	| None -> Fo.put_kw fo "let";
+	| Some cm -> Fo.put_kw fo ("let!" ^ cm)
+	end;
 	print_inline fo Opkind.p_min var;
 	Fo.enter_indent fo;
 	print_predicate fo cdef;
 	Fo.leave_indent fo;
 	print_predicate fo body
-    | Ctrm_if (_, cond, cq, ccq) ->
+    | Cpred_if (_, cond, cq, ccq) ->
 	Fo.newline fo;
 	Fo.put_kw fo "if";
 	print_inline fo Opkind.p_min cond;
 	Fo.enter_indent fo;
 	print_predicate fo cq;
 	Fo.leave_indent fo;
-	print_predicate ~default:print_else fo ccq
-    | Ctrm_at (_, cases) ->
+	print_predicate fo ccq
+    | Cpred_at (_, cases) ->
 	List.iter (fun (pat, cq) ->
 	    Fo.newline fo;
 	    Fo.put_kw fo "at";
@@ -121,17 +124,23 @@ and print_predicate ?(default = print_is) fo = function
 	    print_predicate fo cq;
 	    Fo.leave_indent fo;
 	) cases
-    | ctrm ->
+    | Cpred_be (_, ctrm) ->
 	Fo.newline fo;
-	default fo ctrm
-and print_is fo ctrm =
-    Fo.put_kw fo "be";
-    print_inline fo Opkind.p_min ctrm
-and print_else fo ctrm =
-    Fo.newline fo;
-    Fo.put_kw fo "else";
-    Fo.put_kw fo "be";
-    print_inline fo Opkind.p_min ctrm
+	Fo.put_kw fo "be";
+	print_inline fo Opkind.p_min ctrm
+    | Cpred_do1 (_, cm, cx) ->
+	Fo.newline fo;
+	Fo.put_kw fo "do";
+	print_inline fo Opkind.p_min cx
+    | Cpred_do2 (_, cm, cx, cpred) ->
+	Fo.newline fo;
+	Fo.put_kw fo "do";
+	print_inline fo Opkind.p_min cx;
+	print_predicate fo cpred
+    | Cpred_raise (_, cx) ->
+	Fo.newline fo;
+	Fo.put_kw fo "raise";
+	print_inline fo Opkind.p_min cx
 
 and print_def fo cdef =
     Fo.newline fo;
@@ -168,8 +177,10 @@ and print_def fo cdef =
     | Cdec_val (_, typing) ->
 	Fo.put_kw fo "val";
 	print_inline fo Opkind.p_min typing
-    | Cdef_val (_, pat, pred) ->
-	Fo.put_kw fo "val";
+    | Cdef_val (_, export, cm_opt, pat, pred) ->
+	let kw = if export then "val" else "let" in
+	let kw = Option.fold (fun cm kw -> kw ^ cm) cm_opt kw in
+	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min pat;
 	Fo.enter_indent fo;
 	print_predicate fo pred;

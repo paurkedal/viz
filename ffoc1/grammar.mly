@@ -59,11 +59,12 @@ let apply_fence loc name0 name1 =
 %token INCLUDE
 %token IN
 %token SIG
-%token TYPE LET VAL INJ
-%token WHERE WITH WHAT WHICH
+%token TYPE INJ
+%token <Cst_types.cmonad option> LET VAL WHAT WHICH
+%token WHERE WITH
 
 %token BE
-%token DO
+%token <Cst_types.cmonad> DO
 %token RAISE
 %token UPON
 
@@ -129,6 +130,7 @@ let apply_fence loc name0 name1 =
 
 %type <Cst_types.ctrm> main
 %type <Cst_types.ctrm> expr
+%type <Cst_types.cpred> predicate_block
 %start main
 %%
 
@@ -170,9 +172,9 @@ structure_clause:
   | IN structure_pattern structure_block
     { Cdef_in (mkloc $startpos $endpos, $2, $3) }
   | LET term_pattern predicate_block
-    { Cdef_val (mkloc $startpos $endpos, $2, $3) } /* FIXME */
+    { Cdef_val (mkloc $startpos $endpos, false, $1, $2, $3) }
   | VAL term_pattern predicate_block
-    { Cdef_val (mkloc $startpos $endpos, $2, $3) }
+    { Cdef_val (mkloc $startpos $endpos, true, $1, $2, $3) }
   ;
 
 modular_clause:
@@ -203,22 +205,30 @@ term: expr {$1};
 
 predicate_block: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
-    BE term { $2 }
-  | RAISE term { Ctrm_raise (mkloc $startpos $endpos, $2) }
+    BE term { Cpred_be (mkloc $startpos $endpos, $2) }
+  | RAISE term { Cpred_raise (mkloc $startpos $endpos, $2) }
   ;
 compound_predicate:
+    nonfunction_predicate { $1 }
+  | at_predicate { Cpred_at (mkloc $startpos $endpos, $1) }
+  ;
+nonfunction_predicate:
     atomic_predicate { $1 }
   | atomic_predicate WHICH predicate_block
     { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
       let that_trm = Ctrm_ref (that, Ih_none) in
-      Ctrm_let (mkloc $startpos $endpos, that_trm, $3, $1) }
+      Cpred_let (mkloc $startpos $endpos, $2, that_trm, $3, $1) }
   | postif_predicate { $1 }
   | if_predicate { $1 }
-  | at_predicate { Ctrm_at (mkloc $startpos $endpos, $1) }
+  | do_predicate { $1 }
+  ;
+nonfunction_predicate_with_participle:
+    nonfunction_predicate { $1 }
+  | participle nonfunction_predicate_with_participle { $1 $2 }
   ;
 if_predicate:
     IF term predicate_block if_predicate
-    { Ctrm_if (mkloc $startpos $endpos, $2, $3, $4) }
+    { Cpred_if (mkloc $startpos $endpos, $2, $3, $4) }
   | ELSE predicate_block { $2 }
   ;
 at_predicate:
@@ -229,8 +239,14 @@ at_predicate:
   ;
 postif_predicate:
     atomic_predicate BEGIN IF term END postif_predicate
-    { Ctrm_if (mkloc $startpos $endpos, $4, $1, $6) }
+    { Cpred_if (mkloc $startpos $endpos, $4, $1, $6) }
   | atomic_predicate BEGIN OTHERWISE END { $1 }
+  ;
+do_predicate:
+    DO expr
+    { Cpred_do1 (mkloc $startpos $endpos, $1, $2) }
+  | DO expr nonfunction_predicate_with_participle
+    { Cpred_do2 (mkloc $startpos $endpos, $1, $2, $3) }
   ;
 
 /* Participles */
@@ -241,7 +257,7 @@ participle_seq:
   ;
 participle:
     LET term_pattern predicate_block
-    { fun x -> Ctrm_let (mkloc $startpos $endpos, $2, $3, x) }
+    { fun x -> Cpred_let (mkloc $startpos $endpos, $1, $2, $3, x) }
   ;
 
 /* Expressions */
@@ -466,7 +482,7 @@ atomic_expr:
     }
   | WHERE structure_block { $2 }
   | WITH signature_block { $2 }
-  | WHAT predicate_block { $2 }
+  | WHAT predicate_block { Ctrm_what (mkloc $startpos $endpos, $1, $2) }
   ;
 parenthesised:
     /* empty */ { Ctrm_literal (mkloc $startpos $endpos, Lit_unit) }

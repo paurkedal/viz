@@ -31,18 +31,25 @@ type idrhint = Ih_none | Ih_univ | Ih_inj
 
 type cidr = Cidr of loc * idr
 
-type ctrm =
+type cmonad = string
+
+type cpred =
+    | Cpred_let		of loc * cmonad option * ctrm * cpred * cpred
+    | Cpred_if		of loc * ctrm * cpred * cpred
+    | Cpred_at		of loc * (ctrm * cpred) list
+    | Cpred_be		of loc * ctrm
+    | Cpred_raise	of loc * ctrm
+    | Cpred_do1		of loc * cmonad * ctrm
+    | Cpred_do2		of loc * cmonad * ctrm * cpred
+ and ctrm =
     | Ctrm_ref		of cidr * idrhint
     | Ctrm_literal	of loc * lit
     | Ctrm_label	of loc * cidr * ctrm
     | Ctrm_quantify	of loc * cidr * ctrm * ctrm
-    | Ctrm_let		of loc * ctrm * ctrm * ctrm
     | Ctrm_rel		of loc * ctrm * (loc * cidr * ctrm) list
     | Ctrm_apply	of loc * ctrm * ctrm
     | Ctrm_project	of loc * cidr * ctrm
-    | Ctrm_raise	of loc * ctrm
-    | Ctrm_if		of loc * ctrm * ctrm * ctrm
-    | Ctrm_at		of loc * (ctrm * ctrm) list
+    | Ctrm_what		of loc * cmonad option * cpred
     | Ctrm_where	of loc * cdef list
     | Ctrm_with		of loc * ctrm option * cdef list
  and cdef =
@@ -53,6 +60,6 @@ type ctrm =
     | Cdec_sig		of loc * cidr
     | Cdef_sig		of loc * cidr * ctrm
     | Cdec_val		of loc * ctrm
-    | Cdef_val		of loc * ctrm * ctrm
+    | Cdef_val		of loc * bool * cmonad option * ctrm * cpred
     | Cdef_inj		of loc * ctrm
     | Cdef_lex		of loc * string * (cidr * cidr list) list
