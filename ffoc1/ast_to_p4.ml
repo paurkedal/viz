@@ -119,6 +119,8 @@ let emit_aval_literal loc lit =
     | Lit_string x -> let s = UString.to_utf8 x in <:expr< $str:s$ >>
 
 let rec emit_apat = function
+    | Apat_literal (loc, lit) ->
+	<:patt< $emit_apat_literal loc lit$ >>
     | Apat_ref p ->
 	let _loc = p4loc (apath_loc p) in
 	<:patt< $id: emit_apath_uid p$ >>
@@ -151,6 +153,10 @@ let emit_op _loc default = function
     | "2'mod" -> <:expr< (mod) >>
     | _ -> default ()
 
+let bindings_are_rec = function
+    | [(_, Apat_literal _, _)] -> false
+    | _ -> true (* TODO *)
+
 let rec emit_aval = function
     | Aval_literal (loc, lit) -> emit_aval_literal loc lit
     | Aval_ref p ->
@@ -179,8 +185,12 @@ let rec emit_aval = function
 	let emit_binding (loc, x, body) =
 	    let _loc = p4loc loc in
 	    <:binding< $pat: emit_apat x$ = $emit_aval body$ >> in
-	<:expr< let rec $list: List.map emit_binding bindings$
-		in $emit_aval body$ >>
+	if bindings_are_rec bindings then
+	    <:expr< let rec $list: List.map emit_binding bindings$
+		    in $emit_aval body$ >>
+	else
+	    <:expr< let $list: List.map emit_binding bindings$
+		    in $emit_aval body$ >>
     | Aval_if (loc, cond, cq, ccq) ->
 	let _loc = p4loc loc in
 	<:expr< if $emit_aval cond$ then $emit_aval cq$ else $emit_aval ccq$ >>

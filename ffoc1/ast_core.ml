@@ -47,6 +47,7 @@ let rec aval_loc = function
     | Aval_raise (loc, _) -> loc
 
 let rec apat_loc = function
+    | Apat_literal (loc, _) -> loc
     | Apat_ref p -> apath_loc p
     | Apat_uvar x -> avar_loc x
     | Apat_apply (loc, _, _) -> loc

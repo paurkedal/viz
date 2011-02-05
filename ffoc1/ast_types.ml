@@ -40,6 +40,7 @@ type atyp =
     with sexp
 
 type apat =
+    | Apat_literal of loc * lit
     | Apat_ref of apath
     | Apat_uvar of avar
     | Apat_apply of loc * apat * apat

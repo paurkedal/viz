@@ -66,6 +66,7 @@ let rec fold_atyp_paths f = function
 	fold_atyp_paths f u *> fold_atyp_paths f v
 
 let rec fold_apat_paths f = function
+    | Apat_literal _ -> ident
     | Apat_ref p -> f p
     | Apat_uvar _ -> ident
     | Apat_apply (_, p, q) ->

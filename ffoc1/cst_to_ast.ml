@@ -67,6 +67,8 @@ let build_atyp_con_args =
     loop []
 
 let rec build_apat ?(fpos = false) = function
+    | Ctrm_literal (loc, lit) ->
+	Apat_literal (loc, lit)
     | Ctrm_ref (cidr, Ih_inj) ->
 	Apat_ref (Apath ([], cidr_to_avar cidr))
     | Ctrm_ref (cidr, _) ->
