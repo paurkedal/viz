@@ -62,6 +62,7 @@ let apply_fence loc name0 name1 =
 %token TYPE INJ
 %token <Cst_types.cmonad option> LET VAL WHAT WHICH
 %token WHERE WITH
+%token SKIP ENDSKIP /* Hack for ffoc1pp only. */
 
 %token BE
 %token <Cst_types.cmonad> DO
@@ -159,6 +160,7 @@ structure_block:
 structure_clause_seq:
     /* empty */ { [] }
   | structure_clause_seq structure_clause { $2 :: $1 }
+  | structure_clause_seq SKIP structure_clause_seq ENDSKIP { $1 }
   ;
 
 signature_clause:

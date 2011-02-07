@@ -85,6 +85,11 @@ let initial_intro_keywords = [
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
     "at",	Grammar.AT;
+    "--?ffoc:open", Grammar.OPEN;
+    "--?ffoc:include", Grammar.INCLUDE;
+    "--?ffoc:type", Grammar.TYPE;
+    "--?ffoc:skip", Grammar.SKIP;
+    "--?ffoc:endskip", Grammar.ENDSKIP;
 ]
 let initial_plain_keywords = [
     "(",	Grammar.LPAREN;
@@ -119,21 +124,14 @@ let skip_space state =
     (* Skip spaces and comments, update indentation. *)
     let start_locb = LStream.locbound state.st_stream in
     let rec loop () =
-	match LStream.peek state.st_stream with
-	| None -> ()
-	| Some ch ->
-	    if UChar.is_space ch then
-		begin
-		    LStream.skip state.st_stream;
-		    loop ()
-		end else
-	    if ch = UChar.ch_dash
-		    && Option.exists ((=) UChar.ch_dash)
-				     (LStream.peek_at 1 state.st_stream) then
-		begin
-		    skip_line state;
-		    loop ()
-		end in
+	LStream.skip_while UChar.is_space state.st_stream;
+	match LStream.peek_n 3 state.st_stream with
+	| ch0 :: ch1 :: rest
+		when ch0 = UChar.ch_dash && ch1 = UChar.ch_dash
+		  && (rest = [] || UChar.code (List.hd rest) <> 0x3f) ->
+	    skip_line state;
+	    loop ()
+	| _ -> () in
     loop ();
     let end_locb = LStream.locbound state.st_stream in
     if Location.Bound.lineno start_locb < Location.Bound.lineno end_locb then
