@@ -334,6 +334,7 @@ and emit_adef = function
 	let odef =
 	    <:str_item< type $list: List.map emit_type_binding bindings$ >> in
 	let alias_bindings = List.concat (List.map emit_inj_aliases bindings) in
+	if alias_bindings = [] then odef else
 	let odef_aliases = <:str_item< value $list: alias_bindings$ >> in
 	<:str_item< $list: [odef; odef_aliases]$ >>
     | Adef_val (loc, v, None, x) ->
