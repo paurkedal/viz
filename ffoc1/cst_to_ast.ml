@@ -415,7 +415,8 @@ and build_amod = function
     | Ctrm_project _ as ctrm ->
 	Amod_ref (build_apath ctrm)
     | Ctrm_where (loc, cdefs) ->
-	Amod_defs (loc, build_adefs [] cdefs)
+	let adefs = build_adefs Idr_map.empty [] cdefs in
+	Amod_defs (loc, adefs)
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), cx), cxsig)
 	    when cidr_is_2o_colon op ->
 	Amod_coercion (loc, build_amod cx, build_asig cxsig)
@@ -423,35 +424,45 @@ and build_amod = function
 	Amod_apply (loc, build_amod cf, build_amod cx)
     | ctrm -> errf_at (ctrm_loc ctrm) "Invalid module expression."
 
-and build_adefs adefs = function
+and build_adefs adecmap adefs = function
     | Cdef_include (loc, m) :: xs ->
 	let adef = Adef_include (loc, build_amod m) in
-	build_adefs (adef :: adefs) xs
+	build_adefs adecmap (adef :: adefs) xs
     | Cdef_open (loc, p) :: xs ->
 	let adef = Adef_open (loc, build_apath p) in
-	build_adefs (adef :: adefs) xs
+	build_adefs adecmap (adef :: adefs) xs
     | Cdef_in (loc, cpat, cmod) :: xs ->
 	let cpat, cmod = Cst_utils.move_typing (cpat, cmod) in
 	let amod = build_amod cmod in
 	let cpat, amod =
 	    Cst_utils.fold_ctrm_args wrap_amod_lambda (cpat, amod) in
 	let adef = Adef_in (loc, build_avar cpat, amod) in
-	build_adefs (adef :: adefs) xs
+	build_adefs adecmap (adef :: adefs) xs
     | Cdec_sig (loc, cidr) :: xs ->
 	errf_at loc "Missing signature definition."
     | Cdef_sig (loc, cidr, ctrm) :: xs ->
 	let adef = Adef_sig (loc, cidr_to_avar cidr, build_asig ctrm) in
-	build_adefs (adef :: adefs) xs
+	build_adefs adecmap (adef :: adefs) xs
     | (Cdef_type _ :: _) as xs ->
 	let atcases, xs' = build_atcases false [] Algt_builder.empty xs in
 	let adef = Adef_types atcases in
-	build_adefs (adef :: adefs) xs'
-    | Cdec_val (loc, p) :: xs -> errf_at loc "UNIMPLEMENTED (val)"
+	build_adefs adecmap (adef :: adefs) xs'
+    | Cdec_val (loc, cdec) :: xs ->
+	let cv, ct = Cst_utils.extract_cidr_typing cdec in
+	let at = build_atyp ct in
+	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
+	build_adefs adecmap adefs xs
     | (Cdef_val _ :: _) as xs ->
 	let build_avcase = function
 	    | Cdef_val (loc, export, cm_opt, cpat, cpred) ->
-		let cpat, ctyp_opt = Cst_utils.extract_ctrm_coercion cpat in
 		let cvar, cpred = Cst_utils.move_applications (cpat, cpred) in
+		let at_opt =
+		    begin match cvar with
+		    | Ctrm_ref (Cidr (_, idr), _) ->
+			(try Some (snd (Idr_map.find idr adecmap))
+			 with Not_found -> None)
+		    | _ -> assert false (* unreachable *)
+		    end in
 		let avar = build_avar cvar in
 		let aval =
 		    begin match cm_opt with
@@ -464,12 +475,24 @@ and build_adefs adefs = function
 			let af = aval_ref_of_idr loc idr_run_toplevel_io in
 			Aval_apply (loc, af, ax)
 		    end in
-		let atyp_opt = Option.map build_atyp ctyp_opt in
-		Some (loc, avar, atyp_opt, aval)
+		Some (loc, avar, at_opt, aval)
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
-	build_adefs (break_rec_and_push_avcases avcases adefs) xs'
+	build_adefs adecmap (break_rec_and_push_avcases avcases adefs) xs'
     | Cdef_inj (loc, p) :: xs ->
 	errf_at loc "Injections must follow a type definition."
-    | Cdef_lex _ :: xs -> build_adefs adefs xs
-    | [] -> List.rev adefs
+    | Cdef_lex _ :: xs -> build_adefs adecmap adefs xs
+    | [] ->
+	let strip_used_avcase = function
+	    | (_, v, Some _, _) -> Idr_map.remove (avar_idr v)
+	    | _ -> ident in
+	let strip_used_adef = function
+	    | Adef_val (loc, v, t, x) -> strip_used_avcase (loc, v, t, x)
+	    | Adef_vals avcases -> List.fold strip_used_avcase avcases
+	    | _ -> ident in
+	let adecmap = List.fold strip_used_adef adefs adecmap in
+	Idr_map.iter
+	    (fun idr (loc, _) ->
+		errf_at loc "Declaration lacks a subsequent definition.")
+	    adecmap;
+	List.rev adefs
