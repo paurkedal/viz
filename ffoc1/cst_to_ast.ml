@@ -43,7 +43,7 @@ let build_apath ctrm =
 	| ct -> errf_at (ctrm_loc ct) "Expecting a variable or path." in
     match loop [] ctrm with
     | av :: avs -> Apath (avs, av)
-    | _ -> raise (Failure "Unreachable.")
+    | _ -> assert false (* unreachable *)
 
 let rec build_atyp = function
     | Ctrm_ref (cidr, Ih_univ) ->

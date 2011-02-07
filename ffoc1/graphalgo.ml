@@ -62,7 +62,7 @@ module ST_algo (G : ST_GRAPH) = struct
 		let after_w u =
 		    match VM.find u preord with
 		    | Some cu -> cu > cw
-		    | _ -> raise (Failure "Unreachable.") in
+		    | _ -> assert false in
 		let p = List.drop_while after_w p in
 		(c, s, p, preord, accu)
 	    with Not_found ->	(* Not yet seen. *)
@@ -125,7 +125,7 @@ module Make (Vertex : VERTEX) = struct
 		let after_w u =
 		    match Key_map.find_vertex_e u preord with
 		    | Some cu -> cu > cw
-		    | _ -> raise (Failure "Unreachable.") in
+		    | _ -> assert false in
 		let p = List.drop_while after_w p in
 		(c, s, p, preord, accu) in
 	let process_new_vertex v (c, s, p, preord, accu) =

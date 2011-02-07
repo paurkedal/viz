@@ -96,4 +96,4 @@ and ctrm_is_pure = function
     | Ctrm_what (_, Some _, _) -> true
     | Ctrm_what (_, None, x) -> cpred_is_pure x
     | Ctrm_with _ | Ctrm_where _ | Ctrm_quantify _ ->
-	raise (Failure "Unreachable.")
+	assert false (* unreachable *)

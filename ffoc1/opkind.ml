@@ -155,7 +155,7 @@ let preinfix_logic = Array.init 9
 	    | 6 -> fun spec -> Grammar.LOGIC6 (name_1o2o spec)
 	    | 7 -> fun spec -> Grammar.LOGIC7 (name_1o2o spec)
 	    | 8 -> fun spec -> Grammar.LOGIC8 (name_1o2o spec)
-	    | _ -> raise (Failure "Unreachable.")
+	    | _ -> assert false (* unreachable *)
 	    end;
     })
 let mixfix_quantifier = {
@@ -196,7 +196,7 @@ let preinfix_arith = Array.init 10
 	    | 7 -> fun spec -> Grammar.ARITH7 (name_1o2o spec)
 	    | 8 -> fun spec -> Grammar.ARITH8 (name_1o2o spec)
 	    | 9 -> fun spec -> Grammar.ARITH9 (name_1o2o spec)
-	    | _ -> raise (Failure "Unreachable.")
+	    | _ -> assert false (* unreachable *)
 	    end;
     })
 let suffix_arith = Array.init 10
@@ -219,7 +219,7 @@ let suffix_arith = Array.init 10
 	    | 7 -> fun spec -> Grammar.ARITH7_S (name_1o spec)
 	    | 8 -> fun spec -> Grammar.ARITH8_S (name_1o spec)
 	    | 9 -> fun spec -> Grammar.ARITH9_S (name_1o spec)
-	    | _ -> raise (Failure "Unreachable.")
+	    | _ -> assert false (* unreachable *)
 	    end;
     })
 let prefix_script = Array.init 3
@@ -235,7 +235,7 @@ let prefix_script = Array.init 3
 	    | 0 -> fun spec -> Grammar.SCRIPT0_P (name_1o spec)
 	    | 1 -> fun spec -> Grammar.SCRIPT1_P (name_1o spec)
 	    | 2 -> fun spec -> Grammar.SCRIPT2_P (name_1o spec)
-	    | _ -> raise (Failure "Unreachable.")
+	    | _ -> assert false (* unreachable *)
 	    end;
     })
 let suffix_script = Array.init 3
@@ -251,7 +251,7 @@ let suffix_script = Array.init 3
 	    | 0 -> fun spec -> Grammar.SCRIPT0_S (name_1o spec)
 	    | 1 -> fun spec -> Grammar.SCRIPT1_S (name_1o spec)
 	    | 2 -> fun spec -> Grammar.SCRIPT2_S (name_1o spec)
-	    | _ -> raise (Failure "Unreachable.")
+	    | _ -> assert false (* unreachable *)
 	    end;
     })
 let infix_script = Array.init 3
@@ -267,7 +267,7 @@ let infix_script = Array.init 3
 	    | 0 -> fun spec -> Grammar.SCRIPT0_I (name_2o spec)
 	    | 1 -> fun spec -> Grammar.SCRIPT1_I (name_2o spec)
 	    | 2 -> fun spec -> Grammar.SCRIPT2_I (name_2o spec)
-	    | _ -> raise (Failure "Unreachable.")
+	    | _ -> assert false (* unreachable *)
 	    end;
     })
 let suffix_project = {
