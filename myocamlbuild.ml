@@ -90,7 +90,7 @@ rule "Fform/OC Stage 1, Byte Compilation: ff -> cmo & cmi"
     (custom_byte_compile_ocaml_implem "%.ff" "%.cmo");;
 
 rule "Fform/OC Stage 1, Native Compilation: ff -> cmx & o"
-    ~tags:["ocaml"; "pp"; "ffoc1pp"]
+    ~tags:["ocaml"; "native"; "pp"; "ffoc1pp"]
     ~prods:["%.cmx"; "%.o"; "%.cmi"]
     ~deps:["%.ff"; "%.ff.depends"; "fflib/stdlex.ff"]
     (custom_native_compile_ocaml_implem "%.ff");;
@@ -99,6 +99,11 @@ rule "Fform/OC Stage 1, Preprocessing Only: ff -> ff.ml"
     ~dep:"%.ff"
     ~prod:"%.ff.ml"
     (ffoc1pp "ff.ml" "%.ff" "%.ff.ml");;
+
+flag ["ocaml"; "ffoc1pp"; "compile"] & A"-nopervasives";;
+flag ["ocaml"; "ffoc1pp"; "link"] & A"-nopervasives";;
+flag ["ocaml"; "ffoc1pp"; "pp"; "no_pervasive"] & A"--no-pervasive";;
+flag ["ocamldep"; "ffoc1pp"; "no_pervasive"] & A"--no-pervasive";;
 
 
 (* Other Rules
@@ -120,6 +125,12 @@ let ocaml_pp lib pa =
     flag ["ocaml"; "pp"; pa]
 	(S [A "-I"; A (ocamlfind_query lib); A (pa ^ ".cmo")])
 
+let ffoc1pp_include path =
+    flag ["ocaml"; "ffoc1pp"; "compile"]	& S[A"-I"; P path];
+    flag ["ocaml"; "ffoc1pp"; "link"]		& S[A"-I"; P path];
+    flag ["ocaml"; "ffoc1pp"; "pp"]		& S[A"-I"; P path];
+    flag ["ocamldep"; "ffoc1pp"]		& S[A"-I"; P path]
+
 let () = dispatch begin function
     | Before_options ->
 	Options.use_ocamlfind := true;
@@ -138,6 +149,8 @@ let () = dispatch begin function
 	ocaml_pkg "camlp4";
 	ocaml_pp "type-conv" "pa_type_conv";
 	ocaml_pp "sexplib" "pa_sexp_conv";
+	ocaml_lib "fflib";
+	ffoc1pp_include "fflib";
 	()
     | _ -> ()
 end

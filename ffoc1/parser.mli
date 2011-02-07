@@ -20,4 +20,12 @@
 
 open Cst_types
 
-val parse_file : string -> ctrm option
+val locate_source :
+    ?exts: string list -> ?strip_ext: bool -> roots: string list ->
+    string -> string
+
+val parse_file :
+    ?exts: string list -> roots: string list -> string -> ctrm option
+
+val find_and_parse_file :
+    ?exts: string list -> roots: string list -> string -> ctrm option

@@ -11,7 +11,7 @@ let usage = "ffoc1 [--print | -o OUTPUT] INPUT"
 
 module String_set = Set.Make (String)
 
-let print_depend input_path m =
+let print_depend roots input_path m =
     let rec extract comps = function
 	| [] -> comps
 	| Avar (_, Idr comp) :: vs -> extract (comp :: comps) vs in
@@ -26,10 +26,21 @@ let print_depend input_path m =
 	| [] -> ident
 	| x :: xs -> String_set.add x in
     let deps = Ast_utils.fold_amod_paths add_dep m String_set.empty in
+    let check_and_print_dep dep =
+	try
+	    let path = Parser.locate_source ~strip_ext:true ~roots dep in
+	    print_char ' '; print_string path
+	with Not_found -> () in
     print_string input_path;
     print_char ':';
-    String_set.iter (fun c -> print_char ' '; print_string c) deps;
+    String_set.iter check_and_print_dep deps;
     print_char '\n'
+
+let add_pervasive = function
+    | Amod_defs (loc, defs) ->
+	let pervasive = Apath ([], Avar (Location.dummy, Idr "pervasive")) in
+	Amod_defs (loc, Adef_open (Location.dummy, pervasive) :: defs)
+    | _ -> assert false
 
 let _ =
     let opt_setter r x =
@@ -39,16 +50,19 @@ let _ =
     let out_path_opt = ref None in
     let do_print = ref false in
     let do_depend = ref false in
-    let use_ast = ref true in
+    let open_pervasive = ref true in
+    let roots = ref [] in
     let optspecs = Arg.align [
 	"-o", Arg.String (opt_setter out_path_opt),
 	    "PATH The output file.";
+	"-I", Arg.String (fun p -> roots := p :: !roots),
+	    "PATH Prepend PATH to the root paths to search for structures.";
 	"--depend", Arg.Unit (fun () -> do_depend := true),
 	    " Output dependecies.";
 	"--print", Arg.Unit (fun () -> do_print := true),
 	    " Print expression tree.";
-	"--old-codegen", Arg.Unit (fun () -> use_ast := false),
-	    " Use old code generator.";
+	"--no-pervasive", Arg.Unit (fun () -> open_pervasive := false),
+	    " Don't open the pervasive structure."
     ] in
     Arg.parse optspecs (opt_setter in_path_opt) usage;
     let require what = function
@@ -57,7 +71,7 @@ let _ =
 	    exit 64 (* EX_USAGE *)
 	| Some x -> x in
     let in_path = require "An input path" !in_path_opt in
-    match Parser.parse_file in_path with
+    match Parser.parse_file ~exts: [""] ~roots: !roots in_path with
     | Some term ->
 	if !do_print then begin
 	    let fo = Formatter.create () in
@@ -66,7 +80,9 @@ let _ =
 	end else begin
 	    try
 		let amod = Cst_to_ast.build_amod term in
-		if !do_depend then print_depend in_path amod else
+		let amod = if !open_pervasive then add_pervasive amod
+			   else amod in
+		if !do_depend then print_depend !roots in_path amod else
 		let omod = Ast_to_p4.emit_toplevel amod in
 		Printers.OCaml.print_implem ?output_file:!out_path_opt omod
 	    with Error_at (loc, msg) ->
