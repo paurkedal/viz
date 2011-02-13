@@ -48,9 +48,9 @@ let ascii_encode s =
     let s' =
 	if String.length s >= 2 then
 	    match String.sub s 0 2 with
-	    | "0'" -> "_0o_" ^ (String.after 2 s)
-	    | "1'" -> "_1o_" ^ (String.after 2 s)
-	    | "2'" -> "_2o_" ^ (String.after 2 s)
+	    | "0'" -> "op0_" ^ (String.after 2 s)
+	    | "1'" -> "op1_" ^ (String.after 2 s)
+	    | "2'" -> "op2_" ^ (String.after 2 s)
 	    | _ -> s
 	else s in
     UString.iter
