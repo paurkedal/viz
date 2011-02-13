@@ -36,10 +36,16 @@ let print_depend roots input_path m =
     String_set.iter check_and_print_dep deps;
     print_char '\n'
 
-let add_pervasive = function
+let pervasive_apath = Apath ([], Avar (Location.dummy, Idr "pervasive"))
+let add_pervasive_in_asig = function
+    | Asig_decs (loc, decs) ->
+	Asig_decs (loc, Adec_open (Location.dummy, pervasive_apath) :: decs)
+    | _ -> assert false
+let rec add_pervasive_in_amod = function
     | Amod_defs (loc, defs) ->
-	let pervasive = Apath ([], Avar (Location.dummy, Idr "pervasive")) in
-	Amod_defs (loc, Adef_open (Location.dummy, pervasive) :: defs)
+	Amod_defs (loc, Adef_open (Location.dummy, pervasive_apath) :: defs)
+    | Amod_coercion (loc, m, s) ->
+	Amod_coercion (loc, add_pervasive_in_amod m, add_pervasive_in_asig s)
     | _ -> assert false
 
 let _ =
@@ -83,7 +89,7 @@ let _ =
 		    Cst_rewrite.default_rewrite_ctrm
 			Cst_rewrite.default_rewriter `Structure (term, ()) in
 		let amod = Cst_to_ast.build_amod term in
-		let amod = if !open_pervasive then add_pervasive amod
+		let amod = if !open_pervasive then add_pervasive_in_amod amod
 			   else amod in
 		if !do_depend then print_depend !roots in_path amod else
 		let omod = Ast_to_p4.emit_toplevel amod in
