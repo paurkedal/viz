@@ -73,7 +73,6 @@ let apply_fence loc name0 name1 =
 %token LEXALIAS
 %token LEXOPEN
 
-%token LPAREN RPAREN
 %token <Leaf_types.idr> LBRACKET RBRACKET
 %token IF ELSE OTHERWISE
 %token AT
@@ -475,7 +474,6 @@ atomic_expr:
     { let idr, hint = $1 in
       Ctrm_ref (Cidr (mkloc $startpos $endpos, idr), hint) }
   | LITERAL { Ctrm_literal (mkloc $startpos $endpos, $1) }
-  | LPAREN parenthesised RPAREN { $2 }
   | LBRACKET parenthesised RBRACKET
     {
 	let locb = mkloc $startpos $endpos($1) in

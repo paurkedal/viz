@@ -92,8 +92,6 @@ let initial_intro_keywords = [
     "--?ffoc:endskip", Grammar.ENDSKIP;
 ]
 let initial_plain_keywords = [
-    "(",	Grammar.LPAREN;
-    ")",	Grammar.RPAREN;
     "true",	Grammar.LITERAL (Lit_bool true);
     "false",	Grammar.LITERAL (Lit_bool false);
 ]

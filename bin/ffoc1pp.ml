@@ -79,6 +79,9 @@ let _ =
 	    printf "%s\n" (Formatter.contents fo)
 	end else begin
 	    try
+		let term, () =
+		    Cst_rewrite.default_rewrite_ctrm
+			Cst_rewrite.default_rewriter `Structure (term, ()) in
 		let amod = Cst_to_ast.build_amod term in
 		let amod = if !open_pervasive then add_pervasive amod
 			   else amod in

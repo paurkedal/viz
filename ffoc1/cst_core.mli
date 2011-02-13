@@ -46,6 +46,7 @@ val idr_1o_not : idr
 val idr_2o_and : idr
 val idr_2o_or : idr
 val idr_1o_asterisk : idr
+val idr_1b_paren : idr
 val idr_2b_dotbracket : idr
 val idr_run_toplevel_io : idr
 val cidr_is_2o_colon : cidr -> bool
