@@ -42,6 +42,7 @@ lex BR ) ] } ⌉ ⌋ ⟧
 lex S2L .[
 
 lex I	⊤ ⊥
+lex I	[;] ([;]) {;} ({;})
 
 -- ASCII Variants
 -- ==============

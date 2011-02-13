@@ -125,7 +125,37 @@ and subterm_rewrite_cdef rw stra = function
 
 let default_rewrite_cpred = subterm_rewrite_cpred
 
+let rec rewrite_coll_comma push rw inner = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), xs), x), accu
+	    when op = idr_2o_comma ->
+	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
+	let inner = Ctrm_apply (loc, Ctrm_apply (loc, push, x), inner) in
+	rewrite_coll_comma push rw inner (xs, accu)
+    | x, accu ->
+	let loc = ctrm_loc x in
+	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
+	Ctrm_apply (loc, Ctrm_apply (loc, push, x), inner), accu
+
+let rewrite_coll_semicolon (null, push) rw = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), x), xr), accu
+	    when op = idr_2o_semicolon ->
+	let xr, accu = rw.rw_ctrm rw `Value (xr, accu) in
+	rewrite_coll_comma push rw xr (x, accu)
+    | d -> rewrite_coll_comma push rw null d
+
+let rewrite_coll_comprehension (null, push) rw = function
+    | Ctrm_literal (loc, Lit_unit), accu -> null, accu
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), x), y), accu
+	    when op = idr_2o_vertical_bar ->
+	assert false (* unimplemented *)
+    | d -> rewrite_coll_semicolon (null, push) rw d
+
 let default_rewrite_ctrm_value rw = function
+    | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
+	    when op = idr_1b_square_bracket ->
+	let null = Ctrm_ref (Cidr (op_loc, idr_list_null), Ih_inj) in
+	let push = Ctrm_ref (Cidr (op_loc, idr_list_push), Ih_inj) in
+	rewrite_coll_comprehension (null, push) rw (x, accu)
     | d -> subterm_rewrite_ctrm rw `Value d
 
 let default_rewrite_ctrm rw stra = function

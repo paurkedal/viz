@@ -118,15 +118,27 @@ let emit_aval_literal loc lit =
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
     | Lit_string x -> let s = UString.to_utf8 x in <:expr< $str:s$ >>
 
+let emit_apat_fixed _loc default = function
+    | "[]" -> <:patt< [] >>
+    | _ -> default ()
+
 let rec emit_apat = function
     | Apat_literal (loc, lit) ->
 	<:patt< $emit_apat_literal loc lit$ >>
     | Apat_ref p ->
 	let _loc = p4loc (apath_loc p) in
-	<:patt< $id: emit_apath_uid p$ >>
+	let default () = <:patt< $id: emit_apath_uid p$ >> in
+	begin match p with
+	| Apath ([], Avar (_, Idr s)) -> emit_apat_fixed _loc default s
+	| _ -> default ()
+	end
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	<:patt< $lid: avar_to_lid v$ >>
+    | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
+	    when apath_is Cst_core.idr_list_push op ->
+	let _loc = p4loc loc in
+	<:patt< [$emit_apat x$ :: $emit_apat y$] >>
     | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
 	    when apath_is Cst_core.idr_2o_comma op ->
 	let _loc = p4loc loc in
@@ -135,7 +147,9 @@ let rec emit_apat = function
 	let _loc = p4loc loc in
 	<:patt< $emit_apat p0$ $emit_apat p1$ >>
 
-let emit_op _loc default = function
+let emit_aval_fixed _loc default = function
+    | "[]" -> <:expr< [] >>
+    | "[;]" -> <:expr< Data.List.push >>
     | "1'¬" -> <:expr< not >>
     | "2'∧" -> <:expr< (&&) >>
     | "2'∨" -> <:expr< (||) >>
@@ -163,9 +177,13 @@ let rec emit_aval = function
 	let _loc = p4loc (apath_loc p) in
 	let default () = <:expr< $id: emit_apath_lid p$ >> in
 	begin match p with
-	| Apath ([], Avar (_, Idr s)) -> emit_op _loc default s
+	| Apath ([], Avar (_, Idr s)) -> emit_aval_fixed _loc default s
 	| _ -> default ()
 	end
+    | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
+	    when apath_is Cst_core.idr_list_push op ->
+	let _loc = p4loc loc in
+	<:expr< [$emit_aval x$ :: $emit_aval y$] >>
     | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
 	    when apath_is Cst_core.idr_2o_comma op ->
 	let _loc = p4loc loc in
