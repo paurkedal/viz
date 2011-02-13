@@ -18,6 +18,7 @@
 
 (** Auxiliary Functions for the Abstract Syntax Tree *)
 
+open Leaf_types
 open Ast_types
 open Ast_core
 

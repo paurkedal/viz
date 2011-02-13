@@ -29,3 +29,5 @@ type lit =
     | Lit_float of float
     | Lit_string of UString.t
     with sexp
+
+type stratum = [`Type | `Value | `Signature | `Structure]
