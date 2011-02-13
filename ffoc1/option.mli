@@ -23,6 +23,7 @@ val default_opt : 'a option -> 'a option -> 'a option
 val fold : ('a -> 'b -> 'b) -> 'a option -> 'b -> 'b
 val iter : ('a -> unit) -> 'a option -> unit
 val map : ('a -> 'b) -> 'a option -> 'b option
+val map_fold : ('a * 'c -> 'b * 'c) -> 'a option * 'c -> 'b option * 'c
 val for_all : ('a -> bool) -> 'a option -> bool
 val exists  : ('a -> bool) -> 'a option -> bool
 val filter  : ('a -> bool) -> 'a option -> 'a option

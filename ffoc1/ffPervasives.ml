@@ -66,6 +66,14 @@ module List = struct
 	| [] -> fun accu -> accu
 	| x :: xs -> fun accu -> fold f xs (f x accu)
 
+    let map_fold f (xs, accu) =
+	let rec loop ys accu = function
+	    | [] -> (List.rev ys, accu)
+	    | x :: xs ->
+		let (y, accu') = f (x, accu) in
+		loop (y :: ys) accu' xs in
+	loop [] accu xs
+
     let rev_filter f =
 	let rec loop accu = function
 	    | [] -> accu

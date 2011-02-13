@@ -48,6 +48,8 @@ module List : sig
 
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
+    val map_fold : ('a * 'c -> 'b * 'c) -> 'a list * 'c -> 'b list * 'c
+
     val rev_filter : ('a -> bool) -> 'a list -> 'a list
 
     val find_image : ('a -> 'b option) -> 'a list -> 'b option
