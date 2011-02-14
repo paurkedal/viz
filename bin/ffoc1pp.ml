@@ -36,6 +36,14 @@ let print_depend roots input_path m =
     String_set.iter check_and_print_dep deps;
     print_char '\n'
 
+let print_cst term =
+    let fo = Formatter.create () in
+    Syn_print.print fo term;
+    printf "%s\n" (Formatter.contents fo)
+
+let print_ast amod =
+    printf "%s\n" (Ast_utils.amod_to_string amod)
+
 let pervasive_apath = Apath ([], Avar (Location.dummy, Idr "pervasive"))
 let add_pervasive_in_asig = function
     | Asig_decs (loc, decs) ->
@@ -54,7 +62,8 @@ let _ =
 	r := Some x in
     let in_path_opt = ref None in
     let out_path_opt = ref None in
-    let do_print = ref false in
+    let do_cst = ref false in
+    let do_ast = ref false in
     let do_depend = ref false in
     let open_pervasive = ref true in
     let roots = ref [] in
@@ -65,8 +74,10 @@ let _ =
 	    "PATH Prepend PATH to the root paths to search for structures.";
 	"--depend", Arg.Unit (fun () -> do_depend := true),
 	    " Output dependecies.";
-	"--print", Arg.Unit (fun () -> do_print := true),
-	    " Print expression tree.";
+	"--cst", Arg.Unit (fun () -> do_cst := true),
+	    " Dump the concrete syntax tree.  Mainly for debugging.";
+	"--ast", Arg.Unit (fun () -> do_ast := true),
+	    " Dump the abstract syntax tree.  Mainly for debugging.";
 	"--no-pervasive", Arg.Unit (fun () -> open_pervasive := false),
 	    " Don't open the pervasive structure."
     ] in
@@ -79,24 +90,21 @@ let _ =
     let in_path = require "An input path" !in_path_opt in
     match Parser.parse_file ~exts: [""] ~roots: !roots in_path with
     | Some term ->
-	if !do_print then begin
-	    let fo = Formatter.create () in
-	    Syn_print.print fo term;
-	    printf "%s\n" (Formatter.contents fo)
-	end else begin
-	    try
-		let term, () =
-		    Cst_rewrite.default_rewrite_ctrm
-			Cst_rewrite.default_rewriter `Structure (term, ()) in
-		let amod = Cst_to_ast.build_amod term in
-		let amod = if !open_pervasive then add_pervasive_in_amod amod
-			   else amod in
-		if !do_depend then print_depend !roots in_path amod else
-		let omod = Ast_to_p4.emit_toplevel amod in
-		Printers.OCaml.print_implem ?output_file:!out_path_opt omod
-	    with Error_at (loc, msg) ->
-		eprintf "%s: %s\n" (Location.to_string loc) msg;
-		exit 65 (* EX_DATAERR *)
+	begin try
+	    let term, () =
+		Cst_rewrite.default_rewrite_ctrm
+		    Cst_rewrite.default_rewriter `Structure (term, ()) in
+	    if !do_cst then print_cst term else
+	    let amod = Cst_to_ast.build_amod term in
+	    let amod = if !open_pervasive then add_pervasive_in_amod amod
+		       else amod in
+	    if !do_ast then print_ast amod else
+	    if !do_depend then print_depend !roots in_path amod else
+	    let omod = Ast_to_p4.emit_toplevel amod in
+	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod
+	with Error_at (loc, msg) ->
+	    eprintf "%s: %s\n" (Location.to_string loc) msg;
+	    exit 65 (* EX_DATAERR *)
 	end
     | None ->
 	fprintf stderr "No result\n";
