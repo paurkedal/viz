@@ -46,10 +46,21 @@ let move_typing (src, dst) =
     | _ ->
 	(src, dst)
 
+let count_formal_args ctrm =
+    let rec loop n = function
+	| Ctrm_apply (loc, f, _) -> loop (n + 1) f
+	| Ctrm_ref (_, Ih_none) -> n
+	| _ -> 0 in
+    loop 0 ctrm
+
 let rec fold_ctrm_args f (trm, accu) =
     match trm with
     | Ctrm_apply (loc, trm', arg) -> fold_ctrm_args f (trm', f arg accu)
     | _ -> (trm, accu)
+
+let fold_formal_args f (trm, accu) =
+    if count_formal_args trm = 0 then (trm, accu) else
+    fold_ctrm_args f (trm, accu)
 
 let rec move_applications (src, dst) =
     match src with

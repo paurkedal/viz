@@ -31,7 +31,11 @@ val extract_cidr_typing : ctrm -> cidr * ctrm
     identifier, [extract_idr_typing u] returns the tuple [(v, t)], otherwise
     raises Error_at. *)
 
-val fold_ctrm_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
+val count_formal_args : ctrm -> int
+(** Given a function formal argument list, return the number of arguments.
+    Returns 0 when applied to a constructor. *)
+
+val fold_formal_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
 
 val move_typing : ctrm * ctrm -> ctrm * ctrm
 (** [move_typing (src, dst)] moves a typing ([v : t]) from the top-level of

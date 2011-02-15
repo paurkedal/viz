@@ -96,16 +96,23 @@ let avar_for_line loc = Avar (loc, idr_for_line loc)
 
 type monad_mode = MM_quote of cmonad | MM_bind of aval
 
+let wrap_abstractions cpat arhs =
+    let wrap carg arhs =
+	let aarg = build_apat carg in
+	Aval_at (ctrm_loc carg, [(aarg, None, arhs)]) in
+    let cpat, arhs = Cst_utils.fold_formal_args wrap (cpat, arhs) in
+    (build_apat cpat, arhs)
+
 let rec build_aval_pure = function
     | Cpred_let (loc, _, _, _, _) as clet ->
 	let rec loop bindings = function
 	    | Cpred_let (loc, Some cm, cpat, crhs, ccont) ->
-		let apat = build_apat cpat in
 		let arhs = build_aval_monad (MM_quote cm) crhs in
+		let apat, arhs = wrap_abstractions cpat arhs in
 		loop ((loc, apat, arhs) :: bindings) ccont
 	    | Cpred_let (loc, None, cpat, crhs, ccont) ->
-		let apat = build_apat cpat in
 		let arhs = build_aval_pure crhs in
+		let apat, arhs = wrap_abstractions cpat arhs in
 		loop ((loc, apat, arhs) :: bindings) ccont
 	    | ccont ->
 		let acont = build_aval_pure ccont in
@@ -123,40 +130,49 @@ let rec build_aval_pure = function
     | Cpred_do2 (loc, _, _, _)
     | Cpred_raise (loc, _) ->
 	raise (Failure "Internal error: Should be pure.")
+and build_aval_monadic_let mm bindings = function
+    | Cpred_let (loc, Some cm, cpat, crhs, ccont) ->
+	let arhs = build_aval_monad (MM_quote cm) crhs in
+	let apat, arhs = wrap_abstractions cpat arhs in
+	build_aval_monadic_let mm ((loc, apat, arhs) :: bindings) ccont
+    | Cpred_let (loc, None, cpat, crhs, ccont)
+	    when Cst_utils.cpred_is_pure crhs ->
+	let arhs = build_aval_pure crhs in
+	let apat, arhs = wrap_abstractions cpat arhs in
+	build_aval_monadic_let mm ((loc, apat, arhs) :: bindings) ccont
+    | Cpred_let (loc, None, cpat, crhs, ccont) ->
+	(* Monadic Case. We transform "let <var> be <rhs> in <cont>"
+	 * to "let tmp <var> be <cont> in <rhs> >>= tmp" *)
+	if Cst_utils.count_formal_args cpat > 0 then
+	    errf_at loc "Cannot run monadic action inside an abstraction. \
+			 Maybe you meant to use 'let!'?";
+	let vf = avar_for_line loc in
+	let acont = build_aval_monad mm ccont in
+	let acont = Aval_at (loc, [(build_apat cpat, None, acont)]) in
+	let binding = (loc, Apat_uvar vf, acont) in
+	let afref = Aval_ref (Apath ([], vf)) in
+	let arhs = build_aval_monad (MM_bind afref) crhs in
+	Aval_let (loc, List.rev (binding :: bindings), arhs)
+    | ccont ->
+	let acont = build_aval_monad mm ccont in
+	let (last_loc, _, _) = List.hd bindings in
+	let loc = Location.span [cpred_loc ccont; last_loc] in
+	Aval_let (loc, List.rev bindings, acont)
 and build_aval_monad mm = function
     | Cpred_let (loc, _, _, _, _) as clet ->
-	let rec loop bindings = function
-	    | Cpred_let (loc, Some cm, cpat, crhs, ccont) ->
-		let apat = build_apat cpat in
-		let arhs = build_aval_monad (MM_quote cm) crhs in
-		loop ((loc, apat, arhs) :: bindings) ccont
-	    | Cpred_let (loc, None, cpat, crhs, ccont)
-		    when Cst_utils.cpred_is_pure crhs ->
-		let apat = build_apat cpat in
-		let arhs = build_aval_pure crhs in
-		loop ((loc, apat, arhs) :: bindings) ccont
-	    | Cpred_let (loc, None, cpat, crhs, ccont) ->
-		(* Monadic Case. We transform "let <var> be <rhs> in <cont>"
-		 * to "let tmp <var> be <cont> in <rhs> >>= tmp" *)
-		let cpat, crhs = Cst_utils.move_applications (cpat, crhs) in
-		let vf = avar_for_line loc in
-		let acont = build_aval_monad mm ccont in
-		let acont = Aval_at (loc, [(build_apat cpat, None, acont)]) in
-		let binding = (loc, Apat_uvar vf, acont) in
-		let afref = Aval_ref (Apath ([], vf)) in
-		let arhs = build_aval_monad (MM_bind afref) crhs in
-		Aval_let (loc, List.rev (binding :: bindings), arhs)
-	    | ccont ->
-		let acont = build_aval_monad mm ccont in
-		Aval_let (loc, List.rev bindings, acont) in
-	loop [] clet
+	build_aval_monadic_let mm [] clet
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond,
 		 build_aval_monad mm cq, build_aval_monad mm ccq)
     | Cpred_at (loc, cases) ->
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_monad mm cq) in
-	Aval_at (loc, List.map build_case cases)
+	begin match mm with
+	| MM_quote _ -> Aval_at (loc, List.map build_case cases)
+	| MM_bind _ ->
+	    errf_at loc "Cannot run monadic action inside an abstraction. \
+			 You may be missing a surrounding monad escape."
+	end
     | Cpred_be (loc, cx) ->
 	let ax = build_aval_expr cx in
 	begin match mm with
@@ -435,7 +451,7 @@ and build_adefs adecmap adefs = function
 	let cpat, cmod = Cst_utils.move_typing (cpat, cmod) in
 	let amod = build_amod cmod in
 	let cpat, amod =
-	    Cst_utils.fold_ctrm_args wrap_amod_lambda (cpat, amod) in
+	    Cst_utils.fold_formal_args wrap_amod_lambda (cpat, amod) in
 	let adef = Adef_in (loc, build_avar cpat, amod) in
 	build_adefs adecmap (adef :: adefs) xs
     | Cdec_sig (loc, cidr) :: xs ->
