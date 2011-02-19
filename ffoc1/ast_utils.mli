@@ -23,6 +23,7 @@ open Ast_types
 open Ast_core
 
 val atyp_to_string : atyp -> string
+val apat_to_string : apat -> string
 val aval_to_string : aval -> string
 val asig_to_string : asig -> string
 val amod_to_string : amod -> string
@@ -36,7 +37,11 @@ val flatten_application : atyp -> apath * atyp list
 
 val flatten_arrows : atyp -> atyp * atyp list
 
+val fold_apat_vars : (avar -> 'a -> 'a) -> apat -> 'a -> 'a
+val fold_apat_typed_vars : (atyp * avar -> 'a -> 'a) -> apat -> 'a -> 'a
+
 val fold_atyp_paths : (apath -> 'a -> 'a) -> atyp -> 'a -> 'a
-val fold_aval_paths : (apath -> 'a -> 'a) -> aval -> 'a -> 'a
+val fold_apat_paths : (stratum -> apath -> 'a -> 'a) -> apat -> 'a -> 'a
+val fold_aval_paths : (stratum -> apath -> 'a -> 'a) -> aval -> 'a -> 'a
 val fold_asig_paths : (stratum -> apath -> 'a -> 'a) -> asig -> 'a -> 'a
 val fold_amod_paths : (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a

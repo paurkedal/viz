@@ -21,6 +21,7 @@ open Cst_core
 open Ast_types
 open Ast_core
 open Leaf_types
+open Leaf_core
 open Diag
 open FfPervasives
 
@@ -66,18 +67,24 @@ let build_atyp_con_args =
 	| ct -> errf_at (ctrm_loc ct) "Expecting a type constructor." in
     loop []
 
-let rec build_apat ?(fpos = false) = function
+let rec build_apat ?(adecmap = Idr_map.empty) ?(fpos = false) = function
     | Ctrm_literal (loc, lit) ->
 	Apat_literal (loc, lit)
     | Ctrm_ref (cidr, Ih_inj) ->
 	Apat_ref (Apath ([], cidr_to_avar cidr))
     | Ctrm_ref (cidr, _) ->
-	if fpos then Apat_ref (Apath ([], cidr_to_avar cidr))
-	else         Apat_uvar (cidr_to_avar cidr)
+	if fpos then Apat_ref (Apath ([], cidr_to_avar cidr)) else
+	let apat = Apat_uvar (cidr_to_avar cidr) in
+	begin try
+	    let (loc, t) = Idr_map.find (cidr_to_idr cidr) adecmap in
+	    Apat_intype (loc, t, apat)
+	with Not_found -> apat end
     | Ctrm_project _ as ctrm ->
 	Apat_ref (build_apath ctrm)
     | Ctrm_apply (loc, cx, cy) ->
-	Apat_apply (loc, build_apat ~fpos:true cx, build_apat cy)
+	let ax = build_apat ~adecmap ~fpos:true cx in
+	let ay = build_apat ~adecmap cy in
+	Apat_apply (loc, ax, ay)
     | cx -> errf_at (ctrm_loc cx) "Invalid pattern."
 
 let make_aval_return loc decor ax =
@@ -382,9 +389,10 @@ end
 module Avcases_algo = Graphalgo.ST_algo (Avcases_graph)
 
 let fold_aval_deps f aval =
-    let f' = function
-	| Apath ([], Avar (_, idr)) -> f idr
-	| Apath _ -> ident in
+    let f' stratum path =
+	match (stratum, path) with
+	| `Value, Apath ([], Avar (_, idr)) -> f idr
+	| _ -> ident in
     Ast_utils.fold_aval_paths f' aval
 
 let break_rec_and_push_avcases avcases =
@@ -407,8 +415,12 @@ let break_rec_and_push_avcases avcases =
     let push_component vs adefs =
 	match vs with
 	| [v] when not (Idr_set.mem v (vertex_deps v)) ->
-	    let (loc, v, t, x) = vertex_avcase v in
-	    Adef_val (loc, v, t, x) :: adefs
+	    let (loc, v, t_opt, x) = vertex_avcase v in
+	    let pat =
+		match t_opt with
+		| None -> Apat_uvar v
+		| Some t -> Apat_intype (loc, t, Apat_uvar v) in
+	    Adef_val (loc, pat, x) :: adefs
 	| _ -> Adef_vals (List.map vertex_avcase vs) :: adefs in
     Avcases_algo.fold_strongly_connected g push_component vs
 
@@ -440,6 +452,17 @@ and build_amod = function
 	Amod_apply (loc, build_amod cf, build_amod cx)
     | ctrm -> errf_at (ctrm_loc ctrm) "Invalid module expression."
 
+and build_toplevel_aval loc cm_opt cpred =
+    begin match cm_opt with
+    | Some cm ->
+	build_aval_monad (MM_quote cm) cpred
+    | None when Cst_utils.cpred_is_pure cpred ->
+	build_aval_pure cpred
+    | None ->
+	let ax = build_aval_monad (MM_quote cmonad_io) cpred in
+	let af = aval_ref_of_idr loc idr_run_toplevel_io in
+	Aval_apply (loc, af, ax)
+    end
 and build_adefs adecmap adefs = function
     | Cdef_include (loc, m) :: xs ->
 	let adef = Adef_include (loc, build_amod m) in
@@ -468,9 +491,16 @@ and build_adefs adecmap adefs = function
 	let at = build_atyp ct in
 	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
 	build_adefs adecmap adefs xs
+    | Cdef_val (loc, export, cm_opt, cpat, cpred) :: xs
+	    when not (Cst_utils.is_formal cpat) ->
+	let apat = build_apat ~adecmap cpat in
+	let aval = build_toplevel_aval loc cm_opt cpred in
+	let adef = Adef_val (loc, apat, aval) in
+	build_adefs adecmap (adef :: adefs) xs
     | (Cdef_val _ :: _) as xs ->
 	let build_avcase = function
-	    | Cdef_val (loc, export, cm_opt, cpat, cpred) ->
+	    | Cdef_val (loc, export, cm_opt, cpat, cpred)
+		    when Cst_utils.is_formal cpat ->
 		let cvar, cpred = Cst_utils.move_applications (cpat, cpred) in
 		let at_opt =
 		    begin match cvar with
@@ -480,17 +510,7 @@ and build_adefs adecmap adefs = function
 		    | _ -> assert false (* unreachable *)
 		    end in
 		let avar = build_avar cvar in
-		let aval =
-		    begin match cm_opt with
-		    | Some cm ->
-			build_aval_monad (MM_quote cm) cpred
-		    | None when Cst_utils.cpred_is_pure cpred ->
-			build_aval_pure cpred
-		    | None ->
-			let ax = build_aval_monad (MM_quote cmonad_io) cpred in
-			let af = aval_ref_of_idr loc idr_run_toplevel_io in
-			Aval_apply (loc, af, ax)
-		    end in
+		let aval = build_toplevel_aval loc cm_opt cpred in
 		Some (loc, avar, at_opt, aval)
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
@@ -503,7 +523,9 @@ and build_adefs adecmap adefs = function
 	    | (_, v, Some _, _) -> Idr_map.remove (avar_idr v)
 	    | _ -> ident in
 	let strip_used_adef = function
-	    | Adef_val (loc, v, t, x) -> strip_used_avcase (loc, v, t, x)
+	    | Adef_val (loc, pat, _) ->
+		Ast_utils.fold_apat_typed_vars
+		    (fun (t, v) -> Idr_map.remove (avar_idr v)) pat
 	    | Adef_vals avcases -> List.fold strip_used_avcase avcases
 	    | _ -> ident in
 	let adecmap = List.fold strip_used_adef adefs adecmap in

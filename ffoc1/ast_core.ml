@@ -51,6 +51,7 @@ let rec apat_loc = function
     | Apat_ref p -> apath_loc p
     | Apat_uvar x -> avar_loc x
     | Apat_apply (loc, _, _) -> loc
+    | Apat_intype (loc, _, _) -> loc
 
 let rec asig_loc = function
     | Asig_ref p -> apath_loc p
@@ -84,7 +85,7 @@ and adef_loc = function
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in
 	Location.span [lloc; uloc]
-    | Adef_val (loc, _, _, _) -> loc
+    | Adef_val (loc, _, _) -> loc
     | Adef_vals bs ->
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in

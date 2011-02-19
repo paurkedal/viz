@@ -18,6 +18,7 @@
 
 (** Utility Functions Operating on the Concrete Syntax Tree *)
 
+open Leaf_types
 open Cst_types
 
 val extract_ctrm_coercion : ctrm -> ctrm * ctrm option
@@ -36,6 +37,10 @@ val count_formal_args : ctrm -> int
     Returns 0 when applied to a constructor. *)
 
 val fold_formal_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
+
+val is_formal : ctrm -> bool
+
+val collect_pattern_vars : ctrm -> idr list
 
 val move_typing : ctrm * ctrm -> ctrm * ctrm
 (** [move_typing (src, dst)] moves a typing ([v : t]) from the top-level of

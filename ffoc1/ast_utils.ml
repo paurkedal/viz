@@ -27,6 +27,7 @@ let sexp_to_string sx =
     Sexp.to_buffer_hum buf sx;
     Buffer.contents buf
 let atyp_to_string x = sexp_to_string (sexp_of_atyp x)
+let apat_to_string x = sexp_to_string (sexp_of_apat x)
 let aval_to_string x = sexp_to_string (sexp_of_aval x)
 let asig_to_string x = sexp_to_string (sexp_of_asig x)
 let amod_to_string x = sexp_to_string (sexp_of_amod x)
@@ -57,6 +58,23 @@ let flatten_application =
     loop []
 
 
+(* Folds over Variable Subterms *)
+
+let rec fold_apat_vars f = function
+    | Apat_literal _ | Apat_ref _ -> ident
+    | Apat_uvar v -> f v
+    | Apat_apply (_, p, q) -> fold_apat_vars f p *> fold_apat_vars f q
+    | Apat_intype (_, t, p) -> fold_apat_vars f p
+
+let rec fold_apat_typed_vars f = function
+    | Apat_literal _ | Apat_ref _ -> ident
+    | Apat_uvar v -> ident
+    | Apat_apply (_, p, q) ->
+	fold_apat_typed_vars f p *> fold_apat_typed_vars f q
+    | Apat_intype (_, t, Apat_uvar v) -> f (t, v)
+    | Apat_intype (_, _, p) -> fold_apat_typed_vars f p
+
+
 (* Folds over Path Subterms *)
 
 let rec fold_atyp_paths f = function
@@ -67,10 +85,12 @@ let rec fold_atyp_paths f = function
 
 let rec fold_apat_paths f = function
     | Apat_literal _ -> ident
-    | Apat_ref p -> f p
+    | Apat_ref p -> f `Value p
     | Apat_uvar _ -> ident
     | Apat_apply (_, p, q) ->
 	fold_apat_paths f p *> fold_apat_paths f q
+    | Apat_intype (_, t, p) ->
+	fold_atyp_paths (f `Type) t *< fold_apat_paths f p
 
 let rec fold_aval_paths f =
     let fold_cases =
@@ -82,7 +102,7 @@ let rec fold_aval_paths f =
 	    end in
     function
     | Aval_literal _ -> ident
-    | Aval_ref p -> f p
+    | Aval_ref p -> f `Value p
     | Aval_apply (_, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
     | Aval_at (_, cases) -> fold_cases cases
     | Aval_match (_, x, cases) -> fold_aval_paths f x *> fold_cases cases
@@ -133,12 +153,10 @@ and fold_adef_paths f = function
     | Adef_in (_, _, m) -> fold_amod_paths f m
     | Adef_sig (_, _, s) -> fold_asig_paths f s
     | Adef_types bindings -> List.fold (fold_atypbind_paths f) bindings
-    | Adef_val (_, _, t, x) ->
-	Option.fold (fold_atyp_paths (f `Type)) t *>
-	fold_aval_paths (f `Value) x
+    | Adef_val (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x
     | Adef_vals bindings ->
 	List.fold
 	    (fun (_, _, t, x) ->
 		Option.fold (fold_atyp_paths (f `Type)) t *>
-		fold_aval_paths (f `Value) x)
+		fold_aval_paths f x)
 	    bindings

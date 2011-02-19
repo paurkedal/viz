@@ -146,6 +146,9 @@ let rec emit_apat = function
     | Apat_apply (loc, p0, p1) ->
 	let _loc = p4loc loc in
 	<:patt< $emit_apat p0$ $emit_apat p1$ >>
+    | Apat_intype (loc, t, p) ->
+	let _loc = p4loc loc in
+	<:patt< ($emit_apat p$ : $emit_atyp t$) >>
 
 let emit_aval_fixed _loc default = function
     | "[]" -> <:expr< [] >>
@@ -355,13 +358,9 @@ and emit_adef = function
 	if alias_bindings = [] then odef else
 	let odef_aliases = <:str_item< value $list: alias_bindings$ >> in
 	<:str_item< $list: [odef; odef_aliases]$ >>
-    | Adef_val (loc, v, None, x) ->
+    | Adef_val (loc, v, x) ->
 	let _loc = p4loc loc in
-	<:str_item< value $lid: avar_to_lid v$ = $emit_aval x$ >>
-    | Adef_val (loc, v, Some t, x) ->
-	let _loc = p4loc loc in
-	<:str_item< value $lid: avar_to_lid v$ : $emit_atyp t$
-			= $emit_aval x$ >>
+	<:str_item< value $pat: emit_apat v$ = $emit_aval x$ >>
     | Adef_vals bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in

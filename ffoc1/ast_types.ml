@@ -42,6 +42,7 @@ type apat =
     | Apat_ref of apath
     | Apat_uvar of avar
     | Apat_apply of loc * apat * apat
+    | Apat_intype of loc * atyp * apat
     with sexp
 
 type aval =
@@ -89,6 +90,6 @@ type amod =
     | Adef_in of loc * avar * amod
     | Adef_sig of loc * avar * asig
     | Adef_types of (loc * avar * atyp list * atypinfo) list
-    | Adef_val of loc * avar * atyp option * aval
+    | Adef_val of loc * apat * aval
     | Adef_vals of (loc * avar * atyp option * aval) list
     with sexp

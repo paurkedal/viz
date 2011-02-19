@@ -16,6 +16,7 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open FfPervasives
 open Cst_types
 open Cst_core
 open Diag
@@ -61,6 +62,32 @@ let rec fold_ctrm_args f (trm, accu) =
 let fold_formal_args f (trm, accu) =
     if count_formal_args trm = 0 then (trm, accu) else
     fold_ctrm_args f (trm, accu)
+
+let rec is_formal = function
+    | Ctrm_ref (_, Ih_inj) -> false
+    | Ctrm_ref (_, _) -> true
+    | Ctrm_label (_, _, x) -> is_formal x
+    | Ctrm_quantify _ -> assert false
+    | Ctrm_rel _ -> false
+    | Ctrm_apply (_, x, _) -> is_formal x
+    | _ -> false
+
+let collect_pattern_vars x =
+    let rec coll fpos = function
+	| Ctrm_ref (Cidr (_, idr), Ih_inj) -> ident
+	| Ctrm_ref (Cidr (_, idr), _) ->
+	    if fpos then ident else fun idrs -> idr :: idrs
+	| Ctrm_literal _ -> ident
+	| Ctrm_label (_, _, x) -> coll fpos x
+	| Ctrm_quantify _ -> assert false (* unimplemented *)
+	| Ctrm_rel (_, x, rys) ->
+	    List.fold (fun (_, _, y) -> coll false y) rys *< coll false x
+	| Ctrm_apply (_, f, x) ->
+	    coll true f *< coll false x
+	| Ctrm_project (_, _, x) -> coll fpos x
+	| Ctrm_what _ | Ctrm_where _ | Ctrm_with _ ->
+	    assert false (* If reachable, write out a proper error message. *)
+    in coll false x []
 
 let rec move_applications (src, dst) =
     match src with
