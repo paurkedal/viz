@@ -1,4 +1,4 @@
-(* Copyright 2010  Petter Urkedal
+(* Copyright 2010--2011  Petter Urkedal
  *
  * This file is part of Fform/OC <http://www.eideticdew.org/p/fform/>.
  *
@@ -17,10 +17,14 @@
  *)
 
 open FfPervasives
+open Printf
 
 exception Error_at of Location.t * string
 
-let errf_at loc msg = Printf.ksprintf (fun s -> raise (Error_at (loc, s))) msg
+let errf_at loc msg = ksprintf (fun s -> raise (Error_at (loc, s))) msg
+
+let warnf_at loc msg =
+    ksprintf (fun s -> eprintf "%s: %s\n" (Location.to_string loc) s) msg
 
 module String_set = Set.Make(String)
 
@@ -39,5 +43,5 @@ let dlogf_for tag ?loc fmt =
 	Option.iter (fun loc -> puts (Location.to_string loc ^ ": ")) loc;
 	puts msg;
 	puts "\n" in
-    Printf.ksprintf print fmt
+    ksprintf print fmt
 

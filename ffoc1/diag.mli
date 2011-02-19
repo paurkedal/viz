@@ -21,6 +21,7 @@
 exception Error_at of Location.t * string
 
 val errf_at : Location.t -> ('b, unit, string, 'a) format4 -> 'b
+val warnf_at : Location.t -> ('b, unit, string, unit) format4 -> 'b
 
 val dlog_en_for : string -> bool
 val dlogf_for : string -> ?loc : Location.t
