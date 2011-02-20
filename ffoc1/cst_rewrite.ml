@@ -106,7 +106,7 @@ and subterm_rewrite_cdef rw stra = function
     | Cdef_in (loc, x, y), accu ->
 	let x, accu = rw.rw_ctrm rw `Structure (x, accu) in
 	let y, accu = rw.rw_ctrm rw stra (y, accu) in
-	Cdef_in (loc, x, x), accu
+	Cdef_in (loc, x, y), accu
     | Cdec_sig (loc, name), accu -> Cdec_sig (loc, name), accu
     | Cdef_sig (loc, name, x), accu ->
 	let x, accu = rw.rw_ctrm rw `Signature (x, accu) in
