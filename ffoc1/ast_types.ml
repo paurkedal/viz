@@ -51,7 +51,8 @@ type aval =
     | Aval_apply of loc * aval * aval
     | Aval_at of loc * (apat * aval option * aval) list
     | Aval_match of loc * aval * (apat * aval option * aval) list
-    | Aval_let of loc * (loc * apat * aval) list * aval
+    | Aval_let of loc * apat * aval * aval
+    | Aval_letrec of loc * (loc * apat * aval) list * aval
     | Aval_if of loc * aval * aval * aval
     | Aval_raise of loc * aval
     with sexp

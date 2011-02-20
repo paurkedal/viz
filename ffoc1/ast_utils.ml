@@ -106,7 +106,9 @@ let rec fold_aval_paths f =
     | Aval_apply (_, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
     | Aval_at (_, cases) -> fold_cases cases
     | Aval_match (_, x, cases) -> fold_aval_paths f x *> fold_cases cases
-    | Aval_let (_, bindings, body) ->
+    | Aval_let (_, p, rhs, body) ->
+	fold_apat_paths f p *> fold_aval_paths f rhs *> fold_aval_paths f body
+    | Aval_letrec (_, bindings, body) ->
 	List.fold
 	    (fun (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x)
 	    bindings *>

@@ -41,7 +41,8 @@ let rec aval_loc = function
     | Aval_ref p -> apath_loc p
     | Aval_apply (loc, _, _) -> loc
     | Aval_at (loc, _) -> loc
-    | Aval_let (loc, _, _) -> loc
+    | Aval_let (loc, _, _, _) -> loc
+    | Aval_letrec (loc, _, _) -> loc
     | Aval_if (loc, _, _, _) -> loc
     | Aval_match (loc, _, _) -> loc
     | Aval_raise (loc, _) -> loc

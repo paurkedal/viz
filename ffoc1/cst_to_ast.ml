@@ -110,20 +110,27 @@ let wrap_abstractions cpat arhs =
     let cpat, arhs = Cst_utils.fold_formal_args wrap (cpat, arhs) in
     (build_apat cpat, arhs)
 
-let rec build_aval_pure = function
-    | Cpred_let (loc, _, _, _, _) as clet ->
+let rec build_aval cm_opt cpred =
+    match cm_opt with
+    | Some cm -> build_aval_monad (MM_quote cm) cpred
+    | None ->    build_aval_pure cpred
+and build_aval_pure = function
+    | Cpred_let (loc, cm_opt, cpat, cpred, ccont)	(* Pattern Case *)
+	    when not (Cst_utils.is_formal cpat) ->
+	let arhs = build_aval cm_opt cpred in
+	let apat = build_apat cpat in
+	let acont = build_aval_pure ccont in
+	Aval_let (loc, apat, arhs, acont)
+    | Cpred_let (loc, _, _, _, _) as clet ->		(* Recursive Case *)
 	let rec loop bindings = function
-	    | Cpred_let (loc, Some cm, cpat, crhs, ccont) ->
-		let arhs = build_aval_monad (MM_quote cm) crhs in
-		let apat, arhs = wrap_abstractions cpat arhs in
-		loop ((loc, apat, arhs) :: bindings) ccont
-	    | Cpred_let (loc, None, cpat, crhs, ccont) ->
-		let arhs = build_aval_pure crhs in
+	    | Cpred_let (loc, cm_opt, cpat, crhs, ccont)
+		    when Cst_utils.is_formal cpat ->
+		let arhs = build_aval cm_opt crhs in
 		let apat, arhs = wrap_abstractions cpat arhs in
 		loop ((loc, apat, arhs) :: bindings) ccont
 	    | ccont ->
 		let acont = build_aval_pure ccont in
-		Aval_let (loc, List.rev bindings, acont) in
+		Aval_letrec (loc, List.rev bindings, acont) in
 	loop [] clet
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond, build_aval_pure cq, build_aval_pure ccq)
@@ -137,37 +144,40 @@ let rec build_aval_pure = function
     | Cpred_do2 (loc, _, _, _)
     | Cpred_raise (loc, _) ->
 	raise (Failure "Internal error: Should be pure.")
-and build_aval_monadic_let mm bindings = function
-    | Cpred_let (loc, Some cm, cpat, crhs, ccont) ->
-	let arhs = build_aval_monad (MM_quote cm) crhs in
-	let apat, arhs = wrap_abstractions cpat arhs in
-	build_aval_monadic_let mm ((loc, apat, arhs) :: bindings) ccont
+and build_aval_monad mm = function
     | Cpred_let (loc, None, cpat, crhs, ccont)
-	    when Cst_utils.cpred_is_pure crhs ->
-	let arhs = build_aval_pure crhs in
-	let apat, arhs = wrap_abstractions cpat arhs in
-	build_aval_monadic_let mm ((loc, apat, arhs) :: bindings) ccont
-    | Cpred_let (loc, None, cpat, crhs, ccont) ->
-	(* Monadic Case. We transform "let <var> be <rhs> in <cont>"
-	 * to "let tmp <var> be <cont> in <rhs> >>= tmp" *)
+	    when not (Cst_utils.cpred_is_pure crhs) ->	(* Monadic Case *)
+	(* Transform "let <var> be <rhs> in <cont>"
+	 *        to "let tmp <var> be <cont> in <rhs> >>= tmp" *)
 	if Cst_utils.count_formal_args cpat > 0 then
 	    errf_at loc "Cannot run monadic action inside an abstraction. \
 			 Maybe you meant to use 'let!'?";
 	let vf = avar_for_line loc in
 	let acont = build_aval_monad mm ccont in
 	let acont = Aval_at (loc, [(build_apat cpat, None, acont)]) in
-	let binding = (loc, Apat_uvar vf, acont) in
 	let afref = Aval_ref (Apath ([], vf)) in
 	let arhs = build_aval_monad (MM_bind afref) crhs in
-	Aval_let (loc, List.rev (binding :: bindings), arhs)
-    | ccont ->
-	let acont = build_aval_monad mm ccont in
-	let (last_loc, _, _) = List.hd bindings in
-	let loc = Location.span [cpred_loc ccont; last_loc] in
-	Aval_let (loc, List.rev bindings, acont)
-and build_aval_monad mm = function
-    | Cpred_let (loc, _, _, _, _) as clet ->
-	build_aval_monadic_let mm [] clet
+	Aval_let (loc, Apat_uvar vf, acont, arhs)
+    | Cpred_let (loc, cm_opt, cpat, cpred, ccont)	(* Pattern Case *)
+	    when not (Cst_utils.is_formal cpat) ->
+	let arhs = build_aval cm_opt cpred in
+	let apat = build_apat cpat in
+	let acont = build_aval_pure ccont in
+	Aval_let (loc, apat, arhs, acont)
+    | Cpred_let (loc, _, _, _, _) as clet ->		(* Recursive Case *)
+	let rec loop bindings = function
+	    | Cpred_let (loc, cm_opt, cpat, crhs, ccont)
+		    when Cst_utils.is_formal cpat
+		      && cm_opt <> None || Cst_utils.cpred_is_pure crhs ->
+		let arhs = build_aval cm_opt crhs in
+		let apat, arhs = wrap_abstractions cpat arhs in
+		loop ((loc, apat, arhs) :: bindings) ccont
+	    | ccont ->
+		let acont = build_aval_monad mm ccont in
+		let (last_loc, _, _) = List.hd bindings in
+		let loc = Location.span [cpred_loc ccont; last_loc] in
+		Aval_letrec (loc, List.rev bindings, acont) in
+	loop [] clet
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond,
 		 build_aval_monad mm cq, build_aval_monad mm ccq)

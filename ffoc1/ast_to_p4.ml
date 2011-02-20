@@ -170,10 +170,6 @@ let emit_aval_fixed _loc default = function
     | "2'mod" -> <:expr< (mod) >>
     | _ -> default ()
 
-let bindings_are_rec = function
-    | [(_, Apat_literal _, _)] -> false
-    | _ -> true (* TODO *)
-
 let rec emit_aval = function
     | Aval_literal (loc, lit) -> emit_aval_literal loc lit
     | Aval_ref p ->
@@ -201,17 +197,16 @@ let rec emit_aval = function
 	let _loc = p4loc loc in
 	<:expr< match $emit_aval x$
 		with [ $list: List.map emit_match_case cases$ ] >>
-    | Aval_let (loc, bindings, body) ->
+    | Aval_let (loc, p, x, body) ->
+	let _loc = p4loc loc in
+	<:expr< let $pat: emit_apat p$ = $emit_aval x$ in $emit_aval body$ >>
+    | Aval_letrec (loc, bindings, body) ->
 	let _loc = p4loc loc in
 	let emit_binding (loc, x, body) =
 	    let _loc = p4loc loc in
 	    <:binding< $pat: emit_apat x$ = $emit_aval body$ >> in
-	if bindings_are_rec bindings then
-	    <:expr< let rec $list: List.map emit_binding bindings$
-		    in $emit_aval body$ >>
-	else
-	    <:expr< let $list: List.map emit_binding bindings$
-		    in $emit_aval body$ >>
+	<:expr< let rec $list: List.map emit_binding bindings$
+		in $emit_aval body$ >>
     | Aval_if (loc, cond, cq, ccq) ->
 	let _loc = p4loc loc in
 	<:expr< if $emit_aval cond$ then $emit_aval cq$ else $emit_aval ccq$ >>
