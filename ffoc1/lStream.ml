@@ -41,6 +41,11 @@ let pop stm =
 	Some ch
     with Stream.Failure -> None
 
+let pop_e stm =
+    match pop stm with
+    | Some ch -> ch
+    | None -> raise Stream.Failure
+
 let peek stm = Stream.peek stm.stream
 
 let peek_n n stm = Stream.npeek n stm.stream

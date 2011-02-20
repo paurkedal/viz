@@ -31,6 +31,8 @@ val locbound : t -> Location.Bound.t
 
 val pop : t -> elt option
 
+val pop_e : t -> elt
+
 val peek : t -> elt option
 
 val peek_n : int -> t -> elt list

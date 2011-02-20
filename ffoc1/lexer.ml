@@ -300,23 +300,13 @@ let triescan state trie =
 let scan_keyword state =
     match triescan state state.st_keywords with
     | None ->
-	(* Special handling of ".<identifier>" and ".<space>". *)
+	(* Special handling of ".<space>". *)
+	let loc_lb = LStream.locbound state.st_stream in
 	begin match LStream.peek_n 2 state.st_stream with
-	| [ch0; ch1] when UChar.code ch0 = 0x2e ->
-	    let loc_lb = LStream.locbound state.st_stream in
-	    if UChar.is_idrchr ch1 then begin
-		LStream.skip state.st_stream;
-		let (name, loc) =
-		    LStream.scan_while UChar.is_idrchr state.st_stream in
-		let idr = idr_of_ustring name in
-		let loc' = Location.between loc_lb (Location.ubound loc) in
-		Some (Grammar.PROJECT idr, loc')
-	    end else if UChar.is_space ch1 then begin
-		LStream.skip state.st_stream;
-		let loc_ub = LStream.locbound state.st_stream in
-		Some (Grammar.DOT, Location.between loc_lb loc_ub)
-	    end else
-		None
+	| [ch0; ch1] when UChar.code ch0 = 0x2e && UChar.is_space ch1 ->
+	    LStream.skip state.st_stream;
+	    let loc_ub = LStream.locbound state.st_stream in
+	    Some (Grammar.DOT, Location.between loc_lb loc_ub)
 	| _ -> None
 	end
     | Some (ti, tokstr, loc) ->
@@ -347,66 +337,57 @@ let scan_keyword state =
 	    Some (tok, loc)
 	  end
 
-let scan_identifier state =
+let scan_regular_identifier state =
+    let (name, loc) = LStream.scan_while UChar.is_idrchr state.st_stream in
+    idr_of_ustring name
+
+let scan_operator_identifier state =
     let buf = UString.Buf.create 8 in
-    let finish () =
-	let s = UString.Buf.contents buf in
-	let n = UString.length s in
-	let ch0 = UString.get s 0 in
-	match int_of_uchar ch0 with
-	| 0x27 (* ' *) ->
-	    let idr = idr_of_ustring (UString.after 1 s) in
-	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ)
-	| _ ->
-	match LStream.peek_code state.st_stream with
-	| 0x25 (* % *) ->
-	    LStream.skip state.st_stream;
-	    let idr = idr_of_ustring s in
-	    Grammar.HINTED_IDENTIFIER (idr, Ih_inj)
-	| _ ->
-	match int_of_uchar (UString.get s (n - 1)) with
-	| 0x5f (* _ *) when n > 1 ->
-	    let idr = idr_of_ustring (UString.sub s 0 (n - 1)) in
-	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ)
-	| _ ->
-	if UChar.is_greek_alpha ch0 then
-	    let idr = idr_of_ustring s in
-	    Grammar.HINTED_IDENTIFIER (idr, Ih_univ) else
-	let idr = idr_of_ustring s in
-	Grammar.IDENTIFIER idr in
-    let rec scan prev_ch =
-	LStream.skip state.st_stream;
-	match LStream.peek state.st_stream with
-	| None -> finish ()
-	| Some next_ch ->
-	    if UChar.are_tied prev_ch next_ch then begin
-		UString.Buf.add_char buf next_ch;
-		scan next_ch
-	    end else finish () in
-    match LStream.peek_n 2 state.st_stream with
+    UString.Buf.add_char buf (LStream.pop_e state.st_stream);
+    UString.Buf.add_char buf (LStream.pop_e state.st_stream);
+    let level = ref 0 in
+    LStream.skip_while
+	begin fun ch ->
+	    if match UCharInfo.general_category ch with
+	    | `Ps | `Pi -> level := !level + 1; true
+	    | `Pe | `Pf -> level := !level - 1; !level >= 0
+	    | `Cc | `Zs | `Zl | `Zp -> false
+	    | _ -> true
+	    then (UString.Buf.add_char buf ch; true)
+	    else false
+	end
+	state.st_stream;
+    idr_of_ustring (UString.Buf.contents buf)
+
+let scan_identifier state =
+    match LStream.peek_n 3 state.st_stream with
     | [] -> Some Grammar.EOF
-    | ch0 :: ch1 :: _ when UChar.is_ascii_digit ch0 && UChar.code ch1 = 0x27 ->
-	UString.Buf.add_char buf ch0;
-	UString.Buf.add_char buf ch1;
-	LStream.skip_n 2 state.st_stream;
-	let level = ref 0 in
-	LStream.skip_while
-	    begin fun ch ->
-		if match UCharInfo.general_category ch with
-		| `Ps | `Pi -> level := !level + 1; true
-		| `Pe | `Pf -> level := !level - 1; !level >= 0
-		| `Zs | `Zl | `Zp -> false
-		| _ -> true
-		then (UString.Buf.add_char buf ch; true)
-		else false
-	    end
-	    state.st_stream;
-	let idr = idr_of_ustring (UString.Buf.contents buf) in
-	if dlog_en then dlogf "Scanned identifier %s" (idr_to_string idr);
-	Some (Grammar.IDENTIFIER idr)
+    | ch_digit :: ch_o :: _
+	    when UChar.is_ascii_digit ch_digit && UChar.code ch_o = 0x27 ->
+	Some (Grammar.IDENTIFIER (scan_operator_identifier state))
+    | ch_dot :: ch_digit :: ch_o :: _
+	    when UChar.code ch_dot = 0x2e
+	      && UChar.is_ascii_digit ch_digit && UChar.code ch_o = 0x27 ->
+	LStream.skip state.st_stream;
+	Some (Grammar.PROJECT (scan_operator_identifier state))
+    | ch_dot :: ch_idrchr :: _
+	    when UChar.code ch_dot = 0x2e && UChar.is_idrchr ch_idrchr ->
+	LStream.skip state.st_stream;
+	Some (Grammar.PROJECT (scan_regular_identifier state))
+    | ch_apo :: ch_idrchr :: _
+	    when UChar.code ch_apo = 0x27 && UChar.is_idrchr ch_idrchr ->
+	LStream.skip state.st_stream;
+	let idr = scan_regular_identifier state in
+	Some (Grammar.HINTED_IDENTIFIER (idr, Ih_univ))
     | ch0 :: _ when UChar.is_idrchr ch0 ->
-	UString.Buf.add_char buf ch0;
-	Some (scan ch0)
+	let idr = scan_regular_identifier state in
+	if LStream.peek_code state.st_stream = 0x25 then begin
+	    LStream.skip state.st_stream;
+	    Some (Grammar.HINTED_IDENTIFIER (idr, Ih_inj))
+	end else if UChar.is_greek_alpha ch0 then
+	    Some (Grammar.HINTED_IDENTIFIER (idr, Ih_univ))
+	else
+	    Some (Grammar.IDENTIFIER idr)
     | _ -> None
 
 let escape_map =
