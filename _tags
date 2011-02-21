@@ -10,6 +10,8 @@
 # For now, process all Fform code with the Camlp4 preprocessor.
 <**/*.ff>: ffoc1pp
 
+"fflib": include
+
 # This is covered by the <**/*.ff> rule, but we may want to remove that rule
 # later.
 <fflib/*.{cmi,cmo,cmx,depends}>: ffoc1pp
