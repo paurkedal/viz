@@ -155,8 +155,8 @@ and fold_adef_paths f = function
     | Adef_in (_, _, m) -> fold_amod_paths f m
     | Adef_sig (_, _, s) -> fold_asig_paths f s
     | Adef_types bindings -> List.fold (fold_atypbind_paths f) bindings
-    | Adef_val (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x
-    | Adef_vals bindings ->
+    | Adef_let (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x
+    | Adef_letrec bindings ->
 	List.fold
 	    (fun (_, _, t, x) ->
 		Option.fold (fold_atyp_paths (f `Type)) t *>

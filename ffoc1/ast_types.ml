@@ -91,6 +91,6 @@ type amod =
     | Adef_in of loc * avar * amod
     | Adef_sig of loc * avar * asig
     | Adef_types of (loc * avar * atyp list * atypinfo) list
-    | Adef_val of loc * apat * aval
-    | Adef_vals of (loc * avar * atyp option * aval) list
+    | Adef_let of loc * apat * aval
+    | Adef_letrec of (loc * avar * atyp option * aval) list
     with sexp

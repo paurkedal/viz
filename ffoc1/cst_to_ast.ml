@@ -419,7 +419,7 @@ let break_rec_and_push_avcases avcases =
 	(fun (vs, avcase) ->
 	    (Idr_set.filter (fun v -> Idr_map.mem v g) vs, avcase)) g in
 
-    (* Emit the components as individual Adef_vals definitions. *)
+    (* Emit the components as individual Adef_letrec definitions. *)
     let vertex_deps v   = match Idr_map.find v g with (deps, _) -> deps in
     let vertex_avcase v = match Idr_map.find v g with (_, avcase) -> avcase in
     let push_component vs adefs =
@@ -430,8 +430,8 @@ let break_rec_and_push_avcases avcases =
 		match t_opt with
 		| None -> Apat_uvar v
 		| Some t -> Apat_intype (loc, t, Apat_uvar v) in
-	    Adef_val (loc, pat, x) :: adefs
-	| _ -> Adef_vals (List.map vertex_avcase vs) :: adefs in
+	    Adef_let (loc, pat, x) :: adefs
+	| _ -> Adef_letrec (List.map vertex_avcase vs) :: adefs in
     Avcases_algo.fold_strongly_connected g push_component vs
 
 let wrap_amod_lambda ?loc_opt cxvarsig amod =
@@ -505,7 +505,7 @@ and build_adefs adecmap adefs = function
 	    when not (Cst_utils.is_formal cpat) ->
 	let apat = build_apat ~adecmap cpat in
 	let aval = build_toplevel_aval loc cm_opt cpred in
-	let adef = Adef_val (loc, apat, aval) in
+	let adef = Adef_let (loc, apat, aval) in
 	build_adefs adecmap (adef :: adefs) xs
     | (Cdef_val _ :: _) as xs ->
 	let build_avcase = function
@@ -533,10 +533,10 @@ and build_adefs adecmap adefs = function
 	    | (_, v, Some _, _) -> Idr_map.remove (avar_idr v)
 	    | _ -> ident in
 	let strip_used_adef = function
-	    | Adef_val (loc, pat, _) ->
+	    | Adef_let (loc, pat, _) ->
 		Ast_utils.fold_apat_typed_vars
 		    (fun (t, v) -> Idr_map.remove (avar_idr v)) pat
-	    | Adef_vals avcases -> List.fold strip_used_avcase avcases
+	    | Adef_letrec avcases -> List.fold strip_used_avcase avcases
 	    | _ -> ident in
 	let is_include = function Adef_include _ -> true | _ -> false in
 	if not (List.exists is_include adefs) then begin
