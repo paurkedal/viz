@@ -538,9 +538,12 @@ and build_adefs adecmap adefs = function
 		    (fun (t, v) -> Idr_map.remove (avar_idr v)) pat
 	    | Adef_vals avcases -> List.fold strip_used_avcase avcases
 	    | _ -> ident in
-	let adecmap = List.fold strip_used_adef adefs adecmap in
-	Idr_map.iter
-	    (fun idr (loc, _) ->
-		errf_at loc "Declaration lacks a subsequent definition.")
-	    adecmap;
+	let is_include = function Adef_include _ -> true | _ -> false in
+	if not (List.exists is_include adefs) then begin
+	    let adecmap = List.fold strip_used_adef adefs adecmap in
+	    Idr_map.iter
+		(fun idr (loc, _) ->
+		    errf_at loc "Declaration lacks a subsequent definition.")
+		adecmap
+	end;
 	List.rev adefs

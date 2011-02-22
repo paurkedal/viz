@@ -153,21 +153,6 @@ let rec emit_apat = function
 let emit_aval_fixed _loc default = function
     | "[]" -> <:expr< [] >>
     | "[;]" -> <:expr< Data.List.push >>
-    | "1'¬" -> <:expr< not >>
-    | "2'∧" -> <:expr< (&&) >>
-    | "2'∨" -> <:expr< (||) >>
-    | "2'=" -> <:expr< (=) >>
-    | "2'≠" -> <:expr< (<>) >>
-    | "2'<" -> <:expr< (<) >>
-    | "2'>" -> <:expr< (>) >>
-    | "2'≤" -> <:expr< (<=) >>
-    | "2'≥" -> <:expr< (>=) >>
-    | "2'+" -> <:expr< (+) >>
-    | "1'-" -> <:expr< (~-) >>
-    | "2'-" -> <:expr< (-) >>
-    | "2'*" -> <:expr< ( * ) >>
-    | "2'/" -> <:expr< (/) >>
-    | "2'mod" -> <:expr< (mod) >>
     | _ -> default ()
 
 let rec emit_aval = function

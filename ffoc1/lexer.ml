@@ -85,11 +85,11 @@ let initial_intro_keywords = [
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
     "at",	Grammar.AT;
-    "--?ffoc:open", Grammar.OPEN;
-    "--?ffoc:include", Grammar.INCLUDE;
-    "--?ffoc:type", Grammar.TYPE;
-    "--?ffoc:skip", Grammar.SKIP;
-    "--?ffoc:endskip", Grammar.ENDSKIP;
+    "--?FFOC open", Grammar.OPEN;
+    "--?FFOC include", Grammar.INCLUDE;
+    "--?FFOC type", Grammar.TYPE;
+    "--?FFOC {#", Grammar.SKIP;
+    "--?FFOC #}", Grammar.ENDSKIP;
 ]
 let initial_plain_keywords = [
     "true",	Grammar.LITERAL (Lit_bool true);
