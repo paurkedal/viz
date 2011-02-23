@@ -65,21 +65,28 @@ let _ =
     let do_cst = ref false in
     let do_ast = ref false in
     let do_depend = ref false in
+    let do_cstubs = ref false in
     let open_pervasive = ref true in
+    let nroots = ref [] in
     let roots = ref [] in
     let optspecs = Arg.align [
 	"-o", Arg.String (opt_setter out_path_opt),
 	    "PATH The output file.";
+	"-N", Arg.String (fun p -> nroots := p :: !nroots),
+	    "PATH Prepend PATH to the root paths, but when combined with \
+	     --depend, don't create dependencies for it.";
 	"-I", Arg.String (fun p -> roots := p :: !roots),
 	    "PATH Prepend PATH to the root paths to search for structures.";
 	"--depend", Arg.Unit (fun () -> do_depend := true),
 	    " Output dependecies.";
+	"--cstubs", Arg.Unit (fun () -> do_cstubs := true),
+	    " Output C stubs, if any.";
 	"--cst", Arg.Unit (fun () -> do_cst := true),
 	    " Dump the concrete syntax tree.  Mainly for debugging.";
 	"--ast", Arg.Unit (fun () -> do_ast := true),
 	    " Dump the abstract syntax tree.  Mainly for debugging.";
 	"--no-pervasive", Arg.Unit (fun () -> open_pervasive := false),
-	    " Don't open the pervasive structure."
+	    " Don't open the pervasive structure.";
     ] in
     Arg.parse optspecs (opt_setter in_path_opt) usage;
     let require what = function
@@ -88,7 +95,7 @@ let _ =
 	    exit 64 (* EX_USAGE *)
 	| Some x -> x in
     let in_path = require "An input path" !in_path_opt in
-    match Parser.parse_file ~exts: [""] ~roots: !roots in_path with
+    match Parser.parse_file ~exts: [""] ~roots: (!roots @ !nroots) in_path with
     | Some term ->
 	begin try
 	    let term, () =
@@ -99,6 +106,7 @@ let _ =
 	    let amod = if !open_pervasive then add_pervasive_in_amod amod
 		       else amod in
 	    if !do_ast then print_ast amod else
+	    if !do_cstubs then Ast_to_cstubs.output_cstubs stdout amod else
 	    if !do_depend then print_depend !roots in_path amod else
 	    let omod = Ast_to_p4.emit_toplevel amod in
 	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod

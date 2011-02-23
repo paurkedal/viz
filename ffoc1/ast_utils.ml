@@ -16,6 +16,7 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Leaf_types
 open Ast_core
 open Ast_types
 open Diag
@@ -44,11 +45,27 @@ let rec fold_arg_types f = function
     | Atyp_arrow (_, at, rt) -> f at *> fold_arg_types f rt
     | rt -> ident
 
+let arity t = fold_arg_types (fun _ accu -> accu + 1) t 0
+
+let unwrap_atyp_io = function
+    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr tc))), t)
+	    when tc = "io" -> (true, t)
+    | t -> (false, t)
+
 let flatten_arrows =
     let rec loop ats = function
 	| Atyp_arrow (_, at, rt) -> loop (at :: ats) rt
 	| rt -> (rt, List.rev ats) in
     loop []
+
+let flatten_arrows_for_c t =
+    let rt, ats = flatten_arrows t in
+    let is_io, rt = unwrap_atyp_io rt in
+    if is_io && ats = [] then
+	let loc = atyp_loc t in
+	(true, rt, [Atyp_ref (Apath ([], Avar (loc, Idr "unit")))])
+    else
+	(false, rt, ats)
 
 let flatten_application =
     let rec loop args = function
@@ -141,7 +158,8 @@ and fold_adec_paths f = function
     | Adec_in (_, _, s) -> fold_asig_paths f s
     | Adec_sig (_, _, s) -> Option.fold (fold_asig_paths f) s
     | Adec_types bindings -> List.fold (fold_atypbind_paths f) bindings
-    | Adec_val (_, _, u) -> fold_atyp_paths (f `Type) u
+    | Adec_val (_, _, t) -> fold_atyp_paths (f `Type) t
+    | Adec_cabi_val (_, _, t) -> fold_atyp_paths (f `Type) t
 
 let rec fold_amod_paths f = function
     | Amod_ref p -> f `Structure p
@@ -162,3 +180,38 @@ and fold_adef_paths f = function
 		Option.fold (fold_atyp_paths (f `Type)) t *>
 		fold_aval_paths f x)
 	    bindings
+    | Adef_cabi_val (_, _, t) -> fold_atyp_paths (f `Type) t
+    | Adef_cabi_open _ -> ident
+
+let rec fold_amod_externals f = function
+    | Amod_ref _ -> fun incs -> ident
+    | Amod_defs (_, defs) -> fun incs ->
+	fun accu -> snd (List.fold (fold_adef_externals f) defs (incs, accu))
+    | Amod_apply (_, mf, ma) -> fun incs ->
+	fold_amod_externals f mf incs *> fold_amod_externals f ma incs
+    | Amod_lambda (_, _, s, m) | Amod_coercion (_, m, s) -> fun incs ->
+	fold_amod_externals f m incs
+and fold_adef_externals f = function
+    | Adef_include (_, m) | Adef_in (_, _, m) ->
+	fun (incs, accu) -> (incs, fold_amod_externals f m incs accu)
+    | Adef_open _ | Adef_sig _ | Adef_types _ | Adef_let _ | Adef_letrec _ ->
+	ident
+    | Adef_cabi_val (_, v, t) ->
+	fun (incs, accu) -> (incs, f (List.rev incs) v t accu)
+    | Adef_cabi_open (_, inc) ->
+	fun (incs, accu) -> (inc :: incs, accu)
+
+let rec fold_amod_cabi_open f = function
+    | Amod_ref _ -> ident
+    | Amod_defs (_, defs) -> List.fold (fold_adef_cabi_open f) defs
+    | Amod_apply (_, mf, ma) ->
+	fold_amod_cabi_open f mf *> fold_amod_cabi_open f ma
+    | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _) ->
+	fold_amod_cabi_open f m
+and fold_adef_cabi_open f = function
+    | Adef_include (_, m) | Adef_in (_, _, m) ->
+	fold_amod_cabi_open f m
+    | Adef_open _ | Adef_sig _ | Adef_types _ | Adef_let _ | Adef_letrec _ ->
+	ident
+    | Adef_cabi_val _ -> ident
+    | Adef_cabi_open (_, inc) -> f inc

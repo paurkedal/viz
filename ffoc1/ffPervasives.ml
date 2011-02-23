@@ -127,6 +127,11 @@ end
 module String = struct
     include String
 
+    let map_of_list f xs =
+	let buf = Buffer.create 8 in
+	List.iter (Buffer.add_char buf *< f) xs;
+	Buffer.contents buf
+
     let rindex_from s i ch =
 	if i = String.length s then rindex s ch else
 	rindex_from s i ch

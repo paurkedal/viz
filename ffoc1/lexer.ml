@@ -64,15 +64,18 @@ type state = {
 let last_location state = state.st_last_location
 
 let initial_intro_keywords = [
-    "open",	Grammar.OPEN;
+    "open",	Grammar.OPEN Abi_Fform;
+    "open:c",	Grammar.OPEN Abi_C;
     "include",	Grammar.INCLUDE;
     "in",	Grammar.IN;
     "sig",	Grammar.SIG;
     "type",	Grammar.TYPE;
     "let",	Grammar.LET None;
     "let!",	Grammar.LET (Some "");
-    "val",	Grammar.VAL None;
-    "val!",	Grammar.VAL (Some "");
+    "val",	Grammar.VAL (`Default,  Abi_Fform);
+    "val-",	Grammar.VAL (`Local,    Abi_Fform);
+    "val:c",	Grammar.VAL (`Default,  Abi_C);
+    "val:c-",	Grammar.VAL (`Local,    Abi_C);
     "inj",	Grammar.INJ;
     "be",	Grammar.BE;
     "do",	Grammar.DO "";
@@ -85,7 +88,7 @@ let initial_intro_keywords = [
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
     "at",	Grammar.AT;
-    "--?FFOC open", Grammar.OPEN;
+    "--?FFOC open", Grammar.OPEN Abi_Fform;
     "--?FFOC include", Grammar.INCLUDE;
     "--?FFOC type", Grammar.TYPE;
     "--?FFOC {#", Grammar.SKIP;

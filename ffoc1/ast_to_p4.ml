@@ -86,19 +86,35 @@ let emit_apath_uid (Apath (vs, v)) =
     emit_apath_helper (avar_loc (List.last (v :: vs)))
 		      <:ident< $uid: avar_to_uid v$ >> vs
 
-let rec emit_atyp = function
+type typefor = Typefor_fform | Typefor_cabi | Typefor_cabi_io
+
+let rec emit_atyp ?(typefor = Typefor_fform) = function
     | Atyp_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	<:ctyp< '$lid: avar_to_lid v$ >>
     | Atyp_ref p ->
 	let _loc = p4loc (apath_loc p) in
 	<:ctyp< $id: emit_apath_lid p$ >>
+    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t), u)
+	    when (typefor = Typefor_cabi || typefor = Typefor_cabi_io)
+	      && avar_idr op = Cst_core.idr_2o_index ->
+	emit_atyp ~typefor t
+    | Atyp_apply (loc, Atyp_ref (Apath ([], io)), t)
+	    when typefor = Typefor_cabi_io && avar_name io = "io" ->
+	emit_atyp ~typefor t
     | Atyp_apply (loc, at, au) ->
 	let _loc = p4loc loc in
-	<:ctyp< $emit_atyp at$ $emit_atyp au$ >>
+	<:ctyp< $emit_atyp ~typefor at$ $emit_atyp ~typefor au$ >>
     | Atyp_arrow (loc, at, au) ->
 	let _loc = p4loc loc in
-	<:ctyp< $emit_atyp at$ -> $emit_atyp au$ >>
+	<:ctyp< $emit_atyp ~typefor at$ -> $emit_atyp ~typefor au$ >>
+
+let emit_atyp_cabi_io = function
+    | Atyp_arrow _ as t ->
+	emit_atyp ~typefor: Typefor_cabi_io t
+    | t ->
+	let _loc = p4loc (atyp_loc t) in
+	<:ctyp< unit -> $emit_atyp ~typefor: Typefor_cabi_io t$ >>
 
 let emit_apat_literal loc lit =
     let _loc = p4loc loc in
@@ -296,6 +312,16 @@ and emit_adec = function
     | Adec_val (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
+    | Adec_cabi_val (loc, v, t) ->
+	let _loc = p4loc loc in
+	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
+	let name = avar_to_lid v in
+	if fst (Ast_utils.unwrap_atyp_io (Ast_utils.result_type t)) then
+	    let ot = emit_atyp_cabi_io t in
+	    <:sig_item< value $lid: name$ : $ot$ >>
+	else
+	    let ot = emit_atyp ~typefor: Typefor_cabi t in
+	    <:sig_item< external $lid: name$ : $ot$ = $str_list: syms$ >>
 
 let rec emit_amod = function
     | Amod_ref p ->
@@ -354,6 +380,36 @@ and emit_adef = function
 		<:binding< $lid: avar_to_lid v$ : $emit_atyp t$
 			    = $emit_aval x$ >> in
 	<:str_item< value rec $list: List.map emit_value_binding bindings$ >>
+    | Adef_cabi_val (loc, v, t) ->
+	let _loc = p4loc loc in
+	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
+	let name = avar_to_lid v in
+	let rt = Ast_utils.result_type t in
+	let (is_io, rt) = Ast_utils.unwrap_atyp_io rt in
+	if is_io then
+	    let cname = "_io_" ^ name in
+	    let ot = emit_atyp_cabi_io t in
+	    let ox = <:str_item< external $lid: cname$ : $ot$
+					= $str_list: syms$ >> in
+	    let r = Ast_utils.arity t in
+	    let z =
+		if r > 0 then
+		    let mkarg i = Printf.sprintf "x%d" i in
+		    let args = List.init r mkarg in
+		    let y = List.fold (fun x f -> <:expr< $f$ $lid: x$ >>) args
+				      <:expr< $lid: cname$ >> in
+		    let y = <:expr< unsafe_thunk (fun () -> $y$) >> in
+		    List.fold (fun x y -> <:expr< fun $lid: x$ -> $y$ >>)
+			      (List.rev args) y
+		else
+		    <:expr< unsafe_thunk $lid: cname$ >> in
+	    let ov = <:str_item< value $lid: name$ = $z$ >> in
+	    <:str_item< $list: [ox; ov]$ >>
+	else
+	    let ot = emit_atyp ~typefor: Typefor_cabi t in
+	    <:str_item< external $lid: name$ : $ot$ = $str_list: syms$ >>
+    | Adef_cabi_open (loc, _) ->
+	let _loc = p4loc loc in <:str_item< >>
 
 let emit_toplevel = function
     | Amod_defs (loc, defs) ->

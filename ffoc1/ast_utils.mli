@@ -32,10 +32,14 @@ val apath_to_avar : apath -> avar
 
 val result_type : atyp -> atyp
 val fold_arg_types : (atyp -> 'a -> 'a) -> atyp -> 'a -> 'a
+val arity : atyp -> int
 
 val flatten_application : atyp -> apath * atyp list
 
+val unwrap_atyp_io : atyp -> bool * atyp
+
 val flatten_arrows : atyp -> atyp * atyp list
+val flatten_arrows_for_c : atyp -> bool * atyp * atyp list
 
 val fold_apat_vars : (avar -> 'a -> 'a) -> apat -> 'a -> 'a
 val fold_apat_typed_vars : (atyp * avar -> 'a -> 'a) -> apat -> 'a -> 'a
@@ -45,3 +49,10 @@ val fold_apat_paths : (stratum -> apath -> 'a -> 'a) -> apat -> 'a -> 'a
 val fold_aval_paths : (stratum -> apath -> 'a -> 'a) -> aval -> 'a -> 'a
 val fold_asig_paths : (stratum -> apath -> 'a -> 'a) -> asig -> 'a -> 'a
 val fold_amod_paths : (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a
+
+val fold_amod_externals : (string list -> avar -> atyp -> 'a -> 'a) -> amod
+		       -> string list -> 'a -> 'a
+val fold_adef_externals : (string list -> avar -> atyp -> 'a -> 'a) -> adef
+		       -> string list * 'a -> string list * 'a
+val fold_amod_cabi_open : (string -> 'a -> 'a) -> amod -> 'a -> 'a
+val fold_adef_cabi_open : (string -> 'a -> 'a) -> adef -> 'a -> 'a

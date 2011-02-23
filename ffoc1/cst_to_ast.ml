@@ -24,6 +24,7 @@ open Leaf_types
 open Leaf_core
 open Diag
 open FfPervasives
+open Unicode
 
 let cidr_to_avar (Cidr (loc, idr)) = Avar (loc, idr)
 
@@ -46,7 +47,7 @@ let build_apath ctrm =
     | av :: avs -> Apath (avs, av)
     | _ -> assert false (* unreachable *)
 
-let rec build_atyp = function
+let rec build_atyp ?(strip_indices = false) = function
     | Ctrm_ref (cidr, Ih_univ) ->
 	Atyp_uvar (cidr_to_avar cidr)
     | Ctrm_ref (cidr, _) ->
@@ -55,9 +56,16 @@ let rec build_atyp = function
 	Atyp_ref (build_apath ctrm)
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), ct), cu)
 	    when cidr_is_2o_arrow op ->
-	Atyp_arrow (loc, build_atyp ct, build_atyp cu)
+	let at = build_atyp ~strip_indices ct in
+	let au = build_atyp ~strip_indices cu in
+	Atyp_arrow (loc, at, au)
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), ct), cu)
+	    when strip_indices && cidr_is_2o_index op ->
+	build_atyp ~strip_indices ct
     | Ctrm_apply (loc, ct, cu) ->
-	Atyp_apply (loc, build_atyp ct, build_atyp cu)
+	let at = build_atyp ~strip_indices ct in
+	let au = build_atyp ~strip_indices cu in
+	Atyp_apply (loc, at, au)
     | ct -> errf_at (ctrm_loc ct) "Invalid type expression."
 
 let build_atyp_con_args =
@@ -353,9 +361,11 @@ and build_adecs adecs = function
     | Cdef_include (loc, csig) :: xs ->
 	let adec = Adec_include (loc, build_asig csig) in
 	build_adecs (adec :: adecs) xs
-    | Cdef_open (loc, p) :: xs ->
+    | Cdef_open (loc, Abi_Fform, p) :: xs ->
 	let adec = Adec_open (loc, build_apath p) in
 	build_adecs (adec :: adecs) xs
+    | Cdef_open (loc, Abi_C, x) :: xs ->
+	errf_at loc "C ABI open is only valid in structures."
     | Cdef_in (loc, p, csig) :: xs ->
 	let adec = Adec_in (loc, build_avar p, build_asig csig) in
 	build_adecs (adec :: adecs) xs
@@ -370,11 +380,18 @@ and build_adecs adecs = function
 	let atcases, xs' = build_atcases true [] Algt_builder.empty xs in
 	let adec = Adec_types atcases in
 	build_adecs (adec :: adecs) xs'
-    | Cdec_val (loc, cdec) :: xs ->
+    | Cdef_val (loc, (`Local, _), _) :: xs ->
+	build_adecs adecs xs
+    | Cdef_val (loc, (expo, abi), cdec) :: xs ->
 	let cv, ct = Cst_utils.extract_cidr_typing cdec in
-	let adec = Adec_val (loc, cidr_to_avar cv, build_atyp ct) in
+	let av = cidr_to_avar cv in
+	let at = build_atyp ct in
+	let adec =
+	    match abi with
+	    | Abi_Fform -> Adec_val (loc, av, at)
+	    | Abi_C -> Adec_cabi_val (loc, av, at) in
 	build_adecs (adec :: adecs) xs
-    | Cdef_val (loc, _, _, _, _) :: xs ->
+    | Cdef_let (loc, _, _, _) :: xs ->
 	errf_at loc "Signatures cannot contain value definitions."
     | Cdef_inj (loc, _) :: xs ->
 	errf_at loc "Injections must follow a type."
@@ -477,8 +494,15 @@ and build_adefs adecmap adefs = function
     | Cdef_include (loc, m) :: xs ->
 	let adef = Adef_include (loc, build_amod m) in
 	build_adefs adecmap (adef :: adefs) xs
-    | Cdef_open (loc, p) :: xs ->
+    | Cdef_open (loc, Abi_Fform, p) :: xs ->
 	let adef = Adef_open (loc, build_apath p) in
+	build_adefs adecmap (adef :: adefs) xs
+    | Cdef_open (loc, Abi_C, cinc) :: xs ->
+	let adef =
+	    match cinc with
+	    | Ctrm_literal (_, Lit_string s) ->
+		Adef_cabi_open (loc, (UString.to_utf8 s))
+	    | _ -> errf_at loc "C ABI open takes a string argument." in
 	build_adefs adecmap (adef :: adefs) xs
     | Cdef_in (loc, cpat, cmod) :: xs ->
 	let cpat, cmod = Cst_utils.move_typing (cpat, cmod) in
@@ -496,20 +520,24 @@ and build_adefs adecmap adefs = function
 	let atcases, xs' = build_atcases false [] Algt_builder.empty xs in
 	let adef = Adef_types atcases in
 	build_adefs adecmap (adef :: adefs) xs'
-    | Cdec_val (loc, cdec) :: xs ->
+    | Cdef_val (loc, (expo, abi), cdec) :: xs ->
 	let cv, ct = Cst_utils.extract_cidr_typing cdec in
 	let at = build_atyp ct in
+	let adefs =
+	    match abi with
+	    | Abi_Fform -> adefs
+	    | Abi_C -> Adef_cabi_val (loc, cidr_to_avar cv, at) :: adefs in
 	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
 	build_adefs adecmap adefs xs
-    | Cdef_val (loc, export, cm_opt, cpat, cpred) :: xs
+    | Cdef_let (loc, cm_opt, cpat, cpred) :: xs
 	    when not (Cst_utils.is_formal cpat) ->
 	let apat = build_apat ~adecmap cpat in
 	let aval = build_toplevel_aval loc cm_opt cpred in
 	let adef = Adef_let (loc, apat, aval) in
 	build_adefs adecmap (adef :: adefs) xs
-    | (Cdef_val _ :: _) as xs ->
+    | (Cdef_let _ :: _) as xs ->
 	let build_avcase = function
-	    | Cdef_val (loc, export, cm_opt, cpat, cpred)
+	    | Cdef_let (loc, cm_opt, cpat, cpred)
 		    when Cst_utils.is_formal cpat ->
 		let cvar, cpred = Cst_utils.move_applications (cpat, cpred) in
 		let at_opt =
@@ -537,6 +565,7 @@ and build_adefs adecmap adefs = function
 		Ast_utils.fold_apat_typed_vars
 		    (fun (t, v) -> Idr_map.remove (avar_idr v)) pat
 	    | Adef_letrec avcases -> List.fold strip_used_avcase avcases
+	    | Adef_cabi_val (loc, v, _) -> Idr_map.remove (avar_idr v)
 	    | _ -> ident in
 	let is_include = function Adef_include _ -> true | _ -> false in
 	if not (List.exists is_include adefs) then begin

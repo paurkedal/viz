@@ -20,6 +20,7 @@ open Ocamlbuild_pack
 open Ocamlbuild_plugin
 
 let ffoc1pp_path = "bin/ffoc1pp.native"
+let static = true
 
 (* Ocamlbuild Plug-In for Fform/OC
  * =============================== *)
@@ -113,10 +114,10 @@ let native_compile_ffoc1_implem ?tag ff env build =
 	 "implem" +++ tag) ff cmx
 
 (** Fform Stage 1 dependency analyzer. *)
-let ffoc1dep arg out env build =
+let ffoc1x xflag arg out env build =
     let arg = env arg and out = env out in
     let tags = tags_of_pathname arg ++ "ffoc1pp" ++ "ocamldep" in
-    Cmd(S[A ffoc1pp_path; T tags; A"--depend";
+    Cmd(S[A ffoc1pp_path; T tags; A xflag;
 	  Ocaml_utils.ocaml_include_flags arg;
 	  P arg; Sh ">"; Px out])
 
@@ -132,8 +133,8 @@ let ffoc1pp tag ff ff_ml env build =
 rule "Fform/OC Stage 1, Dependency Analysis"
     ~tags:["ocaml"; "pp"; "ffoc1pp"]
     ~prod:"%.ff.depends"
-    ~deps:["%.ff"; ffoc1pp_path; "fflib/stdlex.ff"]
-    (ffoc1dep "%.ff" "%.ff.depends");;
+    ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
+    (ffoc1x "--depend" "%.ff" "%.ff.depends");;
 
 rule "ffoc1, byte compilation: ff -> cmo & cmi"
     ~tags:["ocaml"; "byte"; "pp"; "ffoc1pp"]
@@ -148,9 +149,14 @@ rule "ffoc1, native compilation: ff & cmi -> cmx & o"
     (native_compile_ffoc1_implem "%.ff");;
 
 rule "ffoc1, preprocessing only: ff -> ff.ml"
-    ~dep:"%.ff"
+    ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
     ~prod:"%.ff.ml"
     (ffoc1pp "ff.ml" "%.ff" "%.ff.ml");;
+
+rule "ffoc1, C stub generation: ff -> _stubs.c"
+    ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
+    ~prod:"%_stubs.c"
+    (ffoc1x "--cstubs" "%.ff" "%_stubs.c");;
 
 flag ["ocaml"; "ffoc1pp"; "compile"] & A"-nopervasives";;
 flag ["ocaml"; "ffoc1pp"; "link"] & A"-nopervasives";;
@@ -203,6 +209,15 @@ let () = dispatch begin function
 	ocaml_pp "type-conv" "pa_type_conv";
 	ocaml_pp "sexplib" "pa_sexp_conv";
 	ocaml_lib "fflib";
+	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
+	flag ["ocaml"; "ffoc1pp"] & S[A"-I"; P"fflib"];
+	flag ["ocamldep"; "ffoc1pp"; "in_fflib"] & S[A"-I"; P"fflib"];
+	flag ["ocamldep"; "ffoc1pp"] & S[A"-N"; P"fflib"];
+	flag ["link"; "library"; "ocaml"; "byte"; "use_libfflib"]
+	     (S[A"-ccopt"; A"-L."; A"-cclib"; A"-lfflib";
+		A"-dllib"; A"-lfflib"]);
+	flag ["link"; "library"; "ocaml"; "native"; "use_libfflib"]
+	     (S[A"-ccopt"; A"-L."; A"-cclib"; A"-lfflib"]);
 	()
     | _ -> ()
 end

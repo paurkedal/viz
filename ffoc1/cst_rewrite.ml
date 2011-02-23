@@ -97,9 +97,9 @@ and subterm_rewrite_cdef rw stra = function
     | Cdef_include (loc, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cdef_include (loc, x), accu
-    | Cdef_open (loc, x), accu ->
+    | Cdef_open (loc, abi, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
-	Cdef_open (loc, x), accu
+	Cdef_open (loc, abi, x), accu
     | Cdef_type (loc, t), accu ->
 	let t, accu = rw.rw_ctrm rw `Type (t, accu)  in
 	Cdef_type (loc, t), accu
@@ -111,13 +111,13 @@ and subterm_rewrite_cdef rw stra = function
     | Cdef_sig (loc, name, x), accu ->
 	let x, accu = rw.rw_ctrm rw `Signature (x, accu) in
 	Cdef_sig (loc, name, x), accu
-    | Cdec_val (loc, t), accu ->
+    | Cdef_val (loc, vi, t), accu ->
 	let t, accu = rw.rw_ctrm rw `Type (t, accu) in
-	Cdec_val (loc, t), accu
-    | Cdef_val (loc, export, cm, x, p), accu ->
+	Cdef_val (loc, vi, t), accu
+    | Cdef_let (loc, cm, x, p), accu ->
 	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
 	let p, accu = rw.rw_cpred rw `Value (p, accu) in
-	Cdef_val (loc, export, cm, x, p), accu
+	Cdef_let (loc, cm, x, p), accu
     | Cdef_inj (loc, t), accu ->
 	let t, accu = rw.rw_ctrm rw `Type (t, accu) in
 	Cdef_inj (loc, t), accu

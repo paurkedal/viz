@@ -148,8 +148,9 @@ and print_def fo cdef =
     | Cdef_include (_, path) ->
 	Fo.put_kw fo "include";
 	print_inline fo Opkind.p_min path
-    | Cdef_open (_, path) ->
-	Fo.put_kw fo "open";
+    | Cdef_open (_, abi, path) ->
+	let kw = match abi with Abi_Fform -> "open" | Abi_C -> "open/c" in
+	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min path
     | Cdef_type (_, eqn) ->
 	Fo.put_kw fo "type";
@@ -174,12 +175,13 @@ and print_def fo cdef =
 	| Ctrm_with (_, None, defs) -> print_defs fo defs
 	| _ -> Fo.put_kw fo "include"; print_inline fo Opkind.p_min body
 	end
-    | Cdec_val (_, typing) ->
-	Fo.put_kw fo "val";
+    | Cdef_val (_, (expo, abi), typing) ->
+	let kw = (match abi with Abi_Fform -> "val" | Abi_C -> "val/c")
+	       ^ (match expo with `Local -> "-" | _ -> "") in
+	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min typing
-    | Cdef_val (_, export, cm_opt, pat, pred) ->
-	let kw = if export then "val" else "let" in
-	let kw = Option.fold (fun cm kw -> kw ^ cm) cm_opt kw in
+    | Cdef_let (_, cm_opt, pat, pred) ->
+	let kw = Option.fold (fun cm kw -> kw ^ "!" ^ cm) cm_opt "let" in
 	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min pat;
 	Fo.enter_indent fo;

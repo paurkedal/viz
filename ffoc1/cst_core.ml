@@ -27,6 +27,7 @@ let cidr_to_string (Cidr (_, Idr s)) = s
 let idr_2o_colon	= idr_2o_c ":"
 let idr_2o_arrow	= idr_2o_c "→"
 let idr_2o_mapsto	= idr_2o_c "↦"
+let idr_2o_index	= idr_2o_c "#"
 let idr_2o_comma	= idr_2o_c ","
 let idr_2o_semicolon	= idr_2o_c ";"
 let idr_2o_vertical_bar	= idr_2o_c "|"
@@ -46,6 +47,7 @@ let idr_list_push	= Idr "[;]"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
 let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
 let cidr_is_2o_mapsto	(Cidr (_, idr)) = idr = idr_2o_mapsto
+let cidr_is_2o_index	(Cidr (_, idr)) = idr = idr_2o_index
 let cidr_is_2o_comma	(Cidr (_, idr)) = idr = idr_2o_comma
 let cidr_is_2o_eq	(Cidr (_, idr)) = idr = idr_2o_eq
 let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor

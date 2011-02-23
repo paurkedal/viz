@@ -55,12 +55,13 @@ let apply_fence loc name0 name1 =
 %token EOF
 %token BEGIN END
 
-%token OPEN
+%token <Leaf_types.abi> OPEN
 %token INCLUDE
 %token IN
 %token SIG
 %token TYPE INJ
-%token <Cst_types.cmonad option> LET VAL WHAT WHICH
+%token <Cst_types.cmonad option> LET WHAT WHICH
+%token <Leaf_types.val_info> VAL
 %token WHERE WITH
 %token SKIP ENDSKIP /* Hack for ffoc1pp only. */
 
@@ -173,14 +174,12 @@ structure_clause:
   | IN structure_pattern structure_block
     { Cdef_in (mkloc $startpos $endpos, $2, $3) }
   | LET term_pattern predicate_block
-    { Cdef_val (mkloc $startpos $endpos, false, $1, $2, $3) }
-  | VAL term_pattern predicate_block
-    { Cdef_val (mkloc $startpos $endpos, true, $1, $2, $3) }
+    { Cdef_let (mkloc $startpos $endpos, $1, $2, $3) }
   ;
 
 modular_clause:
     OPEN projection
-    { Cdef_open (mkloc $startpos $endpos, $2) }
+    { Cdef_open (mkloc $startpos $endpos, $1, $2) }
   | INCLUDE expr
     { Cdef_include (mkloc $startpos $endpos, $2) }
   | SIG identifier
@@ -192,7 +191,7 @@ modular_clause:
   | INJ term_pattern
     { Cdef_inj (mkloc $startpos $endpos, $2) }
   | VAL term_pattern
-    { Cdec_val (mkloc $startpos $endpos, $2) }
+    { Cdef_val (mkloc $startpos $endpos, $1, $2) }
   | PREPARED_DEF { $1 }
   ;
 

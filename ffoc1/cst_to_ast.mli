@@ -21,6 +21,6 @@
 open Cst_types
 open Ast_types
 
-val build_atyp : ctrm -> atyp
+val build_atyp : ?strip_indices: bool -> ctrm -> atyp
 val build_asig : ctrm -> asig
 val build_amod : ctrm -> amod

@@ -72,6 +72,8 @@ end
 module String : sig
     include module type of String
 
+    val map_of_list : ('a -> char) -> 'a list -> string
+
     val split_on_char : char -> string -> string list
 
     val after : int -> string -> string
