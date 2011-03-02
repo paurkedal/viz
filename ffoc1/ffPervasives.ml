@@ -122,6 +122,9 @@ module Char = struct
     let is_space ch =
 	match ch with ' ' | '\n' | '\t' -> true
 		    | _ -> false
+
+    let is_lower ch = let code = Char.code ch in 0x41 <= code && code <= 0x5a
+    let is_upper ch = let code = Char.code ch in 0x61 <= code && code <= 0x7a
 end
 
 module String = struct

@@ -28,10 +28,16 @@ module UChar = struct
     let ch_tab		= of_int 0x9
     let ch_nl		= of_int 0xa
     let ch_space	= of_int 0x20
+    let ch_hash		= of_int 0x23
     let ch_apostrophe	= of_int 0x27
+    let ch_comma	= of_int 0x2c
     let ch_dash		= of_int 0x2d
+    let ch_dot		= of_int 0x2e
+    let ch_qmark	= of_int 0x3f
     let ch_underscore	= of_int 0x5f
     let ch_grave_accent	= of_int 0x60
+    let ch_lbrace	= of_int 0x7b
+    let ch_rbrace	= of_int 0x7d
 
     let is_idrchr ch =
 	match UCharInfo.general_category ch with

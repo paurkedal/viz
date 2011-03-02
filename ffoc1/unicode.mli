@@ -45,9 +45,16 @@ module UChar : sig
     val ch_tab : t
     val ch_nl : t
     val ch_space : t
+    val ch_hash : t
+    val ch_apostrophe : t
+    val ch_comma : t
     val ch_dash : t
+    val ch_dot : t
+    val ch_qmark : t
     val ch_underscore : t
     val ch_grave_accent : t
+    val ch_lbrace : t
+    val ch_rbrace : t
 
     val to_utf8 : t -> string
 end

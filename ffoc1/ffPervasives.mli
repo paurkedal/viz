@@ -67,6 +67,8 @@ module Char : sig
     include module type of Char
 
     val is_space : char -> bool
+    val is_lower : char -> bool
+    val is_upper : char -> bool
 end
 
 module String : sig
