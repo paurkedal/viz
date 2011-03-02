@@ -138,10 +138,49 @@ let skip_space state =
     let start_locb = LStream.locbound state.st_stream in
     let rec loop () =
 	LStream.skip_while UChar.is_space state.st_stream;
+	let com_loclb = LStream.locbound state.st_stream in
 	match LStream.peek_n 3 state.st_stream with
-	| ch0 :: ch1 :: rest
+	| ch0 :: ch1 :: rest (* Skip nested "{#"-"#}"-comment. *)
+		when ch0 = UChar.ch_lbrace && ch1 = UChar.ch_hash
+		  && (rest = [] || List.hd rest <> UChar.ch_rbrace) ->
+	    LStream.skip_n 2 state.st_stream;
+	    let com_locub = LStream.locbound state.st_stream in
+	    let rec state0 n = match LStream.pop state.st_stream with
+		| None -> stateEOF n
+		| Some ch when ch = UChar.ch_hash -> stateH n
+		| Some ch when ch = UChar.ch_lbrace -> stateL n
+		| _ -> state0 n
+	    and stateH n = match LStream.pop state.st_stream with
+		| None -> stateEOF n
+		| Some ch when ch = UChar.ch_hash -> stateH n
+		| Some ch when ch = UChar.ch_rbrace -> stateHR n
+		| _ -> state0 n
+	    and stateL n = match LStream.pop state.st_stream with
+		| None -> stateEOF n
+		| Some ch when ch = UChar.ch_hash -> stateLH (n + 1)
+		| Some ch when ch = UChar.ch_lbrace -> stateL n
+		| _ -> state0 n
+	    and stateLH n = match LStream.pop state.st_stream with
+		| None -> stateEOF n
+		| Some ch when ch = UChar.ch_rbrace ->
+		    let loc = Location.at (LStream.locbound state.st_stream) in
+		    raise (Error_at (loc, "Invalid {#} sequence in comment."))
+		| Some ch when ch = UChar.ch_hash -> stateH n
+		| Some ch when ch = UChar.ch_lbrace -> stateL n
+		| _ -> state0 n
+	    and stateHR n = if n > 0 then state0 (n - 1) else ()
+	    and stateEOF n =
+		let loc = Location.between com_loclb com_locub in
+		raise (Error_at (loc, "Unterminated comment.")) in
+	    state0 0;
+	    loop ()
+	| ch0 :: ch1 :: rest (* Skip "#"-comment. *)
+		when ch0 = UChar.ch_hash && UChar.is_space ch1 ->
+	    skip_line state;
+	    loop ()
+	| ch0 :: ch1 :: rest (* Skip "--"-comment. *)
 		when ch0 = UChar.ch_dash && ch1 = UChar.ch_dash
-		  && (rest = [] || UChar.code (List.hd rest) <> 0x3f) ->
+		  && (rest = [] || List.hd rest <> UChar.ch_qmark) ->
 	    skip_line state;
 	    loop ()
 	| _ -> () in
