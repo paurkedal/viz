@@ -39,26 +39,38 @@ let tokeninfo_lexkind = function
     | Ti_operator (_, ok) -> ok.Opkind.ok_lexkind
     | Ti_keyword (_, lk) -> lk
 
+type pending_work =
+    | Pending_BEGIN
+	(* Pushed on to of a Pending_END to protect it from taking effect on
+	 * the next intro-word.  That is, the next block will be wrapped
+	 * inside the current block.  This is used for "what", "which",
+	 * "where", and "with". *)
+    | Pending_END of Location.t * int
+	(* Emit an end-of-block when reaching an intro-word before the given
+	 * column. *)
+
 type state = {
     st_stream : LStream.t;
 
-    (* The current indentation, and stack of past indentations. *)
+    (* The current indentation. *)
     mutable st_indent : int;
-    mutable st_indent_stack : (int * Location.t) list;
 
-    (* Token to be emitted before reading any further. *)
-    mutable st_stash : (Grammar.token * Location.t) option;
+    (* A look-ahead token. *)
+    mutable st_holding : Location.t * Grammar.token * Opkind.lexkind;
 
-    (* True after a "what", "which", "where", or "with".  This prevents popping
-     * the indent_stack, so that one can use unindentation. *)
-    mutable st_continued : bool;
+    (* Things to take into account before reading any further. *)
+    mutable st_pending : pending_work list;
 
     (* The currently active keywords and operators. *)
     mutable st_keywords : tokeninfo UString_trie.t;
 
     mutable st_lookahead : int;
-    mutable st_last_location : Location.t;
     mutable st_scanners : (state -> Grammar.token option) list;
+
+    (* This is the location of the last emitted token.  It's used when the
+     * grammar raises Grammar.Error, otherwise we pass along the location and
+     * use Error_at. *)
+    mutable st_last_location : Location.t;
 }
 
 let last_location state = state.st_last_location
@@ -138,48 +150,10 @@ let skip_space state =
     if Location.Bound.lineno start_locb < Location.Bound.lineno end_locb then
 	state.st_indent <- Location.Bound.column end_locb
 
-let stacked_column state =
-    match state.st_indent_stack with
-    | [] -> -1
-    | (col, _) :: _ -> col
-
-let current_column state =
-    if LStream.peek state.st_stream == None then -1 else
-    let locb = LStream.locbound state.st_stream in
-    Location.Bound.column locb
-
-let push_end_token state loc =
-    let col = Location.Bound.column (Location.lbound loc) in
-    state.st_indent_stack <- (col, loc) :: state.st_indent_stack
-
-let pop_token state =
-    match state.st_stash with
-    | Some (_, loc) as res ->
-	state.st_stash <- None;
-	if dlog_en then dlogf ~loc "Returning stashed token.";
-	res
-    | None ->
-	if state.st_continued then begin
-	    if dlog_en then
-		dlogf ~loc:(Location.at (LStream.locbound state.st_stream))
-		      "Continued block.";
-	    None
-	end else
-	begin match state.st_indent_stack with
-	| [] -> None
-	| (col, loc) :: st_indent_stack' ->
-	    if current_column state < col
-	    then begin
-		if dlog_en then
-		    dlogf ~loc:(Location.at (LStream.locbound state.st_stream))
-			"Inserting END/%d implied by BEGIN at %s"
-			(List.length state.st_indent_stack)
-			(Location.to_string loc);
-		state.st_indent_stack <- st_indent_stack';
-		Some (Grammar.END, loc)
-	    end
-	    else None
-	end
+let holding_column state =
+    match state.st_holding with
+    | (_, Grammar.EOF, _) -> -1
+    | (loc, _, _) -> Location.Bound.column (Location.lbound loc)
 
 let declare_operator state ok (Cidr (loc, op), names) =
     let op' = UString_sequence.create (idr_to_ustring op) in
@@ -300,45 +274,27 @@ let triescan state trie =
 	let loc_ub = LStream.locbound state.st_stream in
 	Some (res, UString.of_sequence_n len la, Location.between loc_lb loc_ub)
 
+let scan_custom state =
+    (* Special handling of ".<space>". *)
+    let loc_lb = LStream.locbound state.st_stream in
+    begin match LStream.peek_n 2 state.st_stream with
+    | [ch0; ch1] when UChar.code ch0 = 0x2e && UChar.is_space ch1 ->
+	LStream.skip state.st_stream;
+	let loc_ub = LStream.locbound state.st_stream in
+	Some (Location.between loc_lb loc_ub, Grammar.DOT, Opkind.Lex_regular)
+    | _ -> None
+    end
+
 let scan_keyword state =
-    match triescan state state.st_keywords with
-    | None ->
-	(* Special handling of ".<space>". *)
-	let loc_lb = LStream.locbound state.st_stream in
-	begin match LStream.peek_n 2 state.st_stream with
-	| [ch0; ch1] when UChar.code ch0 = 0x2e && UChar.is_space ch1 ->
-	    LStream.skip state.st_stream;
-	    let loc_ub = LStream.locbound state.st_stream in
-	    Some (Grammar.DOT, Location.between loc_lb loc_ub)
-	| _ -> None
-	end
-    | Some (ti, tokstr, loc) ->
-	let (tok, _) =
-	    match ti with
-	    | Ti_keyword (Grammar.LEX, _) -> scan_lexdef state loc
-	    | Ti_keyword (tok, _) | Ti_operator (tok, _) -> (tok, loc) in
-	let loc_lb = Location.lbound loc in
-	let lk = tokeninfo_lexkind ti in
-	if state.st_continued
-	     || lk = Opkind.Lex_intro
-		&& stacked_column state <> Location.Bound.column loc_lb then
-	  begin
-	    state.st_continued <- lk = Opkind.Lex_continued;
-	    let loc_begin = Location.between loc_lb loc_lb in
-	    assert (state.st_stash = None);
-	    state.st_stash <- Some (tok, loc);
-	    push_end_token state loc_begin;
-	    if dlog_en then
-		dlogf ~loc:loc_begin "Inserting BEGIN/%d"
-				     (List.length state.st_indent_stack);
-	    Some (Grammar.BEGIN, loc_begin)
-	  end
-	else
-	  begin
-	    state.st_continued <- lk = Opkind.Lex_continued;
-	    if dlog_en then dlogf ~loc "Scanned keyword.";
-	    Some (tok, loc)
-	  end
+    let unwrap (ti, tokstr, loc) =
+	match ti with
+	| Ti_keyword (Grammar.LEX, lk) ->
+	    let (tok, loc_spec) = scan_lexdef state loc in
+	    let loc_full = Location.span [loc; loc_spec] in
+	    (loc_full, tok, lk)
+	| Ti_keyword (tok, lk) -> (loc, tok, lk)
+	| Ti_operator (tok, ok) -> (loc, tok, ok.Opkind.ok_lexkind) in
+    Option.map unwrap (triescan state state.st_keywords)
 
 let scan_regular_identifier state =
     let (name, loc) = LStream.scan_while UChar.is_idrchr state.st_stream in
@@ -401,20 +357,27 @@ let escape_map =
 
 let scan_string_literal state =
     let buf = UString.Buf.create 8 in
+    let loc_lb = LStream.locbound state.st_stream in
     LStream.skip state.st_stream;
     let rec next () =
 	match LStream.pop state.st_stream with
-	| None -> raise Grammar.Error
+	| None ->
+	    let loc = Location.between loc_lb loc_lb in
+	    raise (Error_at (loc, "Unterminated string literal."))
 	| Some ch ->
 	    if ch = UChar.of_char '\\' then
 		begin match LStream.pop state.st_stream with
-		| None -> raise Grammar.Error
+		| None ->
+		    let loc = Location.between loc_lb loc_lb in
+		    raise (Error_at (loc, "Unterminated string escape."))
 		| Some ch' ->
 		    try
 			let ch'' = UChar_map.find ch' escape_map in
 			UString.Buf.add_char buf ch'';
 			next ()
-		    with Not_found -> raise Grammar.Error
+		    with Not_found ->
+			let loc = Location.between loc_lb loc_lb in
+			raise (Error_at (loc, "Unterminated string escape."))
 		end
 	    else if ch <> UChar.of_char '"' then begin
 		UString.Buf.add_char buf ch;
@@ -464,42 +427,95 @@ let scan_literal state =
 	    found (scan_int have_sign 10 state)
 	else None
 
-let fixed_scanners = [pop_token; scan_keyword]
+let scan_eof state =
+    if LStream.peek state.st_stream = None then
+	let loc = Location.at (LStream.locbound state.st_stream) in
+	Some (loc, Grammar.EOF, Opkind.Lex_intro)
+    else
+	None
+
+let fixed_scanners = [scan_eof; scan_custom; scan_keyword]
 let default_scanners = [scan_literal; scan_identifier]
+
+let pop_manifest_token state =
+    skip_space state;
+    let (loc', tok', lk') = state.st_holding in
+    begin match List.find_image (fun f -> f state) fixed_scanners with
+    | Some (loc, tok, lk) ->
+	state.st_holding <- (loc, tok, lk)
+    | None ->
+	let loc_lb = LStream.locbound state.st_stream in
+	let tok =
+	    try
+		match List.find_image (fun f -> f state) state.st_scanners with
+		| Some x -> x
+		| None ->
+		    raise Grammar.Error
+	    with Grammar.Error ->
+		let loc_ub = LStream.locbound state.st_stream in
+		let loc = Location.between loc_lb loc_ub in
+		raise (Error_at (loc, "Invalid literal."))
+	    in
+	let loc_ub = LStream.locbound state.st_stream in
+	let loc = Location.between loc_lb loc_ub in
+	if dlog_en then dlogf ~loc "Scanned regular token.";
+	state.st_holding <- (loc, tok, Opkind.Lex_regular)
+    end;
+    (loc', tok')
+
+let pop_virtual_token state =
+    let cur_col = holding_column state in
+    let (loc, tok, lk) = state.st_holding in
+    let loc_lb = Location.lbound loc in
+    match lk with
+    | Opkind.Lex_intro ->
+	begin match state.st_pending with
+	| Pending_BEGIN :: pending ->
+	    let loc_begin = Location.between loc_lb loc_lb in
+	    state.st_pending <- Pending_END (loc_begin, cur_col)
+			     :: pending;
+	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
+	    (loc_begin, Grammar.BEGIN)
+	| Pending_END (_, col) :: pending when cur_col = col ->
+	    if dlog_en then dlogf ~loc "ITEM[col = %d]" col;
+	    pop_manifest_token state
+	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
+	    state.st_pending <- pending;
+	    if dlog_en then dlogf ~loc "END[col = %d]" col;
+	    (loc, Grammar.END)
+	| Pending_END _ :: _ | [] as pending ->
+	    if tok = Grammar.EOF then (loc, tok) else
+	    let loc_begin = Location.between loc_lb loc_lb in
+	    state.st_pending <- Pending_END (loc_begin, cur_col)
+			     :: pending;
+	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
+	    (loc_begin, Grammar.BEGIN)
+	end
+    | Opkind.Lex_continued ->
+	state.st_pending <- Pending_BEGIN :: state.st_pending;
+	pop_manifest_token state
+    | Opkind.Lex_regular ->
+	pop_manifest_token state
 
 let default_state_template = {
     st_stream = LStream.null;
     st_indent = -1;
-    st_indent_stack = [];
-    st_stash = None;
-    st_continued = false;
+    st_holding = (Location.dummy, Grammar.EOF, Opkind.Lex_intro);
+    st_pending = [];
     st_keywords = initial_keywords;
     st_lookahead = initial_lookahead;
-    st_last_location = Location.dummy;
     st_scanners = default_scanners;
+    st_last_location = Location.dummy;
 }
+
 let create_from_lstream st_stream =
-    {default_state_template with st_stream = st_stream}
+    let state = {default_state_template with st_stream = st_stream} in
+    let _ = pop_manifest_token state in state
+
 let create_from_file path =
     create_from_lstream (LStream.open_in path)
 
 let lexer state () =
-    skip_space state;
-    match List.find_image (fun f -> f state) fixed_scanners with
-    | Some (tok, loc) ->
-	state.st_last_location <- loc;
-	(tok, loc)
-    | None ->
-	let loc_lb = LStream.locbound state.st_stream in
-	let tok =
-	    match List.find_image (fun f -> f state) state.st_scanners with
-	    | Some x -> x
-	    | None ->
-		state.st_last_location <- Location.at loc_lb;
-		raise Grammar.Error
-	    in
-	let loc_ub = LStream.locbound state.st_stream in
-	let loc = Location.between loc_lb loc_ub in
-	state.st_last_location <- loc;
-	if dlog_en then dlogf ~loc "Scanned token.";
-	(tok, loc)
+    let (loc, tok) = pop_virtual_token state in
+    state.st_last_location <- loc;
+    (tok, loc)
