@@ -40,6 +40,7 @@ let rec aval_loc = function
     | Aval_literal (loc, _) -> loc
     | Aval_ref p -> apath_loc p
     | Aval_apply (loc, _, _) -> loc
+    | Aval_array (loc, _) -> loc
     | Aval_at (loc, _) -> loc
     | Aval_let (loc, _, _, _) -> loc
     | Aval_letrec (loc, _, _) -> loc

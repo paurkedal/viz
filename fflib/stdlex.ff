@@ -37,7 +37,7 @@ lex S0	^ ↑ ↓
 lex S2S	!
 lex S2	# @
 
-lex BL ( [ { ⌈ ⌊ ⟦
+lex BL ( [ { ⌈ ⌊ ⟦ #[
 lex BR ) ] } ⌉ ⌋ ⟧
 lex S2L .[
 

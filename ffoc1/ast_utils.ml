@@ -121,6 +121,7 @@ let rec fold_aval_paths f =
     | Aval_literal _ -> ident
     | Aval_ref p -> f `Value p
     | Aval_apply (_, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
+    | Aval_array (_, xs) -> List.fold (fold_aval_paths f) xs
     | Aval_at (_, cases) -> fold_cases cases
     | Aval_match (_, x, cases) -> fold_aval_paths f x *> fold_cases cases
     | Aval_let (_, p, rhs, body) ->

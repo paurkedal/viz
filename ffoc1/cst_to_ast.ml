@@ -229,6 +229,8 @@ and build_aval_expr = function
 	build_aval_pure (Cpred_at (loc, [cx, Cpred_be (loc, cy)]))
     | Ctrm_apply (loc, cx, cy) ->
 	Aval_apply (loc, build_aval_expr cx, build_aval_expr cy)
+    | Ctrm_array (loc, cxs) ->
+	Aval_array (loc, List.map build_aval_expr cxs)
     | Ctrm_rel (loc, cx, (_, cf, cy) :: rest) ->
 	let build_aval_rel cf cx cy =
 	    let loc = Location.span [ctrm_loc cx; ctrm_loc cy] in

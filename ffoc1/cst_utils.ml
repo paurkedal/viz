@@ -85,6 +85,7 @@ let collect_pattern_vars x =
 	| Ctrm_apply (_, f, x) ->
 	    coll true f *< coll false x
 	| Ctrm_project (_, _, x) -> coll fpos x
+	| Ctrm_array (_, xs) -> List.fold (coll false) xs
 	| Ctrm_what _ | Ctrm_where _ | Ctrm_with _ ->
 	    assert false (* If reachable, write out a proper error message. *)
     in coll false x []
@@ -128,6 +129,7 @@ and ctrm_is_pure = function
     | Ctrm_ref _ -> true
     | Ctrm_label (_, _, x) -> ctrm_is_pure x
     | Ctrm_project _ -> true
+    | Ctrm_array (_, xs) -> List.for_all ctrm_is_pure xs
     | Ctrm_rel (_, x, rels) ->
 	ctrm_is_pure x && List.for_all (fun (_, op, y) -> ctrm_is_pure y) rels
     | Ctrm_apply (_, x, y) -> ctrm_is_pure x && ctrm_is_pure y

@@ -52,6 +52,7 @@ val idr_1o_asterisk : idr
 val idr_1b_paren : idr
 val idr_1b_square_bracket : idr
 val idr_1b_curly_bracket : idr
+val idr_1b_array : idr
 val idr_2b_dotbracket : idr
 val idr_run_toplevel_io : idr
 val idr_list_null : idr

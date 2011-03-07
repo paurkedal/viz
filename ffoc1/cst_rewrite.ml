@@ -81,6 +81,9 @@ and subterm_rewrite_ctrm rw stra = function
     | Ctrm_project (loc, l, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Ctrm_project (loc, l, x), accu
+    | Ctrm_array (loc, xs), accu ->
+	let xs, accu = List.map_fold (rw.rw_ctrm rw stra) (xs, accu) in
+	Ctrm_array (loc, xs), accu
     | Ctrm_what (loc, cm, p), accu ->
 	let p, accu = rw.rw_cpred rw stra (p, accu) in
 	Ctrm_what (loc, cm, p), accu
@@ -150,12 +153,25 @@ let rewrite_coll_comprehension (null, push) rw = function
 	assert false (* unimplemented *)
     | d -> rewrite_coll_semicolon (null, push) rw d
 
+let rec rewrite_comma_into_list rw = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), xs), x),
+	    ys, accu when op = idr_2o_comma ->
+	let (y, accu) = rw.rw_ctrm rw `Value (x, accu) in
+	rewrite_comma_into_list rw (xs, y :: ys, accu)
+    | x, ys, accu ->
+	let (y, accu) = rw.rw_ctrm rw `Value (x, accu) in
+	(y :: ys, accu)
+
 let default_rewrite_ctrm_value rw = function
     | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
 	    when op = idr_1b_square_bracket ->
 	let null = Ctrm_ref (Cidr (op_loc, idr_list_null), Ih_inj) in
 	let push = Ctrm_ref (Cidr (op_loc, idr_list_push), Ih_inj) in
 	rewrite_coll_comprehension (null, push) rw (x, accu)
+    | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
+	    when op = idr_1b_array ->
+	let (ys, accu) = rewrite_comma_into_list rw (x, [], accu) in
+	(Ctrm_array (loc, ys), accu)
     | d -> subterm_rewrite_ctrm rw `Value d
 
 let default_rewrite_ctrm rw stra = function

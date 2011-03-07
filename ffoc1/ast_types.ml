@@ -49,6 +49,7 @@ type aval =
     | Aval_literal of loc * lit
     | Aval_ref of apath
     | Aval_apply of loc * aval * aval
+    | Aval_array of loc * aval list
     | Aval_at of loc * (apat * aval option * aval) list
     | Aval_match of loc * aval * (apat * aval option * aval) list
     | Aval_let of loc * apat * aval * aval

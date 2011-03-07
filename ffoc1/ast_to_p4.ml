@@ -191,6 +191,9 @@ let rec emit_aval = function
     | Aval_apply (loc, x, y) ->
 	let _loc = p4loc loc in
 	<:expr< $emit_aval x$ $emit_aval y$ >>
+    | Aval_array (loc, xs) ->
+	let _loc = p4loc loc in
+	<:expr< [| $list: List.map emit_aval xs$ |] >>
     | Aval_at (loc, cases) ->
 	let _loc = p4loc loc in
 	<:expr< fun [ $list: List.map emit_match_case cases$ ] >>

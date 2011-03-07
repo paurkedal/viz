@@ -39,6 +39,7 @@ let idr_1q_functor	= idr_1q_c "Fun"
 let idr_1b_paren	= idr_1b_c "(" ")"
 let idr_1b_square_bracket = idr_1b_c "[" "]"
 let idr_1b_curly_bracket = idr_1b_c "{" "}"
+let idr_1b_array	= idr_1b_c "#[" "]"
 let idr_2b_dotbracket	= idr_2b_c ".[" "]"
 let idr_1o_asterisk	= idr_1o_c "*"
 let idr_run_toplevel_io	= Idr "__run_toplevel_io"
@@ -80,6 +81,7 @@ let ctrm_loc = function
     | Ctrm_rel (loc, _, _)
     | Ctrm_apply (loc, _, _)
     | Ctrm_project (loc, _, _)
+    | Ctrm_array (loc, _)
     | Ctrm_what (loc, _, _)
     | Ctrm_where (loc, _)
     | Ctrm_with (loc, _, _) ->

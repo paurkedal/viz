@@ -49,6 +49,7 @@ type cpred =
     | Ctrm_rel		of loc * ctrm * (loc * cidr * ctrm) list
     | Ctrm_apply	of loc * ctrm * ctrm
     | Ctrm_project	of loc * cidr * ctrm
+    | Ctrm_array	of loc * ctrm list
     | Ctrm_what		of loc * cmonad option * cpred
     | Ctrm_where	of loc * cdef list
     | Ctrm_with		of loc * ctrm option * cdef list
