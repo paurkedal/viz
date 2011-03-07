@@ -1,0 +1,20 @@
+#! /bin/sh
+set -e
+
+case "$1" in
+    *.byte|*.native)
+	prog="$1"
+	;;
+    *)
+	prog="$1.${OCAML_TARGET:-byte}"
+	;;
+esac
+shift
+
+work_dir="`pwd`"
+cd "`dirname $0`"
+top_srcdir="`pwd`"
+ocamlbuild -use-ocamlfind -no-links "$prog"
+cd "${work_dir}"
+
+"${top_srcdir}/_build/${prog}" "$@"
