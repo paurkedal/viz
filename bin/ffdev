@@ -40,6 +40,7 @@ EOF
     mypath=`realpath $0`
     FFORM_SRCDIR=${mypath%/bin/*}
 fi
+export FFORM_SRCDIR
 
 # Determine the Program Name
 #
@@ -71,14 +72,14 @@ for ext in .ml .ff; do
 	FFDEV_TARGET=${FFDEV_TARGET-${OCAML_TARGET-byte}}
 	progpath="$FFORM_SRCDIR/_build/bin/$prog.${FFDEV_TARGET}"
 	if [ ! -e "$progpath" -o x"$FFDEV_REBUILD" != x ]; then
-	    make -C "$FFORM_SRCDIR" $FFDEV_TARGET
+	    make 1>&2 -C "$FFORM_SRCDIR" $FFDEV_TARGET
 	fi
 	exec "$progpath" "$@"
 	exit 69
     fi
 done
-if [ -e "bin/$prog.sh" -o -e "bin/$prog" ]; then
-    exec bin/$prog "$@"
+if [ -e "$FFORM_SRCDIR/bin/$prog.sh" ]; then
+    exec ${SHELL-/bin/sh} "$FFORM_SRCDIR/bin/$prog.sh" "$@"
     exit 69
 fi
 echo 1>&2 "Cannot locate '$prog' in $FFORM_SRCDIR/bin."
