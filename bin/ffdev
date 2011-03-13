@@ -47,10 +47,27 @@ export FFORM_SRCDIR
 case $0 in
     */ffdev|ffdev)
 	if [ "$#" -eq 0 -o "$1" = "--help" ]; then
+	    echo
 	    echo "This is a wrapper script, see:"
+	    echo
 	    for prog in "$FFORM_SRCDIR/bin"/*; do
 		[ ! -h "$prog" ] || echo "    ffdev ${prog##*/}" --help
 	    done
+	    cat <<EOF
+
+Additionally ffdev can provide the following information:
+
+    ffdev --srcdir	Print the top-level source directory.
+    ffdev --includes	Print -I flags for use with ffoc1pp.  These are
+			already included when using the prefform script.
+
+EOF
+	    exit 0
+	elif [ "$1" = "--srcdir" ]; then
+	    echo "$FFORM_SRCDIR"
+	    exit 0
+	elif [ "$1" = "--includes" ]; then
+	    echo "-I $FFORM_SRCDIR/_build -I $FFORM_SRCDIR/_build/fflib"
 	    exit 0
 	fi
 	prog="$1"
