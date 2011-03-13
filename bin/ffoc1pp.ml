@@ -7,7 +7,7 @@ open Cst_types
 open Ast_types
 open Leaf_types
 
-let usage = "ffoc1 [--print | -o OUTPUT] INPUT"
+let usage = "ffoc1pp [--print | -o OUTPUT] INPUT"
 
 module String_set = Set.Make (String)
 
@@ -73,7 +73,7 @@ let _ =
 	"-o", Arg.String (opt_setter out_path_opt),
 	    "PATH The output file.";
 	"-N", Arg.String (fun p -> nroots := p :: !nroots),
-	    "PATH Prepend PATH to the root paths, but when combined with \
+	    "PATH Prepend PATH to the root paths, but when combined with\n\
 	     --depend, don't create dependencies for it.";
 	"-I", Arg.String (fun p -> roots := p :: !roots),
 	    "PATH Prepend PATH to the root paths to search for structures.";

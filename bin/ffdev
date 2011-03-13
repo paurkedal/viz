@@ -1,0 +1,85 @@
+#! /bin/sh
+#
+# This is a wrapper script around the programs in the "bin" directory.  There
+# are three ways to use it:
+#
+#   * Add the "bin" subdirectory to your $PATH.
+#
+#   * Create symbolic links corresponding to those in the "bin" subdirectory
+#     under some directory which is included in your $PATH.
+#
+#   * Create a single symbolic link named "ffdev" to this wrapper under some
+#     directory which is included in your $PATH.
+
+have_command()
+{
+    type >/dev/null 2>&1 "$@"
+}
+
+set -e
+
+# Locate the Top-Level Source Directory
+#
+if [ x"$FFORM_SRCDIR" = x ]; then
+    if have_command realpath; then
+	:
+    elif have_command greadlink; then
+	alias realpath='greadlink -f'
+    elif readlink --version 2>/dev/null | grep -q GNU; then
+	alias realpath='readlink -f'
+    else
+	cat 1>&2 <<EOF
+
+Can't canonicalize the program path.  You may resolve this by installing
+'realpath' or a GNU 'readlink', or by setting \$FFORM_SRCDIR to the top-level
+directory of your Fform check-out.
+
+EOF
+	exit 69
+    fi
+    mypath=`realpath $0`
+    FFORM_SRCDIR=${mypath%/bin/*}
+fi
+
+# Determine the Program Name
+#
+case $0 in
+    */ffdev|ffdev)
+	if [ "$#" -eq 0 -o "$1" = "--help" ]; then
+	    echo "This is a wrapper script, see:"
+	    for prog in "$FFORM_SRCDIR/bin"/*; do
+		[ ! -h "$prog" ] || echo "    ffdev ${prog##*/}" --help
+	    done
+	    exit 0
+	fi
+	prog="$1"
+	shift
+	;;
+    *)
+	if have_command basename; then
+	    prog=`basename $0`
+	else
+	    prog=${0##*/}
+	fi
+esac
+
+# Dispatch to the Executable or Script
+#
+for ext in .ml .ff; do
+    src="$FFORM_SRCDIR/bin/$prog$ext"
+    if [ -e "$src" ]; then
+	FFDEV_TARGET=${FFDEV_TARGET-${OCAML_TARGET-byte}}
+	progpath="$FFORM_SRCDIR/_build/bin/$prog.${FFDEV_TARGET}"
+	if [ ! -e "$progpath" -o x"$FFDEV_REBUILD" != x ]; then
+	    make -C "$FFORM_SRCDIR" $FFDEV_TARGET
+	fi
+	exec "$progpath" "$@"
+	exit 69
+    fi
+done
+if [ -e "bin/$prog.sh" -o -e "bin/$prog" ]; then
+    exec bin/$prog "$@"
+    exit 69
+fi
+echo 1>&2 "Cannot locate '$prog' in $FFORM_SRCDIR/bin."
+exit 69

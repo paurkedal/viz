@@ -1,5 +1,1 @@
-#! /bin/sh
-prog="$0"; while [ -h "$prog" ]; do prog="`readlink "$prog"`"; done
-prog_dir=`dirname "$prog"`
-top_srcdir=`cd "${prog_dir}"/..; pwd`
-exec "`dirname "$prog"`/../_run" bin/ffoc1pp -I ${top_srcdir}/fflib "$@"
+ffdev
