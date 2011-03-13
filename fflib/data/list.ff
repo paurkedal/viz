@@ -1,0 +1,88 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Fform Standard Library.
+#
+# The Fform Standard Library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+
+#?ffoc type t α = list α
+#?ffoc {#
+
+type t α
+inj [] : t α
+inj [;] : α → t α → t α
+
+#?ffoc #}
+
+val rev : t α → t α
+ ## Reverse the order of elements of a list.
+
+val fold : (α → β → β) → t α → β → β
+ ## (fold f xs) composes the functions (f x) where (x) runs over (xs)::
+ ##   fold f [x_1, ..., x_n] ≡ f x_n ∘ ... ∘ f x_1
+ ## or in equation form::
+ ##   fold f [] ≡ ident
+ ##   fold f [x; xs] ≡ fold f xs ∘ f x
+
+val foldr : (α → β → β) → t α → β → β
+ ## (fold f xs ≡ fold f (rev xs)).
+
+val map : (α → β) → t α → t β
+ ## (map f) is the lifting of (f) to element-wise function on a list
+ ## determined by the equations::
+ ##   map f [] ≡ []
+ ##   map f [x; xs] ≡ [f x; map f xs]
+
+val mapr : (α → β) → t α → t β
+ ## (mapr f xs ≡ map f (rev xs))
+
+val cat : t α → t α → t α
+ ## Concatenate two lists.
+
+val catr : t α → t α → t α
+ ## (catr xs ys ≡ cat (rev xs) ys)
+
+val flatten : t (t α) → t α
+ ## (flatten xss ≡ fold cat xss []) is the result of concatenating the
+ ## elements of a list of lists.
+
+
+let fold f
+    at [] be ident
+    at [x; xs] be fold f xs ∘ f x
+
+let foldr f xs be fold f (rev xs)
+
+let mapr f
+    let loop ys
+	at [] be ys
+	at [x; xs] be loop [f x; ys] xs
+    be loop []
+
+let map f xs be rev (mapr f xs)
+
+let catr xs ys
+    be that xs which
+    at [] be ys
+    at [x; xs] be catr xs [x; ys]
+
+let rev xs be catr xs []
+
+let cat xs ys be catr (rev xs) ys
+
+let flatten
+    at [] be []
+    at [xs] be xs
+    at [xs; xss] be cat xs (flatten xss)
