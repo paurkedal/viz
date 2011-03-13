@@ -214,7 +214,7 @@ compound_predicate:
   ;
 nonfunction_predicate:
     atomic_predicate { $1 }
-  | ASSERT term nonfunction_predicate
+  | ASSERT term nonfunction_predicate_with_participle
     { Cpred_assert (mkloc $startpos $endpos, $2, $3) }
   | atomic_predicate WHICH predicate_block
     { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
@@ -229,8 +229,10 @@ nonfunction_predicate_with_participle:
   | participle nonfunction_predicate_with_participle { $1 $2 }
   ;
 if_predicate:
-    IF term predicate_block if_predicate
+    IF term predicate_block if_predicate_cont
     { Cpred_if (mkloc $startpos $endpos, $2, $3, $4) }
+if_predicate_cont:
+    nonfunction_predicate_with_participle { $1 }
   | ELSE predicate_block { $2 }
   ;
 at_predicate:

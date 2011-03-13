@@ -217,7 +217,7 @@ let rec emit_aval = function
 	<:expr< if $emit_aval cond$ then $emit_aval cq$ else $emit_aval ccq$ >>
     | Aval_assert (loc, x, y) ->
 	let _loc = p4loc loc in
-	<:expr< assert $emit_aval x$; $emit_aval y$ >>
+	<:expr< (assert $emit_aval x$; $emit_aval y$) >>
     | Aval_raise (loc, x) ->
 	let _loc = p4loc loc in
 	<:expr< raise $emit_aval x$ >>
