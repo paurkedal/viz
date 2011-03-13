@@ -1,0 +1,81 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Fform Standard Library.
+#
+# The Fform Standard Library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+#?ffoc {#
+
+type r α
+
+#?ffoc #}
+
+val init : int → (int → α) → r α
+
+val uniform : int → α → r α
+
+val get : int → r α → action φ α
+
+val slice : int → int → r α → action φ (r α)
+
+val set : int → α → r α → action φ unit
+
+val copy : r α → action φ (r α)
+
+val fill : int → int → α → r α → action φ (r α)
+
+val blit : int → int → r α → int → r α → action φ (r α)
+
+val map : (α → β) → r α → action φ (r β)
+
+val mapi : (int → α → β) → r α → action φ (r β)
+
+val fold : (α → β → β) → r α → β → action φ β
+
+val foldr : (α → β → β) → r α → β → action φ β
+
+val aiter : (α → action φ unit) → r α → action φ unit
+
+val aiterr : (α → action φ unit) → r α → action φ unit
+
+val afold : (α → β → action φ β) → r α → β → action φ β
+
+val afoldr : (α → β → action φ β) → r α → β → action φ β
+
+val cat : r α → r α → action φ (r α)
+
+val cat_list : list (r α) → action φ (r α)
+
+val sort : (α → α → order) → r α → action φ unit
+
+val of_list : list α → action φ (r α)
+
+val as_list : r α → action φ (list α)
+
+val of_array : array.t α → action φ (r α)
+
+val as_array : r α → action φ (array.t α)
+
+val freeze : r α → action φ (array.t α)
+
+
+#?ffoc include compat.ocaml_array.array_act
+
+open prereq
+open prereq.action_ops
+
+let aiter k a be fold (x +> m +> m >> k x) a (return ()) >>= ident
+let aiterr k a be foldr (x +> m +> m >> k x) a (return ()) >>= ident
+let afold k a accu be fold (x +> m +> m >>= k x) a (return accu) >>= ident
+let afoldr k a accu be foldr (x +> m +> m >>= k x) a (return accu) >>= ident

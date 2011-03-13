@@ -1,0 +1,70 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Fform Standard Library.
+#
+# The Fform Standard Library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+
+#?ffoc {#
+
+type t α
+
+#?ffoc #}
+
+val length : t α → int
+
+val get : int → t α → α
+
+val slice : int → int → t α → t α
+
+val init : int → (int → α) → t α
+
+val uniform : int → α → t α
+
+val of_list : list α → t α
+
+val as_list : t α → list α
+
+val map : (α → β) → t α → t β
+
+val mapi : (int → α → β) → t α → t β
+
+val fold : (α → β → β) → t α → β → β
+
+val foldr : (α → β → β) → t α → β → β
+
+val cat : t α → t α → t α
+
+val cat_list : list (t α) → t α
+
+val aiter : (α → action φ unit) → t α → action φ unit
+
+val aiterr : (α → action φ unit) → t α → action φ unit
+
+val afold : (α → β → action φ β) → t α → β → action φ β
+
+val afoldr : (α → β → action φ β) → t α → β → action φ β
+
+#?ffoc include compat.ocaml_array.array_const
+
+open action_ops
+
+let aiter k a be fold (x +> m +> m >> k x) a (return ())
+
+let aiterr k a be foldr (x +> m +> m >> k x) a (return ())
+
+let afold k a be fold (x +> m +> m >>= k x) a ∘ return
+
+let afoldr k a be foldr (x +> m +> m >>= k x) a ∘ return

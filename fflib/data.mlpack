@@ -1,3 +1,5 @@
 fflib/data/bool
 fflib/data/int
 fflib/data/list
+fflib/data/array
+fflib/data/array_act
