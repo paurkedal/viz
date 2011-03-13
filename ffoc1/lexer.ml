@@ -100,11 +100,11 @@ let initial_intro_keywords = [
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
     "at",	Grammar.AT;
-    "--?FFOC open", Grammar.OPEN Abi_Fform;
-    "--?FFOC include", Grammar.INCLUDE;
-    "--?FFOC type", Grammar.TYPE;
-    "--?FFOC {#", Grammar.SKIP;
-    "--?FFOC #}", Grammar.ENDSKIP;
+    "#?ffoc open", Grammar.OPEN Abi_Fform;
+    "#?ffoc include", Grammar.INCLUDE;
+    "#?ffoc type", Grammar.TYPE;
+    "#?ffoc {#", Grammar.SKIP;
+    "#?ffoc #}", Grammar.ENDSKIP;
 ]
 let initial_plain_keywords = [
     "true",	Grammar.LITERAL (Lit_bool true);
@@ -178,8 +178,9 @@ let skip_space state =
 		when ch0 = UChar.ch_hash && UChar.is_space ch1 ->
 	    skip_line state;
 	    loop ()
-	| ch0 :: ch1 :: rest (* Skip "--"-comment. *)
-		when ch0 = UChar.ch_dash && ch1 = UChar.ch_dash
+	| ch0 :: ch1 :: rest (* Skip "##" or "--"-comment. *)
+		when (ch0 = UChar.ch_dash && ch1 = UChar.ch_dash ||
+		      ch0 = UChar.ch_hash && ch1 = UChar.ch_hash)
 		  && (rest = [] || List.hd rest <> UChar.ch_qmark) ->
 	    skip_line state;
 	    loop ()
