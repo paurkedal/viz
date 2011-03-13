@@ -48,3 +48,11 @@ end
 module Int_misc = struct
     let show = Pervasives.string_of_int
 end
+
+module Io_misc = struct
+    open Ocaml_prereq
+    let print s = __unsafe_action (fun () -> Pervasives.print_string s)
+    let eprint s = __unsafe_action (fun () -> Pervasives.prerr_string s)
+    let fprint ochan s =
+	__unsafe_action (fun () -> Pervasives.output_string ochan s)
+end

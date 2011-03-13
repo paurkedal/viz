@@ -1,3 +1,5 @@
 fflib/compat
 fflib/prereq
+fflib/data
 fflib/system
+fflib/pervasive
