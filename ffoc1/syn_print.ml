@@ -128,6 +128,11 @@ and print_predicate fo = function
 	Fo.newline fo;
 	Fo.put_kw fo "be";
 	print_inline fo Opkind.p_min ctrm
+    | Cpred_assert (_, cx, cy) ->
+	Fo.newline fo;
+	Fo.put_kw fo "assert";
+	print_inline fo Opkind.p_min cx;
+	print_predicate fo cy
     | Cpred_do1 (_, cm, cx) ->
 	Fo.newline fo;
 	Fo.put_kw fo "do";

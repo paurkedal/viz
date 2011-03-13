@@ -154,6 +154,7 @@ let rec fold_aval_paths f =
 	fold_aval_paths f body
     | Aval_if (_, c, cq, ccq) ->
 	fold_aval_paths f c *> fold_aval_paths f cq *> fold_aval_paths f ccq
+    | Aval_assert (_, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
     | Aval_raise (_, x) -> fold_aval_paths f x
 
 let fold_atypinfo_paths f = function

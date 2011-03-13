@@ -65,7 +65,7 @@ let apply_fence loc name0 name1 =
 %token WHERE WITH
 %token SKIP ENDSKIP /* Hack for ffoc1pp only. */
 
-%token BE
+%token ASSERT BE
 %token <Cst_types.cmonad> DO
 %token RAISE
 %token UPON
@@ -214,6 +214,8 @@ compound_predicate:
   ;
 nonfunction_predicate:
     atomic_predicate { $1 }
+  | ASSERT term nonfunction_predicate
+    { Cpred_assert (mkloc $startpos $endpos, $2, $3) }
   | atomic_predicate WHICH predicate_block
     { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
       let that_trm = Ctrm_ref (that, Ih_none) in

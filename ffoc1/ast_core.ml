@@ -46,6 +46,7 @@ let rec aval_loc = function
     | Aval_letrec (loc, _, _) -> loc
     | Aval_if (loc, _, _, _) -> loc
     | Aval_match (loc, _, _) -> loc
+    | Aval_assert (loc, _, _) -> loc
     | Aval_raise (loc, _) -> loc
 
 let rec apat_loc = function

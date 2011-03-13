@@ -148,6 +148,8 @@ and build_aval_pure = function
 	Aval_at (loc, List.map build_case cases)
     | Cpred_be (loc, cx) ->
 	build_aval_expr cx
+    | Cpred_assert (loc, cx, cy) ->
+	Aval_assert (loc, build_aval_expr cx, build_aval_pure cy)
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)
     | Cpred_raise (loc, _) ->
@@ -204,6 +206,8 @@ and build_aval_monad mm = function
 	| MM_quote cm -> make_aval_return loc cm ax
 	| MM_bind af -> Aval_apply (loc, af, ax)
 	end
+    | Cpred_assert (loc, cx, cy) ->
+	Aval_assert (loc, build_aval_expr cx, build_aval_monad mm cy)
     | Cpred_do1 (loc, cm, cx) ->
 	let ax = build_aval_expr cx in
 	begin match mm with

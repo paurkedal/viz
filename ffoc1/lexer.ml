@@ -89,6 +89,7 @@ let initial_intro_keywords = [
     "val:c",	Grammar.VAL (`Default,  Abi_C);
     "val:c-",	Grammar.VAL (`Local,    Abi_C);
     "inj",	Grammar.INJ;
+    "assert",	Grammar.ASSERT;
     "be",	Grammar.BE;
     "do",	Grammar.DO "";
     "raise",	Grammar.RAISE;

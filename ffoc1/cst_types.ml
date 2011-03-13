@@ -38,6 +38,7 @@ type cpred =
     | Cpred_if		of loc * ctrm * cpred * cpred
     | Cpred_at		of loc * (ctrm * cpred) list
     | Cpred_be		of loc * ctrm
+    | Cpred_assert	of loc * ctrm * cpred
     | Cpred_raise	of loc * ctrm
     | Cpred_do1		of loc * cmonad * ctrm
     | Cpred_do2		of loc * cmonad * ctrm * cpred
