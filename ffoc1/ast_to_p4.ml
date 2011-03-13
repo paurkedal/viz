@@ -99,12 +99,13 @@ let rec emit_atyp ?(typefor = Typefor_fform) = function
 	    when (typefor = Typefor_cabi || typefor = Typefor_cabi_io)
 	      && avar_idr op = Cst_core.idr_2o_index ->
 	emit_atyp ~typefor t
-    | Atyp_apply (loc, Atyp_ref (Apath ([], io)), t)
-	    when typefor = Typefor_cabi_io && avar_name io = "io" ->
-	emit_atyp ~typefor t
     | Atyp_apply (loc, at, au) ->
-	let _loc = p4loc loc in
-	<:ctyp< $emit_atyp ~typefor at$ $emit_atyp ~typefor au$ >>
+	if typefor = Typefor_cabi_io
+		&& Ast_utils.atyp_action_pocket at <> Ast_utils.No_pocket then
+	    emit_atyp ~typefor au
+	else
+	    let _loc = p4loc loc in
+	    <:ctyp< $emit_atyp ~typefor at$ $emit_atyp ~typefor au$ >>
     | Atyp_arrow (loc, at, au) ->
 	let _loc = p4loc loc in
 	<:ctyp< $emit_atyp ~typefor at$ -> $emit_atyp ~typefor au$ >>
@@ -319,7 +320,8 @@ and emit_adec = function
 	let _loc = p4loc loc in
 	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
 	let name = avar_to_lid v in
-	if fst (Ast_utils.unwrap_atyp_io (Ast_utils.result_type t)) then
+	let rt = Ast_utils.result_type t in
+	if fst (Ast_utils.unwrap_atyp_action rt) <> Ast_utils.No_pocket then
 	    let ot = emit_atyp_cabi_io t in
 	    <:sig_item< value $lid: name$ : $ot$ >>
 	else
@@ -387,12 +389,13 @@ and emit_adef = function
 	let _loc = p4loc loc in
 	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
 	let name = avar_to_lid v in
+	let ot = emit_atyp ~typefor: Typefor_cabi t in
 	let rt = Ast_utils.result_type t in
-	let (is_io, rt) = Ast_utils.unwrap_atyp_io rt in
-	if is_io then
-	    let cname = "_io_" ^ name in
-	    let ot = emit_atyp_cabi_io t in
-	    let ox = <:str_item< external $lid: cname$ : $ot$
+	let (pocket, rt) = Ast_utils.unwrap_atyp_action rt in
+	if pocket <> Ast_utils.No_pocket then
+	    let cname = "_stub_" ^ name in
+	    let oxt = emit_atyp_cabi_io t in
+	    let ox = <:str_item< external $lid: cname$ : $oxt$
 					= $str_list: syms$ >> in
 	    let r = Ast_utils.arity t in
 	    let z =
@@ -401,15 +404,14 @@ and emit_adef = function
 		    let args = List.init r mkarg in
 		    let y = List.fold (fun x f -> <:expr< $f$ $lid: x$ >>) args
 				      <:expr< $lid: cname$ >> in
-		    let y = <:expr< unsafe_thunk (fun () -> $y$) >> in
+		    let y = <:expr< __unsafe_action (fun () -> $y$) >> in
 		    List.fold (fun x y -> <:expr< fun $lid: x$ -> $y$ >>)
 			      (List.rev args) y
 		else
-		    <:expr< unsafe_thunk $lid: cname$ >> in
-	    let ov = <:str_item< value $lid: name$ = $z$ >> in
+		    <:expr< __unsafe_action $lid: cname$ >> in
+	    let ov = <:str_item< value $lid: name$ : $ot$ = $z$ >> in
 	    <:str_item< $list: [ox; ov]$ >>
 	else
-	    let ot = emit_atyp ~typefor: Typefor_cabi t in
 	    <:str_item< external $lid: name$ : $ot$ = $str_list: syms$ >>
     | Adef_cabi_open (loc, _) ->
 	let _loc = p4loc loc in <:str_item< >>

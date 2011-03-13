@@ -42,7 +42,7 @@ let idr_1b_curly_bracket = idr_1b_c "{" "}"
 let idr_1b_array	= idr_1b_c "#[" "]"
 let idr_2b_dotbracket	= idr_2b_c ".[" "]"
 let idr_1o_asterisk	= idr_1o_c "*"
-let idr_run_toplevel_io	= Idr "__run_toplevel_io"
+let idr_run_action	= Idr "__unsafe_run_action"
 let idr_list_null	= Idr "[]"
 let idr_list_push	= Idr "[;]"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon

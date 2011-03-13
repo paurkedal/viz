@@ -54,7 +54,7 @@ val idr_1b_square_bracket : idr
 val idr_1b_curly_bracket : idr
 val idr_1b_array : idr
 val idr_2b_dotbracket : idr
-val idr_run_toplevel_io : idr
+val idr_run_action : idr
 val idr_list_null : idr
 val idr_list_push : idr
 val cidr_is_2o_colon : cidr -> bool

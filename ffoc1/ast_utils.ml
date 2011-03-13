@@ -47,10 +47,31 @@ let rec fold_arg_types f = function
 
 let arity t = fold_arg_types (fun _ accu -> accu + 1) t 0
 
-let unwrap_atyp_io = function
-    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr tc))), t)
-	    when tc = "io" -> (true, t)
-    | t -> (false, t)
+type pocket =
+    | No_pocket
+    | Local_pocket of avar
+    | World_pocket
+
+let atyp_action_pocket = function
+    | Atyp_ref (Apath ([], Avar (_, Idr io))) when io = "io" ->
+	World_pocket
+    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr action))), pocket) ->
+	begin match pocket with
+	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world_pocket" ->
+	    World_pocket
+	| Atyp_uvar v ->
+	    Local_pocket v
+	| _ ->
+	    errf_at (atyp_loc pocket) "Invalid pocket type tag."
+	end
+    | _ -> No_pocket
+let unwrap_atyp_action = function
+    | Atyp_apply (_, u, v) as t ->
+	begin match atyp_action_pocket u with
+	| No_pocket -> (No_pocket, t)
+	| p -> (p, v)
+	end
+    | t -> (No_pocket, t)
 
 let flatten_arrows =
     let rec loop ats = function
@@ -60,8 +81,8 @@ let flatten_arrows =
 
 let flatten_arrows_for_c t =
     let rt, ats = flatten_arrows t in
-    let is_io, rt = unwrap_atyp_io rt in
-    if is_io && ats = [] then
+    let pocket, rt = unwrap_atyp_action rt in
+    if pocket <> No_pocket && ats = [] then
 	let loc = atyp_loc t in
 	(true, rt, [Atyp_ref (Apath ([], Avar (loc, Idr "unit")))])
     else

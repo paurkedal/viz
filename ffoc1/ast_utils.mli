@@ -36,7 +36,13 @@ val arity : atyp -> int
 
 val flatten_application : atyp -> apath * atyp list
 
-val unwrap_atyp_io : atyp -> bool * atyp
+type pocket =
+    | No_pocket
+    | Local_pocket of avar
+    | World_pocket
+
+val atyp_action_pocket : atyp -> pocket
+val unwrap_atyp_action : atyp -> pocket * atyp
 
 val flatten_arrows : atyp -> atyp * atyp list
 val flatten_arrows_for_c : atyp -> bool * atyp * atyp list

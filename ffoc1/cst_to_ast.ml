@@ -489,7 +489,7 @@ and build_toplevel_aval loc cm_opt cpred =
 	build_aval_pure cpred
     | None ->
 	let ax = build_aval_monad (MM_quote cmonad_io) cpred in
-	let af = aval_ref_of_idr loc idr_run_toplevel_io in
+	let af = aval_ref_of_idr loc idr_run_action in
 	Aval_apply (loc, af, ax)
     end
 and build_adefs adecmap adefs = function
