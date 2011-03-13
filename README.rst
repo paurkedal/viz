@@ -23,8 +23,8 @@ The following packages are required:
 * The Menhir parser generator.
 * The camomile and sexplib libraries.
 
-If not available though your package manager,
-[Godi](http://godi.camlcity.org/godi/index.html) is a convenient alternative.
+If not available though your package manager, Godi_ is a convenient
+alternative.
 
 You can then check out and build the preprocessor:
 
@@ -57,3 +57,6 @@ Directories
 * fflib - The Fform Standard Library.
 * examples - Fform example programs.
 * tests - Fform tests programs.
+
+
+.. _Godi: http://godi.camlcity.org/godi/index.html

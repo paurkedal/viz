@@ -22,6 +22,8 @@ in bool include data.bool
 in int include data.int
 include int.ops
 
+in list include data.list
+
 val print : string → io unit
 val eprint : string → io unit
 
