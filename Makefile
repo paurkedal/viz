@@ -13,7 +13,7 @@ clean:
 	$(OCAMLBUILD) -clean
 
 check:
-	$(OCAMLBUILD) tests/test.byte -- -verbose
+	$(OCAMLBUILD) ffoc1-tests/test.byte -- -verbose
 
 doc:
 	$(OCAMLBUILD) ffoc1.docdir/index.html
