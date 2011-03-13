@@ -13,3 +13,13 @@
 # This is covered by the <**/*.ff> rule, but we may want to remove that rule
 # later.
 <fflib/*.{cmi,cmo,cmx,depends}>: ffoc1pp
+
+<fflib/**/*>: no_pervasive, in_fflib
+<fflib/pervasive.ff>: ocamlstdlib
+<fflib/compat/ocaml_*.ff>: ocamlstdlib
+
+<fflib/compat/*.cmx>: for-pack(Compat)
+<fflib/system/*.cmx>: for-pack(System)
+
+<fflib.{cma,cmxa}>: use_libfflib
+<fftests/*.{byte,native}>: use_fflib

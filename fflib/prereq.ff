@@ -1,0 +1,48 @@
+-- Copyright 2011  Petter Urkedal
+--
+-- This file is part of the Fform Standard Library.
+--
+-- The Fform Standard Library is free software: you can redistribute it and/or
+-- modify it under the terms of the GNU Lesser General Public License as
+-- published by the Free Software Foundation, either version 3 of the License,
+-- or (at your option) any later version.
+--
+-- Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+-- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+-- FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+-- more details.
+--
+-- You should have received a copy of the GNU Lesser General Public License
+-- along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+--?FFOC include compat.ocaml_prereq
+
+val ident : α → α
+ -- The identity function, (ident x ≡ x), also known as the I combinator.
+
+val konst : α → β → α
+ -- (konst x y ≡ x).  (konst) is also known as the K combinator.
+
+val 2'∘ : (β → γ) → (α → β) → α → γ
+ -- Function composition, ((f ∘ g) x ≡ f (g x)).
+
+let ident x be x
+let konst x y be x
+let (g <* f) x be g (f x) -- also g ∘ f
+let (f *> g) x be g (f x)
+let f <@ x be f x -- f "at" x
+let x @> f be f x -- x "under" f
+
+
+--------------------------
+-- Parts from system.io --
+--------------------------
+
+--type io α
+
+--inj unsafe_thunk : (unit → α) → io α
+
+in action_ops
+    let return be __builtin_action_return
+    let 2'>>= m k be __builtin_action_bind k m
+    let 2'>> m n be __builtin_action_bind (() +> n) m

@@ -211,13 +211,16 @@ let () = dispatch begin function
 	ocaml_lib "fflib";
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
 	flag ["ocaml"; "ffoc1pp"] & S[A"-I"; P"fflib"];
-	flag ["ocamldep"; "ffoc1pp"; "in_fflib"] & S[A"-I"; P"fflib"];
+	flag ["ocaml"; "compile"; "in_fflib"] & S[A"-I"; P"fflib"];
+	flag ["ocamldep"; "in_fflib"] & S[A"-I"; P"fflib"];
 	flag ["ocamldep"; "ffoc1pp"] & S[A"-N"; P"fflib"];
 	flag ["link"; "library"; "ocaml"; "byte"; "use_libfflib"]
 	     (S[A"-ccopt"; A"-L."; A"-cclib"; A"-lfflib";
 		A"-dllib"; A"-lfflib"]);
 	flag ["link"; "library"; "ocaml"; "native"; "use_libfflib"]
 	     (S[A"-ccopt"; A"-L."; A"-cclib"; A"-lfflib"]);
+	dep ["ocaml"; "byte"; "use_prereq"] ["fflib/prereq.cmo"];
+	dep ["ocaml"; "native"; "use_prereq"] ["fflib/prereq.cmx"];
 	()
     | _ -> ()
 end
