@@ -13,10 +13,47 @@ language is implemented as an O'Caml preprocessor.  This will later be used to
 bootstrap a full stand-alone implementation.
 
 
+Quick Start
+===========
+
+The following packages are required:
+
+* The O'Caml complier.
+* The ocamlfind utility (findlib).
+* The Menhir parser generator.
+* The camomile and sexplib libraries.
+
+If not available though your package manager,
+[Godi](http://godi.camlcity.org/godi/index.html) is a convenient alternative.
+
+You can then check out and build the preprocessor:
+
+    git checkout git@github.com:paurkedal/fform.git
+    cd fform
+    make
+
+There is nothing to install at the moment due to the early development stage.
+You may run example programs with either of the commands
+
+    ocamlbuild examples/PROGNAME.byte --
+    ocamlbuild examples/PROGNAME.native --
+
+A convenience wrapper is available for compiling code outside the repository.
+To use it create a link
+
+    ln -s $FFORM_SRCDIR/bin/ffdev $HOME/bin/prefform
+
+assuming $HOME/bin is in your $PATH, you can now compile programs with
+
+    prefform ocamlc -o foo foo.ff
+
+
 Directories
 ===========
 
 * bin - Program source code and wrapper scripts.
-* ffoc1 - The bootstrap O'Caml preprocessor.
+* ffoc1 - The O'Caml preprocessor library used by bin/ffoc1pp.
+* ffoc1-tests - OUnit tests for ffoc1.
 * fflib - The Fform Standard Library.
-* tests - OUnit tests.
+* examples - Fform example programs.
+* tests - Fform tests programs.

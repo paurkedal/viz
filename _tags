@@ -1,4 +1,4 @@
-<**/*.{ml,mli,native,byte,d.byte,top}>: use_camlp4, use_camomile, use_dynlink, use_extlib, use_menhirLib, use_sexplib
+<**/*.{ml,mli,native,byte,d.byte,top}>: use_camlp4, use_camomile, use_dynlink, use_menhirLib, use_sexplib
 
 <ffoc1/*.{cmo,cmx}>: for-pack(Ffoc1)
 <ffoc1/ast_to_p4.ml>: camlp4orf
@@ -23,4 +23,4 @@
 <fflib/system/*.cmx>: for-pack(System)
 
 <fflib.{cma,cmxa}>: use_libfflib
-<fftests/*.{byte,native}>: use_fflib
+<{examples,tests}/*.{byte,native}>: use_fflib
