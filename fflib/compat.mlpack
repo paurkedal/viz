@@ -1,3 +1,4 @@
 fflib/compat/ocaml_prereq
+fflib/compat/ocaml_unicode
 fflib/compat/ocaml_pervasives
 fflib/compat/ocaml_array

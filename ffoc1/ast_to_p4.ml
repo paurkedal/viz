@@ -117,14 +117,22 @@ let emit_atyp_cabi_io = function
 	let _loc = p4loc (atyp_loc t) in
 	<:ctyp< unit -> $emit_atyp ~typefor: Typefor_cabi_io t$ >>
 
-let emit_apat_literal loc lit =
+let emit_apat_literal loc lit ocond_opt =
     let _loc = p4loc loc in
     match lit with
-    | Lit_unit     -> <:patt< () >>
-    | Lit_bool x   -> if x then <:patt< True >> else <:patt< False >>
-    | Lit_int x    -> let s = string_of_int x in <:patt< $int:s$ >>
-    | Lit_float x  -> let s = string_of_float x in <:patt< $flo:s$ >>
-    | Lit_string x -> let s = UString.to_utf8 x in <:patt< $str:s$ >>
+    | Lit_unit     -> <:patt< () >>, ocond_opt
+    | Lit_bool x   -> (if x then <:patt<True>> else <:patt<False>>), ocond_opt
+    | Lit_int x    -> let s = string_of_int x in <:patt< $int:s$ >>, ocond_opt
+    | Lit_float x  -> let s = string_of_float x in <:patt<$flo:s$>>, ocond_opt
+    | Lit_string x ->
+	let v = fresh_avar_at loc in
+	let cond = <:expr< $lid: avar_to_lid v$
+			 = String.of_utf8 $str: UString.to_utf8 x$ >> in
+	let cond =
+	    match ocond_opt with
+	    | None -> cond
+	    | Some cond' -> <:expr< $cond'$ && $cond$ >> in
+	<:patt< $lid: avar_to_lid v$ >>, Some cond
 
 let emit_aval_literal loc lit =
     let _loc = p4loc loc in
@@ -133,39 +141,48 @@ let emit_aval_literal loc lit =
     | Lit_bool x   -> if x then <:expr< True >> else <:expr< False >>
     | Lit_int x    -> let s = string_of_int x in <:expr< $int:s$ >>
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
-    | Lit_string x -> let s = UString.to_utf8 x in <:expr< $str:s$ >>
+    | Lit_string x ->
+	let s = UString.to_utf8 x in
+	<:expr< String.of_utf8 $str:s$ >>
 
 let emit_apat_fixed _loc default = function
     | "[]" -> <:patt< [] >>
     | _ -> default ()
 
 let rec emit_apat = function
-    | Apat_literal (loc, lit) ->
-	<:patt< $emit_apat_literal loc lit$ >>
-    | Apat_ref p ->
+    | Apat_literal (loc, lit) -> fun ocond_opt ->
+	emit_apat_literal loc lit ocond_opt
+    | Apat_ref p -> fun ocond_opt ->
 	let _loc = p4loc (apath_loc p) in
 	let default () = <:patt< $id: emit_apath_uid p$ >> in
 	begin match p with
 	| Apath ([], Avar (_, Idr s)) -> emit_apat_fixed _loc default s
 	| _ -> default ()
-	end
+	end, ocond_opt
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
-	<:patt< $lid: avar_to_lid v$ >>
+	fun ocond_opt -> <:patt< $lid: avar_to_lid v$ >>, ocond_opt
     | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
-	    when apath_is Cst_core.idr_list_push op ->
+	    when apath_is Cst_core.idr_list_push op -> fun ocond_opt ->
 	let _loc = p4loc loc in
-	<:patt< [$emit_apat x$ :: $emit_apat y$] >>
+	let ox, ocond_opt = emit_apat x ocond_opt in
+	let oy, ocond_opt = emit_apat y ocond_opt in
+	<:patt< [$ox$ :: $oy$] >>, ocond_opt
     | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
-	    when apath_is Cst_core.idr_2o_comma op ->
+	    when apath_is Cst_core.idr_2o_comma op -> fun ocond_opt ->
 	let _loc = p4loc loc in
-	<:patt< ($emit_apat x$, $emit_apat y$) >>
-    | Apat_apply (loc, p0, p1) ->
+	let ox, ocond_opt = emit_apat x ocond_opt in
+	let oy, ocond_opt = emit_apat y ocond_opt in
+	<:patt< ($ox$, $oy$) >>, ocond_opt
+    | Apat_apply (loc, x, y) -> fun ocond_opt ->
 	let _loc = p4loc loc in
-	<:patt< $emit_apat p0$ $emit_apat p1$ >>
-    | Apat_intype (loc, t, p) ->
+	let ox, ocond_opt = emit_apat x ocond_opt in
+	let oy, ocond_opt = emit_apat y ocond_opt in
+	<:patt< $ox$ $oy$ >>, ocond_opt
+    | Apat_intype (loc, t, x) -> fun ocond_opt ->
 	let _loc = p4loc loc in
-	<:patt< ($emit_apat p$ : $emit_atyp t$) >>
+	let ox, ocond_opt = emit_apat x ocond_opt in
+	<:patt< ($ox$ : $emit_atyp t$) >>, ocond_opt
 
 let emit_aval_fixed _loc default = function
     | "[]" -> <:expr< [] >>
@@ -204,12 +221,18 @@ let rec emit_aval = function
 		with [ $list: List.map emit_match_case cases$ ] >>
     | Aval_let (loc, p, x, body) ->
 	let _loc = p4loc loc in
-	<:expr< let $pat: emit_apat p$ = $emit_aval x$ in $emit_aval body$ >>
+	let op, ocond_opt = emit_apat p None in
+	if ocond_opt <> None then
+	    errf_at loc "Cannot match string literals in let-binding.";
+	<:expr< let $pat: op$ = $emit_aval x$ in $emit_aval body$ >>
     | Aval_letrec (loc, bindings, body) ->
 	let _loc = p4loc loc in
 	let emit_binding (loc, x, body) =
 	    let _loc = p4loc loc in
-	    <:binding< $pat: emit_apat x$ = $emit_aval body$ >> in
+	    let ox, ocond_opt = emit_apat x None in
+	    if ocond_opt <> None then
+		errf_at loc "Cannot match string literals in let-binding.";
+	    <:binding< $pat: ox$ = $emit_aval body$ >> in
 	<:expr< let rec $list: List.map emit_binding bindings$
 		in $emit_aval body$ >>
     | Aval_if (loc, cond, cq, ccq) ->
@@ -221,13 +244,12 @@ let rec emit_aval = function
     | Aval_raise (loc, x) ->
 	let _loc = p4loc loc in
 	<:expr< raise $emit_aval x$ >>
-and emit_match_case (pat, cond_opt, body) =
-    let opat = emit_apat pat in
+and emit_match_case (pat, ocond_opt, body) =
+    let opat, ocond_opt = emit_apat pat (Option.map emit_aval ocond_opt) in
     let obody = emit_aval body in
     let _loc = p4loc (Location.span [apat_loc pat; aval_loc body]) in
-    match cond_opt with
-    | Some cond ->
-	let ocond = emit_aval cond in
+    match ocond_opt with
+    | Some ocond ->
 	<:match_case< $pat: opat$ when $ocond$ -> $obody$ >>
     | None ->
 	<:match_case< $pat: opat$ -> $obody$ >>
@@ -374,7 +396,10 @@ and emit_adef = function
 	<:str_item< $list: [odef; odef_aliases]$ >>
     | Adef_let (loc, v, x) ->
 	let _loc = p4loc loc in
-	<:str_item< value $pat: emit_apat v$ = $emit_aval x$ >>
+	let ov, ocond_opt = emit_apat v None in
+	if ocond_opt <> None then
+	    errf_at loc "Cannot match string literal in let-binding.";
+	<:str_item< value $pat: ov$ = $emit_aval x$ >>
     | Adef_letrec bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in

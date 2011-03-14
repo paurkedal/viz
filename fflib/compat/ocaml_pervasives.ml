@@ -16,6 +16,8 @@
  * along with Fform.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_unicode
+
 module Bool_ops = struct
     let op1_U00ac = Pervasives.not
     let op2_U2227 = Pervasives.( && )
@@ -46,13 +48,15 @@ module Int_ops = struct
 end
 
 module Int_misc = struct
-    let show = Pervasives.string_of_int
+    let show i = String.of_utf8 (Pervasives.string_of_int i)
 end
 
 module Io_misc = struct
     open Ocaml_prereq
-    let print s = __unsafe_action (fun () -> Pervasives.print_string s)
-    let eprint s = __unsafe_action (fun () -> Pervasives.prerr_string s)
-    let fprint ochan s =
-	__unsafe_action (fun () -> Pervasives.output_string ochan s)
+    let print s = __unsafe_action
+	(fun () -> Pervasives.print_string (String.as_utf8 s))
+    let eprint s = __unsafe_action
+	(fun () -> Pervasives.prerr_string (String.as_utf8 s))
+    let fprint ochan s = __unsafe_action
+	(fun () -> Pervasives.output_string ochan (String.as_utf8 s))
 end

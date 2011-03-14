@@ -25,6 +25,10 @@ let avar_idr (Avar (_, idr)) = idr
 let avar_name (Avar (_, Idr s)) = s
 let avar_loc (Avar (loc, _)) = loc
 
+let fresh_avar_at ?(prefix = "_x") loc =
+    let chno = Location.Bound.charno (Location.lbound loc) in
+    Avar (loc, Idr (prefix ^ (string_of_int chno)))
+
 let apath_loc = function
     | Apath ([], v) -> avar_loc v
     | Apath (avs, v) ->

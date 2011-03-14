@@ -52,3 +52,5 @@ in action_ops
     let return be __builtin_action_return
     let 2'>>= m k be __builtin_action_bind k m
     let 2'>> m n be __builtin_action_bind (() +> n) m
+
+#?ffoc include compat.ocaml_unicode

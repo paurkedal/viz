@@ -38,3 +38,5 @@ val adef_loc : adef -> loc
 val apat_uvar_any : loc -> apat
 val apat_uvar_of_idr : loc -> idr -> apat
 val aval_ref_of_idr : loc -> idr -> aval
+
+val fresh_avar_at : ?prefix: string -> loc -> avar
