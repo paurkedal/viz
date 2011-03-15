@@ -62,8 +62,6 @@ module UChar = struct
 	| `Zs -> true
 	| _ -> false
 
-    let are_tied ch0 ch1 = is_idrchr ch0 && is_idrchr ch1
-
     let is_ascii_digit ch = let i = uint_code ch in 0x30 <= i && i <= 0x39
     let is_ascii_lower ch = let i = uint_code ch in 0x61 <= i && i <= 0x7a
     let is_ascii_upper ch = let i = uint_code ch in 0x41 <= i && i <= 0x5a
@@ -83,6 +81,10 @@ module UChar = struct
     let is_ocaml_idrcnt ch =
 	is_ascii_alnum ch ||
 	match uint_code ch with 0x27 | 0x5f -> true | _ -> false
+
+    let are_tied ch0 ch1 =
+	   is_idrchr ch0 && is_idrchr ch1
+	|| ch0 = ch_dash && is_ascii_digit ch1
 
     let to_utf8 ch =
 	UString_encoding.encode CharEncoding.utf8 (UText.init 1 (fun _ -> ch))

@@ -436,37 +436,30 @@ let scan_int have_sign base state =
 	    if 0x30 <= code && code <= 0x39 then code - 0x30 else
 	    if 0x61 <= code && code <= 0x66 then code - 0x61 + 10 else
 	    raise Grammar.Error in
-	LStream.skip state.st_stream;
-	f (value + base * accu) in
+	if value >= base then raise Grammar.Error else
+	(LStream.skip state.st_stream; f (value + base * accu)) in
     let n = (f 0) in
     Lit_int (if have_sign then -n else n)
 
 let scan_literal state =
     let found lit =
 	Some (Grammar.LITERAL lit) in
-    let chcode_at n =
-	match LStream.peek_at n state.st_stream with
-	| None -> 0
-	| Some ch -> UChar.code ch in
-    let (n_sign, have_sign) =
-	if chcode_at 0 = 0x2d then (1, true) else (0, false) in
-    match chcode_at n_sign with
-    | 0x22 ->
-	if have_sign then None else found (scan_string_literal state)
-    | 0x30 ->
-	LStream.skip_n n_sign state.st_stream;
-	begin match chcode_at 1 with
-	| 0x62 (* 0b *) -> found (scan_int have_sign  2 state)
-	| 0x6f (* 0o *) -> found (scan_int have_sign  8 state)
-	| 0x78 (* 0x *) -> found (scan_int have_sign 16 state)
-	| _ -> found (scan_int have_sign 10 state)
-	end
-    | ch0 ->
-	LStream.skip_n n_sign state.st_stream;
-	if 0x30 <= ch0 && ch0 <= 0x39 then
-	    if chcode_at 1 = 0x27 (* ' *) then None else
-	    found (scan_int have_sign 10 state)
-	else None
+    let found_int n_skip have_sign base =
+	LStream.skip_n n_skip state.st_stream;
+	found (scan_int have_sign base state) in
+    match LStream.peek_n_code 3 state.st_stream with
+    | 0x22 :: _ -> found (scan_string_literal state)
+    | 0x30 :: 0x62 :: _ -> found_int 2 false 2
+    | 0x30 :: 0x6f :: _ -> found_int 2 false 8
+    | 0x30 :: 0x78 :: _ -> found_int 2 false 16
+    | ch0 :: ch1 :: _ when 0x30 <= ch0 && ch0 <= 0x39 && ch1 != 0x27 ->
+	found_int 0 false 10
+    | 0x2d :: 0x30 :: 0x62 :: _ -> found_int 3 true 2
+    | 0x2d :: 0x30 :: 0x6f :: _ -> found_int 3 true 8
+    | 0x2d :: 0x30 :: 0x78 :: _ -> found_int 3 true 16
+    | 0x2d :: ch0 :: ch1 :: _ when 0x30 <= ch0 && ch0 <= 0x39 && ch1 != 0x27 ->
+	found_int 1 true 10
+    | _ -> None
 
 let scan_eof state =
     if LStream.peek state.st_stream = None then
