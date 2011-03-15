@@ -1,26 +1,34 @@
-OCAMLBUILD = ocamlbuild
+all: prefform-all
 
-BYTE	= bin/ffoc1pp.byte libfflib.a fflib.cma
-NATIVE	= bin/ffoc1pp.native libfflib.a fflib.cmxa
-
-native:
-	$(OCAMLBUILD) $(NATIVE)
-byte:
-	$(OCAMLBUILD) $(BYTE)
-all:
-	$(OCAMLBUILD) $(BYTE) $(NATIVE)
-clean:
-	$(OCAMLBUILD) -clean
-
-check:
-	$(OCAMLBUILD) ffoc1-tests/test.byte -- -verbose
-
-doc:
-	$(OCAMLBUILD) ffoc1.docdir/index.html
+clean: prefform-clean
 
 install:
-	@echo 'There is no production compiler to install yet, but you can'
-	@echo 'create a symbolic link to bin/ffoc1pp or add the bin/ dir to'
-	@echo 'your $$PATH for testing.'
+	@echo 'There is no production compiler to install yet.  README.rst'
+	@echo 'explains how to the current code nevertheless.'
 
-.PHONY: all byte native clean check doc install
+.PHONY: all clean install
+
+# The ffoc1 Camlp4 Preprocessor and Associated fflib
+# ==================================================
+
+OCAMLBUILD = ocamlbuild
+PREFFORM_BYTE	= bin/ffoc1pp.byte libfflib.a fflib.cma
+PREFFORM_NATIVE	= bin/ffoc1pp.native libfflib.a fflib.cmxa
+
+prefform-native:
+	$(OCAMLBUILD) $(PREFFORM_NATIVE)
+prefform-byte:
+	$(OCAMLBUILD) $(PREFFORM_BYTE)
+prefform-all:
+	$(OCAMLBUILD) $(PREFFORM_BYTE) $(PREFFORM_NATIVE)
+prefform-clean:
+	$(OCAMLBUILD) -clean
+
+prefform-check:
+	$(OCAMLBUILD) ffoc1-tests/test.byte -- -verbose
+
+prefform-doc:
+	$(OCAMLBUILD) ffoc1.docdir/index.html
+
+.PHONY: prefform-all prefform-byte prefform-native
+.PHONY: prefform-clean prefform-check prefform-doc

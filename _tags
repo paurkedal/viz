@@ -23,4 +23,4 @@
 <fflib/system/*.cmx>: for-pack(System)
 
 <fflib.{cma,cmxa}>: use_libfflib
-<{examples,tests}/*.{byte,native}>: use_fflib
+<{examples,tests,tools}/**/*.{ff,byte,native}>: use_fflib
