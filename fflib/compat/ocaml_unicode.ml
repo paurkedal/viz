@@ -16,6 +16,7 @@
  * along with Fform.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_prereq
 open CamomileLibrary.Default.Camomile
 
 module UString_encoding = CharEncoding.Make (UText)
@@ -34,4 +35,7 @@ module String = struct
     type t = string
     let of_utf8 = UString_encoding.decode CharEncoding.utf8
     let as_utf8 = UString_encoding.encode CharEncoding.utf8
+
+    let eq (x : string) (y : string) = x = y
+    let cmp (x : string) (y : string) = __generic_cmp x y
 end

@@ -27,4 +27,4 @@ in list include data.list
 val print : string → io unit
 val eprint : string → io unit
 
-#?ffoc include compat.ocaml_pervasives.io_misc
+#?ffoc include compat.ocaml_pervasives.pervasive

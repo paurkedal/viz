@@ -126,8 +126,8 @@ let emit_apat_literal loc lit ocond_opt =
     | Lit_float x  -> let s = string_of_float x in <:patt<$flo:s$>>, ocond_opt
     | Lit_string x ->
 	let v = fresh_avar_at loc in
-	let cond = <:expr< $lid: avar_to_lid v$
-			 = String.of_utf8 $str: UString.to_utf8 x$ >> in
+	let cond = <:expr< String.eq $lid: avar_to_lid v$
+				(String.of_utf8 $str: UString.to_utf8 x$) >> in
 	let cond =
 	    match ocond_opt with
 	    | None -> cond

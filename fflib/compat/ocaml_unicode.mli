@@ -16,6 +16,7 @@
  * along with Fform.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_prereq
 open CamomileLibrary.Default.Camomile
 
 type char = UChar.t
@@ -32,4 +33,7 @@ module String : sig
     type t = string
     val of_utf8 : utf8 -> string
     val as_utf8 : string -> utf8
+
+    val eq : string -> string -> bool
+    val cmp : string -> string -> torder
 end
