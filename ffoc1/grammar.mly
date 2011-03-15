@@ -21,6 +21,7 @@ open Cst_types
 open Cst_core
 open Leaf_types
 open Leaf_core
+open Unicode
 
 let mkloc lb ub =
     Location.between (Location.Bound.of_lexing_position lb)
@@ -50,6 +51,17 @@ let apply_prefix_script lb ub lbf ubf f =
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)
     apply loc (Ctrm_ref (Cidr (loc, name0), Ih_none))
+
+let cpred_failure loc msg_opt =
+    let cloc = Ctrm_literal (loc, Lit_string
+		(UString.of_utf8 (Location.to_string loc))) in
+    let msg =
+	match msg_opt with
+	| Some msg -> msg
+	| None -> Ctrm_literal (loc, Lit_string
+		(UString.of_utf8 "This point should be unreachable.")) in
+    let failure = Ctrm_ref (Cidr (loc, Idr "__failure"), Ih_none) in
+    Cpred_be (loc, Ctrm_apply (loc, Ctrm_apply (loc, failure, cloc), msg))
 %}
 
 %token EOF
@@ -65,7 +77,7 @@ let apply_fence loc name0 name1 =
 %token WHERE WITH
 %token SKIP ENDSKIP /* Hack for ffoc1pp only. */
 
-%token ASSERT BE
+%token ASSERT BE FAIL
 %token <Cst_types.cmonad> DO
 %token RAISE
 %token UPON
@@ -206,6 +218,8 @@ term: expr {$1};
 predicate_block: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
     BE term { Cpred_be (mkloc $startpos $endpos, $2) }
+  | FAIL { cpred_failure (mkloc $startpos $endpos) None }
+  | FAIL term { cpred_failure (mkloc $startpos $endpos) (Some $2) }
   | RAISE term { Cpred_raise (mkloc $startpos $endpos, $2) }
   ;
 compound_predicate:

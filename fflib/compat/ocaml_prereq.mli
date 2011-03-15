@@ -16,6 +16,8 @@
  * along with Fform.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_unicode
+
 type ('f, 'a) action
 (** A monad type for sequencing actions.  The first type parameter is the
     "pocket" in which the action is valid, and the second type parameter is
@@ -37,6 +39,8 @@ val __unsafe_run_action : ('f, 'a) action -> 'a
 val __builtin_action_return : 'a -> ('f, 'a) action
 val __builtin_action_bind
     : ('a -> ('f, 'b) action) -> ('f, 'a) action -> ('f, 'b) action
+
+val __failure : string -> string -> 'a
 
 val none : 'a option
 val some : 'a -> 'a option

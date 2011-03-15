@@ -16,6 +16,8 @@
  * along with Fform.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_unicode
+
 (* Dark spells about the world state. *)
 type ('f, 'a) action = Unsafe_thunk of (unit -> 'a)
 type world_pocket
@@ -26,6 +28,10 @@ let __unsafe_run_action (Unsafe_thunk f) = f ()
 let __builtin_action_return x = Unsafe_thunk (fun () -> x)
 let __builtin_action_bind k (Unsafe_thunk f) =
     Unsafe_thunk (fun () -> __unsafe_run_action (k (f ())))
+
+let __failure loc msg =
+    Printf.eprintf "%s: %s\n" (String.as_utf8 loc) (String.as_utf8 msg);
+    assert false
 
 (* Options *)
 let none = None
