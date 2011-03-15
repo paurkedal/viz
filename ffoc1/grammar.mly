@@ -78,7 +78,7 @@ let cpred_failure loc msg_opt =
 %token SKIP ENDSKIP /* Hack for ffoc1pp only. */
 
 %token ASSERT BE FAIL
-%token <Cst_types.cmonad> DO
+%token <Cst_types.cmonad> DO WHEN
 %token RAISE
 %token UPON
 
@@ -265,6 +265,18 @@ do_predicate:
     { Cpred_do1 (mkloc $startpos $endpos, $1, $2) }
   | DO expr nonfunction_predicate_with_participle
     { Cpred_do2 (mkloc $startpos $endpos, $1, $2, $3) }
+  | WHEN expr predicate_block
+    {
+	let loc = mkloc $startpos $endpos in
+	Cpred_if (loc, $2, $3, Cpred_be (loc, Ctrm_literal (loc, Lit_unit)))
+    }
+  | WHEN expr predicate_block nonfunction_predicate_with_participle
+    {
+	let loc = mkloc $startpos $endpos in
+	let m = Cpred_if (loc, $2, $3,
+		    Cpred_be (loc, Ctrm_literal (loc, Lit_unit))) in
+	Cpred_do2 (loc, $1, Ctrm_what (loc, Some $1, m), $4)
+    }
   ;
 
 /* Participles */

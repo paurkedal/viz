@@ -93,6 +93,7 @@ let initial_intro_keywords = [
     "assert",	Grammar.ASSERT;
     "be",	Grammar.BE;
     "do",	Grammar.DO "";
+    "when",	Grammar.WHEN "";
     "raise",	Grammar.RAISE;
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
