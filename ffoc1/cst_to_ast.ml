@@ -153,7 +153,7 @@ and build_aval_pure = function
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)
     | Cpred_raise (loc, _) ->
-	raise (Failure "Internal error: Should be pure.")
+	errf_at loc "Monadic code is not allowed here."
 and build_aval_monad mm = function
     | Cpred_let (loc, None, cpat, crhs, ccont)
 	    when not (Cst_utils.cpred_is_pure crhs) ->	(* Monadic Case *)
@@ -172,7 +172,7 @@ and build_aval_monad mm = function
 	    when not (Cst_utils.is_formal cpat) ->
 	let arhs = build_aval cm_opt cpred in
 	let apat = build_apat cpat in
-	let acont = build_aval_pure ccont in
+	let acont = build_aval_monad mm ccont in
 	Aval_let (loc, apat, arhs, acont)
     | Cpred_let (loc, _, _, _, _) as clet ->		(* Recursive Case *)
 	let rec loop bindings = function
