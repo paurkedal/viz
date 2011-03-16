@@ -26,9 +26,6 @@ val cidr_loc : cidr -> loc
 val cidr_to_idr : cidr -> idr
 val cidr_to_string : cidr -> string
 
-module Idr_set : Set.S with type elt = idr
-module Idr_map : Map.S with type key = idr
-
 val cpred_loc : cpred -> loc
 val ctrm_loc : ctrm -> loc
 

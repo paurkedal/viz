@@ -58,13 +58,6 @@ let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor
 let cidr_is_1o_asterisk	(Cidr (_, idr)) = idr = idr_1o_asterisk
 let cidr_is_2b_dotbracket (Cidr (_, idr)) = idr = idr_2b_dotbracket
 
-module Idr = struct
-    type t = idr
-    let compare (Idr x) (Idr y) = compare x y
-end
-module Idr_set = Set.Make (Idr)
-module Idr_map = Map.Make (Idr)
-
 let cmonad_io = ""
 
 let cpred_loc = function

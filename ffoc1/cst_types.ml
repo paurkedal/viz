@@ -25,8 +25,6 @@ TYPE_CONV_PATH "Ffoc1.Cst_types"
 open Sexplib
 open Leaf_types
 
-type loc = Location.t
-
 type idrhint = Ih_none | Ih_univ | Ih_inj
 
 type cidr = Cidr of loc * idr

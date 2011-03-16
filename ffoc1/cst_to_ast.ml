@@ -20,6 +20,7 @@ open Cst_types
 open Cst_core
 open Ast_types
 open Ast_core
+open Ast_letrec
 open Leaf_types
 open Leaf_core
 open Diag
@@ -137,10 +138,16 @@ and build_aval_pure = function
 		let avar, arhs = wrap_abstractions cpat arhs in
 		(* TODO: Can extract typing from cpat and pass it here. *)
 		loop ((loc, avar, None, arhs) :: bindings) ccont
-	    | ccont ->
-		let acont = build_aval_pure ccont in
-		Aval_letrec (loc, List.rev bindings, acont) in
-	loop [] clet
+	    | ccont -> (bindings, build_aval_pure ccont) in
+	let wrap_let = function
+	    | Adef_let (loc, apat, arhs) ->
+		fun acont -> Aval_let (loc, apat, arhs, acont)
+	    | Adef_letrec bindings ->
+		fun acont -> Aval_letrec (loc, bindings, acont)
+	    | _ -> assert false in
+	let bindings, acont = loop [] clet in
+	let adefs = collect_binding_components bindings [] in
+	List.fold wrap_let adefs acont
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond, build_aval_pure cq, build_aval_pure ccq)
     | Cpred_at (loc, cases) ->
@@ -416,58 +423,6 @@ and build_adecs adecs = function
     | [] -> List.rev adecs
 
 
-module Avcases_graph = struct
-    type graph = (Idr_set.t * (loc * avar * atyp option * aval)) Idr_map.t
-    type vertex = idr
-    module Vertex_map = Idr_map
-
-    let empty : graph = Idr_map.empty
-
-    let fold_adjacent (g : graph) f v =
-	try
-	    let (vs, _) = Idr_map.find v g in
-	    Idr_set.fold f vs
-	with Not_found -> ident
-end
-
-module Avcases_algo = Graphalgo.ST_algo (Avcases_graph)
-
-let fold_aval_deps f aval =
-    let f' stratum path =
-	match (stratum, path) with
-	| `Value, Apath ([], Avar (_, idr)) -> f idr
-	| _ -> ident in
-    Ast_utils.fold_aval_paths f' aval
-
-let break_rec_and_push_avcases avcases =
-    (* Build dependency graph. *)
-    let add_vertex ((_, Avar (_, v), _, aval) as avcase) (g, vs) =
-	let deps = fold_aval_deps Idr_set.add aval Idr_set.empty in
-	let g = Idr_map.add v (deps, avcase) g in
-	(g, v :: vs) in
-    let (g, vs) = List.fold add_vertex avcases (Avcases_graph.empty, []) in
-    let vs = List.rev vs in
-
-    (* Remove dependecies not included in g. *)
-    let g = Idr_map.map
-	(fun (vs, avcase) ->
-	    (Idr_set.filter (fun v -> Idr_map.mem v g) vs, avcase)) g in
-
-    (* Emit the components as individual Adef_letrec definitions. *)
-    let vertex_deps v   = match Idr_map.find v g with (deps, _) -> deps in
-    let vertex_avcase v = match Idr_map.find v g with (_, avcase) -> avcase in
-    let push_component vs adefs =
-	match vs with
-	| [v] when not (Idr_set.mem v (vertex_deps v)) ->
-	    let (loc, v, t_opt, x) = vertex_avcase v in
-	    let pat =
-		match t_opt with
-		| None -> Apat_uvar v
-		| Some t -> Apat_intype (loc, t, Apat_uvar v) in
-	    Adef_let (loc, pat, x) :: adefs
-	| _ -> Adef_letrec (List.map vertex_avcase vs) :: adefs in
-    Avcases_algo.fold_strongly_connected g push_component vs
-
 let wrap_amod_lambda ?loc_opt cxvarsig amod =
     let loc = Option.default (ctrm_loc cxvarsig) loc_opt in
     let cxvar, cxsig = Cst_utils.extract_term_typing cxvarsig in
@@ -569,7 +524,7 @@ and build_adefs adecmap adefs = function
 		Some (loc, avar, at_opt, aval)
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
-	build_adefs adecmap (break_rec_and_push_avcases avcases adefs) xs'
+	build_adefs adecmap (collect_binding_components avcases adefs) xs'
     | Cdef_inj (loc, p) :: xs ->
 	errf_at loc "Injections must follow a type definition."
     | Cdef_lex _ :: xs -> build_adefs adecmap adefs xs

@@ -16,27 +16,9 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-TYPE_CONV_PATH "Ffoc1.Cst_types"
-open Sexplib
-open Unicode
+open Leaf_types
+open Ast_types
 
-type loc = Location.t
+type binding = loc * avar * atyp option * aval
 
-type idr = Idr of string with sexp
-
-type lit =
-    | Lit_unit
-    | Lit_bool of bool
-    | Lit_int of int
-    | Lit_float of float
-    | Lit_string of UString.t
-    with sexp
-
-type stratum = [`Type | `Value | `Signature | `Structure]
-
-type abi = Abi_Fform | Abi_C with sexp
-
-type type_exposure = [`Default | `Local | `Abstract | `Exported]
-type val_exposure = [`Default | `Local | `Exported]
-
-type val_info = val_exposure * abi
+val collect_binding_components : binding list -> adef list -> adef list
