@@ -149,7 +149,9 @@ let rec fold_aval_paths f =
 	fold_apat_paths f p *> fold_aval_paths f rhs *> fold_aval_paths f body
     | Aval_letrec (_, bindings, body) ->
 	List.fold
-	    (fun (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x)
+	    (fun (_, v, topt, x) ->
+		Option.fold (fold_atyp_paths (f `Type)) topt *>
+		fold_aval_paths f x)
 	    bindings *>
 	fold_aval_paths f body
     | Aval_if (_, c, cq, ccq) ->

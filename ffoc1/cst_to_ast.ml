@@ -116,7 +116,7 @@ let wrap_abstractions cpat arhs =
 	let aarg = build_apat carg in
 	Aval_at (ctrm_loc carg, [(aarg, None, arhs)]) in
     let cpat, arhs = Cst_utils.fold_formal_args wrap (cpat, arhs) in
-    (build_apat cpat, arhs)
+    (build_avar cpat, arhs)
 
 let rec build_aval cm_opt cpred =
     match cm_opt with
@@ -134,8 +134,9 @@ and build_aval_pure = function
 	    | Cpred_let (loc, cm_opt, cpat, crhs, ccont)
 		    when Cst_utils.is_formal cpat ->
 		let arhs = build_aval cm_opt crhs in
-		let apat, arhs = wrap_abstractions cpat arhs in
-		loop ((loc, apat, arhs) :: bindings) ccont
+		let avar, arhs = wrap_abstractions cpat arhs in
+		(* TODO: Can extract typing from cpat and pass it here. *)
+		loop ((loc, avar, None, arhs) :: bindings) ccont
 	    | ccont ->
 		let acont = build_aval_pure ccont in
 		Aval_letrec (loc, List.rev bindings, acont) in
@@ -180,11 +181,12 @@ and build_aval_monad mm = function
 		    when Cst_utils.is_formal cpat
 		      && cm_opt <> None || Cst_utils.cpred_is_pure crhs ->
 		let arhs = build_aval cm_opt crhs in
-		let apat, arhs = wrap_abstractions cpat arhs in
-		loop ((loc, apat, arhs) :: bindings) ccont
+		let avar, arhs = wrap_abstractions cpat arhs in
+		(* TODO: Can extract typing from cpat and pass it here. *)
+		loop ((loc, avar, None, arhs) :: bindings) ccont
 	    | ccont ->
 		let acont = build_aval_monad mm ccont in
-		let (last_loc, _, _) = List.hd bindings in
+		let (last_loc, _, _, _) = List.hd bindings in
 		let loc = Location.span [cpred_loc ccont; last_loc] in
 		Aval_letrec (loc, List.rev bindings, acont) in
 	loop [] clet

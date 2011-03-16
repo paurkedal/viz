@@ -227,12 +227,12 @@ let rec emit_aval = function
 	<:expr< let $pat: op$ = $emit_aval x$ in $emit_aval body$ >>
     | Aval_letrec (loc, bindings, body) ->
 	let _loc = p4loc loc in
-	let emit_binding (loc, x, body) =
+	let emit_binding (loc, v, topt, body) =
 	    let _loc = p4loc loc in
-	    let ox, ocond_opt = emit_apat x None in
-	    if ocond_opt <> None then
-		errf_at loc "Cannot match string literals in let-binding.";
-	    <:binding< $pat: ox$ = $emit_aval body$ >> in
+	    match topt with
+	    | None ->   <:binding< $lid: avar_to_lid v$ = $emit_aval body$ >>
+	    | Some t -> <:binding< $lid: avar_to_lid v$ : $emit_atyp t$
+				   = $emit_aval body$ >> in
 	<:expr< let rec $list: List.map emit_binding bindings$
 		in $emit_aval body$ >>
     | Aval_if (loc, cond, cq, ccq) ->
