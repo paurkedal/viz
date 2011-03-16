@@ -16,10 +16,10 @@
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
 lex L0	⊢ ⊣ ⊧ ⊨
-lex L1	;
-lex L3	: := ≡
-lex L4	, <+> <@ <* (12'∘)
-lex L5	↦ ⇒ ⇔ @> *> >>= >>
+lex L1	: := ≡
+lex L2	<+> <@ <* (12'∘)
+lex L3	; ↦ ⇒ ⇔ @> *> >>= >>
+lex L4	,
 lex L6	∨ ⊻
 lex L7
 lex L8	∧ ¬
