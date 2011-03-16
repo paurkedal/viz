@@ -15,45 +15,36 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
-lex L0	⊢ ⊣ ⊧ ⊨
+#	Operators		ASCII Variants
+#	--------------------------------------------------------------------
+lex L0	⊢ ⊣ ⊧ ⊨			|- (12'⊢)  -| (12'⊣) |= (12'⊧) |== (12'⊨)
 lex L1	: := ≡
-lex L2	<+> <@ <* (12'∘)
-lex L3	; ↦ ⇒ ⇔ @> *> >>= >>
+lex L2	<+>     <@ <* (12'∘)
+lex L3	; ↦ ⇒ ⇔ @> *> >>= >>	+> (12'↦) => (12'⇒) <=> (12'⇔)
 lex L4	,
-lex L6	∨ ⊻
+lex L6	∨ ⊻			\/ (12'∨)
 lex L7
-lex L8	∧ ¬
+lex L8	∧ ¬			/\ (12'∧) not (12'¬)
 
-lex Q	∀ ∃ Fun
-lex R	= ≠ < > ≤ ≥ ≺ ≻ ≼ ≽ ∈ ⊂ ⊃ ⊆ ⊇ ⊏ ⊐ ⊑ ⊒
+lex Q	∀ ∃ Fun			A` (2'∀) E` (2'∃)
+lex R	= ≠ < > ≤ ≥		!= (2'≠) <= (2'≤) >= (2'≥)
+lex R	≺ ≻ ≼ ≽
+lex R	∈ ⊂ ⊃ ⊆ ⊇ ⊏ ⊐ ⊑ ⊒	<: (2'∈)
+lex R
 
-lex A1	→ ↔
-lex A2	+ −
+lex A1	→ ↔			-> (12'→) <-> (12'↔)
+lex A2	+ −			- (12'−)
 lex A4	∪
-lex A6	× ⋅ / ∘ div mod quo rem
+lex A6	× ⋅ / ∘ div mod quo rem	* (12'×) o` (12'∘)
 lex A8	∩
 
 lex S0	^ ↑ ↓
 lex S2S	!
 lex S2	# @
 
-lex BL ( [ { ⌈ ⌊ ⟦ #[
-lex BR ) ] } ⌉ ⌋ ⟧
-lex S2L .[
+lex BL	( [ { ⌈ ⌊ ⟦ #[
+lex BR	) ] } ⌉ ⌋ ⟧
+lex S2L	.[
 
 lex I	⊤ ⊥
 lex I	[;] ([;]) {;} ({;})
-
-# ASCII Variants
-# ==============
-
-lex L0	|- (12'⊢)  -| (12'⊣) |= (12'⊧) |== (12'⊨)
-lex L5	-> (12'→) <-> (12'↔) +> (12'↦) ==> (12'⇒) <=> (12'⇔)
-lex L6	\/ (12'∨)
-lex L8	/\ (12'∧) not (12'¬)
-
-lex Q	A` (2'∀) E` (2'∃)
-lex R	!= (2'≠) <= (2'≤) >= (2'≥) <: (2'∈)
-
-lex A2	- (12'−)
-lex A6	* (12'×) o` (12'∘)
