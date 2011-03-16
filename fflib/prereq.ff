@@ -17,32 +17,25 @@
 
 #?ffoc include compat.ocaml_prereq
 
-val ident : α → α
- ## The identity function, (ident x ≡ x), also known as the I combinator.
+in combinators
+    let ident x be x
+    let konst x y be x
+    let (g <* f) x be g (f x) -- also g ∘ f
+    let (f *> g) x be g (f x)
+    let f <@ x be f x -- f "at" x
+    let x @> f be f x -- x "under" f
 
-val konst : α → β → α
- ## (konst x y ≡ x).  (konst) is also known as the K combinator.
+in bool_ops
+    #?ffoc include compat.ocaml_pervasives.bool_ops
 
-val 2'∘ : (β → γ) → (α → β) → α → γ
- ## Function composition, ((f ∘ g) x ≡ f (g x)).
-
-val 2'*> : (α → β) → (β → γ) → α → γ
- ## Function composition with arguments reversed.
-
-val 2'<@ : (α → β) → α → β
- ## (f <@ x ≡ f x) is the value of (f) at (x).  I.e. (<@) is a low-precedence
- ## variant of the application operator.  It can be pronounced "at" or "of".
-
-val 2'@> : α → (α → β) → β
- ## (x @> f ≡ f x) is the image of (x) under (f).  I.e. (@>) is a reversed
- ## low-precedence application operator.  It can be pronounced "under".
-
-let ident x be x
-let konst x y be x
-let (g <* f) x be g (f x) -- also g ∘ f
-let (f *> g) x be g (f x)
-let f <@ x be f x -- f "at" x
-let x @> f be f x -- x "under" f
+in int_ops
+    val 1'- : int → int
+    val 2'+ : int → int → int
+    val 2'- : int → int → int
+    val 2'* : int → int → int
+    val 2'/ : int → int → int
+    val 2'mod : int → int → int
+    #?ffoc include compat.ocaml_pervasives.int_ops
 
 in action_ops
     val return : α → action φ α
@@ -53,4 +46,10 @@ in action_ops
     let 2'>>= m k be __builtin_action_bind k m
     let 2'>> m n be __builtin_action_bind (() +> n) m
 
+# This is for our own use, as we typically open prereq on the top of each
+# library structure.  The pervasive structure does a similar inclusion for
+# client code.
+include combinators
+include bool_ops
+include int_ops
 #?ffoc include compat.ocaml_unicode

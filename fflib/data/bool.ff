@@ -19,6 +19,8 @@ open prereq
 
 type t = bool
 
+in ops include bool_ops
+
 val show : bool → string
  ## (show b) converts (true) to ("true") and (false) to ("false").
 

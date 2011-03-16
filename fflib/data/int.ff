@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
+open prereq
+
 type t = int
 
 in ops
@@ -24,8 +26,7 @@ in ops
     val 2'* : int → int → int
     val 2'/ : int → int → int
     val 2'mod : int → int → int
-
-    #?ffoc include compat.ocaml_pervasives.int_ops
+    include int_ops
 
 val show : t → string
 

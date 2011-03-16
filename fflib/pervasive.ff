@@ -15,13 +15,31 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
-include prereq
+val ident : α → α
+ ## The identity function, (ident x ≡ x), also known as the I combinator.
+
+val konst : α → β → α
+ ## (konst x y ≡ x).  (konst) is also known as the K combinator.
+
+val 2'∘ : (β → γ) → (α → β) → α → γ
+ ## Function composition, ((f ∘ g) x ≡ f (g x)).
+
+val 2'*> : (α → β) → (β → γ) → α → γ
+ ## Function composition with arguments reversed.
+
+val 2'<@ : (α → β) → α → β
+ ## (f <@ x ≡ f x) is the value of (f) at (x).  I.e. (<@) is a low-precedence
+ ## variant of the application operator.  It can be pronounced "at" or "of".
+
+val 2'@> : α → (α → β) → β
+ ## (x @> f ≡ f x) is the image of (x) under (f).  I.e. (@>) is a reversed
+ ## low-precedence application operator.  It can be pronounced "under".
+
+include prereq.combinators
+include prereq.int_ops
 
 in bool include data.bool
-
 in int include data.int
-include int.ops
-
 in list include data.list
 
 val print : string → io unit
