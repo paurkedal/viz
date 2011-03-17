@@ -146,7 +146,7 @@ and build_aval_pure = function
 		fun acont -> Aval_letrec (loc, bindings, acont)
 	    | _ -> assert false in
 	let bindings, acont = loop [] clet in
-	let adefs = collect_binding_components bindings [] in
+	let adefs = collect_binding_components (List.rev bindings) [] in
 	List.fold wrap_let adefs acont
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond, build_aval_pure cq, build_aval_pure ccq)
