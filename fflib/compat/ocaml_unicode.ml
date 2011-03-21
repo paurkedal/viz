@@ -25,18 +25,17 @@ module Pervasive = struct
     type char = UChar.t
     type utf8 = string
     type string = UText.t
+
+    let __string_of_utf8 = UString_encoding.decode CharEncoding.utf8
 end
 open Pervasive
 
 module Char_ = struct
-    type t = char
     let of_int = UChar.chr
     let as_int = UChar.code
 end
 
 module String_ = struct
-    type t = string
-
     let length = UText.length
     let get i s = UText.get s i
     let init = UText.init
