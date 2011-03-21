@@ -158,6 +158,9 @@ rule "ffoc1, C stub generation: ff -> _stubs.c"
     ~prod:"%_stubs.c"
     (ffoc1x "--cstubs" "%.ff" "%_stubs.c");;
 
+copy_rule "ffoc1, Underscored module names to avoid conflict with O'Caml."
+    "%.ff" "%_.ff";;
+
 flag ["ocaml"; "ffoc1pp"; "compile"] & A"-nopervasives";;
 flag ["ocaml"; "ffoc1pp"; "link"] & A"-nopervasives";;
 flag ["ocaml"; "ffoc1pp"; "pp"; "no_pervasive"] & A"--no-pervasive";;

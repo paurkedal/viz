@@ -21,18 +21,26 @@ open CamomileLibrary.Default.Camomile
 
 module UString_encoding = CharEncoding.Make (UText)
 
-type char = UChar.t
-type utf8 = string
-type string = UText.t
+module Pervasive = struct
+    type char = UChar.t
+    type utf8 = string
+    type string = UText.t
+end
+open Pervasive
 
-module Char = struct
+module Char_ = struct
     type t = char
     let of_int = UChar.chr
     let as_int = UChar.code
 end
 
-module String = struct
+module String_ = struct
     type t = string
+
+    let length = UText.length
+    let get i s = UText.get s i
+    let init = UText.init
+
     let of_utf8 = UString_encoding.decode CharEncoding.utf8
     let as_utf8 = UString_encoding.encode CharEncoding.utf8
 

@@ -63,7 +63,10 @@ let ascii_encode s =
     UString.to_utf8 (UString.Buf.contents buf)
 
 let str_to_lid s = String.uncapitalize (ascii_encode s)
-let str_to_uid s = String.capitalize (ascii_encode s)
+let str_to_uid = function
+    | "char" -> "Char_"
+    | "string" -> "String_"
+    | s -> String.capitalize (ascii_encode s)
 let idr_to_lid (Idr s) = str_to_lid s
 let idr_to_uid (Idr s) = str_to_uid s
 let avar_to_lid (Avar (_, idr)) = idr_to_lid idr
@@ -127,7 +130,7 @@ let emit_apat_literal loc lit ocond_opt =
     | Lit_string x ->
 	let v = fresh_avar_at loc in
 	let cond = <:expr< String.eq $lid: avar_to_lid v$
-				(String.of_utf8 $str: UString.to_utf8 x$) >> in
+			    (String_.of_utf8 $str: UString.to_utf8 x$) >> in
 	let cond =
 	    match ocond_opt with
 	    | None -> cond
@@ -143,7 +146,7 @@ let emit_aval_literal loc lit =
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
     | Lit_string x ->
 	let s = UString.to_utf8 x in
-	<:expr< String.of_utf8 $str:s$ >>
+	<:expr< String_.of_utf8 $str:s$ >>
 
 let emit_apat_fixed _loc default = function
     | "[]" -> <:patt< [] >>

@@ -19,18 +19,23 @@
 open Ocaml_prereq
 open CamomileLibrary.Default.Camomile
 
-type char = UChar.t
-type utf8 = string
-type string = UText.t
+module Pervasive : sig
+    type char = UChar.t
+    type utf8 = string
+    type string = UText.t
+end
+open Pervasive
 
-module Char : sig
-    type t = char
+module Char_ : sig
     val of_int : int -> char
     val as_int : char -> int
 end
 
-module String : sig
-    type t = string
+module String_ : sig
+    val length : string -> int
+    val get : int -> string -> char
+    val init : int -> (int -> char) -> string
+
     val of_utf8 : utf8 -> string
     val as_utf8 : string -> utf8
 

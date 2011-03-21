@@ -1,0 +1,45 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Fform Standard Library.
+#
+# The Fform Standard Library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+
+type t = string
+
+val length : t → int
+ ## (length x) is the number of characters used to represent (x), including
+ ## accents, control characters, etc.
+
+val get : int → t → char
+ ## (get i x) is the (i)th character of (x).
+
+val init : int → (int → char) → t
+ ## (x = init n f) is the (n)-character string such that (get i x = f i) for
+ ## (0 ≤ i < n).
+
+val eq : t → t → bool
+ ## Structural equality: (eq x y) is true iff (x) and (y) contain the same
+ ## string.  Unicode normalization is not taken into account.
+
+val cmp : t → t → torder
+ ## (cmp x y) provides lexicographic order of Unicode code points between (x)
+ ## and (y).  This is a fast non-collating and non-normalizing comparison.
+
+val to_utf8 : t → utf8
+val of_utf8 : utf8 → t
+
+# The above are primitives.
+#?ffoc include compat.ocaml_unicode.string

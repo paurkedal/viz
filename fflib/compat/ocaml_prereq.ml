@@ -45,3 +45,4 @@ let __generic_cmp x y =
     if cmp < 0 then Tprec else
     if cmp > 0 then Tsucc else
     Tcoin
+let __generic_eq x y = x = y

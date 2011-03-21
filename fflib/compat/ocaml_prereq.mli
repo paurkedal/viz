@@ -46,4 +46,5 @@ val tprec : torder
 val tcoin : torder
 val tsucc : torder
 val __adapt_cmp : ('a -> 'a -> torder) -> 'a -> 'a -> int
+val __generic_eq : 'a -> 'a -> bool
 val __generic_cmp : 'a -> 'a -> torder
