@@ -27,6 +27,12 @@ in combinators
 
 in bool_ops
     #?ffoc include compat.ocaml_pervasives.bool_ops
+    let (¬* f)   x0 be ¬ f x0
+    let (f ∧* g) x0 be f x0 ∧ g x0
+    let (f ∨* g) x0 be f x0 ∨ g x0
+    let (¬** f)   x0 x1 be ¬ f x0 x1
+    let (f ∧** g) x0 x1 be f x0 x1 ∧ g x0 x1
+    let (f ∨** g) x0 x1 be f x0 x1 ∨ g x0 x1
 
 in int_ops
     val 1'- : int → int
