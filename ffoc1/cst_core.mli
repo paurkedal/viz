@@ -40,6 +40,7 @@ val idr_2o_comma : idr
 val idr_2o_semicolon : idr
 val idr_2o_vertical_bar : idr
 val idr_2o_arrow : idr
+val idr_2o_times : idr
 val idr_2o_implies : idr
 val idr_2o_mapsto : idr
 val idr_2o_index : idr

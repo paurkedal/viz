@@ -26,6 +26,7 @@ let cidr_to_string (Cidr (_, Idr s)) = s
 
 let idr_2o_colon	= idr_2o_c ":"
 let idr_2o_arrow	= idr_2o_c "→"
+let idr_2o_times	= idr_2o_c "×"
 let idr_2o_implies	= idr_2o_c "⇒"
 let idr_2o_mapsto	= idr_2o_c "↦"
 let idr_2o_index	= idr_2o_c "#"
