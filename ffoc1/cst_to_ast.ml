@@ -243,6 +243,9 @@ and build_aval_expr = function
     | Ctrm_apply (loc,
 	Ctrm_apply (_, Ctrm_ref (semi, _),
 	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (impl, _), cx), cy)), cz)
+	    when cidr_is_2o_implies impl && cidr_is_2o_semicolon semi ->
+	build_aval_pure
+	    (Cpred_if (loc, cx, Cpred_be (loc, cy), Cpred_be (loc, cz)))
     | Ctrm_apply (loc,
 	Ctrm_apply (_, Ctrm_ref (impl, _), cx),
 	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (semi, _), cy), cz))
