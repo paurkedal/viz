@@ -429,6 +429,20 @@ let scan_string_literal state =
     next ();
     Lit_string (UString.Buf.contents buf)
 
+let scan_char_literal state =
+    assert (LStream.peek_code state.st_stream = 0x63);
+    let loc_lb = LStream.locbound state.st_stream in
+    LStream.skip state.st_stream;
+    match scan_string_literal state with
+    | Lit_string s ->
+	if UString.length s <> 1 then
+	    let loc_ub = LStream.locbound state.st_stream in
+	    raise (Error_at (Location.between loc_lb loc_ub,
+			     "Expecting a single character."))
+	else
+	    Lit_char (UString.get s 0)
+    | _ -> assert false
+
 let scan_int have_sign base state =
     let rec f accu =
 	let ch = Option.default UChar.ch_space (LStream.peek state.st_stream) in
@@ -451,6 +465,7 @@ let scan_literal state =
 	found (scan_int have_sign base state) in
     match LStream.peek_n_code 3 state.st_stream with
     | 0x22 :: _ -> found (scan_string_literal state)
+    | 0x63 :: 0x22 :: _ -> found (scan_char_literal state)
     | 0x30 :: 0x62 :: _ -> found_int 2 false 2
     | 0x30 :: 0x6f :: _ -> found_int 2 false 8
     | 0x30 :: 0x78 :: _ -> found_int 2 false 16

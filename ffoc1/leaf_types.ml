@@ -29,6 +29,7 @@ type lit =
     | Lit_bool of bool
     | Lit_int of int
     | Lit_float of float
+    | Lit_char of UChar.t
     | Lit_string of UString.t
     with sexp
 

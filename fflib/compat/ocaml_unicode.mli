@@ -24,6 +24,7 @@ module Pervasive : sig
     type utf8 = string
     type string = UText.t
 
+    val __char_of_utf8 : utf8 -> char
     val __string_of_utf8 : utf8 -> string
 end
 open Pervasive

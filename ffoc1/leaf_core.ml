@@ -25,6 +25,7 @@ let lit_to_string = function
     | Lit_bool x -> if x then "true" else "false"
     | Lit_int i -> string_of_int i
     | Lit_float x -> string_of_float x
+    | Lit_char s -> "c\"" ^ String.escaped (UChar.to_utf8 s) ^ "\""
     | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""
 
 let starts_with = String.starts_with

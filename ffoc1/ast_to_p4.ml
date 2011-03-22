@@ -131,9 +131,18 @@ let emit_apat_literal loc lit ocond_opt =
     | Lit_bool x   -> (if x then <:patt<True>> else <:patt<False>>), ocond_opt
     | Lit_int x    -> let s = string_of_int x in <:patt< $int:s$ >>, ocond_opt
     | Lit_float x  -> let s = string_of_float x in <:patt<$flo:s$>>, ocond_opt
+    | Lit_char x   ->
+	let v = fresh_avar_at loc in
+	let cond = <:expr< __generic_eq $lid: avar_to_lid v$
+			    (__char_of_utf8 $str: UChar.to_utf8 x$) >> in
+	let cond =
+	    match ocond_opt with
+	    | None -> cond
+	    | Some cond' -> <:expr< $cond'$ && $cond$ >> in
+	<:patt< $lid: avar_to_lid v$ >>, Some cond
     | Lit_string x ->
 	let v = fresh_avar_at loc in
-	let cond = <:expr< String.eq $lid: avar_to_lid v$
+	let cond = <:expr< __generic_eq $lid: avar_to_lid v$
 			    (__string_of_utf8 $str: UString.to_utf8 x$) >> in
 	let cond =
 	    match ocond_opt with
@@ -148,9 +157,8 @@ let emit_aval_literal loc lit =
     | Lit_bool x   -> if x then <:expr< True >> else <:expr< False >>
     | Lit_int x    -> let s = string_of_int x in <:expr< $int:s$ >>
     | Lit_float x  -> let s = string_of_float x in <:expr< $flo:s$ >>
-    | Lit_string x ->
-	let s = UString.to_utf8 x in
-	<:expr< __string_of_utf8 $str:s$ >>
+    | Lit_char x   -> <:expr< __char_of_utf8 $str: UChar.to_utf8 x$ >>
+    | Lit_string x -> <:expr< __string_of_utf8 $str: UString.to_utf8 x$ >>
 
 let emit_apat_fixed _loc default = function
     | "[]" -> <:patt< [] >>

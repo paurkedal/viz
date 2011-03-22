@@ -86,8 +86,16 @@ module UChar = struct
 	   is_idrchr ch0 && is_idrchr ch1
 	|| ch0 = ch_dash && is_ascii_digit ch1
 
+    let of_utf8 s =
+	let ws = UString_encoding.decode CharEncoding.utf8 s in
+	assert (UText.length ws = 1);
+	UText.get ws 0
+
     let to_utf8 ch =
 	UString_encoding.encode CharEncoding.utf8 (UText.init 1 (fun _ -> ch))
+
+    let t_of_sexp sx = of_utf8 (Conv.string_of_sexp sx)
+    let sexp_of_t s = Conv.sexp_of_string (to_utf8 s)
 end
 
 module UChar_map = Map.Make (UChar)
@@ -113,7 +121,7 @@ module UString = struct
     let to_utf8 = UString_encoding.encode CharEncoding.utf8
 
     let t_of_sexp sx = of_utf8 (Conv.string_of_sexp sx)
-    let sexp_of_t s = (Conv.sexp_of_string (to_utf8 s))
+    let sexp_of_t s = Conv.sexp_of_string (to_utf8 s)
 end
 
 module UString_sequence = struct

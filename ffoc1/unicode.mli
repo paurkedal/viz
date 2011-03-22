@@ -57,6 +57,9 @@ module UChar : sig
     val ch_rbrace : t
 
     val to_utf8 : t -> string
+
+    val t_of_sexp : Sexp.t -> t
+    val sexp_of_t : t -> Sexp.t
 end
 
 module UChar_map : Map.S with type key = UChar.t
