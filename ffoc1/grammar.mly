@@ -151,6 +151,9 @@ main:
     EOF { Ctrm_where (mkloc $startpos $endpos, []) }
   | structure_block EOF { $1 }
   | expr EOF { $1 }
+  /* The following tokens are only used internally by the lexer.  We add them
+     only to silence Menhir. */
+  | LEX | LEXALIAS | LEXOPEN { assert false }
   ;
 
 signature_block:
@@ -308,48 +311,60 @@ logic_expr:
   | LOGIC0 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
       apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
-  | logic_expr LOGIC1 qseq logic_expr
+
+  | logic_expr LOGIC1 logic_expr
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | logic_expr LOGIC1 nonempty_qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
-  | LOGIC1 qseq logic_expr
-    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
-      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
+  | logic_expr LOGIC1
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) (fst $2) $1 }
+
   | logic_expr LOGIC2 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC2 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
       apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
-  | logic_expr LOGIC3 qseq logic_expr
+
+  | logic_expr LOGIC3 logic_expr
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | logic_expr LOGIC3 nonempty_qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
-  | LOGIC3 qseq logic_expr
-    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
-      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
+  | logic_expr LOGIC3
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) (fst $2) $1 }
+
   | logic_expr LOGIC4 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC4 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
       apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
-  | logic_expr LOGIC5 qseq logic_expr
+
+  | logic_expr LOGIC5 logic_expr
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | logic_expr LOGIC5 nonempty_qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
-  | LOGIC5 qseq logic_expr
-    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
-      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
+  | logic_expr LOGIC5
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) (fst $2) $1 }
+
   | logic_expr LOGIC6 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
   | LOGIC6 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
       apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
-  | logic_expr LOGIC7 qseq logic_expr
+
+  | logic_expr LOGIC7 logic_expr
+    { apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 $3 }
+  | logic_expr LOGIC7 nonempty_qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
-  | LOGIC7 qseq logic_expr
-    { let rhs = quantify (mkloc $startpos($2) $endpos($3)) $2 $3 in
-      apply_prefix $startpos $endpos $startpos($1) $endpos($1) $1 rhs }
+  | logic_expr LOGIC7
+    { apply_suffix $startpos $endpos $startpos($2) $endpos($2) (fst $2) $1 }
+
   | logic_expr LOGIC8 qseq logic_expr
     { let rhs = quantify (mkloc $startpos($3) $endpos($4)) $3 $4 in
       apply_infix $startpos $endpos $startpos($2) $endpos($2) $2 $1 rhs }
@@ -361,6 +376,10 @@ logic_expr:
 qseq:
     /* empty */ { [] }
   | qseq quantifier { $2 :: $1 }
+  ;
+nonempty_qseq:
+    quantifier { [$1] }
+  | nonempty_qseq quantifier { $2 :: $1 }
   ;
 quantifier:
     QUANTIFIER expr DOT
