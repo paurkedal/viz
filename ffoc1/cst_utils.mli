@@ -55,5 +55,8 @@ val flatten_tycon_application : ctrm -> cidr * ctrm list
 
 val flatten_arrow : ctrm -> ctrm * ctrm list
 
+val fold_on_semicolon : (ctrm -> 'a -> 'a) -> ctrm -> 'a -> 'a
+val fold_on_comma : (ctrm -> 'a -> 'a) -> ctrm -> 'a -> 'a
+
 val cpred_is_pure : cpred -> bool
 val ctrm_is_pure : ctrm -> bool

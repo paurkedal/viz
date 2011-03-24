@@ -31,6 +31,7 @@ let idr_2o_implies	= idr_2o_c "⇒"
 let idr_2o_mapsto	= idr_2o_c "↦"
 let idr_2o_index	= idr_2o_c "#"
 let idr_2o_comma	= idr_2o_c ","
+let idr_1o_semicolon	= idr_1o_c ";"
 let idr_2o_semicolon	= idr_2o_c ";"
 let idr_2o_vertical_bar	= idr_2o_c "|"
 let idr_2o_eq		= idr_2o_c "="
@@ -47,12 +48,17 @@ let idr_1o_asterisk	= idr_1o_c "*"
 let idr_run_action	= Idr "__unsafe_run_action"
 let idr_list_null	= Idr "[]"
 let idr_list_push	= Idr "[;]"
+let idr_set_null	= Idr "{}"
+let idr_set_push	= Idr "{;}"
+let idr_map_null	= Idr "{↦}"
+let idr_map_push	= Idr "{↦;}"
 let cidr_is_2o_colon	(Cidr (_, idr)) = idr = idr_2o_colon
 let cidr_is_2o_arrow	(Cidr (_, idr)) = idr = idr_2o_arrow
 let cidr_is_2o_implies	(Cidr (_, idr)) = idr = idr_2o_implies
 let cidr_is_2o_mapsto	(Cidr (_, idr)) = idr = idr_2o_mapsto
 let cidr_is_2o_index	(Cidr (_, idr)) = idr = idr_2o_index
 let cidr_is_2o_comma	(Cidr (_, idr)) = idr = idr_2o_comma
+let cidr_is_1o_semicolon (Cidr (_, idr)) = idr = idr_1o_semicolon
 let cidr_is_2o_semicolon (Cidr (_, idr)) = idr = idr_2o_semicolon
 let cidr_is_2o_eq	(Cidr (_, idr)) = idr = idr_2o_eq
 let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor

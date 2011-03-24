@@ -20,6 +20,7 @@ open FfPervasives
 open Leaf_types
 open Cst_types
 open Cst_core
+open Diag
 
 type 'a rewriter = {
     rw_cpred : 'a rewriter -> stratum -> cpred * 'a -> cpred * 'a;
@@ -132,30 +133,58 @@ and subterm_rewrite_cdef rw stra = function
 
 let default_rewrite_cpred = subterm_rewrite_cpred
 
-let rec rewrite_coll_comma push rw inner = function
+(* Alt 1: [x1, ..., xn] and [x1, ..., xn; xr]. *)
+let rec rewrite_classicext_comma push rw inner = function
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), xs), x), accu
 	    when op = idr_2o_comma ->
 	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
 	let inner = Ctrm_apply (loc, Ctrm_apply (loc, push, x), inner) in
-	rewrite_coll_comma push rw inner (xs, accu)
+	rewrite_classicext_comma push rw inner (xs, accu)
     | x, accu ->
 	let loc = ctrm_loc x in
 	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
 	Ctrm_apply (loc, Ctrm_apply (loc, push, x), inner), accu
-
-let rewrite_coll_semicolon (null, push) rw = function
+let rewrite_classicext_semicolon (null, push) rw = function
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), x), xr), accu
 	    when op = idr_2o_semicolon ->
 	let xr, accu = rw.rw_ctrm rw `Value (xr, accu) in
-	rewrite_coll_comma push rw xr (x, accu)
-    | d -> rewrite_coll_comma push rw null d
+	rewrite_classicext_comma push rw xr (x, accu)
+    | d -> rewrite_classicext_comma push rw null d
 
+(* Alt 2: [x1; ... xn;] and [x1; ...; xn; xr] *)
+let rewrite_primext_push push rw = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (mapsto, _), x), y), accu
+	    when cidr_is_2o_mapsto mapsto ->
+	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
+	let y, accu = rw.rw_ctrm rw `Value (y, accu) in
+	Ctrm_apply (loc, Ctrm_apply (loc, push, x), y), accu
+    | x, accu ->
+	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
+	Ctrm_apply (ctrm_loc x, push, x), accu
+let rec rewrite_primext_semicolon (null, push) rw = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (semi, _), x), xr), accu
+	    when cidr_is_2o_semicolon semi ->
+	let xp, accu = rewrite_primext_push push rw (x, accu) in
+	let xr, accu = rewrite_primext_semicolon (null, push) rw (xr, accu) in
+	Ctrm_apply (loc, xp, xr), accu
+    | Ctrm_apply (loc, Ctrm_ref (semi, _), x), accu
+	    when cidr_is_1o_semicolon semi ->
+	let xp, accu = rewrite_primext_push push rw (x, accu) in
+	Ctrm_apply (loc, xp, null), accu
+    | xr, accu -> rw.rw_ctrm rw `Value (xr, accu)
 let rewrite_coll_comprehension (null, push) rw = function
     | Ctrm_literal (loc, Lit_unit), accu -> null, accu
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), x), y), accu
 	    when op = idr_2o_vertical_bar ->
 	assert false (* unimplemented *)
-    | d -> rewrite_coll_semicolon (null, push) rw d
+    | Ctrm_apply (_, Ctrm_ref (semi, _), _), _ as d
+	    when cidr_is_1o_semicolon semi ->
+	rewrite_primext_semicolon (null, push) rw d
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (semi, _), _), _), _ as d
+	    when cidr_is_2o_semicolon semi ->
+	rewrite_primext_semicolon (null, push) rw d
+    | d ->
+	rewrite_classicext_semicolon (null, push) rw d
 
 let rec rewrite_comma_into_list rw = function
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), xs), x),
@@ -166,6 +195,30 @@ let rec rewrite_comma_into_list rw = function
 	let (y, accu) = rw.rw_ctrm rw `Value (x, accu) in
 	(y :: ys, accu)
 
+let rewrite_mapsto rw (z, accu) =
+    let rwcase = function
+	| Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (mapsto, _), x), y)
+		when cidr_is_2o_mapsto mapsto ->
+	    fun (cases, accu) ->
+	    let x, accu = rw.rw_ctrm rw `Value (x, accu) in
+	    let y, accu = rw.rw_ctrm rw `Value (y, accu) in
+	    ((x, Cpred_be (loc, y)) :: cases, accu)
+	| x -> errf_at (ctrm_loc x) "Expecting a mapping." in
+    let cases, accu
+	= Cst_utils.fold_on_semicolon rwcase z ([], accu) in
+    let loc = ctrm_loc z in
+    (Ctrm_what (loc, None, Cpred_at (loc, List.rev cases)), accu)
+
+let is_mapsto = function
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (mapsto, _), _), _)
+	when cidr_is_2o_mapsto mapsto -> true
+    | _ -> false
+let is_maplike = function
+    | Ctrm_apply (_, Ctrm_ref (semi, _), x)
+	when cidr_is_1o_semicolon semi -> is_mapsto x
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (semi, _), x), _)
+	when cidr_is_2o_semicolon semi -> is_mapsto x
+    | _ -> false
 let default_rewrite_ctrm_value rw = function
     | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
 	    when op = idr_1b_square_bracket ->
@@ -173,9 +226,28 @@ let default_rewrite_ctrm_value rw = function
 	let push = Ctrm_ref (Cidr (op_loc, idr_list_push), Ih_inj) in
 	rewrite_coll_comprehension (null, push) rw (x, accu)
     | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
+	    when op = idr_1b_curly_bracket ->
+	let idr_null, idr_push =
+	    if is_maplike x then (idr_map_null, idr_map_push)
+			    else (idr_set_null, idr_set_push) in
+	let null = Ctrm_ref (Cidr (op_loc, idr_null), Ih_inj) in
+	let push = Ctrm_ref (Cidr (op_loc, idr_push), Ih_inj) in
+	rewrite_coll_comprehension (null, push) rw (x, accu)
+    | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
 	    when op = idr_1b_array ->
 	let (ys, accu) = rewrite_comma_into_list rw (x, [], accu) in
 	(Ctrm_array (loc, ys), accu)
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (mapsto, _), _), _) as z, accu
+	    when cidr_is_2o_mapsto mapsto ->
+	rewrite_mapsto rw (z, accu)
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (semi, _), x), _) as z, accu
+	    when cidr_is_2o_semicolon semi ->
+	begin match x with
+	| Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (mapsto, _), _), _)
+		when cidr_is_2o_mapsto mapsto ->
+	    rewrite_mapsto rw (z, accu)
+	| _ -> subterm_rewrite_ctrm rw `Value (z, accu)
+	end
     | d -> subterm_rewrite_ctrm rw `Value d
 
 let default_rewrite_ctrm rw stra = function

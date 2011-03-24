@@ -237,9 +237,6 @@ and build_aval_expr = function
 	Aval_ref (Apath ([], cidr_to_avar cidr))
     | Ctrm_project _ as ctrm ->
 	Aval_ref (build_apath ctrm)
-    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), cx), cy)
-	    when cidr_is_2o_mapsto op ->
-	build_aval_pure (Cpred_at (loc, [cx, Cpred_be (loc, cy)]))
     | Ctrm_apply (loc,
 	Ctrm_apply (_, Ctrm_ref (semi, _),
 	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (impl, _), cx), cy)), cz)
@@ -343,14 +340,8 @@ let rec build_atcases is_sig atcases algtb = function
 	    | atcase -> atcase in
 	(List.rev_map finish_atcase atcases, xs)
 
-let rec fold_on_comma f = function
-    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
-	    when cidr_is_2o_comma op ->
-	fold_on_comma f x *> f y
-    | x -> f x
-
 let build_constraints loc eqns =
-    fold_on_comma begin function
+    Cst_utils.fold_on_comma begin function
 	| Ctrm_rel (loc, x, [(_, op, y)]) when cidr_is_2o_eq op ->
 	    begin match x, y with
 	    | Ctrm_apply (_, Ctrm_ref (op, _), x),

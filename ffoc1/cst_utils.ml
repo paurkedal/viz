@@ -111,6 +111,18 @@ let rec flatten_arrow typ =
 	| rt -> (rt, List.rev pts) in
     loop [] typ
 
+let rec fold_on_semicolon f = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
+	    when cidr_is_2o_semicolon op ->
+	f x *> fold_on_semicolon f y
+    | x -> f x
+
+let rec fold_on_comma f = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
+	    when cidr_is_2o_comma op ->
+	fold_on_comma f x *> f y
+    | x -> f x
+
 let rec cpred_is_pure = function
     | Cpred_let (_, None, v, x, y) ->
 	cpred_is_pure x && cpred_is_pure y

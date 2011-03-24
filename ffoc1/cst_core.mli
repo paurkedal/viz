@@ -37,6 +37,7 @@ val application_depth : int -> idr -> ctrm -> int
 (* Specific Symbols *)
 val idr_2o_colon : idr
 val idr_2o_comma : idr
+val idr_1o_semicolon : idr
 val idr_2o_semicolon : idr
 val idr_2o_vertical_bar : idr
 val idr_2o_arrow : idr
@@ -56,8 +57,13 @@ val idr_2b_dotbracket : idr
 val idr_run_action : idr
 val idr_list_null : idr
 val idr_list_push : idr
+val idr_set_null : idr
+val idr_set_push : idr
+val idr_map_null : idr
+val idr_map_push : idr
 val cidr_is_2o_colon : cidr -> bool
 val cidr_is_2o_comma : cidr -> bool
+val cidr_is_1o_semicolon : cidr -> bool
 val cidr_is_2o_semicolon : cidr -> bool
 val cidr_is_2o_arrow : cidr -> bool
 val cidr_is_2o_implies : cidr -> bool
