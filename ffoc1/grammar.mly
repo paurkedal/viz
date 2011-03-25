@@ -106,7 +106,7 @@ let cpred_failure loc msg_opt =
 %left  LOGIC8
 
 /* Relation Operators */
-%token <Leaf_types.idr> RELATION
+%token <Leaf_types.idr> RELATION JUDGEMENT
 
 /* Arithmetic Operators */
 %token <Leaf_types.idr> ARITH0_S ARITH1_S ARITH2_S ARITH3_S
@@ -295,7 +295,21 @@ participle:
 
 /* Expressions */
 
-expr: qlogic_expr {$1};
+expr: judgement_expr {$1};
+
+judgement_expr:
+    qlogic_expr { $1 }
+  | qlogic_expr judgement_seq { Ctrm_rel (mkloc $startpos $endpos, $1, $2) }
+  ;
+judgement_seq:
+    judgement_comp { [$1] }
+  | judgement_comp judgement_seq { $1 :: $2 }
+  ;
+judgement_comp:
+    JUDGEMENT qlogic_expr
+    { (mkloc $startpos $endpos,
+       Cidr (mkloc $startpos($1) $endpos($1), $1), $2) }
+  ;
 
 qlogic_expr:
     qseq logic_expr { quantify (mkloc $startpos $endpos) $1 $2 }

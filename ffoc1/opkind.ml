@@ -50,6 +50,7 @@ let p_typing	=  1
 let p_comma	=  2
 let p_cond	=  3
 let p_quant	=  4
+let p_judgement	=  9
 let p_logic n	= 10 + n
 let p_rel	= 19
 let p_arith n	= 20 + n
@@ -166,6 +167,15 @@ let mixfix_quantifier = {
     ok_id = make_id ();
     ok_lexkind = Lex_regular;
     ok_create = (fun spec -> Grammar.QUANTIFIER (name_2o spec));
+}
+let transfix_judgement = {
+    ok_name = "J";
+    ok_arities = [];
+    ok_prec = p_judgement;
+    ok_print = print_unimplemented;
+    ok_id = make_id ();
+    ok_lexkind = Lex_regular;
+    ok_create = (fun spec -> Grammar.JUDGEMENT (name_2o spec));
 }
 let transfix_relation = {
     ok_name = "R";
@@ -325,6 +335,7 @@ let of_string s =
 	if n = 1 then
 	    begin match String.get s 0 with
 	    | 'I' -> identifier_quote
+	    | 'J' -> transfix_judgement
 	    | 'Q' -> mixfix_quantifier
 	    | 'R' -> transfix_relation
 	    | _ -> raise Domain_error

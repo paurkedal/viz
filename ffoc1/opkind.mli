@@ -51,6 +51,7 @@ val to_string : t -> string
  * grammar of type [Cst.ctrm]. *)
 val    mixfix_quantifier : t
 val  preinfix_logic      : t array
+val  transfix_judgement  : t
 val  transfix_relation   : t
 val  preinfix_arith      : t array
 val    suffix_arith      : t array
@@ -68,6 +69,7 @@ val p_min : int
 val p_typing : int
 val p_comma : int
 val p_cond : int
+val p_judgement : int
 val p_logic : int -> int
 val p_rel : int
 val p_arith : int -> int
