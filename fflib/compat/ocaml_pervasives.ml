@@ -20,10 +20,6 @@ open Ocaml_prereq
 open Ocaml_unicode
 
 module Bool_ops = struct
-    let op1_U00ac = Pervasives.not
-    let op2_U2227 = Pervasives.( && )
-    let op2_U2228 = Pervasives.( || )
-
     let op2_U003d = Pervasives.(=)
     let op2_U2260 = Pervasives.(<>)
     let op2_U003c = Pervasives.(<)
