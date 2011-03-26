@@ -64,7 +64,9 @@ let ascii_encode s =
 
 let str_to_lid s = String.uncapitalize (ascii_encode s)
 let str_to_uid = function
+    | "array" -> "Array_"
     | "char" -> "Char_"
+    | "list" -> "List_"
     | "string" -> "String_"
     | s -> String.capitalize (ascii_encode s)
 let idr_to_lid (Idr s) = str_to_lid s
