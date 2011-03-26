@@ -39,10 +39,16 @@ include prereq.combinators
 include prereq.int_ops
 
 in bool include data.bool
+in char include data.char
 in int include data.int
+in string include data.string
+
 in list include data.list
 
+in action_ops include prereq.action_ops
 val print : string → io unit
 val eprint : string → io unit
 
+#?ffoc include compat.ocaml_prereq
 #?ffoc include compat.ocaml_pervasives.pervasive
+#?ffoc include compat.ocaml_unicode.pervasive
