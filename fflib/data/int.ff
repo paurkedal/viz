@@ -28,6 +28,10 @@ in ops
     val 2'mod : int → int → int
     include int_ops
 
+val eq : t → t → bool
+
 val show : t → string
 
 #?ffoc include compat.ocaml_pervasives.int_misc
+
+let eq be __generic_eq

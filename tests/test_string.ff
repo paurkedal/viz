@@ -1,0 +1,80 @@
+let main
+    let 2'= be int.eq
+
+    assert   string.for_all char.is_space "   "
+    assert ¬ string.for_all char.is_space "x  "
+    assert ¬ string.for_all char.is_space " x "
+    assert ¬ string.for_all char.is_space "  x"
+
+    assert ¬ string.for_some char.is_space "xxx"
+    assert   string.for_some char.is_space " xx"
+    assert   string.for_some char.is_space "x x"
+    assert   string.for_some char.is_space "xx "
+
+    assert string.starts_with "" ""
+    assert string.starts_with "" "x"
+    assert string.starts_with "x" "x"
+    assert string.starts_with "x" "xy"
+
+    assert string.ends_with "" ""
+    assert string.ends_with "" "x"
+    assert string.ends_with "x" "x"
+    assert string.ends_with "y" "xy"
+
+    assert   string.contains_char c"x" "x"
+    assert   string.contains_char c"x" "yyxyy"
+    assert ¬ string.contains_char c"x" ""
+    assert ¬ string.contains_char c"x" "yy"
+
+    assert string.contains_sub "" ""
+    assert string.contains_sub "" "x"
+    assert string.contains_sub "x" "x"
+    assert string.contains_sub "x" "-x-"
+    assert string.contains_sub "xy" "xy"
+    assert string.contains_sub "xy" "-xy-"
+    assert ¬ string.contains_sub "x" ""
+    assert ¬ string.contains_sub "x" "--"
+    assert ¬ string.contains_sub "xy" "-x-"
+
+    assert string.count_char c"x" "" = 0
+    assert string.count_char c"x" "--" = 0
+    assert string.count_char c"x" "--x--" = 1
+    assert string.count_char c"x" "x--xx--x" = 4
+
+    assert string.count_for char.is_space "" = 0
+    assert string.count_for char.is_space "-" = 0
+    assert string.count_for char.is_space "- -" = 1
+    assert string.count_for char.is_space " -\n\t- " = 4
+
+    assert string.skip_space "" 0 = 0
+    assert string.skip_space "x" 0 = 0
+    assert string.skip_space "   x" 1 = 3
+    assert string.skip_space "   x" 3 = 3
+    assert string.skip_space "  " 1 = 2
+    assert string.skip_space "  " 2 = 2
+    assert string.skip_space "tt tt" 2 = 3
+
+    assert string.rskip_space "" 0 = 0
+    assert string.rskip_space " " 1 = 0
+    assert string.rskip_space "a  " 1 = 1
+    assert string.rskip_space "a  " 3 = 1
+
+    assert string.skip_to_char c"x" "--x--" 0 = 2
+    assert string.rskip_to_char c"x" "--x--" 4 = 3
+    assert string.skip_to_char c"x" "--" 0 = 2
+    assert string.rskip_to_char c"x" "--" 2 = 0
+
+    assert string.skip_to_sub "x" "x" 0 = 0
+    assert string.skip_to_sub "x" "-" 0 = 1
+    assert string.skip_to_sub "x" "-x" 0 = 1
+    assert string.skip_to_sub "xy" "--xy--xy--" 0 = 2
+    assert string.skip_to_sub "xy" "--xy--xy--" 2 = 2
+    assert string.skip_to_sub "xy" "--xy--xy--" 3 = 6
+
+    let 2'= be string.eq
+    assert string.strip "" = ""
+    assert string.strip "x" = "x"
+    assert string.strip " x" = "x"
+    assert string.strip "x " = "x"
+    assert string.strip "  x  " = "x"
+    be ()
