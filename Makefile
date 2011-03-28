@@ -6,7 +6,9 @@ install:
 	@echo 'There is no production compiler to install yet.  README.rst'
 	@echo 'explains how to the current code nevertheless.'
 
-.PHONY: all clean install
+check: prefform-check
+
+.PHONY: all clean check install
 
 # The ffoc1 Camlp4 Preprocessor and Associated fflib
 # ==================================================
@@ -24,11 +26,17 @@ prefform-all:
 prefform-clean:
 	$(OCAMLBUILD) -clean
 
-prefform-check:
+prefform-check: prefform-check-ffoc1 prefform-check-fflib
+
+prefform-check-ffoc1:
 	$(OCAMLBUILD) ffoc1-tests/test.byte -- -verbose
+
+prefform-check-fflib:
+	/bin/sh tools/run_tests.sh tests/*.ff
 
 prefform-doc:
 	$(OCAMLBUILD) ffoc1.docdir/index.html
 
 .PHONY: prefform-all prefform-byte prefform-native
-.PHONY: prefform-clean prefform-check prefform-doc
+.PHONY: prefform-clean prefform-doc
+.PHONY: prefform-check prefform-check-ffoc1 prefform-check-fflib
