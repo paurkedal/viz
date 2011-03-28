@@ -1,3 +1,5 @@
+open action_ops
+
 let main
     let 2'= be int.eq
 
@@ -72,9 +74,18 @@ let main
     assert string.skip_to_sub "xy" "--xy--xy--" 3 = 6
 
     let 2'= be string.eq
+
     assert string.strip "" = ""
     assert string.strip "x" = "x"
     assert string.strip " x" = "x"
     assert string.strip "x " = "x"
     assert string.strip "  x  " = "x"
+
+    assert "s-t-e" = __unsafe_run_action what!
+	let buf do string.buf.create
+	do string.buf.put_char c"s" buf
+	do string.buf.put_string "-t-" buf
+	do string.buf.put_char c"e" buf
+	do string.buf.contents buf
+
     be ()

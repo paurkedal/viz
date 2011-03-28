@@ -19,6 +19,27 @@ open prereq
 
 type t = string
 
+in buf
+    #?ffoc {#
+
+    type r φ
+
+    val create : action φ (r φ)
+
+    val clear : r φ → action φ unit
+
+    val contents : r φ → action φ string
+
+    val length : r φ → action φ int
+
+    val put_char : char → r φ → action φ unit
+
+    val put_string : string → r φ → action φ unit
+
+    #?ffoc #}
+    #?ffoc include compat.ocaml_unicode.string_buf
+
+
 val length : t → int
  ## (length x) is the number of characters used to represent (x), including
  ## accents, control characters, etc.

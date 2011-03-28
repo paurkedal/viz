@@ -50,3 +50,15 @@ module String_ = struct
     let eq (x : string) (y : string) = x = y
     let cmp (x : string) (y : string) = __generic_cmp x y
 end
+
+module String_buf = struct
+    module B = UText.Buf
+    type 'f r = B.buf
+
+    let create = __unsafe_action (fun () -> B.create 8)
+    let contents buf = __unsafe_action (fun () -> B.contents buf)
+    let length buf = __unsafe_action (fun () -> B.length buf)
+    let clear buf = __unsafe_action (fun () -> B.clear buf)
+    let put_char ch buf = __unsafe_action (fun () -> B.add_char buf ch)
+    let put_string s buf = __unsafe_action (fun () -> B.add_string buf s)
+end
