@@ -20,7 +20,7 @@ external op1_U00ac : bool -> bool = "%boolnot"
 external op2_U2227 : bool -> bool -> bool = "%sequand"
 external op2_U2228 : bool -> bool -> bool = "%sequor"
 
-type ('f, 'a) action
+type ('f, 'a) action = { __unsafe_thunk : unit -> 'a; }
 (** A monad type for sequencing actions.  The first type parameter is the
     "pocket" in which the action is valid, and the second type parameter is
     the return type. *)

@@ -21,15 +21,16 @@ external op2_U2227 : bool -> bool -> bool = "%sequand"
 external op2_U2228 : bool -> bool -> bool = "%sequor"
 
 (* Dark spells about the world state. *)
-type ('f, 'a) action = Unsafe_thunk of (unit -> 'a)
+type ('f, 'a) action = { __unsafe_thunk : unit -> 'a; }
 type world_pocket
 type 'a io = (world_pocket, 'a) action
-let __unsafe_action f = Unsafe_thunk f
-let __unsafe_run_action (Unsafe_thunk f) = f ()
+let __unsafe_action f = { __unsafe_thunk = f; }
+let __unsafe_run_action m = m.__unsafe_thunk ()
 
-let __builtin_action_return x = Unsafe_thunk (fun () -> x)
-let __builtin_action_bind k (Unsafe_thunk f) =
-    Unsafe_thunk (fun () -> __unsafe_run_action (k (f ())))
+let __builtin_action_return x = { __unsafe_thunk = fun () -> x; }
+let __builtin_action_bind k m =
+    let f () = __unsafe_run_action (k (__unsafe_run_action m)) in
+    { __unsafe_thunk = f; }
 
 (* Options *)
 let none = None
