@@ -84,7 +84,7 @@ and subterm_rewrite_ctrm rw stra = function
 	let y, accu = rw.rw_ctrm rw stra (y, accu) in
 	Ctrm_apply (loc, x, y), accu
     | Ctrm_project (loc, l, x), accu ->
-	let x, accu = rw.rw_ctrm rw stra (x, accu) in
+	let x, accu = rw.rw_ctrm rw `Structure (x, accu) in
 	Ctrm_project (loc, l, x), accu
     | Ctrm_array (loc, xs), accu ->
 	let xs, accu = List.map_fold (rw.rw_ctrm rw stra) (xs, accu) in
@@ -250,6 +250,23 @@ let default_rewrite_ctrm_value rw = function
 	end
     | d -> subterm_rewrite_ctrm rw `Value d
 
+let rewrite_structure_name = function
+    | "array" -> "array_"
+    | "char" -> "char_"
+    | "list" -> "list_"
+    | "string" -> "string_"
+    | name -> name
+
+let default_rewrite_ctrm_structure rw = function
+    | Ctrm_ref (Cidr (loc, Idr name), hint), accu ->
+	let name = rewrite_structure_name name in
+	Ctrm_ref (Cidr (loc, Idr name), hint), accu
+    | Ctrm_project (locp, Cidr (locn, Idr name), x), accu ->
+	let (x, accu) = rw.rw_ctrm rw `Structure (x, accu) in
+	let name = rewrite_structure_name name in
+	Ctrm_project (locp, Cidr (locn, Idr name), x), accu
+    | d -> subterm_rewrite_ctrm rw `Structure d
+
 let default_rewrite_ctrm rw stra = function
     | Ctrm_apply (loc, Ctrm_ref (Cidr (_, op), _), x), accu
 	    when op = idr_1b_paren ->
@@ -257,6 +274,7 @@ let default_rewrite_ctrm rw stra = function
     | d ->
 	match stra with
 	| `Value -> default_rewrite_ctrm_value rw d
+	| `Structure -> default_rewrite_ctrm_structure rw d
 	| _ -> subterm_rewrite_ctrm rw stra d
 
 let default_rewrite_cdef = subterm_rewrite_cdef
