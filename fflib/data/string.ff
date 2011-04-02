@@ -17,7 +17,7 @@
 
 open prereq
 
-type t = string
+type t := string
 
 in buf
     #?ffoc {#

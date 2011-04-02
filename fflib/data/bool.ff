@@ -17,7 +17,7 @@
 
 open prereq
 
-type t = bool
+type t := bool
 
 in ops include bool_ops
 

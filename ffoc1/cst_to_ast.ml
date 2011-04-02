@@ -311,7 +311,9 @@ end
 
 let rec build_atcases is_sig atcases algtb = function
     | Cdef_type (loc, Ctrm_rel (_, p, [(_, op, ct)])) :: xs
-	    when cidr_is_2o_eq op ->
+    | Cdef_type (loc, Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), p), ct))
+		:: xs
+	    when cidr_is_2o_coloneq op ->
 	let ati = Atypinfo_alias (build_atyp ct) in
 	let av, ats = build_atyp_con_args p in
 	let atcase = (loc, av, ats, ati) in

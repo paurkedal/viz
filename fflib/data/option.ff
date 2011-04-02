@@ -17,7 +17,7 @@
 
 open prereq
 
-type t α = option α
+type t α := option α
 
 val default : α → option α → α
 val map : (α → β) → option α → option β

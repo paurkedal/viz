@@ -17,7 +17,7 @@
 
 open prereq
 
-type t = char
+type t := char
 
 val of_int : int → t
 

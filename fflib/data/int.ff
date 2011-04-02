@@ -17,7 +17,7 @@
 
 open prereq
 
-type t = int
+type t := int
 
 in ops
     val 1'- : int → int

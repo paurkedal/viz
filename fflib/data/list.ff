@@ -17,7 +17,7 @@
 
 open prereq
 
-#?ffoc type t α = list α
+#?ffoc type t α := list α
 #?ffoc {#
 
 type t α
