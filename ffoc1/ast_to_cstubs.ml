@@ -37,6 +37,9 @@ let header = "\
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/custom.h>
+
+#define ffoc_none Val_int(0)
+value ffoc_some(value x);
 "
 
 let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
@@ -53,6 +56,12 @@ let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
     output_string och cparen
 
 let converters cti_map = function
+    | Atyp_apply (_,
+	    Atyp_ref (Apath ([], Avar (_, Idr "option"))),
+	    Atyp_ref (Apath ([], Avar (loc, Idr tname)))) ->
+	if String_map.mem tname cti_map then
+	    (sprintf "%s_to_option" tname, sprintf "%s_of_option" tname) else
+	errf_at loc "Invalid C type or option not handled for this C type."
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	if String_map.mem tname cti_map then
 	    (sprintf "%s_to_value" tname, sprintf "%s_of_value" tname) else
@@ -108,7 +117,7 @@ let output_cstub och v t cname is_fin cti_map =
     | _ -> output_string och "()"
     end;
     if is_unit then output_string och ";\n\tCAMLreturn (Val_unit);\n}\n"
-	      else output_string och "));\n}\n";
+	       else output_string och "));\n}\n";
     if is_fin then
        begin match t with
        | Atyp_arrow (loc, Atyp_ref (Apath ([], ftv)),
@@ -140,13 +149,15 @@ let output_cstub och v t cname is_fin cti_map =
 let declare_ctype och v ctype =
     let tname = avar_name v in
     fprintf och "\n\
-       #define %s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
-       static struct custom_operations %s_ops;\n\n\
-       static value %s_to_value(%s x)\n{\n\
-       \    value v = alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
-       \    %s_of_value(v) = x;\n\
-       \    return v;\n\
-       }\n" tname ctype tname tname ctype tname ctype tname;
+	#define %s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
+	static struct custom_operations %s_ops;\n\n\
+	static value %s_to_value(%s x)\n{\n\
+	\    value v = alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
+	\    %s_of_value(v) = x;\n\
+	\    return v;\n\
+	}\n\
+	#define %s_to_option(x) ((x)? ffoc_some(%s_to_value(x)) : ffoc_none)\n"
+	tname ctype tname tname ctype tname ctype tname tname tname;
     String_map.add tname {
        cti_ctype = ctype;
        cti_finalize = None;
