@@ -21,7 +21,8 @@
 open Cst_types
 
 val locate_source :
-    ?exts: string list -> ?strip_ext: bool -> roots: string list ->
+    ?exts: string list -> ?strip_ext: bool ->
+    ?topdir: string -> roots: string list ->
     string -> string
 
 val parse_file :

@@ -33,7 +33,7 @@ let print_error loc msg =
     eprintf "%s: %s\n" (Location.to_string loc) msg
 
 let locate_source ?(exts = [".ff"; ".ml"; ".mlpack"]) ?(strip_ext = false)
-		  ~roots rel_path_sans_ext =
+		  ?topdir ~roots rel_path_sans_ext =
     let rec check_roots = function
 	| [] -> raise Not_found
 	| root :: roots ->
@@ -42,7 +42,11 @@ let locate_source ?(exts = [".ff"; ".ml"; ".mlpack"]) ?(strip_ext = false)
 		| [] -> check_roots roots
 		| ext :: exts ->
 		    let path = path_sans_ext ^ ext in
-		    if Sys.file_exists path then
+		    let path' =
+			match topdir with
+			| None -> path
+			| Some topdir -> Filename.concat topdir path in
+		    if Sys.file_exists path' then
 			if strip_ext then path_sans_ext else path
 		    else check_exts exts in
 	    check_exts exts in

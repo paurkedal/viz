@@ -6,14 +6,6 @@
 
 <ffoc1-tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
 
-
-# For now, process all Fform code with the Camlp4 preprocessor.
-<**/*.ff>: ffoc1pp
-
-# This is covered by the <**/*.ff> rule, but we may want to remove that rule
-# later.
-<fflib/*.{cmi,cmo,cmx,depends}>: ffoc1pp
-
 <fflib/**/*>: no_pervasive, in_fflib
 <fflib/pervasive.ff>: ocamlstdlib
 <fflib/compat/ocaml_*.ff>: ocamlstdlib

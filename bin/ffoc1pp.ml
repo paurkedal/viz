@@ -11,7 +11,7 @@ let usage = "ffoc1pp [--print | -o OUTPUT] INPUT"
 
 module String_set = Set.Make (String)
 
-let print_depend roots input_path m =
+let print_depend just_modules topdir roots input_path m =
     let rec extract comps = function
 	| [] -> comps
 	| Avar (_, Idr comp) :: vs -> extract (comp :: comps) vs in
@@ -26,14 +26,19 @@ let print_depend roots input_path m =
 	| [] -> ident
 	| x :: xs -> String_set.add x in
     let deps = Ast_utils.fold_amod_paths add_dep m String_set.empty in
+    let print_module_dep dep =
+	print_char ' '; print_string (String.capitalize dep) in
     let check_and_print_dep dep =
 	try
-	    let path = Parser.locate_source ~strip_ext:true ~roots dep in
+	    let path =
+		Parser.locate_source ~strip_ext:true ?topdir ~roots dep in
 	    print_char ' '; print_string path
 	with Not_found -> () in
     print_string input_path;
     print_char ':';
-    String_set.iter check_and_print_dep deps;
+    String_set.iter
+	(if just_modules then print_module_dep else check_and_print_dep)
+	deps;
     print_char '\n'
 
 let print_cst term =
@@ -69,6 +74,8 @@ let _ =
     let open_pervasive = ref true in
     let nroots = ref [] in
     let roots = ref [] in
+    let topdir = ref None in
+    let raw_deps = ref false in
     let serid = ref None in
     let optspecs = Arg.align [
 	"-o", Arg.String (opt_setter out_path_opt),
@@ -78,8 +85,14 @@ let _ =
 	     --depend, don't create dependencies for it.";
 	"-I", Arg.String (fun p -> roots := p :: !roots),
 	    "PATH Prepend PATH to the root paths to search for structures.";
+	"-T", Arg.String (fun p -> topdir := Some p),
+	    "PATH Add PATH prefix to all roots when scanning for dependencies \
+	     but don't include it in the result.";
 	"--depend", Arg.Unit (fun () -> do_depend := true),
 	    " Output dependecies.";
+	"--depend-modules",
+	    Arg.Unit (fun () -> do_depend := true; raw_deps := true),
+	    " Output all modules as dependencies, without checking paths.";
 	"--cstubs", Arg.Unit (fun () -> do_cstubs := true),
 	    " Output C stubs, if any.";
 	"--cstubs-serid", Arg.String (fun s -> serid := Some s),
@@ -109,7 +122,6 @@ let _ =
 	    let amod = if !open_pervasive then add_pervasive_in_amod amod
 		       else amod in
 	    if !do_ast then print_ast amod else
-	    if !do_depend then print_depend !roots in_path amod else
 	    if !do_cstubs then begin
 		let serid =
 		    match !serid with
@@ -120,6 +132,8 @@ let _ =
 				(Filename.basename in_path)) in
 		Ast_to_cstubs.output_cstubs stdout serid amod
 	    end else
+	    if !do_depend then
+		print_depend !raw_deps !topdir !roots in_path amod else
 	    let omod = Ast_to_p4.emit_toplevel amod in
 	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod
 	with Error_at (loc, msg) ->

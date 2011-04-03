@@ -114,10 +114,17 @@ let native_compile_ffoc1_implem ?tag ff env build =
 	 "implem" +++ tag) ff cmx
 
 (** Fform Stage 1 dependency analyzer. *)
-let ffoc1x xflag arg out env build =
+let ffoc1dep arg out env build =
     let arg = env arg and out = env out in
     let tags = tags_of_pathname arg ++ "ffoc1pp" ++ "ocamldep" in
-    Cmd(S[A ffoc1pp_path; T tags; A xflag;
+    Cmd(S[A ffoc1pp_path; T tags; A "--depend"; A"-T"; P"..";
+	  Ocaml_utils.ocaml_include_flags arg;
+	  P arg; Sh ">"; Px out])
+
+let ffoc1cstubs arg out env build =
+    let arg = env arg and out = env out in
+    let tags = tags_of_pathname arg ++ "ffoc1pp" ++ "cstubs" in
+    Cmd(S[A ffoc1pp_path; T tags; A "--cstubs";
 	  Ocaml_utils.ocaml_include_flags arg;
 	  P arg; Sh ">"; Px out])
 
@@ -134,7 +141,7 @@ rule "Fform/OC Stage 1, Dependency Analysis"
     ~tags:["ocaml"; "pp"; "ffoc1pp"]
     ~prod:"%.ff.depends"
     ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
-    (ffoc1x "--depend" "%.ff" "%.ff.depends");;
+    (ffoc1dep "%.ff" "%.ff.depends");;
 
 rule "ffoc1, byte compilation: ff -> cmo & cmi"
     ~tags:["ocaml"; "byte"; "pp"; "ffoc1pp"]
@@ -156,7 +163,7 @@ rule "ffoc1, preprocessing only: ff -> ff.ml"
 rule "ffoc1, C stub generation: ff -> _stubs.c"
     ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
     ~prod:"%_stubs.c"
-    (ffoc1x "--cstubs" "%.ff" "%_stubs.c");;
+    (ffoc1cstubs "%.ff" "%_stubs.c");;
 
 copy_rule "ffoc1, Underscored module names to avoid conflict with O'Caml."
     "%.ff" "%_.ff";;
@@ -194,6 +201,13 @@ let ffoc1pp_include path =
     flag ["ocaml"; "ffoc1pp"; "pp"]		& S[A"-I"; P path];
     flag ["ocamldep"; "ffoc1pp"]		& S[A"-I"; P path]
 
+let ocaml_cstubs name =
+    flag ["link"; "library"; "ocaml"; "byte"; "use_lib" ^ name]
+	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name);
+	    A"-dllib"; A("-l" ^ name)]);
+    flag ["link"; "library"; "ocaml"; "native"; "use_lib" ^ name]
+	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name)])
+
 let () = dispatch begin function
     | Before_options ->
 	Options.use_ocamlfind := true;
@@ -212,18 +226,13 @@ let () = dispatch begin function
 	ocaml_pp "type-conv" "pa_type_conv";
 	ocaml_pp "sexplib" "pa_sexp_conv";
 	ocaml_lib "fflib";
+	ocaml_cstubs "fflib";
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
 	flag ["ocaml"; "ffoc1pp"] & S[A"-I"; P"fflib"];
+	flag ["cstubs"; "ffoc1pp"] & S[A"-I"; P"fflib"];
 	flag ["ocaml"; "compile"; "in_fflib"] & S[A"-I"; P"fflib"];
 	flag ["ocamldep"; "in_fflib"] & S[A"-I"; P"fflib"];
 	flag ["ocamldep"; "ffoc1pp"] & S[A"-N"; P"fflib"];
-	flag ["link"; "library"; "ocaml"; "byte"; "use_libfflib"]
-	     (S[A"-ccopt"; A"-L."; A"-cclib"; A"-lfflib";
-		A"-dllib"; A"-lfflib"]);
-	flag ["link"; "library"; "ocaml"; "native"; "use_libfflib"]
-	     (S[A"-ccopt"; A"-L."; A"-cclib"; A"-lfflib"]);
-	dep ["ocaml"; "byte"; "use_prereq"] ["fflib/prereq.cmo"];
-	dep ["ocaml"; "native"; "use_prereq"] ["fflib/prereq.cmx"];
 	()
     | _ -> ()
 end
