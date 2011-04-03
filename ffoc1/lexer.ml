@@ -81,13 +81,16 @@ let initial_intro_keywords = [
     "include",	Grammar.INCLUDE;
     "in",	Grammar.IN;
     "sig",	Grammar.SIG;
-    "type",	Grammar.TYPE;
+    "type",	Grammar.TYPE Abi_Fform;
+    "type:c",	Grammar.TYPE Abi_C;
     "let",	Grammar.LET None;
     "let!",	Grammar.LET (Some "");
-    "val",	Grammar.VAL (`Default,  Abi_Fform);
-    "val-",	Grammar.VAL (`Local,    Abi_Fform);
-    "val:c",	Grammar.VAL (`Default,  Abi_C);
-    "val:c-",	Grammar.VAL (`Local,    Abi_C);
+    "val",	Grammar.VAL (`Default,  Abi_Fform, false);
+    "val-",	Grammar.VAL (`Local,    Abi_Fform, false);
+    "val:c",	Grammar.VAL (`Default,  Abi_C, false);
+    "val:cf",	Grammar.VAL (`Default,  Abi_C, true);
+    "val:c-",	Grammar.VAL (`Local,    Abi_C, false);
+    "val:cf-",	Grammar.VAL (`Local,    Abi_C, true);
     "inj",	Grammar.INJ;
     "fail",	Grammar.FAIL;
     "assert",	Grammar.ASSERT;
@@ -105,7 +108,7 @@ let initial_intro_keywords = [
     "at",	Grammar.AT;
     "#?ffoc open", Grammar.OPEN Abi_Fform;
     "#?ffoc include", Grammar.INCLUDE;
-    "#?ffoc type", Grammar.TYPE;
+    "#?ffoc type", Grammar.TYPE Abi_Fform;
     "#?ffoc {#", Grammar.SKIP;
     "#?ffoc #}", Grammar.ENDSKIP;
 ]

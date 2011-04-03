@@ -64,6 +64,7 @@ let idr_1q_symbol (Idr name) =
     if starts_with "1'" name then String.sub name 2 (String.length name - 2)
     else raise (Failure ("Expected a quantifier operator identifier: " ^ name))
 
+module String_map = Map.Make (String)
 module Idr = struct
     type t = idr
     let compare (Idr x) (Idr y) = compare x y

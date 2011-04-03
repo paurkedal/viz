@@ -69,6 +69,7 @@ let _ =
     let open_pervasive = ref true in
     let nroots = ref [] in
     let roots = ref [] in
+    let serid = ref None in
     let optspecs = Arg.align [
 	"-o", Arg.String (opt_setter out_path_opt),
 	    "PATH The output file.";
@@ -81,6 +82,8 @@ let _ =
 	    " Output dependecies.";
 	"--cstubs", Arg.Unit (fun () -> do_cstubs := true),
 	    " Output C stubs, if any.";
+	"--cstubs-serid", Arg.String (fun s -> serid := Some s),
+	    "STRING Prefix for serialization id of generated custom types.";
 	"--cst", Arg.Unit (fun () -> do_cst := true),
 	    " Dump the concrete syntax tree.  Mainly for debugging.";
 	"--ast", Arg.Unit (fun () -> do_ast := true),
@@ -106,8 +109,17 @@ let _ =
 	    let amod = if !open_pervasive then add_pervasive_in_amod amod
 		       else amod in
 	    if !do_ast then print_ast amod else
-	    if !do_cstubs then Ast_to_cstubs.output_cstubs stdout amod else
 	    if !do_depend then print_depend !roots in_path amod else
+	    if !do_cstubs then begin
+		let serid =
+		    match !serid with
+		    | Some serid -> serid
+		    | None ->
+			sprintf "org.eideticdew.ffoc.%s."
+			    (Filename.chop_extension
+				(Filename.basename in_path)) in
+		Ast_to_cstubs.output_cstubs stdout serid amod
+	    end else
 	    let omod = Ast_to_p4.emit_toplevel amod in
 	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod
 	with Error_at (loc, msg) ->

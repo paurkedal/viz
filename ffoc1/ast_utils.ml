@@ -160,7 +160,7 @@ let rec fold_aval_paths f =
     | Aval_raise (_, x) -> fold_aval_paths f x
 
 let fold_atypinfo_paths f = function
-    | Atypinfo_abstract -> ident
+    | Atypinfo_abstract | Atypinfo_cabi _ -> ident
     | Atypinfo_alias u -> fold_atyp_paths f u
     | Atypinfo_injs injs ->
 	List.fold (fun (_, _, u) -> fold_atyp_paths f u) injs
@@ -184,7 +184,7 @@ and fold_adec_paths f = function
     | Adec_sig (_, _, s) -> Option.fold (fold_asig_paths f) s
     | Adec_types bindings -> List.fold (fold_atypbind_paths f) bindings
     | Adec_val (_, _, t) -> fold_atyp_paths (f `Type) t
-    | Adec_cabi_val (_, _, t) -> fold_atyp_paths (f `Type) t
+    | Adec_cabi_val (_, _, t, _, _) -> fold_atyp_paths (f `Type) t
 
 let rec fold_amod_paths f = function
     | Amod_ref p -> f `Structure p
@@ -205,26 +205,8 @@ and fold_adef_paths f = function
 		Option.fold (fold_atyp_paths (f `Type)) t *>
 		fold_aval_paths f x)
 	    bindings
-    | Adef_cabi_val (_, _, t) -> fold_atyp_paths (f `Type) t
+    | Adef_cabi_val (_, _, t, _, _) -> fold_atyp_paths (f `Type) t
     | Adef_cabi_open _ -> ident
-
-let rec fold_amod_externals f = function
-    | Amod_ref _ -> fun incs -> ident
-    | Amod_defs (_, defs) -> fun incs ->
-	fun accu -> snd (List.fold (fold_adef_externals f) defs (incs, accu))
-    | Amod_apply (_, mf, ma) -> fun incs ->
-	fold_amod_externals f mf incs *> fold_amod_externals f ma incs
-    | Amod_lambda (_, _, s, m) | Amod_coercion (_, m, s) -> fun incs ->
-	fold_amod_externals f m incs
-and fold_adef_externals f = function
-    | Adef_include (_, m) | Adef_in (_, _, m) ->
-	fun (incs, accu) -> (incs, fold_amod_externals f m incs accu)
-    | Adef_open _ | Adef_sig _ | Adef_types _ | Adef_let _ | Adef_letrec _ ->
-	ident
-    | Adef_cabi_val (_, v, t) ->
-	fun (incs, accu) -> (incs, f (List.rev incs) v t accu)
-    | Adef_cabi_open (_, inc) ->
-	fun (incs, accu) -> (inc :: incs, accu)
 
 let rec fold_amod_cabi_open f = function
     | Amod_ref _ -> ident

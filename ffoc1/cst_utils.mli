@@ -32,6 +32,8 @@ val extract_cidr_typing : ctrm -> cidr * ctrm
     identifier, [extract_idr_typing u] returns the tuple [(v, t)], otherwise
     raises Error_at. *)
 
+val extract_term_cname_opt : ctrm -> ctrm * string option
+
 val count_formal_args : ctrm -> int
 (** Given a function formal argument list, return the number of arguments.
     Returns 0 when applied to a constructor. *)

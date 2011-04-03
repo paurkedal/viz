@@ -63,6 +63,7 @@ type atypinfo =
     | Atypinfo_abstract (* only in signature *)
     | Atypinfo_alias of atyp
     | Atypinfo_injs of (loc * avar * atyp) list
+    | Atypinfo_cabi of string
     with sexp
 
 type asig =
@@ -79,7 +80,7 @@ type asig =
     | Adec_types of (loc * avar * atyp list * atypinfo) list
       (** Holds a non-empty list of mutually recursive type definitions. *)
     | Adec_val of loc * avar * atyp
-    | Adec_cabi_val of loc * avar * atyp
+    | Adec_cabi_val of loc * avar * atyp * string * bool
     with sexp
 
 type amod =
@@ -97,5 +98,5 @@ type amod =
     | Adef_let of loc * apat * aval
     | Adef_letrec of (loc * avar * atyp option * aval) list
     | Adef_cabi_open of loc * string
-    | Adef_cabi_val of loc * avar * atyp
+    | Adef_cabi_val of loc * avar * atyp * string * bool
     with sexp

@@ -71,7 +71,8 @@ let cpred_failure loc msg_opt =
 %token INCLUDE
 %token IN
 %token SIG
-%token TYPE INJ
+%token <Leaf_types.abi> TYPE
+%token INJ
 %token <Cst_types.cmonad option> LET WHAT WHICH
 %token <Leaf_types.val_info> VAL
 %token WHERE WITH
@@ -202,7 +203,7 @@ modular_clause:
   | SIG identifier signature_block
     { Cdef_sig (mkloc $startpos $endpos, $2, $3) }
   | TYPE type_equation
-    { Cdef_type (mkloc $startpos $endpos, $2) }
+    { Cdef_type (mkloc $startpos $endpos, $1, $2) }
   | INJ term_pattern
     { Cdef_inj (mkloc $startpos $endpos, $2) }
   | VAL term_pattern

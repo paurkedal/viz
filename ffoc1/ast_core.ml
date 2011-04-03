@@ -76,7 +76,7 @@ and adec_loc = function
 	let (uloc, _, _, _) = List.last bs in
 	Location.span [lloc; uloc]
     | Adec_val (loc, _, _) -> loc
-    | Adec_cabi_val (loc, _, _) -> loc
+    | Adec_cabi_val (loc, _, _, _, _) -> loc
 
 and amod_loc = function
     | Amod_ref p -> apath_loc p
@@ -98,7 +98,7 @@ and adef_loc = function
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in
 	Location.span [lloc; uloc]
-    | Adef_cabi_val (loc, _, _) -> loc
+    | Adef_cabi_val (loc, _, _, _, _) -> loc
     | Adef_cabi_open (loc, _) -> loc
 
 let apat_uvar_any loc = Apat_uvar (Avar (loc, Idr "_"))

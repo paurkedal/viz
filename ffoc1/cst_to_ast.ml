@@ -309,16 +309,27 @@ module Algt_builder = struct
     let find_injs av = Idr_map.find (avar_idr av)
 end
 
+let build_atypinfo_cabi = function
+    | Ctrm_literal (_, Lit_string s) -> Atypinfo_cabi (UString.to_utf8 s)
+    | ctrm -> errf_at (ctrm_loc ctrm) "Invalid C type specification."
+
 let rec build_atcases is_sig atcases algtb = function
-    | Cdef_type (loc, Ctrm_rel (_, p, [(_, op, ct)])) :: xs
-    | Cdef_type (loc, Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), p), ct))
-		:: xs
+    | Cdef_type (loc, abi, Ctrm_rel (_, p, [(_, op, ct)])) :: xs
+    | Cdef_type (loc, abi,
+		 Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), p), ct)) :: xs
 	    when cidr_is_2o_coloneq op ->
-	let ati = Atypinfo_alias (build_atyp ct) in
+	let ati =
+	    match abi with
+	    | Abi_Fform -> Atypinfo_alias (build_atyp ct)
+	    | Abi_C -> build_atypinfo_cabi ct in
 	let av, ats = build_atyp_con_args p in
 	let atcase = (loc, av, ats, ati) in
 	build_atcases is_sig (atcase :: atcases) algtb xs
-    | Cdef_type (loc, p) :: xs ->
+    | Cdef_type (loc, Abi_C, p) :: xs ->
+	let av, ats = build_atyp_con_args p in
+	let atcase = (loc, av, ats, Atypinfo_cabi (avar_name av)) in
+	build_atcases is_sig (atcase :: atcases) algtb xs
+    | Cdef_type (loc, Abi_Fform, p) :: xs ->
 	let atcase, algtb' = Algt_builder.add_type loc p algtb in
 	build_atcases is_sig (atcase :: atcases) algtb' xs
     | Cdef_inj (loc, Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct))
@@ -400,16 +411,20 @@ and build_adecs adecs = function
 	let atcases, xs' = build_atcases true [] Algt_builder.empty xs in
 	let adec = Adec_types atcases in
 	build_adecs (adec :: adecs) xs'
-    | Cdef_val (loc, (`Local, _), _) :: xs ->
+    | Cdef_val (loc, (`Local, _, is_fin), _) :: xs ->
 	build_adecs adecs xs
-    | Cdef_val (loc, (expo, abi), cdec) :: xs ->
+    | Cdef_val (loc, (expo, abi, is_fin), cdec) :: xs ->
 	let cv, ct = Cst_utils.extract_cidr_typing cdec in
+	let ct, cn_opt = Cst_utils.extract_term_cname_opt ct in
 	let av = cidr_to_avar cv in
 	let at = build_atyp ct in
 	let adec =
-	    match abi with
-	    | Abi_Fform -> Adec_val (loc, av, at)
-	    | Abi_C -> Adec_cabi_val (loc, av, at) in
+	    match abi, cn_opt with
+	    | Abi_Fform, None -> assert (not is_fin); Adec_val (loc, av, at)
+	    | Abi_Fform, Some _ -> errf_at loc "Invalid declaration."
+	    | Abi_C, Some cn -> Adec_cabi_val (loc, av, at, cn, is_fin)
+	    | Abi_C, None -> Adec_cabi_val (loc, av, at, avar_name av, is_fin)
+	    in
 	build_adecs (adec :: adecs) xs
     | Cdef_let (loc, _, _, _) :: xs ->
 	errf_at loc "Signatures cannot contain value definitions."
@@ -425,6 +440,10 @@ let wrap_amod_lambda ?loc_opt cxvarsig amod =
     let axvar = build_avar cxvar in
     let axsig = build_asig cxsig in
     Amod_lambda (loc, axvar, axsig, amod)
+
+let build_actypinfo = function
+    | Ctrm_literal (loc, Lit_string s) -> Atypinfo_cabi (UString.to_utf8 s)
+    | ctrm -> errf_at (ctrm_loc ctrm) "The C type name must be a string."
 
 let rec build_amod_of_pred = function
     | Cpred_at (loc, [cxvarsig, cymod]) ->
@@ -488,13 +507,19 @@ and build_adefs adecmap adefs = function
 	let atcases, xs' = build_atcases false [] Algt_builder.empty xs in
 	let adef = Adef_types atcases in
 	build_adefs adecmap (adef :: adefs) xs'
-    | Cdef_val (loc, (expo, abi), cdec) :: xs ->
+    | Cdef_val (loc, (expo, abi, is_fin), cdec) :: xs ->
 	let cv, ct = Cst_utils.extract_cidr_typing cdec in
+	let ct, cn_opt = Cst_utils.extract_term_cname_opt ct in
+	let av = cidr_to_avar cv in
 	let at = build_atyp ct in
 	let adefs =
-	    match abi with
-	    | Abi_Fform -> adefs
-	    | Abi_C -> Adef_cabi_val (loc, cidr_to_avar cv, at) :: adefs in
+	    match abi, cn_opt with
+	    | Abi_Fform, None -> assert (not is_fin); adefs
+	    | Abi_Fform, Some _ -> errf_at loc "Invalid declaration."
+	    | Abi_C, Some cn ->
+		Adef_cabi_val (loc, av, at, cn, is_fin) :: adefs
+	    | Abi_C, None ->
+		Adef_cabi_val (loc, av, at, avar_name av, is_fin) :: adefs in
 	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
 	build_adefs adecmap adefs xs
     | Cdef_let (loc, cm_opt, cpat, cpred) :: xs
@@ -533,7 +558,7 @@ and build_adefs adecmap adefs = function
 		Ast_utils.fold_apat_typed_vars
 		    (fun (t, v) -> Idr_map.remove (avar_idr v)) pat
 	    | Adef_letrec avcases -> List.fold strip_used_avcase avcases
-	    | Adef_cabi_val (loc, v, _) -> Idr_map.remove (avar_idr v)
+	    | Adef_cabi_val (loc, v, _, _, _) -> Idr_map.remove (avar_idr v)
 	    | _ -> ident in
 	let is_include = function Adef_include _ -> true | _ -> false in
 	if not (List.exists is_include adefs) then begin

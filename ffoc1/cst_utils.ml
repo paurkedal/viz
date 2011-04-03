@@ -17,6 +17,8 @@
  *)
 
 open FfPervasives
+open Unicode
+open Leaf_types
 open Cst_types
 open Cst_core
 open Diag
@@ -38,6 +40,13 @@ let extract_cidr_typing expr =
     match extract_term_typing expr with
     | Ctrm_ref (cidr, _), y -> (cidr, y)
     | x, y -> errf_at (ctrm_loc x) "Identifier expected."
+
+let extract_term_cname_opt = function
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x),
+	    Ctrm_literal (_, Lit_string y))
+	    when cidr_is_2o_coloneq op ->
+	(x, Some (UString.to_utf8 y))
+    | x -> (x, None)
 
 let move_typing (src, dst) =
     match src with

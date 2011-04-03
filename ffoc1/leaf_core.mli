@@ -52,5 +52,6 @@ val idr_1q : idr -> idr
 val idr_1q_c : string -> idr
 val idr_1q_symbol : idr -> string
 
+module String_map : Map.S with type key = string
 module Idr_set : Set.S with type elt = idr
 module Idr_map : Map.S with type key = idr

@@ -269,13 +269,13 @@ and emit_match_case (pat, ocond_opt, body) =
 let emit_type_binding (loc, v, params, ti) =
     let _loc = p4loc loc in
     match ti with
-    | Atypinfo_abstract ->
+    | Atypinfo_abstract | Atypinfo_cabi _ ->
 	List.fold (fun arg at -> <:ctyp< $at$ $emit_atyp arg$ >>) params
 		  <:ctyp< $lid: avar_to_lid v$ >>
     | _ ->
     let rhs =
 	match ti with
-	| Atypinfo_abstract -> raise (Failure "Not reachable.")
+	| Atypinfo_abstract | Atypinfo_cabi _ -> assert false (* Unreachable *)
 	| Atypinfo_alias typ -> emit_atyp typ
 	| Atypinfo_injs injs ->
 	    let emit_inj (loc, v, inj_type) =
@@ -306,7 +306,7 @@ let emit_inj_aliases (loc, v, params, ti) =
 		avars ov in
 	    <:binding< $lid: avar_to_lid v$ = $ov$ >> in
 	List.map emit_inj injs
-    | Atypinfo_abstract _ | Atypinfo_alias _ -> []
+    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
 let rec emit_asig = function
     | Asig_ref p ->
@@ -353,7 +353,7 @@ and emit_adec = function
     | Adec_val (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
-    | Adec_cabi_val (loc, v, t) ->
+    | Adec_cabi_val (loc, v, t, cn, is_fin) ->
 	let _loc = p4loc loc in
 	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
 	let name = avar_to_lid v in
@@ -425,7 +425,7 @@ and emit_adef = function
 		<:binding< $lid: avar_to_lid v$ : $emit_atyp t$
 			    = $emit_aval x$ >> in
 	<:str_item< value rec $list: List.map emit_value_binding bindings$ >>
-    | Adef_cabi_val (loc, v, t) ->
+    | Adef_cabi_val (loc, v, t, cn, is_fin) ->
 	let _loc = p4loc loc in
 	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
 	let name = avar_to_lid v in
