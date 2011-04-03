@@ -10,6 +10,7 @@ open Leaf_types
 let usage = "ffoc1pp [--print | -o OUTPUT] INPUT"
 
 module String_set = Set.Make (String)
+module Ocaml_printer = Camlp4.Printers.OCaml.Make(Camlp4.PreCast.Syntax)
 
 let print_depend just_modules topdir roots input_path m =
     let rec extract comps = function
@@ -71,6 +72,7 @@ let _ =
     let do_ast = ref false in
     let do_depend = ref false in
     let do_cstubs = ref false in
+    let add_loc = ref false in
     let open_pervasive = ref true in
     let nroots = ref [] in
     let roots = ref [] in
@@ -103,6 +105,8 @@ let _ =
 	    " Dump the abstract syntax tree.  Mainly for debugging.";
 	"--no-pervasive", Arg.Unit (fun () -> open_pervasive := false),
 	    " Don't open the pervasive structure.";
+	"--add-locations", Arg.Unit (fun () -> add_loc := true),
+	    " Add locations to O'Caml output.";
     ] in
     Arg.parse optspecs (opt_setter in_path_opt) usage;
     let require what = function
@@ -135,7 +139,12 @@ let _ =
 	    if !do_depend then
 		print_depend !raw_deps !topdir !roots in_path amod else
 	    let omod = Ast_to_p4.emit_toplevel amod in
-	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod
+	    if !add_loc then
+		Ocaml_printer.print !out_path_opt
+		    (fun o -> o#set_loc_and_comments#implem)
+		    omod
+	    else
+		Printers.OCaml.print_implem ?output_file:!out_path_opt omod
 	with Error_at (loc, msg) ->
 	    eprintf "%s: %s\n" (Location.to_string loc) msg;
 	    exit 65 (* EX_DATAERR *)
