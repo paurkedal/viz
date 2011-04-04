@@ -37,6 +37,7 @@ val 2'@> : α → (α → β) → β
 
 include prereq.combinators
 include prereq.int_ops
+include prereq.bool_ops
 
 in bool include data.bool
 in char include data.char
