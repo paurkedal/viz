@@ -19,6 +19,19 @@
 open Ocamlbuild_pack
 open Ocamlbuild_plugin
 
+let is_space = function
+    | ' ' | '\t' | '\n' | '\r' -> true
+    | _ -> false
+let rec rskip_while f s i =
+    if i > 0 && f (String.get s (i - 1)) then rskip_while f s (i - 1) else i
+let split_on_space s =
+    let rec loop j accu =
+	if j = 0 then accu else
+	let i = rskip_while (fun ch -> not (is_space ch)) s j in
+	let accu = if i < j then String.sub s i (j - i) :: accu else accu in
+	loop (rskip_while is_space s i) accu in
+    loop (String.length s) []
+
 let ffoc1pp_path = "bin/ffoc1pp.native"
 let static = true
 
@@ -200,6 +213,13 @@ let ffoc1pp_include path =
     flag ["ocaml"; "ffoc1pp"; "link"]		& S[A"-I"; P path];
     flag ["ocaml"; "ffoc1pp"; "pp"]		& S[A"-I"; P path];
     flag ["ocamldep"; "ffoc1pp"]		& S[A"-I"; P path]
+
+let llvm_libs () =
+    let sL = run_and_read "llvm-config --ldflags" in
+    let sl = run_and_read "llvm-config --libs jit interpreter native core" in
+    S[S(List.map (fun l -> S[A"-ccopt"; A l]) (split_on_space sL));
+      S(List.map (fun l -> S[A"-cclib"; A l]) (split_on_space sl));
+      A"-cclib"; A"-lstdc++"]
 
 let ocaml_cstubs name =
     flag ["link"; "library"; "ocaml"; "byte"; "use_lib" ^ name]
