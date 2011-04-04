@@ -157,6 +157,9 @@ and print_def fo cdef =
 	let kw = match abi with Abi_Fform -> "open" | Abi_C -> "open/c" in
 	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min path
+    | Cdef_use (_, x) ->
+	Fo.put_kw fo "use";
+	print_inline fo Opkind.p_min x
     | Cdef_type (_, Abi_Fform, eqn) ->
 	Fo.put_kw fo "type";
 	print_inline fo Opkind.p_min eqn

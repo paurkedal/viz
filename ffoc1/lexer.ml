@@ -79,6 +79,7 @@ let initial_intro_keywords = [
     "open",	Grammar.OPEN Abi_Fform;
     "open:c",	Grammar.OPEN Abi_C;
     "include",	Grammar.INCLUDE;
+    "use",	Grammar.USE;
     "in",	Grammar.IN;
     "sig",	Grammar.SIG;
     "type",	Grammar.TYPE Abi_Fform;

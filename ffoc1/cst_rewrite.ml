@@ -108,6 +108,7 @@ and subterm_rewrite_cdef rw stra = function
     | Cdef_open (loc, abi, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cdef_open (loc, abi, x), accu
+    | Cdef_use (loc, x), accu as d -> d
     | Cdef_type (loc, abi, t), accu ->
 	let t, accu = rw.rw_ctrm rw `Type (t, accu)  in
 	Cdef_type (loc, abi, t), accu

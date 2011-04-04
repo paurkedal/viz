@@ -69,6 +69,7 @@ let rec asig_loc = function
 and adec_loc = function
     | Adec_include (loc, _) -> loc
     | Adec_open (loc, _) -> loc
+    | Adec_use (loc, _) -> loc
     | Adec_in (loc, _, _) -> loc
     | Adec_sig (loc, _, _) -> loc
     | Adec_types bs ->
@@ -87,6 +88,7 @@ and amod_loc = function
 and adef_loc = function
     | Adef_include (loc, _) -> loc
     | Adef_open (loc, _) -> loc
+    | Adef_use (loc, _) -> loc
     | Adef_in (loc, _, _) -> loc
     | Adef_sig (loc, _, _) -> loc
     | Adef_types bs ->

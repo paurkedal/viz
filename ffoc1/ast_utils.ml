@@ -180,6 +180,7 @@ let rec fold_asig_paths f = function
 and fold_adec_paths f = function
     | Adec_include (_, s) -> fold_asig_paths f s
     | Adec_open (_, p) -> f `Signature p
+    | Adec_use _ -> ident
     | Adec_in (_, _, s) -> fold_asig_paths f s
     | Adec_sig (_, _, s) -> Option.fold (fold_asig_paths f) s
     | Adec_types bindings -> List.fold (fold_atypbind_paths f) bindings
@@ -195,6 +196,7 @@ let rec fold_amod_paths f = function
 and fold_adef_paths f = function
     | Adef_include (_, m) -> fold_amod_paths f m
     | Adef_open (_, p) -> f `Structure p
+    | Adef_use _ -> ident
     | Adef_in (_, _, m) -> fold_amod_paths f m
     | Adef_sig (_, _, s) -> fold_asig_paths f s
     | Adef_types bindings -> List.fold (fold_atypbind_paths f) bindings
@@ -218,7 +220,8 @@ let rec fold_amod_cabi_open f = function
 and fold_adef_cabi_open f = function
     | Adef_include (_, m) | Adef_in (_, _, m) ->
 	fold_amod_cabi_open f m
-    | Adef_open _ | Adef_sig _ | Adef_types _ | Adef_let _ | Adef_letrec _ ->
+    | Adef_open _ | Adef_use _ | Adef_sig _ | Adef_types _
+    | Adef_let _ | Adef_letrec _ ->
 	ident
     | Adef_cabi_val _ -> ident
     | Adef_cabi_open (_, inc) -> f inc

@@ -75,6 +75,7 @@ type asig =
  and adec =
     | Adec_include of loc * asig
     | Adec_open of loc * apath
+    | Adec_use of loc * aval
     | Adec_in of loc * avar * asig
     | Adec_sig of loc * avar * asig option
     | Adec_types of (loc * avar * atyp list * atypinfo) list
@@ -92,6 +93,7 @@ type amod =
  and adef =
     | Adef_include of loc * amod
     | Adef_open of loc * apath
+    | Adef_use of loc * aval
     | Adef_in of loc * avar * amod
     | Adef_sig of loc * avar * asig
     | Adef_types of (loc * avar * atyp list * atypinfo) list

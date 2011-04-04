@@ -336,6 +336,7 @@ and emit_adec = function
     | Adec_open (loc, p) ->
 	let _loc = p4loc loc in
 	<:sig_item< open $id: emit_apath_uid p$ >>
+    | Adec_use (loc, _) -> let _loc = p4loc loc in <:sig_item< >>
     | Adec_in (loc, v, s) ->
 	let _loc = p4loc loc in
 	<:sig_item< module $uid: avar_to_uid v$ : $emit_asig s$ >>
@@ -394,6 +395,7 @@ and emit_adef = function
     | Adef_open (loc, p) ->
 	let _loc = p4loc loc in
 	<:str_item< open $id: emit_apath_uid p$ >>
+    | Adef_use (loc, _) -> let _loc = p4loc loc in <:str_item< >>
     | Adef_in (loc, v, m) ->
 	let _loc = p4loc loc in
 	<:str_item< module $uid: avar_to_uid v$ = $emit_amod m$ >>

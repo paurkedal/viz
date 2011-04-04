@@ -397,6 +397,9 @@ and build_adecs adecs = function
 	build_adecs (adec :: adecs) xs
     | Cdef_open (loc, Abi_C, x) :: xs ->
 	errf_at loc "C ABI open is only valid in structures."
+    | Cdef_use (loc, x) :: xs ->
+	let adec = Adec_use (loc, build_aval_expr x) in
+	build_adecs (adec :: adecs) xs
     | Cdef_in (loc, p, csig) :: xs ->
 	let adec = Adec_in (loc, build_avar p, build_asig csig) in
 	build_adecs (adec :: adecs) xs
@@ -495,6 +498,9 @@ and build_adefs adecmap adefs = function
 	    | Ctrm_literal (_, Lit_string s) ->
 		Adef_cabi_open (loc, (UString.to_utf8 s))
 	    | _ -> errf_at loc "C ABI open takes a string argument." in
+	build_adefs adecmap (adef :: adefs) xs
+    | Cdef_use (loc, x) :: xs ->
+	let adef = Adef_use (loc, build_aval_expr x) in
 	build_adefs adecmap (adef :: adefs) xs
     | Cdef_in (loc, cpat, cmod) :: xs ->
 	let cpat, cmod = Cst_utils.move_typing (cpat, cmod) in

@@ -68,7 +68,7 @@ let cpred_failure loc msg_opt =
 %token BEGIN END
 
 %token <Leaf_types.abi> OPEN
-%token INCLUDE
+%token INCLUDE USE
 %token IN
 %token SIG
 %token <Leaf_types.abi> TYPE
@@ -196,6 +196,8 @@ structure_clause:
 modular_clause:
     OPEN projection
     { Cdef_open (mkloc $startpos $endpos, $1, $2) }
+  | USE expr
+    { Cdef_use (mkloc $startpos $endpos, $2) }
   | INCLUDE expr
     { Cdef_include (mkloc $startpos $endpos, $2) }
   | SIG identifier
