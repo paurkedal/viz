@@ -411,19 +411,24 @@ and build_adecs adecs = function
 	let atcases, xs' = build_atcases true [] Algt_builder.empty xs in
 	let adec = Adec_types atcases in
 	build_adecs (adec :: adecs) xs'
-    | Cdef_val (loc, (`Local, _, is_fin), _) :: xs ->
+    | Cdef_val (loc, (`Local, _, _), _) :: xs ->
 	build_adecs adecs xs
-    | Cdef_val (loc, (expo, abi, is_fin), cdec) :: xs ->
+    | Cdef_val (loc, (expo, abi, val_options), cdec) :: xs ->
 	let cv, ct = Cst_utils.extract_cidr_typing cdec in
 	let ct, cn_opt = Cst_utils.extract_term_cname_opt ct in
 	let av = cidr_to_avar cv in
 	let at = build_atyp ct in
 	let adec =
 	    match abi, cn_opt with
-	    | Abi_Fform, None -> assert (not is_fin); Adec_val (loc, av, at)
-	    | Abi_Fform, Some _ -> errf_at loc "Invalid declaration."
-	    | Abi_C, Some cn -> Adec_cabi_val (loc, av, at, cn, is_fin)
-	    | Abi_C, None -> Adec_cabi_val (loc, av, at, avar_name av, is_fin)
+	    | Abi_Fform, None ->
+		assert (val_options = []);
+		Adec_val (loc, av, at)
+	    | Abi_Fform, Some _ ->
+		errf_at loc "Invalid declaration."
+	    | Abi_C, Some cn ->
+		Adec_cabi_val (loc, av, at, cn, val_options)
+	    | Abi_C, None ->
+		Adec_cabi_val (loc, av, at, avar_name av, val_options)
 	    in
 	build_adecs (adec :: adecs) xs
     | Cdef_let (loc, _, _, _) :: xs ->
@@ -507,19 +512,22 @@ and build_adefs adecmap adefs = function
 	let atcases, xs' = build_atcases false [] Algt_builder.empty xs in
 	let adef = Adef_types atcases in
 	build_adefs adecmap (adef :: adefs) xs'
-    | Cdef_val (loc, (expo, abi, is_fin), cdec) :: xs ->
+    | Cdef_val (loc, (expo, abi, val_options), cdec) :: xs ->
 	let cv, ct = Cst_utils.extract_cidr_typing cdec in
 	let ct, cn_opt = Cst_utils.extract_term_cname_opt ct in
 	let av = cidr_to_avar cv in
 	let at = build_atyp ct in
 	let adefs =
 	    match abi, cn_opt with
-	    | Abi_Fform, None -> assert (not is_fin); adefs
+	    | Abi_Fform, None ->
+		assert (val_options = []);
+		adefs
 	    | Abi_Fform, Some _ -> errf_at loc "Invalid declaration."
 	    | Abi_C, Some cn ->
-		Adef_cabi_val (loc, av, at, cn, is_fin) :: adefs
+		Adef_cabi_val (loc, av, at, cn, val_options) :: adefs
 	    | Abi_C, None ->
-		Adef_cabi_val (loc, av, at, avar_name av, is_fin) :: adefs in
+		Adef_cabi_val (loc, av, at, avar_name av, val_options)
+		    :: adefs in
 	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
 	build_adefs adecmap adefs xs
     | Cdef_let (loc, cm_opt, cpat, cpred) :: xs

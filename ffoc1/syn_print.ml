@@ -183,9 +183,10 @@ and print_def fo cdef =
 	| Ctrm_with (_, None, defs) -> print_defs fo defs
 	| _ -> Fo.put_kw fo "include"; print_inline fo Opkind.p_min body
 	end
-    | Cdef_val (_, (expo, abi, is_fin), typing) ->
+    | Cdef_val (_, (expo, abi, valopts), typing) ->
 	let kw = (match abi with Abi_Fform -> "val" | Abi_C -> "val/c")
-	       ^ (if is_fin then "f" else "")
+	       ^ (if List.mem `Is_finalizer valopts then "f" else "")
+	       ^ (if List.mem `Is_stub valopts then "s" else "")
 	       ^ (match expo with `Local -> "-" | _ -> "") in
 	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min typing

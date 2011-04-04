@@ -353,9 +353,13 @@ and emit_adec = function
     | Adec_val (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
-    | Adec_cabi_val (loc, v, t, cn, is_fin) ->
+    | Adec_cabi_val (loc, v, t, cn, valopts) ->
 	let _loc = p4loc loc in
-	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
+	let stubname =
+	    if List.mem `Is_stub valopts then cn else
+	    "_stub_" ^ avar_to_lid v in
+	let syms =
+	    Ast.LCons (stubname, Ast.LNil) in
 	let name = avar_to_lid v in
 	let rt = Ast_utils.result_type t in
 	if fst (Ast_utils.unwrap_atyp_action rt) <> Ast_utils.No_pocket then
@@ -425,9 +429,12 @@ and emit_adef = function
 		<:binding< $lid: avar_to_lid v$ : $emit_atyp t$
 			    = $emit_aval x$ >> in
 	<:str_item< value rec $list: List.map emit_value_binding bindings$ >>
-    | Adef_cabi_val (loc, v, t, cn, is_fin) ->
+    | Adef_cabi_val (loc, v, t, cn, valopts) ->
 	let _loc = p4loc loc in
-	let syms = Ast.LCons ("_stub_" ^ avar_to_lid v, Ast.LNil) in
+	let stubname =
+	    if List.mem `Is_stub valopts then cn else
+	    "_stub_" ^ avar_to_lid v in
+	let syms = Ast.LCons (stubname, Ast.LNil) in
 	let name = avar_to_lid v in
 	let ot = emit_atyp ~typefor: Typefor_cabi t in
 	let rt = Ast_utils.result_type t in

@@ -195,7 +195,9 @@ and output_adef_c och = function
 	   | _ -> ident
 	   end
 	   defs
-    | Adef_cabi_val (loc, v, t, cn, is_fin) -> output_cstub och v t cn is_fin
+    | Adef_cabi_val (loc, v, t, cn, valopts) ->
+	if List.mem `Is_stub valopts then ident else
+	output_cstub och v t cn (List.mem `Is_finalizer valopts)
     | Adef_include (loc, m) -> output_amod_c och m
     | _ -> ident
 

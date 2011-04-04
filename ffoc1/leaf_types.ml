@@ -39,5 +39,6 @@ type abi = Abi_Fform | Abi_C with sexp
 
 type type_exposure = [`Default | `Local | `Abstract | `Exported]
 type val_exposure = [`Default | `Local | `Exported]
+type val_option = [`Is_finalizer | `Is_stub] with sexp
 
-type val_info = val_exposure * abi * bool
+type val_info = val_exposure * abi * val_option list
