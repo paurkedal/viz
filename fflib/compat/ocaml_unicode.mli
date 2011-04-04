@@ -53,6 +53,6 @@ module String_buf : sig
     val contents : 'f r -> ('f, string) action
     val length : 'f r -> ('f, int) action
     val clear : 'f r -> ('f, unit) action
-    val put_char : char -> 'f r -> ('f, unit) action
-    val put_string : string -> 'f r -> ('f, unit) action
+    val put_char : 'f r -> char -> ('f, unit) action
+    val put_string : 'f r -> string -> ('f, unit) action
 end

@@ -59,6 +59,6 @@ module String_buf = struct
     let contents buf = __unsafe_action (fun () -> B.contents buf)
     let length buf = __unsafe_action (fun () -> B.length buf)
     let clear buf = __unsafe_action (fun () -> B.clear buf)
-    let put_char ch buf = __unsafe_action (fun () -> B.add_char buf ch)
-    let put_string s buf = __unsafe_action (fun () -> B.add_string buf s)
+    let put_char buf ch = __unsafe_action (fun () -> B.add_char buf ch)
+    let put_string buf s = __unsafe_action (fun () -> B.add_string buf s)
 end

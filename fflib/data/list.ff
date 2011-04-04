@@ -16,6 +16,7 @@
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
+open action_ops
 
 #?ffoc type t α := list α
 #?ffoc {#
@@ -38,6 +39,10 @@ val fold : (α → β → β) → t α → β → β
 
 val foldr : (α → β → β) → t α → β → β
  ## (fold f xs ≡ fold f (rev xs)).
+
+val iter : (α → action φ unit) → t α → action φ unit
+ ## (iter f xs ≡ f x1 >> ... >> f xN) forms an action-monad which iterates (f)
+ ## over the elements of (xs)
 
 val map : (α → β) → t α → t β
  ## (map f) is the lifting of (f) to element-wise function on a list
@@ -64,6 +69,10 @@ let fold f
     at [x; xs] be fold f xs ∘ f x
 
 let foldr f xs be fold f (rev xs)
+
+let iter f
+    at [] be return ()
+    at [x; xs] be f x >> iter f xs
 
 let mapr f
     let loop ys

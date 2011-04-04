@@ -1,8 +1,8 @@
-fflib/data/char_
-fflib/data/string_
 fflib/data/bool
 fflib/data/int
 fflib/data/list_
 fflib/data/option
 fflib/data/array_
 fflib/data/array_act
+fflib/data/char_
+fflib/data/string_

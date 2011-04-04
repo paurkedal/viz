@@ -1,5 +1,13 @@
 open action_ops
 
+# No polymorphic comparison yet...
+
+let sl_eq xs ys be (xs, ys) @> what
+    at ([], []) be true
+    at ([], _) be false
+    at (_, []) be false
+    at ([x; xs], [y; ys]) be string.eq x y ∧ sl_eq xs ys
+
 let main
     let 2'= be int.eq
 
@@ -83,9 +91,20 @@ let main
 
     assert "s-t-e" = __unsafe_run_action what!
 	let buf do string.buf.create
-	do string.buf.put_char c"s" buf
-	do string.buf.put_string "-t-" buf
-	do string.buf.put_char c"e" buf
+	do string.buf.put_char buf c"s"
+	do string.buf.put_string buf "-t-"
+	do string.buf.put_char buf c"e"
 	do string.buf.contents buf
+
+    assert string.join ", " [] = ""
+    assert string.join ", " ["xy"] = "xy"
+    assert string.join ", " ["ab", "c", "de"] = "ab, c, de"
+
+    assert sl_eq (string.csplit_on_space "") []
+    assert sl_eq (string.csplit_on_space " ") []
+    assert sl_eq (string.csplit_on_space "one") ["one"]
+    assert sl_eq (string.csplit_on_space " one  ") ["one"]
+    assert sl_eq (string.csplit_on_space "is 3 words") ["is"; "3"; "words";]
+    assert sl_eq (string.csplit_on_space "  is  two ") ["is"; "two";]
 
     be ()

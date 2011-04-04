@@ -16,6 +16,7 @@
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
+open action_ops
 
 type t := string
 
@@ -32,9 +33,9 @@ in buf
 
     val length : r φ → action φ int
 
-    val put_char : char → r φ → action φ unit
+    val put_char : r φ → char → action φ unit
 
-    val put_string : string → r φ → action φ unit
+    val put_string : r φ → string → action φ unit
 
     #?ffoc #}
     #?ffoc include compat.ocaml_unicode.string_buf
@@ -59,7 +60,7 @@ val cmp : t → t → torder
  ## (cmp x y) provides lexicographic order of Unicode code points between (x)
  ## and (y).  This is a fast non-collating and non-normalizing comparison.
 
-val to_utf8 : t → utf8
+val as_utf8 : t → utf8
 val of_utf8 : utf8 → t
 
 # The above are primitives.
@@ -68,12 +69,16 @@ val of_utf8 : utf8 → t
 val cat : t → t → t
  ## Concatenates two strings.
 
+val join : t → list t → t
+ ## (join sep pieces) concatenates the elements of (pieces) with (sep) between
+ ## each element.
+
 val slice : int → int → t → t
  ## (slice i j s) is the (n)-character substring of (s) starting at (i).
 
 val as_list : t → list char
 
-# TODO: val of_list : list char → t
+val of_list : list char → t
 
 
 ### Iteration
@@ -142,12 +147,37 @@ val strip_left : t → t
 val strip_right : t → t
 
 
+### Splitting
+
+val csplit_where : (char → bool) → t → list t
+ ## (csplit_where f s) splits (s) on contiguous characters where (f) is true,
+ ## and strips out any contigous prefix or suffix where (f) is true.  That is,
+ ## no empty strings are returned.
+
+val csplit_on_space : t → list t
+ ## (csplit_on_space s ≡ csplit_where char.is_space s) is the list of
+ ## space-separated substrings of (s).
+
+
 ### Implementation
 
 let cat x y
     let nx be length x
     let n be nx + length y
     be init n (i ↦ (i < nx ⇒ get i x; get (i - nx) y))
+
+let cat_list xs be __unsafe_run_action what!
+    let buf do buf.create
+    do list.iter (buf.put_string buf) xs
+    do buf.contents buf
+
+let join s
+    at [] be ""
+    at [x; xs] be __unsafe_run_action what!
+	let buf do buf.create
+	do buf.put_string buf x
+	do list.iter (x ↦ buf.put_string buf s >> buf.put_string buf x) xs
+	do buf.contents buf
 
 let slice i j x
     assert 0 ≤ i ≤ j ≤ length x
@@ -159,7 +189,11 @@ let as_list x
 	else be collect_upto (n - 1) [get (n - 1) x; accu]
     be collect_upto (length x) []
 
-# TODO: of_list
+let of_list xs be __unsafe_run_action what!
+    let buf do buf.create
+    do list.iter (buf.put_char buf) xs
+    do buf.contents buf
+
 
 let fold f x
     let n be length x
@@ -292,3 +326,13 @@ let strip_left s
 let strip_right s
     let j be rskip_space s (length s)
     be slice 0 j s
+
+
+let csplit_where f s
+    let loop j accu
+	if j = 0 be accu
+	let i be rskip_while (¬* f) s j
+	be loop (rskip_while f s i) [slice i j s; accu]
+    be loop (rskip_while f s (length s)) []
+
+let csplit_on_space be csplit_where char.is_space
