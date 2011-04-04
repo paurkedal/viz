@@ -27,6 +27,15 @@ inj [;] : α → t α → t α
 
 #?ffoc #}
 
+val init : int → (int → α) → list α
+
+val head : t α → α
+ ## Given a non-empty list (xs), (head xs) is the first element.
+
+val tail : t α → t α
+ ## Given a non-empty list (xs), (tail xs) is the list following the first
+ ## element.
+
 val rev : t α → t α
  ## Reverse the order of elements of a list.
 
@@ -44,6 +53,36 @@ val iter : (α → action φ unit) → t α → action φ unit
  ## (iter f xs ≡ f x1 >> ... >> f xN) forms an action-monad which iterates (f)
  ## over the elements of (xs)
 
+val for_all : (α → bool) → t α → bool
+ ## (for_all f xs) is true iff (f x) holds for all elements (x) of (xs).
+
+val for_some : (α → bool) → t α → bool
+ ## (for_some f xs) is true iff (f x) holds for at least one element (x) of
+ ## (xs).
+
+val count : (α → bool) → t α → int
+ ## (count f xs) is the number of elements at which (f) returns true.
+
+val length : t α → int
+ ## (length xs ≡ count (_ ↦ true) xs) is the number of elements is (xs).
+
+val find : (α → bool) → t α → option α
+ ## (find f xs) returns the first element (x) of (xs) such that (f x), or
+ ## (none) if no element is found.
+
+val filter : (α → bool) → t α → t α
+ ## (filter f xs) is the result of removing elements of (xs) at which (f) is
+ ## false.
+
+val bifilter : (α → bool) → t α → t α × t α
+ ## (bifilter f zs) returns the pair ((xs, ys)) amounting to a partition of
+ ## (zs) where (xs) are the elements at which (f) is true and (ys) are the
+ ## remaining elements, both in the order they occur in (zs).
+
+val take_while : (α → bool) → t α → t α
+
+val drop_while : (α → bool) → t α → t α
+
 val map : (α → β) → t α → t β
  ## (map f) is the lifting of (f) to element-wise function on a list
  ## determined by the equations::
@@ -52,6 +91,8 @@ val map : (α → β) → t α → t β
 
 val mapr : (α → β) → t α → t β
  ## (mapr f xs ≡ map f (rev xs))
+
+val mapi : (int → α → β) → list α → list β
 
 val cat : t α → t α → t α
  ## Concatenate two lists.
@@ -63,6 +104,30 @@ val flatten : t (t α) → t α
  ## (flatten xss ≡ fold cat xss []) is the result of concatenating the
  ## elements of a list of lists.
 
+val zip : t α → t β → t (α × β)
+ ## Given two lists (xs) and (ys) of the same length, (zip xs ys) is the list
+ ## of pairs taken from (xs) and (ys) in order.
+
+val zip_trunc : t α → t β → t (α × β)
+ ## (zip_trunc xs ys) is the list of pairs taken from (xs) and (ys) in order,
+ ## truncating to the length of the shortest list.
+
+val unzip : t (α × β) → t α × t β
+ ## (unzip xs ≡ (map fst xs, map snd xs)) turns a list of pairs into two lists
+ ## of the respective components.
+
+
+
+let init n f
+    let loop n zs
+	if n = 0 be zs
+	else be loop (n - 1) [f (n - 1); zs]
+    be loop n []
+
+let head at [] fail "An empty list was passed to list.head."
+	 at [x; _] be x
+let tail at [] fail "An empty list was passed to list.tail."
+	 at [_; xs] be xs
 
 let fold f
     at [] be ident
@@ -74,6 +139,57 @@ let iter f
     at [] be return ()
     at [x; xs] be f x >> iter f xs
 
+let for_all f
+    at [] be true
+    at [x; xs] be f x ∧ for_all f xs
+
+let for_some f
+    at [] be false
+    at [x; xs] be f x ∨ for_some f xs
+
+let count f
+    let add_count n
+	at [] be n
+	at [x; xs] be add_count (f x ⇒ n + 1; n) xs
+    be add_count 0
+
+let length xs
+    let add_length n
+	at [] be n
+	at [x; xs] be add_length (n + 1) xs
+    be add_length 0 xs
+
+let find f
+    at [] be none
+    at [x; xs] if f x be some x
+	       else be find f xs
+
+let filter f
+    let loop zs
+	at [] be rev zs
+	at [x; xs] if f x be loop [x; zs] xs
+		   else be loop zs xs
+    be loop []
+
+let bifilter f
+    let loop xs ys
+	at [] be (rev xs, rev ys)
+	at [z; zs] if f z be loop [z; xs] ys zs
+		   else   be loop xs [z; ys] zs
+    be loop [] []
+
+let drop_while f
+    at [] be []
+    at [x; xs] if f x be drop_while f xs
+	       else be [x; xs]
+
+let take_while f xs
+    let loop zs
+	at [] be xs
+	at [y; ys] if f y be loop [y; zs] ys
+		   else be rev zs
+    be loop [] xs
+
 let mapr f
     let loop ys
 	at [] be ys
@@ -81,6 +197,12 @@ let mapr f
     be loop []
 
 let map f xs be rev (mapr f xs)
+
+let mapi f
+    let loop i zs
+	at [] be rev zs
+	at [x; xs] be loop (i + 1) [f i x; zs] xs
+    be loop 0 []
 
 let catr xs ys
     be that xs which
@@ -95,3 +217,26 @@ let flatten
     at [] be []
     at [xs] be xs
     at [xs; xss] be cat xs (flatten xss)
+
+let zip xs ys
+    let loop zs
+	at [x; xs]
+	    at [y; ys] be loop [(x, y); zs] xs ys
+	    at [] fail "list.zip: The first list is longer than the second."
+	at []
+	    at [] be rev zs
+	    at _ fail "list.zip: The second list is longer than the first."
+    be loop [] xs ys
+
+let zip_trunc xs ys
+    let loop zs
+	at [x; xs] at [y; ys] be loop [(x, y); zs] xs ys
+		   at [] be rev zs
+	at [] at _ be rev zs
+    be loop [] xs ys
+
+let unzip zs
+    let loop xs ys
+	at [(x, y); zs] be loop [x; xs] [y; ys] zs
+	at [] be (rev xs, rev ys)
+    be loop [] [] zs

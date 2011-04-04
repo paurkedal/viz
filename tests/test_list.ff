@@ -1,0 +1,36 @@
+let 2'= be int.eq
+
+lex R =;=
+
+let 2'=;=
+    at [] at [] be true
+	  at _ be false
+    at [x; xs] at [y; ys] be x = y ∧ xs =;= ys
+	       at _ be false
+
+let isz x be x = 0
+let isnz x be ¬ x = 0
+
+let main
+    assert list.init 4 ident =;= [0; 1; 2; 3;]
+    assert list.head [1] = 1
+    assert list.tail [1; 2; 3;] =;= [2; 3;]
+    assert list.rev [0; 1; 2; 3;] =;= [3; 2; 1; 0;]
+    assert list.fold 2'+ [1; 10; 100;] 1000 = 1111
+    assert list.for_all isz [0; 0; 0; 0;]
+    assert ¬ list.for_all isz [0; 1;]
+    assert ¬ list.for_all isz [1; 0;]
+    assert list.for_some isz [1; 0; 8;]
+    assert list.for_some isz [1; 3; 0;]
+    assert ¬ list.for_some isz [1; 8; 8;]
+    assert list.count isz [0; 1; 1; 0; 1; 0;] = 3
+    assert list.length [] = 0
+    assert list.length [0; 1;] = 2
+    assert list.filter isnz [0; 1; 2; 0; 3; 4; 0;] =;= [1; 2; 3; 4;]
+    assert list.drop_while isz [0; 0; 1; 2;] =;= [1; 2;]
+    assert list.take_while isnz [1; 2; 0; 0;] =;= [1; 2;]
+    assert list.map (x ↦ -x) [1; 2; 4;] =;= [-1; -2; -4;]
+    assert list.catr [0; 1;] [2; 3;] =;= [1; 0; 2; 3;]
+    assert list.cat [0; 1;] [2; 3;] =;= [0; 1; 2; 3;]
+    assert list.flatten [[0; 1;]; []; [2;]; [3; 4;];] =;= [0; 1; 2; 3; 4;]
+    be ()
