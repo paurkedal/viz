@@ -98,7 +98,7 @@ let rec emit_atyp ?(typefor = Typefor_fform) = function
     | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t), u)
 	    when avar_idr op = Cst_core.idr_2o_times ->
 	let _loc = p4loc loc in
-	<:ctyp< $emit_atyp t$ * $emit_atyp u$ >>
+	<:ctyp< ($emit_atyp t$ * $emit_atyp u$) >>
     | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t), u)
 	    when (typefor = Typefor_cabi || typefor = Typefor_cabi_io)
 	      && avar_idr op = Cst_core.idr_2o_index ->

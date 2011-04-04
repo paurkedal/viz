@@ -227,6 +227,9 @@ let () = dispatch begin function
 	ocaml_pp "sexplib" "pa_sexp_conv";
 	ocaml_lib "fflib";
 	ocaml_cstubs "fflib";
+	dep ["ocaml"; "compile"; "byte"; "use_fflib"] ["fflib.cma"];
+	dep ["ocaml"; "compile"; "native"; "use_fflib"] ["fflib.cmxa"];
+	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
 	flag ["ocaml"; "ffoc1pp"] & S[A"-I"; P"fflib"];
 	flag ["cstubs"; "ffoc1pp"] & S[A"-I"; P"fflib"];

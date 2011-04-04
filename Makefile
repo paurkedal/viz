@@ -6,7 +6,7 @@ install:
 	@echo 'There is no production compiler to install yet.  README.rst'
 	@echo 'explains how to the current code nevertheless.'
 
-check: prefform-check
+check: prefform-check-fflib
 
 .PHONY: all clean check install
 
