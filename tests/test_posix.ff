@@ -1,0 +1,22 @@
+open action_ops
+open system.posix
+
+let show_str h s be print h >> print " --> " >> print s >> print "\n"
+let show_int h be show_str h ∘ int.show
+let show_bool h be show_str h ∘ bool.show
+let show_err be show_int
+
+let main
+    do getegid >>= show_int "getegid"
+    do geteuid >>= show_int "geteuid"
+    do getgid >>= show_int "getgid"
+    do getlogin >>= show_str "getlogin"
+    do getpid >>= show_int "getpid"
+    do getppid >>= show_int "getppid"
+    do getuid >>= show_int "getuid"
+    do isatty 0 >>= show_bool "isatty 0"
+    do isatty 3 >>= show_bool "isatty 3"
+    do print "Sleeping for 1 s; " >> flush stdout
+    do sleep 1 >>= show_err "sleep 1"
+    do print "Sleeping for 0.4 s; " >> flush stdout
+    do usleep 500000 >>= show_int "usleep 400000"

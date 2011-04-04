@@ -36,6 +36,7 @@ let header = "\
 
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
+#include <caml/alloc.h>
 #include <caml/custom.h>
 
 #define ffoc_none Val_int(0)
@@ -68,6 +69,8 @@ let converters cti_map = function
 	begin match tname with
 	| "bool"  -> ("Val_bool", "Bool_val")
 	| "int"   -> ("Val_int", "Int_val")
+	| "int32" -> ("caml_copy_int32", "Int32_val")
+	| "int64" -> ("caml_copy_int64", "Int64_val")
 	| "octet" -> ("Val_int", "Int_val")
 	| "utf8" -> ("caml_copy_string", "String_val")
 	| _ ->

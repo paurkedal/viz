@@ -49,6 +49,11 @@ module Int_misc = struct
 end
 
 module Pervasive = struct
+    let stdin = Pervasives.stdin
+    let stdout = Pervasives.stdout
+    let stderr = Pervasives.stderr
+    let flush chan = __unsafe_action (fun () -> Pervasives.flush chan)
+    let flush_all = __unsafe_action (fun () -> Pervasives.flush_all ())
     let print s = __unsafe_action
 	(fun () -> Pervasives.print_string (String_.as_utf8 s))
     let eprint s = __unsafe_action

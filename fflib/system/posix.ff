@@ -16,22 +16,94 @@
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
+open data
+open action_ops
 open:c "unistd.h"
+
+val access : string → int → io bool
+
+val:c chdir_utf8 : utf8 → io int := "chdir"
+val chdir : string → io int
+
+val:c chown_utf8 : utf8 → int → int → io int := "chown"
+val chown : string → int → int → io int
 
 val:c close : int → io int
 val:c dup : int → io int
 val:c dup2 : int → int → io int
 
+val:c fchown : int → int → int → io int
+val:c fchdir : int → io int
+val:c fdatasync : int → io int
+val:c fsync : int → io int
+
 val:c getegid : io int
 val:c geteuid : io int
 val:c getgid : io int
 
-val:c gethostid : io int#l
+val:c getlogin_utf8 : io utf8 := "getlogin"
+val getlogin : io string
 
-val:c getpgrp : io int
+val:c gethostid : io int32
+
 val:c getpid : io int
 val:c getppid : io int
 
 val:c getuid : io int
 
 val:c isatty : int → io bool
+
+val:c lchown_utf8 : utf8 → int → int → io int := "lchown"
+
+val lchown : string → int → int → io int
+
+val:c link_utf8 : utf8 → utf8 → io int := "link"
+val link : string → string → io int
+
+val:c nice : int → io int
+
+val:c rmdir_utf8 : utf8 → io int := "rmdir"
+
+val rmdir : string → io int
+
+val:c setegid : int → io int
+
+val:c seteuid : int → io int
+
+val:c setgid : int → io int
+
+val:c setregid : int → int → io int
+
+val:c setreuid : int → int → io int
+
+val:c setuid : int → io int
+
+val:c sleep : int → io int
+
+val:c symlink_utf8 : utf8 → utf8 → io int := "symlink"
+
+val symlink : string → string → io int
+
+val:c sync : io unit
+
+val:c unlink_utf8 : utf8 → io int := "unlink"
+
+val unlink : string → io int
+
+val:c usleep : int → io int
+
+
+### Implementation Details
+
+val:c _access_utf8 : utf8 → int → io int := "access"
+let access p m
+    be _access_utf8 (string.as_utf8 p) m >>= return ∘ (0 ↦ true; _ ↦ false)
+
+let chdir be chdir_utf8 ∘ string.as_utf8
+let chown be chown_utf8 ∘ string.as_utf8
+let getlogin be getlogin_utf8 >>= return ∘ string.of_utf8
+let lchown be lchown_utf8 ∘ string.as_utf8
+let link ps pt be link_utf8 (string.as_utf8 ps) (string.as_utf8 pt)
+let rmdir be rmdir_utf8 ∘ string.as_utf8
+let symlink ps pt be symlink_utf8 (string.as_utf8 ps) (string.as_utf8 pt)
+let unlink be unlink_utf8 ∘ string.as_utf8
