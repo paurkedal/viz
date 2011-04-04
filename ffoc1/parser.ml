@@ -42,10 +42,15 @@ let locate_source ?(exts = [".ff"; ".ml"; ".mlpack"]) ?(strip_ext = false)
 		| [] -> check_roots roots
 		| ext :: exts ->
 		    let path = path_sans_ext ^ ext in
+		    let len = String.length path_sans_ext in
+		    let path' =
+			if String.get path_sans_ext (len - 1) = '_' then
+			    String.sub path_sans_ext 0 (len - 1) ^ ext else
+			path in
 		    let path' =
 			match topdir with
-			| None -> path
-			| Some topdir -> Filename.concat topdir path in
+			| None -> path'
+			| Some topdir -> Filename.concat topdir path' in
 		    if Sys.file_exists path' then
 			if strip_ext then path_sans_ext else path
 		    else check_exts exts in
