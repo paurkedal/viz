@@ -308,44 +308,52 @@ let emit_inj_aliases (loc, v, params, ti) =
 	List.map emit_inj injs
     | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
-let rec emit_asig = function
+type amod_state = {
+    mutable ams_stub_prefix : string;
+}
+
+let rec emit_asig state = function
     | Asig_ref p ->
 	let _loc = p4loc (apath_loc p) in
 	<:module_type< $id: emit_apath_uid p$ >>
     | Asig_decs (loc, decs) ->
 	let _loc = p4loc loc in
-	<:module_type< sig $list: List.map emit_adec decs$ end >>
+	<:module_type< sig $list: List.map (emit_adec state) decs$ end >>
     | Asig_product (loc, xv, xsig, ysig) ->
 	let _loc = p4loc loc in
 	<:module_type<
-	    functor ( $uid: avar_to_uid xv$ : $emit_asig xsig$ ) ->
-		$emit_asig ysig$ >>
+	    functor ( $uid: avar_to_uid xv$ : $emit_asig state xsig$ ) ->
+		$emit_asig state ysig$ >>
     | Asig_with_type (loc, s, x, y) ->
 	let _loc = p4loc loc in
 	let constr = <:with_constr< type $emit_atyp x$ = $emit_atyp y$ >> in
-	<:module_type< $emit_asig s$ with $constr$ >>
+	<:module_type< $emit_asig state s$ with $constr$ >>
     | Asig_with_struct (loc, s, x, y) ->
 	let _loc = p4loc loc in
 	let constr = <:with_constr< module $uid: avar_to_uid x$
 					 = $emit_apath_uid y$ >> in
-	<:module_type< $emit_asig s$ with $constr$ >>
-and emit_adec = function
+	<:module_type< $emit_asig state s$ with $constr$ >>
+and emit_adec state = function
     | Adec_include (loc, s) ->
 	let _loc = p4loc loc in
-	<:sig_item< include $emit_asig s$ >>
+	<:sig_item< include $emit_asig state s$ >>
     | Adec_open (loc, p) ->
 	let _loc = p4loc loc in
 	<:sig_item< open $id: emit_apath_uid p$ >>
-    | Adec_use (loc, _) -> let _loc = p4loc loc in <:sig_item< >>
+    | Adec_use (loc, use) ->
+	begin match Ast_utils.interpret_use use with
+	| `Stub_prefix pfx -> state.ams_stub_prefix <- pfx
+	end;
+	let _loc = p4loc loc in <:sig_item< >>
     | Adec_in (loc, v, s) ->
 	let _loc = p4loc loc in
-	<:sig_item< module $uid: avar_to_uid v$ : $emit_asig s$ >>
+	<:sig_item< module $uid: avar_to_uid v$ : $emit_asig state s$ >>
     | Adec_sig (loc, v, None) ->
 	let _loc = p4loc loc in
 	<:sig_item< module type $uid: avar_to_uid v$ >>
     | Adec_sig (loc, v, Some s) ->
 	let _loc = p4loc loc in
-	<:sig_item< module type $uid: avar_to_uid v$ = $emit_asig s$ >>
+	<:sig_item< module type $uid: avar_to_uid v$ = $emit_asig state s$ >>
     | Adec_types bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
@@ -357,8 +365,8 @@ and emit_adec = function
     | Adec_cabi_val (loc, v, t, cn, valopts) ->
 	let _loc = p4loc loc in
 	let stubname =
-	    if List.mem `Is_stub valopts then cn else
-	    "_stub_" ^ avar_to_lid v in
+	    if List.mem `Is_stub valopts then state.ams_stub_prefix ^ cn else
+	    state.ams_stub_prefix ^ avar_to_lid v in
 	let syms =
 	    Ast.LCons (stubname, Ast.LNil) in
 	let name = avar_to_lid v in
@@ -370,38 +378,42 @@ and emit_adec = function
 	    let ot = emit_atyp ~typefor: Typefor_cabi t in
 	    <:sig_item< external $lid: name$ : $ot$ = $str_list: syms$ >>
 
-let rec emit_amod = function
+let rec emit_amod state = function
     | Amod_ref p ->
 	let _loc = p4loc (apath_loc p) in
 	<:module_expr< $id: emit_apath_uid p$ >>
     | Amod_defs (loc, defs) ->
 	let _loc = p4loc loc in
-	<:module_expr< struct $list: List.map emit_adef defs$ end >>
+	<:module_expr< struct $list: List.map (emit_adef state) defs$ end >>
     | Amod_apply (loc, x, y) ->
 	let _loc = p4loc loc in
-	<:module_expr< $emit_amod x$ $emit_amod y$ >>
+	<:module_expr< $emit_amod state x$ $emit_amod state y$ >>
     | Amod_lambda (loc, xv, xsig, ymod) ->
 	let _loc = p4loc loc in
 	<:module_expr<
-	    functor ($uid: avar_to_uid xv$ : $emit_asig xsig$) ->
-		$emit_amod ymod$ >>
+	    functor ($uid: avar_to_uid xv$ : $emit_asig state xsig$) ->
+		$emit_amod state ymod$ >>
     | Amod_coercion (loc, m, s) ->
 	let _loc = p4loc loc in
-	<:module_expr< ($emit_amod m$ : $emit_asig s$) >>
-and emit_adef = function
+	<:module_expr< ($emit_amod state m$ : $emit_asig state s$) >>
+and emit_adef state = function
     | Adef_include (loc, m) ->
 	let _loc = p4loc loc in
-	<:str_item< include $emit_amod m$ >>
+	<:str_item< include $emit_amod state m$ >>
     | Adef_open (loc, p) ->
 	let _loc = p4loc loc in
 	<:str_item< open $id: emit_apath_uid p$ >>
-    | Adef_use (loc, _) -> let _loc = p4loc loc in <:str_item< >>
+    | Adef_use (loc, use) ->
+	begin match Ast_utils.interpret_use use with
+	| `Stub_prefix pfx -> state.ams_stub_prefix <- pfx
+	end;
+	let _loc = p4loc loc in <:str_item< >>
     | Adef_in (loc, v, m) ->
 	let _loc = p4loc loc in
-	<:str_item< module $uid: avar_to_uid v$ = $emit_amod m$ >>
+	<:str_item< module $uid: avar_to_uid v$ = $emit_amod state m$ >>
     | Adef_sig (loc, v, s) ->
 	let _loc = p4loc loc in
-	<:str_item< module type $uid: avar_to_uid v$ = $emit_asig s$ >>
+	<:str_item< module type $uid: avar_to_uid v$ = $emit_asig state s$ >>
     | Adef_types bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
@@ -434,15 +446,15 @@ and emit_adef = function
     | Adef_cabi_val (loc, v, t, cn, valopts) ->
 	let _loc = p4loc loc in
 	let stubname =
-	    if List.mem `Is_stub valopts then cn else
-	    "_stub_" ^ avar_to_lid v in
+	    if List.mem `Is_stub valopts then state.ams_stub_prefix ^ cn else
+	    state.ams_stub_prefix ^ avar_to_lid v in
 	let syms = Ast.LCons (stubname, Ast.LNil) in
 	let name = avar_to_lid v in
 	let ot = emit_atyp ~typefor: Typefor_cabi t in
 	let rt = Ast_utils.result_type t in
 	let (pocket, rt) = Ast_utils.unwrap_atyp_action rt in
 	if pocket <> Ast_utils.No_pocket then
-	    let cname = "_stub_" ^ name in
+	    let cname = state.ams_stub_prefix ^ name in
 	    let oxt = emit_atyp_cabi_io t in
 	    let ox = <:str_item< external $lid: cname$ : $oxt$
 					= $str_list: syms$ >> in
@@ -467,6 +479,7 @@ and emit_adef = function
 
 let emit_toplevel = function
     | Amod_defs (loc, defs) ->
-	<:str_item< $list: List.map emit_adef defs$ >>
+	let state = {ams_stub_prefix = "_stub_"} in
+	<:str_item< $list: List.map (emit_adef state) defs$ >>
     | amod ->
 	errf_at (amod_loc amod) "Module expression not allowed at top-level."

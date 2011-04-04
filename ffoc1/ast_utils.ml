@@ -22,6 +22,7 @@ open Ast_types
 open Diag
 open Sexplib
 open FfPervasives
+open Unicode
 
 let sexp_to_string sx =
     let buf = Buffer.create 64 in
@@ -225,3 +226,22 @@ and fold_adef_cabi_open f = function
 	ident
     | Adef_cabi_val _ -> ident
     | Adef_cabi_open (_, inc) -> f inc
+
+let interpret_use use =
+    let rec flatten params = function
+	| Aval_apply (_, inner, param) -> flatten (param :: params) inner
+	| directive -> directive, params in
+    let directive, params = flatten [] use in
+    match directive with
+    | Aval_ref (Apath ([Avar (_, Idr "cabi")], subdirective)) ->
+	begin match subdirective with
+	| Avar (_, Idr "stub_prefix") ->
+	    begin match params with
+	    | [Aval_literal (_, Lit_string pfx)] ->
+		`Stub_prefix (UString.to_utf8 pfx)
+	    | _ -> errf_at (aval_loc use) "Invalid stub prefix."
+	    end
+	| _ -> errf_at (avar_loc subdirective) "Invalid cabi use-directive."
+	end
+    | _ ->
+	errf_at (aval_loc directive) "Invalid use-directive."

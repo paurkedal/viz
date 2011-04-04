@@ -59,6 +59,8 @@ type aval =
     | Aval_raise of loc * aval
     with sexp
 
+type ause = [`Stub_prefix of string]
+
 type atypinfo =
     | Atypinfo_abstract (* only in signature *)
     | Atypinfo_alias of atyp

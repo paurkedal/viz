@@ -20,6 +20,8 @@ open data
 open action_ops
 open:c "unistd.h"
 
+use cabi.stub_prefix "ffoc_posix_"
+
 val access : string → int → io bool
 
 val:c chdir_utf8 : utf8 → io int := "chdir"
