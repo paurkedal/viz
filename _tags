@@ -14,5 +14,9 @@
 <fflib/data/*.cmx>: for-pack(Data)
 <fflib/system/*.cmx>: for-pack(System)
 
-<fflib.{cma,cmxa}>: use_libfflib
+"libfflib.a": use_llvm_libs
+<fflib.{cma,cmxa}>: use_libfflib, use_llvm_libs
 <{examples,tests,tools}/**/*.{ff,byte,native}>: use_fflib
+
+<compiler/**>: in_fflib
+<compiler/llvm/*.cmx>: for-pack(Llvm)

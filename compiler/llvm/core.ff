@@ -1,0 +1,109 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Fform Standard Library.
+#
+# The Fform Standard Library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+open:c "llvm-c/Core.h"
+
+
+### Contexts
+
+type:c context := "LLVMContextRef"
+
+val:c create_context : io context := "LLVMContextCreate"
+
+val:c global_context : io context := "LLVMGetGlobalContext"
+
+val:cf dispose_context : context → io unit := "LLVMContextDispose"
+
+
+### Modules
+
+type:c module := "LLVMModuleRef"
+
+val create_module : context → string → io module
+
+val:cf dispose_module : module → io unit := "LLVMDisposeModule"
+
+
+### Types
+
+type:c ctype := "LLVMTypeRef"
+
+type:c ctypehandle := "LLVMTypeHandleRef"
+
+val:c int1_type : context → io ctype := "LLVMInt1TypeInContext"
+val:c int8_type : context → io ctype := "LLVMInt8TypeInContext"
+val:c int16_type : context → io ctype := "LLVMInt16TypeInContext"
+val:c int32_type : context → io ctype := "LLVMInt32TypeInContext"
+val:c int64_type : context → io ctype := "LLVMInt64TypeInContext"
+val:c int_type : context → int → io ctype := "LLVMIntTypeInContext"
+
+val:c float_type : context → io ctype := "LLVMFloatTypeInContext"
+val:c double_type : context → io ctype := "LLVMDoubleTypeInContext"
+val:c x86_fp80_type : context → io ctype := "LLVMX86FP80TypeInContext"
+val:c fp128_type : context → io ctype := "LLVMFP128TypeInContext"
+val:c ppc_fp128_type : context → io ctype := "LLVMPPCFP128TypeInContext"
+
+
+### Values
+
+type:c value := "LLVMValueRef"
+
+type:c basicblock := "LLVMBasicBlockRef"
+
+type:c builder := "LLVMBuilderRef"
+
+type:c memorybuffer := "LLVMMemoryBufferRef"
+
+
+#### Operations on Functions
+
+val:c add_function_utf8 : module → utf8 → ctype → io value
+	:= "LLVMAddFunction"
+
+val add_function : module → string → ctype → io value
+
+val:c get_named_function_utf8 : module → utf8 → io (option value)
+	:= "LLVMGetNamedFunction"
+
+val get_named_function : module → string → io (option value)
+
+val:c get_first_function : module → io (option value)
+	:= "LLVMGetFirstFunction"
+
+val:c get_last_function : module → io (option value)
+	:= "LLVMGetLastFunction"
+
+val:c get_next_function : value → io (option value)
+	:= "LLVMGetNextFunction"
+
+val:c get_prev_function : value → io (option value)
+	:= "LLVMGetPreviousFunction"
+
+val:c delete_function : value → io unit := "LLVMDeleteFunction"
+
+
+
+### Implementation Details
+
+val:c _create_module : utf8 → context → io module
+				:= "LLVMModuleCreateWithNameInContext"
+
+let create_module ctx nm be _create_module (string.as_utf8 nm) ctx
+
+let add_function m name be add_function_utf8 m (string.as_utf8 name)
+
+let get_named_function m name be get_named_function_utf8 m (string.as_utf8 name)
