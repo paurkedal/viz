@@ -16,9 +16,6 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** O'Caml Code Generation Based on Camlp4 *)
-
 open Ast_types
-open Camlp4.PreCast
 
-val emit_toplevel : module_name: string -> amod -> Ast.str_item
+val output_consts : out_channel -> amod -> unit

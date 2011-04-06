@@ -83,4 +83,8 @@ module String : sig
     val after : int -> string -> string
 
     val starts_with : string -> string -> bool
+
+    val ends_with : string -> string -> bool
+
+    val strip_suffix : string -> string -> string
 end

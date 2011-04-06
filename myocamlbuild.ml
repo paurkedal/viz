@@ -130,16 +130,31 @@ let native_compile_ffoc1_implem ?tag ff env build =
 let ffoc1dep arg out env build =
     let arg = env arg and out = env out in
     let tags = tags_of_pathname arg ++ "ffoc1pp" ++ "ocamldep" in
-    Cmd(S[A ffoc1pp_path; T tags; A "--depend"; A"-T"; P"..";
+    Cmd(S[P ffoc1pp_path; T tags; A "--depend-modules"; A"-T"; P"..";
 	  Ocaml_utils.ocaml_include_flags arg;
 	  P arg; Sh ">"; Px out])
 
 let ffoc1cstubs arg out env build =
     let arg = env arg and out = env out in
     let tags = tags_of_pathname arg ++ "ffoc1pp" ++ "cstubs" in
-    Cmd(S[A ffoc1pp_path; T tags; A "--cstubs";
+    Cmd(S[P ffoc1pp_path; T tags; A "--cstubs";
 	  Ocaml_utils.ocaml_include_flags arg;
 	  P arg; Sh ">"; Px out])
+
+let ffoc1consts arg out env build =
+    let arg = env arg and out = env out in
+    let tags = tags_of_pathname arg ++ "ffoc1pp" ++ "consts" in
+    Cmd(S[P ffoc1pp_path; T tags; A "--consts";
+	  Ocaml_utils.ocaml_include_flags arg;
+	  P arg; Sh ">"; Px out])
+
+let compile_fficgen arg out env build =
+    let arg = env arg and out = env out in
+    Cmd (S[A"cc"; A"-o"; Px out; A arg])
+
+let runprog arg out env build =
+    let arg = env arg and out = env out in
+    Cmd (S[P arg; Sh ">"; Px out])
 
 (** Fform Stage 1 preprocessor subcommand. *)
 let ffoc1pp tag ff ff_ml env build =
@@ -173,10 +188,25 @@ rule "ffoc1, preprocessing only: ff -> ff.ml"
     ~prod:"%.ff.ml"
     (ffoc1pp "ff.ml" "%.ff" "%.ff.ml");;
 
-rule "ffoc1, C stub generation: ff -> _stubs.c"
+rule "ffoc1, C stub generation: ff -> _FFIS.c"
     ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
-    ~prod:"%_stubs.c"
-    (ffoc1cstubs "%.ff" "%_stubs.c");;
+    ~prod:"%_FFIS.c"
+    (ffoc1cstubs "%.ff" "%_FFIS.c");;
+
+rule "ffoc1, C program to emit ML source defining constants: ff -> %_FFICgen.c"
+    ~deps:[ffoc1pp_path; "%.ff"; "fflib/stdlex.ff"]
+    ~prod:"%_FFICgen.c"
+    (ffoc1consts "%.ff" "%_FFICgen.c");;
+
+rule "ffoc1, Run C program to emit constant defs: %_FFICgen -> _FFIC.ml"
+    ~deps:["%_FFICgen"]
+    ~prod:"%_FFIC.ml"
+    (runprog "%_FFICgen" "%_FFIC.ml");;
+
+rule "Compile and link the _FFICgen program"
+    ~dep:"%_FFICgen.c"
+    ~prod:"%_FFICgen"
+    (compile_fficgen "%_FFICgen.c" "%_FFICgen");;
 
 copy_rule "ffoc1, Underscored module names to avoid conflict with O'Caml."
     "%.ff" "%_.ff";;

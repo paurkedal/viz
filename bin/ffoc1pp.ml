@@ -12,7 +12,7 @@ let usage = "ffoc1pp [--print | -o OUTPUT] INPUT"
 module String_set = Set.Make (String)
 module Ocaml_printer = Camlp4.Printers.OCaml.Make(Camlp4.PreCast.Syntax)
 
-let print_depend just_modules topdir roots input_path m =
+let print_depend ~module_name just_modules topdir roots input_path m =
     let rec extract comps = function
 	| [] -> comps
 	| Avar (_, Idr comp) :: vs -> extract (comp :: comps) vs in
@@ -26,20 +26,30 @@ let print_depend just_modules topdir roots input_path m =
 	match comps with
 	| [] -> ident
 	| x :: xs -> String_set.add x in
-    let deps = Ast_utils.fold_amod_paths add_dep m String_set.empty in
+    let deps =
+	Ast_utils.fold_amod_paths ~module_name add_dep m String_set.empty in
     let print_module_dep dep =
 	print_char ' '; print_string (String.capitalize dep) in
-    let check_and_print_dep dep =
+    let check_and_print_dep ext dep =
 	try
 	    let path =
 		Parser.locate_source ~strip_ext:true ?topdir ~roots dep in
-	    print_char ' '; print_string path
+	    print_char ' '; print_string (path ^ ".cmi");
+	    print_char ' '; print_string (path ^ ext)
 	with Not_found -> () in
-    print_string input_path;
-    print_char ':';
-    String_set.iter
-	(if just_modules then print_module_dep else check_and_print_dep)
-	deps;
+    if just_modules then begin
+	print_string input_path; print_char ':';
+	String_set.iter print_module_dep deps
+    end else begin
+	let p = Filename.chop_extension input_path in
+	print_string (p ^ ".cmo"); print_string ": ";
+	print_string (p ^ ".cmi");
+	String_set.iter (check_and_print_dep ".cmo") deps;
+	print_char '\n';
+	print_string (p ^ ".cmx"); print_string ": ";
+	print_string (p ^ ".cmi");
+	String_set.iter (check_and_print_dep ".cmx") deps
+    end;
     print_char '\n'
 
 let print_cst term =
@@ -72,6 +82,7 @@ let _ =
     let do_ast = ref false in
     let do_depend = ref false in
     let do_cstubs = ref false in
+    let do_consts = ref false in
     let add_loc = ref false in
     let open_pervasive = ref true in
     let nroots = ref [] in
@@ -99,6 +110,8 @@ let _ =
 	    " Output C stubs, if any.";
 	"--cstubs-serid", Arg.String (fun s -> serid := Some s),
 	    "STRING Prefix for serialization id of generated custom types.";
+	"--consts", Arg.Unit (fun () -> do_consts := true),
+	    " Output C program to generate ML source defining constants.";
 	"--cst", Arg.Unit (fun () -> do_cst := true),
 	    " Dump the concrete syntax tree.  Mainly for debugging.";
 	"--ast", Arg.Unit (fun () -> do_ast := true),
@@ -115,6 +128,7 @@ let _ =
 	    exit 64 (* EX_USAGE *)
 	| Some x -> x in
     let in_path = require "An input path" !in_path_opt in
+    let module_name = Filename.chop_extension (Filename.basename in_path) in
     match Parser.parse_file ~exts: [""] ~roots: (!roots @ !nroots) in_path with
     | Some term ->
 	begin try
@@ -130,15 +144,14 @@ let _ =
 		let serid =
 		    match !serid with
 		    | Some serid -> serid
-		    | None ->
-			sprintf "org.eideticdew.ffoc.%s."
-			    (Filename.chop_extension
-				(Filename.basename in_path)) in
+		    | None -> sprintf "org.eideticdew.ffoc.%s." module_name in
 		Ast_to_cstubs.output_cstubs stdout serid amod
 	    end else
+	    if !do_consts then Ast_to_consts.output_consts stdout amod else
 	    if !do_depend then
-		print_depend !raw_deps !topdir !roots in_path amod else
-	    let omod = Ast_to_p4.emit_toplevel amod in
+		print_depend ~module_name !raw_deps !topdir !roots
+			     in_path amod else
+	    let omod = Ast_to_p4.emit_toplevel ~module_name amod in
 	    if !add_loc then
 		Ocaml_printer.print !out_path_opt
 		    (fun o -> o#set_loc_and_comments#implem)

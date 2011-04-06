@@ -71,6 +71,8 @@ let converters cti_map = function
 	if String_map.mem tname cti_map then
 	    (sprintf "%s_to_option" tname, sprintf "%s_of_option" tname) else
 	errf_at loc "Invalid C type or option not handled for this C type."
+    | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), Atyp_uvar _) ->
+	("UNIMPLEMENTED", "Data_custom_val")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	if String_map.mem tname cti_map then
 	    (sprintf "%s_to_value" tname, sprintf "%s_of_value" tname) else
@@ -214,8 +216,8 @@ and output_adef_c och = function
 	   end
 	   defs
     | Adef_cabi_val (loc, v, t, cn, valopts) ->
-	if List.mem `Is_stub valopts then ident else
-	output_cstub och v t cn (List.mem `Is_finalizer valopts)
+	if Ast_utils.atyp_is_const t || List.mem `Is_stub valopts then ident
+	else output_cstub och v t cn (List.mem `Is_finalizer valopts)
     | Adef_include (loc, m) -> output_amod_c och m
     | _ -> ident
 

@@ -74,6 +74,15 @@ let unwrap_atyp_action = function
 	end
     | t -> (No_pocket, t)
 
+let atyp_is_const = function
+    | Atyp_arrow _ -> false
+    | Atyp_apply (_, u, v) ->
+	begin match atyp_action_pocket u with
+	| No_pocket -> true
+	| _ -> false
+	end
+    | _ -> true
+
 let flatten_arrows =
     let rec loop ats = function
 	| Atyp_arrow (_, at, rt) -> loop (at :: ats) rt
@@ -188,17 +197,20 @@ and fold_adec_paths f = function
     | Adec_val (_, _, t) -> fold_atyp_paths (f `Type) t
     | Adec_cabi_val (_, _, t, _, _) -> fold_atyp_paths (f `Type) t
 
-let rec fold_amod_paths f = function
+let rec fold_amod_paths ?module_name f = function
     | Amod_ref p -> f `Structure p
-    | Amod_defs (_, defs) -> List.fold (fold_adef_paths f) defs
-    | Amod_apply (_, m0, m1) -> fold_amod_paths f m0 *> fold_amod_paths f m1
-    | Amod_lambda (_, _, s, m) -> fold_asig_paths f s *> fold_amod_paths f m
-    | Amod_coercion (_, m, s) -> fold_amod_paths f m *> fold_asig_paths f s
-and fold_adef_paths f = function
-    | Adef_include (_, m) -> fold_amod_paths f m
+    | Amod_defs (_, defs) -> List.fold (fold_adef_paths ?module_name f) defs
+    | Amod_apply (_, m0, m1) ->
+	fold_amod_paths ?module_name f m0 *> fold_amod_paths ?module_name f m1
+    | Amod_lambda (_, _, s, m) ->
+	fold_asig_paths f s *> fold_amod_paths ?module_name f m
+    | Amod_coercion (_, m, s) ->
+	fold_amod_paths ?module_name f m *> fold_asig_paths f s
+and fold_adef_paths ?module_name f = function
+    | Adef_include (_, m) -> fold_amod_paths ?module_name f m
     | Adef_open (_, p) -> f `Structure p
     | Adef_use _ -> ident
-    | Adef_in (_, _, m) -> fold_amod_paths f m
+    | Adef_in (_, _, m) -> fold_amod_paths ?module_name f m
     | Adef_sig (_, _, s) -> fold_asig_paths f s
     | Adef_types bindings -> List.fold (fold_atypbind_paths f) bindings
     | Adef_let (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x
@@ -208,7 +220,14 @@ and fold_adef_paths f = function
 		Option.fold (fold_atyp_paths (f `Type)) t *>
 		fold_aval_paths f x)
 	    bindings
-    | Adef_cabi_val (_, _, t, _, _) -> fold_atyp_paths (f `Type) t
+    | Adef_cabi_val (_, v, t, _, _) ->
+	(if atyp_is_const t then
+	    match module_name with
+	    | Some mname ->
+		f `Value
+		  (Apath ([Avar (Location.dummy, Idr (mname ^ "_FFIC"))], v))
+	    | None -> ident else
+	ident) *> fold_atyp_paths (f `Type) t
     | Adef_cabi_open _ -> ident
 
 let rec fold_amod_cabi_open f = function

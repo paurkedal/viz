@@ -17,6 +17,7 @@
  *)
 
 open Printf
+open FfPervasives
 
 let rtok_token (token, loc) = token
 let rtok_bpos  (token, loc) =
@@ -32,6 +33,9 @@ let grammar_main =
 let print_error loc msg =
     eprintf "%s: %s\n" (Location.to_string loc) msg
 
+let prune_path =
+    String.strip_suffix "_FFIC" *> String.strip_suffix "_"
+
 let locate_source ?(exts = [".ff"; ".ml"; ".mlpack"]) ?(strip_ext = false)
 		  ?topdir ~roots rel_path_sans_ext =
     let rec check_roots = function
@@ -42,11 +46,7 @@ let locate_source ?(exts = [".ff"; ".ml"; ".mlpack"]) ?(strip_ext = false)
 		| [] -> check_roots roots
 		| ext :: exts ->
 		    let path = path_sans_ext ^ ext in
-		    let len = String.length path_sans_ext in
-		    let path' =
-			if String.get path_sans_ext (len - 1) = '_' then
-			    String.sub path_sans_ext 0 (len - 1) ^ ext else
-			path in
+		    let path' = prune_path path_sans_ext ^ ext in
 		    let path' =
 			match topdir with
 			| None -> path'

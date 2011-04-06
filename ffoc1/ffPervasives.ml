@@ -155,7 +155,20 @@ module String = struct
 
     let after i s = sub s i (String.length s - i)
 
-    let starts_with p s =
-	let np = String.length p in
-	np <= String.length s && p = String.sub s 0 np
+    let starts_with pfx s =
+	let n = String.length s in
+	let m = String.length pfx in
+	m <= n && String.sub s 0 m = pfx
+
+    let ends_with sfx s =
+	let n = String.length s in
+	let m = String.length sfx in
+	m <= n && String.sub s (n - m) m = sfx
+
+    let strip_suffix sfx s =
+	let n = String.length s in
+	let m = String.length sfx in
+	if m <= n && String.sub s (n - m) m = sfx
+	then String.sub s 0 (n - m)
+	else s
 end

@@ -310,6 +310,7 @@ let emit_inj_aliases (loc, v, params, ti) =
 
 type amod_state = {
     mutable ams_stub_prefix : string;
+    ams_module_name : string;
 }
 
 let rec emit_asig state = function
@@ -362,6 +363,9 @@ and emit_adec state = function
     | Adec_val (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
+    | Adec_cabi_val (loc, v, t, cn, valopts) when Ast_utils.atyp_is_const t ->
+	let _loc = p4loc loc in
+	<:sig_item< value $lid: avar_to_lid v$ : $emit_atyp t$ >>
     | Adec_cabi_val (loc, v, t, cn, valopts) ->
 	let _loc = p4loc loc in
 	let stubname =
@@ -443,6 +447,11 @@ and emit_adef state = function
 		<:binding< $lid: avar_to_lid v$ : $emit_atyp t$
 			    = $emit_aval x$ >> in
 	<:str_item< value rec $list: List.map emit_value_binding bindings$ >>
+    | Adef_cabi_val (loc, v, t, cn, valopts) when Ast_utils.atyp_is_const t ->
+	let _loc = p4loc loc in
+	<:str_item< value $lid: avar_to_lid v$ : $emit_atyp t$
+			= $uid: str_to_uid (state.ams_module_name ^ "_FFIC")$
+			. $lid: avar_to_lid v$ >>
     | Adef_cabi_val (loc, v, t, cn, valopts) ->
 	let _loc = p4loc loc in
 	let stubname =
@@ -477,9 +486,12 @@ and emit_adef state = function
     | Adef_cabi_open (loc, _) ->
 	let _loc = p4loc loc in <:str_item< >>
 
-let emit_toplevel = function
+let emit_toplevel ~module_name = function
     | Amod_defs (loc, defs) ->
-	let state = {ams_stub_prefix = "_stub_"} in
+	let state = {
+	    ams_stub_prefix = "_stub_";
+	    ams_module_name = module_name;
+	} in
 	<:str_item< $list: List.map (emit_adef state) defs$ >>
     | amod ->
 	errf_at (amod_loc amod) "Module expression not allowed at top-level."

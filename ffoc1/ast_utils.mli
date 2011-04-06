@@ -41,6 +41,8 @@ type pocket =
     | Local_pocket of avar
     | World_pocket
 
+val atyp_is_const : atyp -> bool
+
 val atyp_action_pocket : atyp -> pocket
 val unwrap_atyp_action : atyp -> pocket * atyp
 
@@ -54,7 +56,8 @@ val fold_atyp_paths : (apath -> 'a -> 'a) -> atyp -> 'a -> 'a
 val fold_apat_paths : (stratum -> apath -> 'a -> 'a) -> apat -> 'a -> 'a
 val fold_aval_paths : (stratum -> apath -> 'a -> 'a) -> aval -> 'a -> 'a
 val fold_asig_paths : (stratum -> apath -> 'a -> 'a) -> asig -> 'a -> 'a
-val fold_amod_paths : (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a
+val fold_amod_paths : ?module_name: string ->
+		      (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a
 
 val fold_amod_cabi_open : (string -> 'a -> 'a) -> amod -> 'a -> 'a
 val fold_adef_cabi_open : (string -> 'a -> 'a) -> adef -> 'a -> 'a

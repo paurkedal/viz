@@ -6,6 +6,8 @@
 
 <ffoc1-tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
 
+"fflib": include
+
 <fflib/**/*>: no_pervasive, in_fflib
 <fflib/pervasive.ff>: ocamlstdlib
 <fflib/compat/ocaml_*.ff>: ocamlstdlib

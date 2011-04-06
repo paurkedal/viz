@@ -3,6 +3,7 @@ ffoc1/ast_letrec
 ffoc1/ast_types
 ffoc1/ast_utils
 ffoc1/ast_to_cstubs
+ffoc1/ast_to_consts
 ffoc1/ast_to_p4
 ffoc1/cst_core
 ffoc1/cst_types

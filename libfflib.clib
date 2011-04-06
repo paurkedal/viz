@@ -1,3 +1,3 @@
 ffoc1/camlffoc.o
-fflib/system/posix_stubs.o
-compiler/llvm/core_stubs.o
+fflib/system/posix_FFIS.o
+compiler/llvm/core_FFIS.o
