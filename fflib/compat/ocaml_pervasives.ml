@@ -32,8 +32,8 @@ module Int_ops = struct
     let op1_U2212 = Pervasives.(~-)
     let op2_U002b = Pervasives.(+)
     let op2_U2212 = Pervasives.(-)
-    let op2_U002a = Pervasives.( * )
-    let op2_U002f = Pervasives.(/)
+    let op2_U00d7 = Pervasives.( * )
+    let op2_U2215 = Pervasives.(/)
     let op2_mod = Pervasives.(mod)
 
     let bitand = Pervasives.(land)

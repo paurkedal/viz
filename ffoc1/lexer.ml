@@ -64,6 +64,9 @@ type state = {
     (* The currently active keywords and operators. *)
     mutable st_keywords : tokeninfo UString_trie.t;
 
+    (* Operator renames, primarily meant for supporting ASCII variants. *)
+    mutable st_renames : idr Idr_map.t;
+
     mutable st_lookahead : int;
     mutable st_scanners : (state -> Grammar.token option) list;
 
@@ -214,13 +217,13 @@ let declare_operator state ok (Cidr (loc, op), names) =
 	with Opkind.Invalid_definition msg -> raise (Error_at (loc, msg)) in
     state.st_keywords <- UString_trie.add op' ti state.st_keywords
 
-let alias_operator state (Cidr (loc_orig, op_orig)) (Cidr (_, op)) =
+let alias_operator state (Cidr (_, op), Cidr (loc_orig, op_orig)) =
     let op_orig' = UString_sequence.create (idr_to_ustring op_orig) in
     let op' = UString_sequence.create (idr_to_ustring op) in
     let ti =
 	match UString_trie.find op_orig' state.st_keywords with
-	| Some (Ti_operator (_, ok)) ->
-	    Ti_operator (ok.Opkind.ok_create (op, []), ok)
+	| Some (Ti_operator (tok, ok)) ->
+	    Ti_operator (tok, ok)
 	| Some (Ti_keyword _) ->
 	    raise (Error_at (loc_orig, "Cannot alias keyword."))
 	| None ->
@@ -228,7 +231,10 @@ let alias_operator state (Cidr (loc_orig, op_orig)) (Cidr (_, op)) =
     if dlog_en then
 	dlogf "Aliasing operator %s as %s."
 	      (idr_to_string op) (idr_to_string op_orig);
-    state.st_keywords <- UString_trie.add op' ti state.st_keywords
+    state.st_keywords <- UString_trie.add op' ti state.st_keywords;
+    state.st_renames <-
+	List.fold (fun f -> Idr_map.add (f op) (f op_orig))
+		  [idr_1o; idr_2o] state.st_renames
 
 let skip_hspace state =
     LStream.skip_while UChar.is_hspace state.st_stream;
@@ -236,6 +242,15 @@ let skip_hspace state =
     | None -> false
     | Some ch -> ch != UChar.ch_nl
     end
+
+let scan_space_separated_identifiers state =
+    let rec scan_names accu =
+	if not (skip_hspace state) then List.rev accu else
+	let name, name_loc =
+	    LStream.scan_while (not *< UChar.is_space) state.st_stream in
+	let cidr = Cidr (name_loc, idr_of_ustring name) in
+	scan_names (cidr :: accu) in
+    scan_names []
 
 let scan_lexops state =
     if not (skip_hspace state) then [] else
@@ -287,12 +302,27 @@ let scan_lexdef state lex_loc =
     List.iter (declare_operator state ok) ops;
     (Grammar.PREPARED_DEF lexdef, loc)
 
+let scan_lexalias state lex_loc =
+    skip_space state;
+    match List.even_odd_pairs (scan_space_separated_identifiers state) with
+    | _, Some op ->
+	errf_at (cidr_loc op) "lex alias takes a even number of operators."
+    | op_pairs, None ->
+	List.iter (alias_operator state) op_pairs;
+	let loc = Location.between
+		(Location.lbound lex_loc)
+		(LStream.locbound state.st_stream) in
+	let lexalias = Cdef_lexalias (loc, op_pairs) in
+	(Grammar.PREPARED_DEF lexalias, loc)
+
 let lexopen state = function
     | Ctrm_where (_, defs) -> List.iter
 	begin function
 	    | Cdef_lex (loc, okname, ops) ->
 		let ok = Opkind.of_string okname in
 		List.iter (declare_operator state ok) ops
+	    | Cdef_lexalias (loc, op_pairs) ->
+		List.iter (alias_operator state) op_pairs
 	    | _ -> ()
 	end
 	defs
@@ -340,6 +370,10 @@ let scan_keyword state =
 	    let (tok, loc_spec) = scan_lexdef state loc in
 	    let loc_full = Location.span [loc; loc_spec] in
 	    (loc_full, tok, lk)
+	| Ti_keyword (Grammar.LEXALIAS, lk) ->
+	    let (tok, loc_spec) = scan_lexalias state loc in
+	    let loc_full = Location.span [loc; loc_spec] in
+	    (loc_full, tok, lk)
 	| Ti_keyword (tok, lk) -> (loc, tok, lk)
 	| Ti_operator (tok, ok) -> (loc, tok, ok.Opkind.ok_lexkind) in
     Option.map unwrap (triescan state state.st_keywords)
@@ -364,7 +398,8 @@ let scan_operator_identifier state =
 	    else false
 	end
 	state.st_stream;
-    idr_of_ustring (UString.Buf.contents buf)
+    let idr = idr_of_ustring (UString.Buf.contents buf) in
+    try Idr_map.find idr state.st_renames with Not_found -> idr
 
 let scan_identifier state =
     match LStream.peek_n 3 state.st_stream with
@@ -559,6 +594,7 @@ let default_state_template = {
     st_holding = (Location.dummy, Grammar.EOF, Opkind.Lex_intro);
     st_pending = [];
     st_keywords = initial_keywords;
+    st_renames = Idr_map.empty;
     st_lookahead = initial_lookahead;
     st_scanners = default_scanners;
     st_last_location = Location.dummy;

@@ -114,6 +114,13 @@ module List = struct
     let rec drop_while f = function
 	| x :: xs -> if f x then drop_while f xs else x :: xs
 	| [] -> []
+
+    let even_odd_pairs zs =
+	let rec loop accu = function
+	    | x :: y :: zs -> loop ((x, y) :: accu) zs
+	    | x :: zs -> (rev accu, Some x)
+	    | [] -> (rev accu, None) in
+	loop [] zs
 end
 
 module Char = struct

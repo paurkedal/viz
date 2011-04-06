@@ -38,7 +38,7 @@ in int_ops
     val 1'- : int → int
     val 2'+ : int → int → int
     val 2'- : int → int → int
-    val 2'* : int → int → int
+    val 2'× : int → int → int
     val 2'/ : int → int → int
     val 2'mod : int → int → int
     #?ffoc include compat.ocaml_pervasives.int_ops

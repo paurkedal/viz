@@ -219,6 +219,13 @@ and print_def fo cdef =
 		Fo.put fo `Keyword ")"
 	    | [] -> () in
 	List.iter put_lexdef idrs
+    | Cdef_lexalias (_, op_pairs) ->
+	Fo.put_kw fo "lexalias";
+	List.iter
+	    (fun (a, b) ->
+		Fo.space fo; Fo.put fo `Operator (cidr_to_string a);
+		Fo.space fo; Fo.put fo `Operator (cidr_to_string b))
+	    op_pairs
 and print_defs fo defs =
     Fo.enter_indent fo;
     List.iter (print_def fo) defs;

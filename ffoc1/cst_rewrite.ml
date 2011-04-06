@@ -130,7 +130,7 @@ and subterm_rewrite_cdef rw stra = function
     | Cdef_inj (loc, t), accu ->
 	let t, accu = rw.rw_ctrm rw `Type (t, accu) in
 	Cdef_inj (loc, t), accu
-    | Cdef_lex _, accu as d -> d
+    | Cdef_lex _, _ | Cdef_lexalias _, _ as d -> d
 
 let default_rewrite_cpred = subterm_rewrite_cpred
 

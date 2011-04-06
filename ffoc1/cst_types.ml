@@ -64,3 +64,4 @@ type cpred =
     | Cdef_let		of loc * cmonad option * ctrm * cpred
     | Cdef_inj		of loc * ctrm
     | Cdef_lex		of loc * string * (cidr * cidr list) list
+    | Cdef_lexalias	of loc * (cidr * cidr) list

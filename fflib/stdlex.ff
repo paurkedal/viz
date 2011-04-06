@@ -15,36 +15,101 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
-#	Operators		ASCII Variants
-#	--------------------------------------------------------------------
-lex J	⊢ ⊣ ⊧ ⊨			|- (12'⊢)  -| (12'⊣) |= (12'⊧) |== (12'⊨)
-lex L1	; : := ≡		== (12'≡)
-lex L2	<+>   <@ <* (12'∘)
-lex L3	↦ ⇒ ⇔ @> *> >>= >>	+> (12'↦) => (12'⇒) <=> (12'⇔)
+
+# Z.  Operators
+#
+# Operators are defined below in increasing levels of precedence.  Each group
+# of precedence levels is followed by ASCII aliases for Unicode operators at
+# those levels.
+
+
+# Z.1.  Judgements
+#
+# At the lowest precedence are the judgement operators.  They are transfix
+# operators, as explained under relations.  These are not used by the core
+# language.
+
+lex J	⊢ ⊣ ⊧ ⊨
+lex alias |- ⊢  -| ⊣  |= ⊧  |== ⊨
+
+
+# Z.2.  Logical and other Low-Precedence Operators
+#
+# The even levels contain prefix and left associative infix operators.  The odd
+# levels contain suffix and right associative suffix operators.
+
+lex L1	; : := ≡
+lex L2	<+>   <@ <*
+lex L3	↦ ⇒ ⇔ @> *> >>= >>
 lex L4	,
-lex L6	∨ ∨* ∨** ⊻		\/ (12'∨) \/* (12'∨*) \/** (12'∨**)
+lex L6	∨ ∨* ∨** ⊻
 lex L7
-lex L8	∧ ∧* ∧**		/\ (12'∧) /\* (12'∧*) /\** (12'∧**)
-lex L8	¬ ¬* ¬**		not (12'¬) not* (12'¬*) not** (12'¬**)
+lex L8	∧ ∧* ∧**
+lex L8	¬ ¬* ¬**
+lex alias == ≡
+lex alias +> ↦  => ⇒  <=> ⇔
+lex alias \/ ∨  \/* ∨*  \/** ∨**
+lex alias /\ ∧  /\* ∧*  /\** ∧**
+lex alias not ¬  not* ¬*  not** ¬**
 
-lex Q	∀ ∃ Fun			A` (2'∀) E` (2'∃)
-lex R	= ≠ < > ≤ ≥		!= (2'≠) <= (2'≤) >= (2'≥)
-lex R	≺ ≻ ≼ ≽			-< (2'≺) >- (2'≻) -<= (≼) >-= (≽)
-lex R	∈ ⊂ ⊃ ⊆ ⊇ ⊏ ⊐ ⊑ ⊒	<: (2'∈)
 
-lex A1	→ ↔			-> (12'→) <-> (12'↔)
-lex A2	+ −			- (12'−)
+# Z.3.  Quantifiers
+#
+# Quantifiers can be mixed with all levels of logical operators under the rule
+# of maximum scope.  E.g.  (A ∨ ∀x. P x ∧ Q ∨ B ≡ (A ∨ (∀x. (P x ∧ Q))) ∨ B)
+
+lex Q	∀ ∃ Fun
+lex alias A` ∀  E` ∃
+
+
+# Z.4.  Relations
+#
+# To support the convenient mathematical convention of writing things like
+# (x ≤ y < z), relations and judgements have special "transfix" operator kind.
+# A chain of relations is interpreted as the conjunction of terms formed by
+# applying each relation to its two adjacent sub-terms.  E.g.
+# (0 ≤ x = y ≤ 1 ≡ 0 ≤ x ∧ x = y ∧ y ≤ 1).
+
+lex R	= ≠ < > ≤ ≥
+lex R	≺ ≻ ≼ ≽
+lex R	∈ ⊂ ⊃ ⊆ ⊇ ⊏ ⊐ ⊑ ⊒
+lex alias != ≠  <= ≤  >= ≥
+lex alias -< ≺  >- ≻  -<= ≼  >-= ≽
+lex alias <: ∈
+
+
+# Z.5.  Arithmetic and other Mid-Precedence Operators
+
+lex A1	→ ↔
+lex A2	+ −
 lex A4	∪
-lex A6	× ⋅ / ∘ div mod quo rem	* (12'×) o` (12'∘)
+lex A6	× ⋅ ∕ ∘ (12'<*) div mod quo rem
 lex A8	∩
+lex alias -> →  <-> ↔
+lex alias - −
+lex alias * ×  / ∕  o` ∘
+
+
+# Z.6.  Sub-, Superscripts, and other High-Precedence Operators
 
 lex S0	^ ↑ ↓
 lex S2S	!
 lex S2	# @
 
+
+# Z.7.  Parentheses
+
 lex BL	( [ { ⌈ ⌊ ⟦ #[
 lex BR	) ] } ⌉ ⌋ ⟧
 lex S2L	.[
+
+
+# Z.8.  Identifiers
+#
+# The "I" token kind is not an operator kind.  It is used for sequences of
+# characters which are to be parsed as identifiers, even if they are not
+# alphanumeric.  An example is the ⊥ \(U+225a) symbol, which is an operator in
+# Unicode, but which often denotes the bottom element of lattice.
 
 lex I	⊤ ⊥
 lex I	[;] ([;]) {;} ({;})

@@ -438,7 +438,7 @@ and build_adecs adecs = function
 	errf_at loc "Signatures cannot contain value definitions."
     | Cdef_inj (loc, _) :: xs ->
 	errf_at loc "Injections must follow a type."
-    | Cdef_lex (loc, _, _) :: xs -> build_adecs adecs xs
+    | Cdef_lex _ :: xs | Cdef_lexalias _ :: xs -> build_adecs adecs xs
     | [] -> List.rev adecs
 
 
@@ -562,7 +562,7 @@ and build_adefs adecmap adefs = function
 	build_adefs adecmap (collect_binding_components avcases adefs) xs'
     | Cdef_inj (loc, p) :: xs ->
 	errf_at loc "Injections must follow a type definition."
-    | Cdef_lex _ :: xs -> build_adefs adecmap adefs xs
+    | Cdef_lex _ :: xs | Cdef_lexalias _ :: xs -> build_adefs adecmap adefs xs
     | [] ->
 	let strip_used_avcase = function
 	    | (_, v, Some _, _) -> Idr_map.remove (avar_idr v)

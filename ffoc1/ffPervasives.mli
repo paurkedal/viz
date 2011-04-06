@@ -61,6 +61,8 @@ module List : sig
     val map_while : ('a -> 'b option) -> 'a list -> 'a list * 'b list
 
     val drop_while : ('a -> bool) -> 'a list -> 'a list
+
+    val even_odd_pairs : 'a list -> ('a * 'a) list * 'a option
 end
 
 module Char : sig
