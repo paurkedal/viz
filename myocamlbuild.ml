@@ -222,11 +222,12 @@ let llvm_libs () =
       A"-cclib"; A"-lstdc++"]
 
 let ocaml_cstubs name =
-    flag ["link"; "library"; "ocaml"; "byte"; "use_lib" ^ name]
+    flag ["link"; "ocaml"; "byte"; "use_lib" ^ name]
 	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name);
 	    A"-dllib"; A("-l" ^ name)]);
-    flag ["link"; "library"; "ocaml"; "native"; "use_lib" ^ name]
-	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name)])
+    flag ["link"; "ocaml"; "native"; "use_lib" ^ name]
+	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name)]);
+    dep ["ocaml"; "link"; "use_lib" ^ name] ["lib" ^ name ^ ".a"]
 
 let () = dispatch begin function
     | Before_options ->
@@ -247,6 +248,7 @@ let () = dispatch begin function
 	ocaml_pp "sexplib" "pa_sexp_conv";
 	ocaml_lib "fflib";
 	ocaml_cstubs "fflib";
+	ocaml_cstubs "tests";
 	dep ["ocaml"; "compile"; "byte"; "use_fflib"] ["fflib.cma"];
 	dep ["ocaml"; "compile"; "native"; "use_fflib"] ["fflib.cmxa"];
 	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();
