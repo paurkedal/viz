@@ -127,9 +127,9 @@ and subterm_rewrite_cdef rw stra = function
 	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
 	let p, accu = rw.rw_cpred rw `Value (p, accu) in
 	Cdef_let (loc, cm, x, p), accu
-    | Cdef_inj (loc, t), accu ->
+    | Cdef_inj (loc, abi, t), accu ->
 	let t, accu = rw.rw_ctrm rw `Type (t, accu) in
-	Cdef_inj (loc, t), accu
+	Cdef_inj (loc, abi, t), accu
     | Cdef_lex _, _ | Cdef_lexalias _, _ as d -> d
 
 let default_rewrite_cpred = subterm_rewrite_cpred

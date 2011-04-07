@@ -200,8 +200,8 @@ and print_def fo cdef =
 	Fo.enter_indent fo;
 	print_predicate fo pred;
 	Fo.leave_indent fo
-    | Cdef_inj (_, typing) ->
-	Fo.put_kw fo "inj";
+    | Cdef_inj (_, abi, typing) ->
+	Fo.put_kw fo (match abi with Abi_Fform -> "inj" | Abi_C -> "inj:c");
 	print_inline fo Opkind.p_min typing
     | Cdef_lex (_, okname, idrs) ->
 	Fo.put_kw fo "lex";

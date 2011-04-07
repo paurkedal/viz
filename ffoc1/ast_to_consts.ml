@@ -38,6 +38,20 @@ let output_const och v t cx =
     | _ ->
 	errf_at (atyp_loc t) "Unsupported type for C constant."
 
+let rec output_inj_check och i = function
+    | [] -> ()
+    | (loc, v, t, Ainjnum_cabi cn) :: injs ->
+	begin match t with
+	| Atyp_arrow (loc, _, _) ->
+	    errf_at loc "A constant type is required for C enum."
+	| _ -> ()
+	end;
+	fprintf stdout "\tck_enum(%d, %s, \"%s\", \"%s\");\n"
+	    i cn (Location.to_string loc) (avar_name v);
+	output_inj_check och (i + 1) injs
+    | (loc, v, t, Ainjnum_auto) :: injs ->
+	output_inj_check och (i + 1) injs
+
 let rec output_amod_c och = function
     | Amod_ref _ -> ()
     | Amod_defs (_, defs) -> List.iter (output_adef_c och) defs
@@ -49,6 +63,12 @@ let rec output_amod_c och = function
 and output_adef_c och = function
     | Adef_cabi_val (loc, v, t, cx, valopts) ->
 	if Ast_utils.atyp_is_const t then output_const och v t cx
+    | Adef_types cases ->
+	List.iter
+	    begin function
+		| (_, _, _, Atypinfo_injs injs) -> output_inj_check och 0 injs
+		| _ -> ()
+	    end cases
     | Adef_include (loc, m) -> output_amod_c och m
     | _ -> ()
 
@@ -57,6 +77,7 @@ let output_consts och m =
 #define __STDC_LIMIT_MACROS 1
 #define __STDC_CONSTANT_MACROS 1
 #include <stdio.h>
+#include <stdlib.h>
 ";
     Ast_utils.fold_amod_cabi_open
 	(fun inc () -> fprintf och "#include <%s>\n" inc) m ();
@@ -73,6 +94,17 @@ fputq(char *s, FILE *out)
 	fputc(*s++, out);
     }
     fputc('\"', out);
+}
+
+static void
+ck_enum(int i_ml, int i_c, char const *loc, char const *name_ml)
+{
+    if (i_ml != i_c) {
+	fprintf(stderr,
+		\"%s: inj %s of value %d does not equal the value %d of the \"
+		\"C enum constant.\", loc, name_ml, i_ml, i_c);
+	exit(65);
+    }
 }
 
 int main()

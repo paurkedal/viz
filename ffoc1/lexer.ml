@@ -96,7 +96,8 @@ let initial_intro_keywords = [
     "val:cs",	Grammar.VAL (`Default,  Abi_C, [`Is_stub]);
     "val:c-",	Grammar.VAL (`Local,    Abi_C, []);
     "val:cf-",	Grammar.VAL (`Local,    Abi_C, [`Is_finalizer]);
-    "inj",	Grammar.INJ;
+    "inj",	Grammar.INJ Abi_Fform;
+    "inj:c",	Grammar.INJ Abi_C;
     "fail",	Grammar.FAIL;
     "assert",	Grammar.ASSERT;
     "be",	Grammar.BE;

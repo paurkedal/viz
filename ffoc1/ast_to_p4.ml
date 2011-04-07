@@ -278,7 +278,7 @@ let emit_type_binding (loc, v, params, ti) =
 	| Atypinfo_abstract | Atypinfo_cabi _ -> assert false (* Unreachable *)
 	| Atypinfo_alias typ -> emit_atyp typ
 	| Atypinfo_injs injs ->
-	    let emit_inj (loc, v, inj_type) =
+	    let emit_inj (loc, v, inj_type, _) =
 		let _loc = p4loc loc in
 		let rt, ats = Ast_utils.flatten_arrows inj_type in
 		let ots = List.map emit_atyp ats in
@@ -289,7 +289,7 @@ let emit_type_binding (loc, v, params, ti) =
 let emit_inj_aliases (loc, v, params, ti) =
     match ti with
     | Atypinfo_injs injs ->
-	let emit_inj (loc, v, inj_type) =
+	let emit_inj (loc, v, inj_type, _) =
 	    let _loc = p4loc loc in
 	    let locd = Location.dummy in
 	    let _, avars =

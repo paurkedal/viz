@@ -292,7 +292,7 @@ module Algt_builder = struct
 	let atcase = (loc, av, ats, ati) in
 	(atcase, Idr_map.add (avar_idr av) (ats, []) algtb)
 
-    let add_inj loc cf ct algtb =
+    let add_inj loc cf ct ainjnum algtb =
 	let af = build_avar cf in
 	let at = build_atyp ct in
 	let art = Ast_utils.result_type at in
@@ -304,7 +304,7 @@ module Algt_builder = struct
 		errf_at loc "The type %s has not been defined in this scope."
 			(Syn_print.ctrm_to_string crt) in
 	Idr_map.add (avar_idr (apath_to_avar ap))
-		    (ats, (loc, af, at) :: injs) algtb
+		    (ats, (loc, af, at, ainjnum) :: injs) algtb
 
     let find_injs av = Idr_map.find (avar_idr av)
 end
@@ -332,11 +332,23 @@ let rec build_atcases is_sig atcases algtb = function
     | Cdef_type (loc, Abi_Fform, p) :: xs ->
 	let atcase, algtb' = Algt_builder.add_type loc p algtb in
 	build_atcases is_sig (atcase :: atcases) algtb' xs
-    | Cdef_inj (loc, Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct))
+    | Cdef_inj (loc, abi,
+		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct))
 	    :: xs when cidr_is_2o_colon op ->
-	let algtb' = Algt_builder.add_inj loc cf ct algtb in
+	let ainjnum, ct =
+	    match abi with
+	    | Abi_Fform -> (Ainjnum_auto, ct)
+	    | Abi_C ->
+		begin match ct with
+		| Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (ceq, _), ct),
+			Ctrm_literal (_, Lit_string cn))
+			when cidr_is_2o_coloneq ceq ->
+		    (Ainjnum_cabi (UString.to_utf8 cn), ct)
+		| _ -> errf_at (ctrm_loc ct) "Invalid C enum specification."
+		end in
+	let algtb' = Algt_builder.add_inj loc cf ct ainjnum algtb in
 	build_atcases is_sig atcases algtb' xs
-    | Cdef_inj (loc, _) :: _ ->
+    | Cdef_inj (loc, _, _) :: _ ->
 	errf_at loc "A type judgement expected after \"inj\"."
     | xs ->
 	let finish_atcase = function
@@ -436,7 +448,7 @@ and build_adecs adecs = function
 	build_adecs (adec :: adecs) xs
     | Cdef_let (loc, _, _, _) :: xs ->
 	errf_at loc "Signatures cannot contain value definitions."
-    | Cdef_inj (loc, _) :: xs ->
+    | Cdef_inj (loc, _, _) :: xs ->
 	errf_at loc "Injections must follow a type."
     | Cdef_lex _ :: xs | Cdef_lexalias _ :: xs -> build_adecs adecs xs
     | [] -> List.rev adecs
@@ -560,7 +572,7 @@ and build_adefs adecmap adefs = function
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
 	build_adefs adecmap (collect_binding_components avcases adefs) xs'
-    | Cdef_inj (loc, p) :: xs ->
+    | Cdef_inj (loc, _, _) :: xs ->
 	errf_at loc "Injections must follow a type definition."
     | Cdef_lex _ :: xs | Cdef_lexalias _ :: xs -> build_adefs adecmap adefs xs
     | [] ->

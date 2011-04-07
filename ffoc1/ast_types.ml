@@ -61,10 +61,12 @@ type aval =
 
 type ause = [`Stub_prefix of string]
 
+type ainjnum = Ainjnum_auto | Ainjnum_cabi of string with sexp
+
 type atypinfo =
     | Atypinfo_abstract (* only in signature *)
     | Atypinfo_alias of atyp
-    | Atypinfo_injs of (loc * avar * atyp) list
+    | Atypinfo_injs of (loc * avar * atyp * ainjnum) list
     | Atypinfo_cabi of string
     with sexp
 

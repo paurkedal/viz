@@ -72,7 +72,7 @@ let cpred_failure loc msg_opt =
 %token IN
 %token SIG
 %token <Leaf_types.abi> TYPE
-%token INJ
+%token <Leaf_types.abi> INJ
 %token <Cst_types.cmonad option> LET WHAT WHICH
 %token <Leaf_types.val_info> VAL
 %token WHERE WITH
@@ -207,7 +207,7 @@ modular_clause:
   | TYPE type_equation
     { Cdef_type (mkloc $startpos $endpos, $1, $2) }
   | INJ term_pattern
-    { Cdef_inj (mkloc $startpos $endpos, $2) }
+    { Cdef_inj (mkloc $startpos $endpos, $1, $2) }
   | VAL term_pattern
     { Cdef_val (mkloc $startpos $endpos, $1, $2) }
   | PREPARED_DEF { $1 }

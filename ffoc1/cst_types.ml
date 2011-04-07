@@ -62,6 +62,6 @@ type cpred =
     | Cdef_sig		of loc * cidr * ctrm
     | Cdef_val		of loc * val_info * ctrm
     | Cdef_let		of loc * cmonad option * ctrm * cpred
-    | Cdef_inj		of loc * ctrm
+    | Cdef_inj		of loc * abi * ctrm
     | Cdef_lex		of loc * string * (cidr * cidr list) list
     | Cdef_lexalias	of loc * (cidr * cidr) list
