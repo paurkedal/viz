@@ -54,9 +54,9 @@ type pocket =
     | World_pocket
 
 let atyp_action_pocket = function
-    | Atyp_ref (Apath ([], Avar (_, Idr io))) when io = "io" ->
+    | Atyp_ref (Apath ([], Avar (_, Idr "io"))) ->
 	World_pocket
-    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr action))), pocket) ->
+    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "action"))), pocket) ->
 	begin match pocket with
 	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world_pocket" ->
 	    World_pocket
