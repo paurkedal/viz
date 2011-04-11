@@ -91,12 +91,14 @@ let rec nonoption_conversion state = function
 	| "unit"   -> (None, "Int_val",    "Val_int")
 	| "bool"   -> (None, "Bool_val",   "Val_bool")
 	| "int"    -> (None, "Int_val",    "Val_int")
+	| "nativeint" | "size" | "offset" ->
+	    (None, "Nativeint_val", "caml_copy_nativeint")
 	| "int32"  -> (None, "Int32_val",  "caml_copy_int32")
 	| "int64"  -> (None, "Int64_val",  "caml_copy_int64")
 	| "octet"  -> (None, "Int_val",    "Val_int")
 	| "utf8"   -> (None, "String_val", "caml_copy_string")
-	| "string" -> (Some "ffoc_ustring_to_utf8", "String_val",
-		       "ffoc_copy_ustring")
+	| "string" ->
+	    (Some "ffoc_ustring_to_utf8", "String_val", "ffoc_copy_ustring")
 	| _ ->
 	    errf_at loc "Don't know how to pass values of type %s to \
 			 C functions." tname
@@ -169,14 +171,14 @@ let output_cstub och v t cname is_fin state =
 	match t with
 	| Atyp_arrow _ -> output_arglist och (output_arg och) args;
 	| _ -> output_string och "()" in
-    output_char och '\t';
     if is_unit then begin
+	output_char och '\t';
 	output_call ();
 	output_string och ";\n\tCAMLreturn (Val_unit);\n"
     end else begin
 	let rcv = conversion state rt in
 	if rcv.cv_is_opt then begin
-	    output_string och "void *y = ";
+	    output_string och "\tvoid *y = ";
 	    output_call ();
 	    output_string och ";\n";
 	    fprintf och "\tCAMLreturn (y? ffoc_some(%s(y)) : ffoc_none);\n"
@@ -235,9 +237,9 @@ let declare_ctype och v ctype state =
 	#define %s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
 	static struct custom_operations %s_ops;\n\n\
 	value\n%scopy_%s(%s x)\n{\n\
-	\    value v = alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
-	\    %s_of_value(v) = x;\n\
-	\    return v;\n\
+	\tvalue v = alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
+	\t%s_of_value(v) = x;\n\
+	\treturn v;\n\
 	}\n"
 	tname ctype
 	tname

@@ -18,23 +18,35 @@
 
 open Diag
 open Leaf_types
+open Leaf_core
 open Ast_types
 open Ast_core
 open Printf
 open FfPervasives
 
-let output_const och v t cx =
+type state = {
+    mutable st_aliases : atyp String_map.t;
+}
+
+let rec output_const och state v t cx =
     match t with
     | Atyp_ref (Apath ([], Avar (loc, Idr tn))) ->
+	begin try
+	    let t' = String_map.find tn state.st_aliases in
+	    output_const och state v t' cx
+	with Not_found ->
 	fprintf och "\tprintf(\"let %s = \"); " (avar_name v);
 	begin match tn with
 	| "bool" -> fprintf och "fputs(%s? \"true\" : \"false\", stdout)" cx
 	| "int" -> fprintf och "printf(\"%%d\", %s)" cx
+	| "nativeint" | "size" | "offset" ->
+	    fprintf och "printf(\"%%ldn\", %s)" cx
 	| "utf8" -> fprintf och "fputq(%s, stdout)" cx
 	  (* TODO: Fix string quoting. *)
-	| _ -> errf_at (atyp_loc t) "Unsupported type for C constant."
+	| _ -> errf_at (atyp_loc t) "Unsupported type %s for C constant." tn
 	end;
 	output_string stdout "; fputc('\\n', stdout);\n"
+	end
     | _ ->
 	errf_at (atyp_loc t) "Unsupported type for C constant."
 
@@ -52,27 +64,31 @@ let rec output_inj_check och i = function
     | (loc, v, t, Ainjnum_auto) :: injs ->
 	output_inj_check och (i + 1) injs
 
-let rec output_amod_c och = function
+let rec output_amod_c och state = function
     | Amod_ref _ -> ()
-    | Amod_defs (_, defs) -> List.iter (output_adef_c och) defs
+    | Amod_defs (_, defs) -> List.iter (output_adef_c och state) defs
     | Amod_apply (_, mf, ma) ->
-	output_amod_c och mf;
-	output_amod_c och ma
+	output_amod_c och state mf;
+	output_amod_c och state ma
     | Amod_lambda (_, _, s, m) | Amod_coercion (_, m, s) ->
-	output_amod_c och m
-and output_adef_c och = function
+	output_amod_c och state m
+and output_adef_c och state = function
     | Adef_cabi_val (loc, v, t, cx, valopts) ->
-	if Ast_utils.atyp_is_const t then output_const och v t cx
+	if Ast_utils.atyp_is_const t then output_const och state v t cx
     | Adef_types cases ->
 	List.iter
 	    begin function
 		| (_, _, _, Atypinfo_injs injs) -> output_inj_check och 0 injs
+		| (_, v, _, Atypinfo_alias name) ->
+		    state.st_aliases <- String_map.add (avar_name v) name
+					state.st_aliases
 		| _ -> ()
 	    end cases
-    | Adef_include (loc, m) -> output_amod_c och m
+    | Adef_include (loc, m) -> output_amod_c och state m
     | _ -> ()
 
 let output_consts och m =
+    let state = { st_aliases = String_map.empty; } in
     output_string och "
 #define __STDC_LIMIT_MACROS 1
 #define __STDC_CONSTANT_MACROS 1
@@ -110,5 +126,5 @@ ck_enum(int i_ml, int i_c, char const *loc, char const *name_ml)
 int main()
 {
 ";
-    output_amod_c och m;
+    output_amod_c och state m;
     output_string och "\treturn 0;\n}\n"
