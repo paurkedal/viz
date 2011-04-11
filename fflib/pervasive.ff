@@ -53,3 +53,4 @@ val eprint : string → io unit
 #?ffoc include compat.ocaml_prereq
 #?ffoc include compat.ocaml_pervasives.pervasive
 #?ffoc include compat.ocaml_unicode.pervasive
+#?ffoc include compat.ocaml_miscints.pervasive
