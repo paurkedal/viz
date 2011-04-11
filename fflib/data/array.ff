@@ -45,13 +45,17 @@ val fold : (α → β → β) → t α → β → β
 
 val foldr : (α → β → β) → t α → β → β
 
+val foldi : (int → α → β → β) → t α → β → β
+
 val cat : t α → t α → t α
 
 val cat_list : list (t α) → t α
 
-val aiter : (α → action φ unit) → t α → action φ unit
+val iter : (α → action φ unit) → t α → action φ unit
 
-val aiterr : (α → action φ unit) → t α → action φ unit
+val iterr : (α → action φ unit) → t α → action φ unit
+
+val iteri : (int → α → action φ unit) → t α → action φ unit
 
 val afold : (α → β → action φ β) → t α → β → action φ β
 
@@ -61,9 +65,15 @@ val afoldr : (α → β → action φ β) → t α → β → action φ β
 
 open action_ops
 
-let aiter k a be fold (x +> m +> m >> k x) a (return ())
+let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) @> (_, y) ↦ y
 
-let aiterr k a be foldr (x +> m +> m >> k x) a (return ())
+let iter k a be fold (x +> m +> m >> k x) a (return ())
+
+let iterr k a be foldr (x +> m +> m >> k x) a (return ())
+
+let! iteri k a
+    let _ do fold (x ↦ m ↦ m >>= i ↦ k i x >> return (i + 1)) a (return 0)
+    be ()
 
 let afold k a be fold (x +> m +> m >>= k x) a ∘ return
 

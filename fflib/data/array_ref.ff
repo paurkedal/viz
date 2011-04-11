@@ -45,9 +45,9 @@ val fold : (α → β → β) → r α → β → action φ β
 
 val foldr : (α → β → β) → r α → β → action φ β
 
-val aiter : (α → action φ unit) → r α → action φ unit
+val iter : (α → action φ unit) → r α → action φ unit
 
-val aiterr : (α → action φ unit) → r α → action φ unit
+val iterr : (α → action φ unit) → r α → action φ unit
 
 val afold : (α → β → action φ β) → r α → β → action φ β
 
@@ -75,7 +75,7 @@ val freeze : r α → action φ (array.t α)
 open prereq
 open prereq.action_ops
 
-let aiter k a be fold (x +> m +> m >> k x) a (return ()) >>= ident
-let aiterr k a be foldr (x +> m +> m >> k x) a (return ()) >>= ident
+let iter k a be fold (x +> m +> m >> k x) a (return ()) >>= ident
+let iterr k a be foldr (x +> m +> m >> k x) a (return ()) >>= ident
 let afold k a accu be fold (x +> m +> m >>= k x) a (return accu) >>= ident
 let afoldr k a accu be foldr (x +> m +> m >>= k x) a (return accu) >>= ident
