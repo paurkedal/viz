@@ -8,7 +8,7 @@
 
 "fflib": include
 
-<fflib/**/*>: no_pervasive, in_fflib
+<fflib/**/*>: no_pervasive
 <fflib/pervasive.ff>: ocamlstdlib
 <fflib/compat/ocaml_*.ff>: ocamlstdlib
 
@@ -20,5 +20,4 @@
 <fflib.{cma,cmxa}>: use_libfflib, use_llvm_libs
 <{examples,tests,tools}/**/*.{ff,byte,native}>: use_fflib
 
-<compiler/**>: in_fflib
 <compiler/llvm/*.cmx>: for-pack(Llvm)

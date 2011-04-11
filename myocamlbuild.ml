@@ -283,11 +283,10 @@ let () = dispatch begin function
 	dep ["ocaml"; "compile"; "native"; "use_fflib"] ["fflib.cmxa"];
 	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
-	flag ["ocaml"; "ffoc1pp"] & S[A"-I"; P"fflib"];
-	flag ["cstubs"; "ffoc1pp"] & S[A"-I"; P"fflib"];
-	flag ["ocaml"; "compile"; "in_fflib"] & S[A"-I"; P"fflib"];
-	flag ["ocamldep"; "in_fflib"] & S[A"-I"; P"fflib"];
-	flag ["ocamldep"; "ffoc1pp"] & S[A"-N"; P"fflib"];
+	let fflib_includes = S[A"-I"; P"fflib"; A"-I"; P"compiler"] in
+	flag ["ocaml"; "ffoc1pp"] fflib_includes;
+	flag ["cstubs"; "ffoc1pp"] fflib_includes;
+	flag ["ocamldep"; "ffoc1pp"] & S[A"-N"; P"fflib"; A"-N"; P"compile"];
 	()
     | _ -> ()
 end
