@@ -60,10 +60,9 @@ let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
     end;
     output_string och cparen
 
-type cti = {
-    cti_ctype : string;
-    cti_finalize : string option;
-}
+type cti =
+    | Cti_custom of string * string option
+    | Cti_alias of atyp
 
 type state = {
     st_cti_map : cti String_map.t;
@@ -77,15 +76,18 @@ type conversion = {
     cv_conv_res : string;
 }
 
-let nonoption_conversion state = function
+let rec nonoption_conversion state = function
     | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), Atyp_uvar _) ->
 	(None, "ffoc_ptr_of_value", "ffoc_copy_ptr")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
-	if String_map.mem tname state.st_cti_map then
-	    (None, sprintf "%s_of_value" tname,
-	     sprintf "%scopy_%s" state.st_stub_prefix tname)
-	else
-	begin match tname with
+	begin try
+	    match String_map.find tname state.st_cti_map with
+	    | Cti_custom _ ->
+		(None, sprintf "%s_of_value" tname,
+		 sprintf "%scopy_%s" state.st_stub_prefix tname)
+	    | Cti_alias tname' -> nonoption_conversion state tname'
+	with Not_found ->
+	match tname with
 	| "unit"   -> (None, "Int_val",    "Val_int")
 	| "bool"   -> (None, "Bool_val",   "Val_bool")
 	| "int"    -> (None, "Int_val",    "Val_int")
@@ -107,6 +109,7 @@ let nonoption_conversion state = function
 	| "i" -> (None, "Int_val",  "Val_int")
 	| "e" -> (None, "Int_val",  "Val_int") (* enum *)
 	| "l" -> (None, "Long_val", "Val_long")
+	| "v" -> (None, "", "")
 	| _ -> errf_at tagloc "Invalid conversion tag %s." tagname
 	end
     | t -> errf_at (atyp_loc t) "Unhandled type for the C ABI."
@@ -201,12 +204,17 @@ let output_cstub och v t cname is_fin state =
 	    end;
 	    begin try
 		let ftn = avar_name ftv in
-		let cti = String_map.find ftn state.st_cti_map in
-		let cti_map =
-		    String_map.add ftn
-			{cti with cti_finalize = Some (avar_name v)}
-		    state.st_cti_map in
-		{state with st_cti_map = cti_map}
+		match String_map.find ftn state.st_cti_map with
+		| Cti_custom (tname, None) ->
+		    let cti_map = String_map.add ftn
+			    (Cti_custom (tname, Some (avar_name v)))
+			    state.st_cti_map in
+		    {state with st_cti_map = cti_map}
+		| Cti_custom (tname, Some _) ->
+		    errf_at (avar_loc v) "This type already has a finalizer."
+		| Cti_alias _ ->
+		    errf_at (avar_loc v)
+			    "Cannot define finalizer for a type alias."
 	    with Not_found ->
 		errf_at loc "Finalizer must receive a C type."
 	    end
@@ -215,6 +223,11 @@ let output_cstub och v t cname is_fin state =
 		"Finalizer must return (io unit) or (action φ unit)."
 	end else
     state
+
+let declare_type_alias v origname state =
+    {state with
+	st_cti_map = String_map.add (avar_name v) (Cti_alias origname)
+				    state.st_cti_map}
 
 let declare_ctype och v ctype state =
     let tname = avar_name v in
@@ -231,25 +244,26 @@ let declare_ctype och v ctype state =
 	state.st_stub_prefix tname ctype
 	tname ctype
 	tname;
-    {state with st_cti_map =
-	String_map.add tname
-	    {cti_ctype = ctype; cti_finalize = None;}
-	    state.st_cti_map
+    {state with
+	st_cti_map = String_map.add tname (Cti_custom (ctype, None))
+		     state.st_cti_map
     }
 
-let output_ctype och stub_prefix sname tname cti =
-    let output_default gn = fprintf och "\tcustom_%s_default,\n" gn in
-    fprintf och "\nstatic struct custom_operations %s_ops = {\n\
-		    \t\"%s%s\",\n" tname sname tname;
-    begin match cti.cti_finalize with
-    | None -> output_default "finalize"
-    | Some vf -> fprintf och "\t(void (*)(value))%s%s,\n" stub_prefix vf
-    end;
-    output_default "compare";
-    output_default "hash";
-    output_default "serialize";
-    output_default "deserialize";
-    output_string och "};\n"
+let output_ctype och stub_prefix sname tname = function
+    | Cti_custom (cname, vf_opt) ->
+	let output_default gn = fprintf och "\tcustom_%s_default,\n" gn in
+	fprintf och "\nstatic struct custom_operations %s_ops = {\n\
+			\t\"%s%s\",\n" tname sname tname;
+	begin match vf_opt with
+	| None -> output_default "finalize"
+	| Some vf -> fprintf och "\t(void (*)(value))%s%s,\n" stub_prefix vf
+	end;
+	output_default "compare";
+	output_default "hash";
+	output_default "serialize";
+	output_default "deserialize";
+	output_string och "};\n"
+    | _ -> ()
 
 let rec output_amod_c och = function
     | Amod_ref _ -> ident
@@ -268,6 +282,7 @@ and output_adef_c och = function
        List.fold
 	   begin function
 	   | (loc, v, ts, Atypinfo_cabi name) -> declare_ctype och v name
+	   | (loc, v, ts, Atypinfo_alias name) -> declare_type_alias v name
 	   | _ -> ident
 	   end
 	   defs
