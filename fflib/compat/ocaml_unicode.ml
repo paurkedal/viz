@@ -62,3 +62,7 @@ module String_buf = struct
     let put_char buf ch = __unsafe_action (fun () -> B.add_char buf ch)
     let put_string buf s = __unsafe_action (fun () -> B.add_string buf s)
 end
+
+let () =
+    Callback.register "ustring_of_utf8" String_.of_utf8;
+    Callback.register "ustring_to_utf8" String_.as_utf8

@@ -39,6 +39,12 @@ let header = "\
 
 #define ffoc_none Val_int(0)
 value ffoc_some(value x);
+
+#define ffoc_ptr_of_value(x) *(void **)Data_custom_val(x)
+value ffoc_copy_ptr(void *);
+
+value ffoc_ustring_to_utf8(value x);
+value ffoc_copy_ustring(char const *);
 "
 
 let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
@@ -64,25 +70,31 @@ type state = {
     st_stub_prefix : string;
 }
 
-let converters cti_map = function
-    | Atyp_apply (_,
-	    Atyp_ref (Apath ([], Avar (_, Idr "option"))),
-	    Atyp_ref (Apath ([], Avar (loc, Idr tname)))) ->
-	if String_map.mem tname cti_map then
-	    (sprintf "%s_to_option" tname, sprintf "%s_of_option" tname) else
-	errf_at loc "Invalid C type or option not handled for this C type."
+type conversion = {
+    cv_is_opt : bool;
+    cv_prep_arg : string option;
+    cv_conv_arg : string;
+    cv_conv_res : string;
+}
+
+let nonoption_conversion state = function
     | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), Atyp_uvar _) ->
-	("UNIMPLEMENTED", "Data_custom_val")
+	(None, "ffoc_ptr_of_value", "ffoc_copy_ptr")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
-	if String_map.mem tname cti_map then
-	    (sprintf "%s_to_value" tname, sprintf "%s_of_value" tname) else
+	if String_map.mem tname state.st_cti_map then
+	    (None, sprintf "%s_of_value" tname,
+	     sprintf "%scopy_%s" state.st_stub_prefix tname)
+	else
 	begin match tname with
-	| "bool"  -> ("Val_bool", "Bool_val")
-	| "int"   -> ("Val_int", "Int_val")
-	| "int32" -> ("caml_copy_int32", "Int32_val")
-	| "int64" -> ("caml_copy_int64", "Int64_val")
-	| "octet" -> ("Val_int", "Int_val")
-	| "utf8" -> ("caml_copy_string", "String_val")
+	| "unit"   -> (None, "Int_val",    "Val_int")
+	| "bool"   -> (None, "Bool_val",   "Val_bool")
+	| "int"    -> (None, "Int_val",    "Val_int")
+	| "int32"  -> (None, "Int32_val",  "caml_copy_int32")
+	| "int64"  -> (None, "Int64_val",  "caml_copy_int64")
+	| "octet"  -> (None, "Int_val",    "Val_int")
+	| "utf8"   -> (None, "String_val", "caml_copy_string")
+	| "string" -> (Some "ffoc_ustring_to_utf8", "String_val",
+		       "ffoc_copy_ustring")
 	| _ ->
 	    errf_at loc "Don't know how to pass values of type %s to \
 			 C functions." tname
@@ -91,47 +103,88 @@ let converters cti_map = function
 		       Atyp_ref (Apath ([], Avar (tagloc, Idr tagname))))
 	    when avar_idr op = idr_2o_index ->
 	begin match tagname with
-	| "l" -> ("Val_long", "Long_val")
-	| "i" -> ("Val_int", "Int_val")
-	| "b" -> ("Val_bool", "Bool_val")
-	| _ -> errf_at tagloc "Undefined C type tag %s." tagname
+	| "b" -> (None, "Bool_val", "Val_bool")
+	| "i" -> (None, "Int_val",  "Val_int")
+	| "e" -> (None, "Int_val",  "Val_int") (* enum *)
+	| "l" -> (None, "Long_val", "Val_long")
+	| _ -> errf_at tagloc "Invalid conversion tag %s." tagname
 	end
     | t -> errf_at (atyp_loc t) "Unhandled type for the C ABI."
 
-let output_arg och cti_map (v, at) =
-    output_string och (snd (converters cti_map at));
-    output_char och '(';
-    output_string och v;
-    output_char och ')'
+let conversion state t =
+    let (is_opt, t) =
+	match t with
+	| Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "option"))), t) ->
+	       (true, t)
+	| t -> (false, t) in
+    let (prep_arg, conv_arg, conv_res) = nonoption_conversion state t in
+    {
+	cv_is_opt = is_opt;
+	cv_prep_arg = prep_arg;
+	cv_conv_arg = conv_arg;
+	cv_conv_res = conv_res;
+    }
+
+let output_arg_prep och (v, cv) =
+    if cv.cv_is_opt then
+	fprintf och "\tvoid *%s_p;\n\
+		     \tif (Is_block(%s)) {\n\
+		     \t\t%s = Field(%s, 0);\n"
+		     v v v v;
+    Option.iter (fun f -> fprintf och "\t%s = %s(%s);\n" v f v) cv.cv_prep_arg;
+    if cv.cv_is_opt then
+	fprintf och "\t\t%s_p = %s(%s);\n\t}\n\
+		     \telse\n\t\t%s_p = NULL;\n"
+		     v cv.cv_conv_arg v v
+
+let output_arg och (v, cv) =
+    if cv.cv_is_opt then fprintf och "%s_p" v else
+    fprintf och "%s(%s)" cv.cv_conv_arg v
 
 let output_cstub och v t cname is_fin state =
     let is_io, rt, ats = Ast_utils.flatten_arrows_for_c t in
-    let (r, rparams) = List.fold
-	(fun at (i, rparams) -> (i + 1, (sprintf "v%d" i, at) :: rparams))
+    let (r, args) = List.fold
+	begin fun at (i, args) ->
+	    (i + 1, (sprintf "x%d" i, conversion state at) :: args)
+	end
 	ats (0, []) in
-    let params = List.rev rparams in
+    let args = List.rev args in
     output_char och '\n';
     fprintf och "CAMLprim value %s%s" state.st_stub_prefix
 	    (Ast_core.avar_name v);
-    output_arglist och (fun (arg, _) -> fprintf och "value %s" arg) params;
-    fprintf och "\n{\n";
-    fprintf och "\tCAMLparam%d" r;
-    output_arglist och (output_string och *< fst) params;
+    output_arglist och (fun (arg, _) -> fprintf och "value %s" arg) args;
+    fprintf och "\n{\n\tCAMLparam%d " r;
+    output_arglist och (output_string och *< fst) args;
+    output_string och ";\n";
+    List.iter (output_arg_prep och) args;
     let is_unit =
        match rt with
        | Atyp_ref (Apath ([], Avar (loc, Idr "unit"))) -> true
        | _ -> false in
-    output_string och ";\n\t";
-    if not is_unit then
-       fprintf och "CAMLreturn (%s(" (fst (converters state.st_cti_map rt));
-    output_string och cname;
-    begin match t with
-    | Atyp_arrow _ ->
-	output_arglist och (output_arg och state.st_cti_map) params;
-    | _ -> output_string och "()"
+    let output_call () =
+	output_string och cname;
+	match t with
+	| Atyp_arrow _ -> output_arglist och (output_arg och) args;
+	| _ -> output_string och "()" in
+    output_char och '\t';
+    if is_unit then begin
+	output_call ();
+	output_string och ";\n\tCAMLreturn (Val_unit);\n"
+    end else begin
+	let rcv = conversion state rt in
+	if rcv.cv_is_opt then begin
+	    output_string och "void *y = ";
+	    output_call ();
+	    output_string och ";\n";
+	    fprintf och "\tCAMLreturn (y? ffoc_some(%s(y)) : ffoc_none);\n"
+			rcv.cv_conv_res
+	end else begin
+	    fprintf och "\tCAMLreturn (%s(" rcv.cv_conv_res;
+	    output_call ();
+	    output_string och "));\n"
+	end
     end;
-    if is_unit then output_string och ";\n\tCAMLreturn (Val_unit);\n}\n"
-	       else output_string och "));\n}\n";
+    output_string och "}\n";
     if is_fin then
 	begin match t with
 	| Atyp_arrow (loc, Atyp_ref (Apath ([], ftv)),
@@ -168,13 +221,16 @@ let declare_ctype och v ctype state =
     fprintf och "\n\
 	#define %s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
 	static struct custom_operations %s_ops;\n\n\
-	static value %s_to_value(%s x)\n{\n\
+	value\n%scopy_%s(%s x)\n{\n\
 	\    value v = alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
 	\    %s_of_value(v) = x;\n\
 	\    return v;\n\
-	}\n\
-	#define %s_to_option(x) ((x)? ffoc_some(%s_to_value(x)) : ffoc_none)\n"
-	tname ctype tname tname ctype tname ctype tname tname tname;
+	}\n"
+	tname ctype
+	tname
+	state.st_stub_prefix tname ctype
+	tname ctype
+	tname;
     {state with st_cti_map =
 	String_map.add tname
 	    {cti_ctype = ctype; cti_finalize = None;}
