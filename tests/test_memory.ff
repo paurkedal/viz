@@ -1,0 +1,39 @@
+open ffi.memory
+open action_ops
+open:c "stdio.h"
+
+type:c cstring := "char *"
+
+val:c calloc_cstring : int → int → action φ cstring := "calloc"
+val:c free_cstring : cstring → action φ unit := "free"
+let alloc_cstring be calloc_cstring 1
+val:c puts_cstring : cstring → io int := "puts"
+
+let! test_cstring
+    let s do alloc_cstring 16
+    let slot do unsafe_custom_address s
+    let p do unsafe_load_ptr (nativeint.of_int 0) slot
+    do print (show_ptr p) >> print "\n" >> flush stdout
+    do unsafe_store_8 (nativeint.of_int 0) p 0x70
+    do unsafe_store_8 (nativeint.of_int 1) p 0x75
+    do unsafe_store_8 (nativeint.of_int 2) p 0x74
+    do unsafe_store_8 (nativeint.of_int 3) p 0x73
+    do unsafe_store_8 (nativeint.of_int 4) p 0x00
+    let _ do puts_cstring s
+    do free_cstring s
+
+val:c puts : ptr φ → action φ int
+
+let! test_ptr
+    let q do unsafe_malloc (nativeint.of_int 3)
+    do print (show_ptr q) >> print "\n" >> flush stdout
+    do unsafe_store_8 (nativeint.of_int 0) q 0x4f
+    do unsafe_store_8 (nativeint.of_int 1) q 0x4b
+    do unsafe_store_8 (nativeint.of_int 2) q 0
+    let _ do puts q
+    do unsafe_free q
+
+let main
+    do test_cstring
+    do test_ptr
+    do print "No segfault :-)\n"

@@ -1,0 +1,107 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Fform Standard Library.
+#
+# The Fform Standard Library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# Fform is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Fform.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open action_ops
+use cabi.stub_prefix "ffoc_"
+
+# Z.  Direct Memory Access
+#
+# This provides direct accses to memory for the purpose of creating bindings
+# to C libraries.  Naturally most if it is unsafe.
+
+
+# Z.Z.  Size and Offset
+
+type offset := nativeint
+type size := nativeint
+
+let scale_size n size be nativeint.mul (nativeint.of_int n) size
+
+
+# Z.Z.  Pointer Objects
+
+type:c ptr φ := "void *"
+ ## The type of a generic pointer.  This is always local to some pocket (φ).
+
+val:cs is_null : ptr φ → bool
+ ## (is_null p) is true iff (p) represents the (NULL) pointer.
+
+val:cs ptr_add : offset → ptr φ → ptr φ
+ ## (ptr_add n p) translates (p) across (n) bytes.  If (p) points to garbage
+ ## collected memory, this may cause the object to be freed, making subsequent
+ ## access unsafe.
+
+val:cs ptr_diff : ptr φ → ptr φ → offset
+ ## (ptr_diff p q) is the distance in bytes from (q) to (p).
+
+val:cs show_ptr : ptr φ → string
+ ## (show p) is a textual representation of (p), conventionally hexadecimal
+ ## including a "0x" prefix.
+
+val:cs unsafe_custom_address : α → action φ (ptr φ)
+ ## Assuming (x) is a custom object, (unsafe_custom_address x) is a pointer to
+ ## the start of the custom data.
+
+val:cs unsafe_custom_load_ptr : α → action φ (ptr φ)
+ ## Assumnig (x) is a custom object, (unsafe_custom_load_ptr x) loads a
+ ## pointer from the first slot of the custom data.  This is just a shortcut
+ ## for (unsafe_load_ptr ∘ unsafe_custom_address).
+
+
+# Z.Z.  Sizes of Elementary C Values
+
+val:c sizeof_ptr : size := "sizeof(void *)"
+ ## The size of a pointer.
+
+val:c sizeof_size : size := "sizeof(size_t)"
+ ## The size of the size_t type.
+
+val:c sizeof_cshort : size := "sizeof(short)"
+ ## The size of the C short and unsigned short types.
+
+val:c sizeof_cint : size := "sizeof(int)"
+ ## The size of the C int and unsigned int types.
+
+val:c sizeof_clong : size := "sizeof(long)"
+ ## The size of the C long and unsigned long types.
+
+val:c sizeof_clonglong : size := "sizeof(long long)"
+ ## The size of the C long long and unsigned long long types.
+
+
+# Z.Z.  Load and Store
+
+val:cs unsafe_load_ptr   : offset → ptr φ → action φ (ptr φ)
+val:cs unsafe_load_u8    : offset → ptr φ → action φ int
+val:cs unsafe_load_s8    : offset → ptr φ → action φ int
+val:cs unsafe_load_u16   : offset → ptr φ → action φ int
+val:cs unsafe_load_s16   : offset → ptr φ → action φ int
+val:cs unsafe_load_int32 : offset → ptr φ → action φ int32
+val:cs unsafe_load_int64 : offset → ptr φ → action φ int64
+
+val:cs unsafe_store_ptr   : offset → ptr φ → ptr φ → action φ unit
+val:cs unsafe_store_8     : offset → ptr φ → int   → action φ unit
+val:cs unsafe_store_16    : offset → ptr φ → int   → action φ unit
+val:cs unsafe_store_int32 : offset → ptr φ → int32 → action φ unit
+val:cs unsafe_store_int64 : offset → ptr φ → int64 → action φ unit
+
+
+# Z.Z.  Auxiliary Functions
+
+val:c unsafe_malloc : size → action φ (ptr φ) := "malloc"
+val:c unsafe_free : ptr φ → action φ unit := "free"
