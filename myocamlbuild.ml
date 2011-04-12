@@ -279,6 +279,7 @@ let () = dispatch begin function
 	ocaml_lib "fflib";
 	ocaml_cstubs "fflib";
 	ocaml_cstubs "tests";
+	flag ["extension:c"; "compile"] & S[A"-ccopt"; A"-I.."];
 	dep ["ocaml"; "compile"; "byte"; "use_fflib"] ["fflib.cma"];
 	dep ["ocaml"; "compile"; "native"; "use_fflib"] ["fflib.cmxa"];
 	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();

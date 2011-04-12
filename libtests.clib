@@ -1,1 +1,2 @@
 tests/test_memory_FFIS.o
+tests/testutils.o

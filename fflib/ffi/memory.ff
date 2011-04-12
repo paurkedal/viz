@@ -38,6 +38,9 @@ let scale_size n size be nativeint.mul (nativeint.of_int n) size
 type:c ptr φ := "void *"
  ## The type of a generic pointer.  This is always local to some pocket (φ).
 
+val:cs ptr_cmp : ptr φ → ptr φ → torder
+val:cs ptr_eq : ptr φ → ptr φ → bool
+
 val:cs is_null : ptr φ → bool
  ## (is_null p) is true iff (p) represents the (NULL) pointer.
 

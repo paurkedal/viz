@@ -45,6 +45,7 @@ in int include data.int
 in string include data.string
 
 in list include data.list
+in array include data.array
 
 in action include prereq.action
 val print : string → io unit

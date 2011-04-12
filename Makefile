@@ -1,5 +1,9 @@
 all: prefform-all
 
+byte: prefform-byte
+
+native: prefform-native
+
 clean: prefform-clean
 
 install:
@@ -8,7 +12,7 @@ install:
 
 check: prefform-check-fflib
 
-.PHONY: all clean check install
+.PHONY: all byte native clean check install
 
 # The ffoc1 Camlp4 Preprocessor and Associated fflib
 # ==================================================

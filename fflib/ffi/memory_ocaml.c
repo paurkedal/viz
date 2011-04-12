@@ -22,38 +22,39 @@
 #include <caml/memory.h>
 #include <stdio.h>
 
-static struct custom_operations ptr_ops = {
-    "org.eideticdew.ffoc.ptr",
-    custom_finalize_default,
-    custom_compare_default,
-    custom_hash_default,
-    custom_serialize_default,
-    custom_deserialize_default
-};
+#define LOAD_PTR_IS_IDENT 1
+#define DEBUG_STORE 0
 
-#define value_as_ptr(v) (*(void **)Data_custom_val(v))
-#define value_as_offset(v) Long_val(v)
+#define Voidp_val(v) (*(void **)Data_custom_val(v))
+#define Offset_val(v) Nativeint_val(v)
 
 value ffoc_copy_ustring(char const *);
+value ffoc_copy_ptr(void *p);
 
-static value
-value_of_ptr(void *p)
+CAMLprim value
+ffoc_ptr_cmp(value p, value q)
 {
-    value v = alloc_custom(&ptr_ops, sizeof(void *), 0, 1);
-    value_as_ptr(v) = p;
-    return v;
+    if (Voidp_val(p) < Voidp_val(q)) return Val_int(0); /* tprec */
+    if (Voidp_val(p) > Voidp_val(q)) return Val_int(2); /* tsucc */
+    return Val_int(1); /* tcoin */
+}
+
+CAMLprim value
+ffoc_ptr_eq(value p, value q)
+{
+    return Voidp_val(p) == Voidp_val(q)? Val_true : Val_false;
 }
 
 CAMLprim value
 ffoc_is_null(value p)
 {
-    return value_as_ptr(p)? Val_true : Val_false;
+    return Voidp_val(p)? Val_true : Val_false;
 }
 
 CAMLprim value
 ffoc_ptr_add(value offset, value p)
 {
-    return value_of_ptr((char *)value_as_ptr(p) + Long_val(offset));
+    return ffoc_copy_ptr((char *)Voidp_val(p) + Long_val(offset));
 }
 
 CAMLprim value
@@ -66,16 +67,16 @@ CAMLprim value
 ffoc_show_ptr(value p)
 {
     char buf[sizeof(void *)*2 + 13];
-    sprintf(buf, "%p", value_as_ptr(p));
+    sprintf(buf, "%p", Voidp_val(p));
     return ffoc_copy_ustring(buf);
 }
 
 
-#define ADDR(t, off, p) (t*)((char *)value_as_ptr(p) + value_as_offset(off))
+#define ADDR(t, off, p) (t*)((char *)Voidp_val(p) + Offset_val(off))
 
 
 CAMLprim value ffoc_unsafe_load_ptr(value off, value p)
-{ return value_of_ptr(*ADDR(void *, off, p)); }
+{ return ffoc_copy_ptr(*ADDR(void *, off, p)); }
 
 CAMLprim value ffoc_unsafe_load_u8(value off, value p)
 { return Val_int(*ADDR(unsigned char, off, p)); }
@@ -90,36 +91,80 @@ CAMLprim value ffoc_unsafe_load_s16(value off, value p)
 { return Val_int(*ADDR(short, off, p)); }
 
 CAMLprim value ffoc_unsafe_load_int32(value off, value p)
-{ return Val_int(*ADDR(int32, off, p)); }
+{ return caml_copy_int32(*ADDR(int32, off, p)); }
 
 CAMLprim value ffoc_unsafe_load_int64(value off, value p)
-{ return Val_int(*ADDR(int64, off, p)); }
+{ return caml_copy_int64(*ADDR(int64, off, p)); }
 
 
-CAMLprim value ffoc_unsafe_store_ptr(value off, value p, value x)
-{ *ADDR(void *, off, p) = value_as_ptr(x); return Val_unit; }
+CAMLprim value
+ffoc_unsafe_store_ptr(value off, value p, value x)
+{
+#if DEBUG_STORE
+    printf("Storing pointer %p to %p + %ld = %p\n", Voidp_val(x),
+	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
+#endif
+    *ADDR(void *, off, p) = Voidp_val(x);
+    return Val_unit;
+}
 
-CAMLprim value ffoc_unsafe_store_8(value off, value p, value x)
-{ *ADDR(unsigned char, off, p) = Int_val(x); return Val_unit; }
+CAMLprim value
+ffoc_unsafe_store_8(value off, value p, value x)
+{
+#if DEBUG_STORE
+    printf("Storing byte %d to %p + %ld = %p\n", Int_val(x),
+	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
+#endif
+    *ADDR(unsigned char, off, p) = Int_val(x);
+    return Val_unit;
+}
 
-CAMLprim value ffoc_unsafe_store_16(value off, value p, value x)
-{ *ADDR(unsigned short, off, p) = Int_val(x); return Val_unit; }
+CAMLprim value
+ffoc_unsafe_store_16(value off, value p, value x)
+{
+#if DEBUG_STORE
+    printf("Storing 16 bit %d to %p + %ld = %p\n", Int_val(x),
+	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
+#endif
+    *ADDR(unsigned short, off, p) = Int_val(x);
+    return Val_unit;
+}
 
-CAMLprim value ffoc_unsafe_store_int32(value off, value p, value x)
-{ *ADDR(int32, off, p) = Int32_val(x); return Val_unit; }
+CAMLprim value
+ffoc_unsafe_store_int32(value off, value p, value x)
+{
+#if DEBUG_STORE
+    printf("Storing 32 bits %d to %p + %ld = %p\n", Int32_val(x),
+	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
+#endif
+    *ADDR(int32, off, p) = Int32_val(x);
+    return Val_unit;
+}
 
-CAMLprim value ffoc_unsafe_store_int64(value off, value p, value x)
-{ *ADDR(int64, off, p) = Int64_val(x); return Val_unit; }
+CAMLprim value
+ffoc_unsafe_store_int64(value off, value p, value x)
+{
+#if DEBUG_STORE
+    printf("Storing to %p + %ld = %p\n",
+	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
+#endif
+    *ADDR(int64, off, p) = Int64_val(x);
+    return Val_unit;
+}
 
 
 CAMLprim value
 ffoc_unsafe_custom_address(value obj)
 {
-    return value_of_ptr(Data_custom_val(obj));
+    return ffoc_copy_ptr(Data_custom_val(obj));
 }
 
 CAMLprim value
 ffoc_unsafe_custom_load_ptr(value obj)
 {
-    return value_of_ptr(*(void **)Data_custom_val(obj));
+#if LOAD_PTR_IS_IDENT
+    return obj;
+#else
+    return ffoc_copy_ptr(*(void **)Data_custom_val(obj));
+#endif
 }
