@@ -539,7 +539,9 @@ atomic_expr:
     { let idr, hint = $1 in
       Ctrm_ref (Cidr (mkloc $startpos $endpos, idr), hint) }
   | LITERAL { Ctrm_literal (mkloc $startpos $endpos, $1) }
-  | LBRACKET parenthesised RBRACKET
+  | LBRACKET RBRACKET
+    { Ctrm_ref (Cidr (mkloc $startpos $endpos, idr_0b $1 $2), Ih_inj) }
+  | LBRACKET expr RBRACKET
     {
 	let locb = mkloc $startpos $endpos($1) in
 	let f = Ctrm_ref (Cidr (locb, idr_1b $1 $3), Ih_none) in
@@ -548,10 +550,6 @@ atomic_expr:
   | WHERE structure_block { $2 }
   | WITH signature_block { $2 }
   | WHAT predicate_block { Ctrm_what (mkloc $startpos $endpos, $1, $2) }
-  ;
-parenthesised:
-    /* empty */ { Ctrm_literal (mkloc $startpos $endpos, Lit_unit) }
-  | expr { $1 }
   ;
 
 identifier: IDENTIFIER { Cidr (mkloc $startpos $endpos, $1) };

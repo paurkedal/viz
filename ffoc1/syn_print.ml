@@ -28,12 +28,13 @@ let print_name fo (Cidr (_, idr)) =
 
 let print_hinted_name fo idr idrhint =
     Fo.enter fo `Name;
-    Fo.put_string fo (idr_to_string idr);
-    begin match idrhint with
-    | Ih_none -> ()
-    | Ih_univ -> Fo.put_string fo "_"
-    | Ih_inj -> Fo.put_string fo "`"
-    end;
+    let name = idr_to_string idr in
+    Fo.put_string fo
+	begin match idrhint with
+	| Ih_none -> name
+	| Ih_univ -> "%" ^ name
+	| Ih_inj -> name ^ "%"
+	end;
     Fo.leave fo `Name
 
 let rec put_infixl fo p_rule p_cur op x y =
@@ -85,6 +86,23 @@ and print_inline fo p = function
     | Ctrm_project (_, Cidr (_, Idr field), m) ->
 	print_inline fo Opkind.p_project m;
 	Fo.put fo `Name ("." ^ field)
+    | Ctrm_array (_, elts) ->
+	Fo.put fo `Operator "#[";
+	if elts <> [] then begin
+	    print_inline fo (Opkind.p_comma + 1) (List.hd elts);
+	    List.iter
+		begin fun elt ->
+		    Fo.put fo `Operator ",";
+		    Fo.space fo;
+		    print_inline fo (Opkind.p_comma + 1) elt
+		end
+		(List.tl elts)
+	end;
+	Fo.put fo `Operator "]"
+    | Ctrm_what (_, cm_opt, cpred) ->
+	let kw = match cm_opt with None -> "what" | Some cm -> "what!" ^ cm in
+	Fo.put_kw fo kw;
+	print_predicate fo cpred
     | Ctrm_with (_, base, defs) ->
 	Option.iter (print_inline fo p) base;
 	Fo.put_kw fo "with";
@@ -92,8 +110,6 @@ and print_inline fo p = function
     | Ctrm_where (_, defs) ->
 	Fo.put_kw fo "where";
 	print_defs fo defs
-    | _ ->
-	Fo.put fo `Error "(unimplemented)"
 
 and print_predicate fo = function
     | Cpred_let (_, cm_opt, var, cdef, body) ->

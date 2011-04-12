@@ -158,7 +158,9 @@ let emit_aval_literal loc lit =
     | Lit_string x -> <:expr< __string_of_utf8 $str: UString.to_utf8 x$ >>
 
 let emit_apat_fixed _loc default = function
-    | "[]" -> <:patt< [] >>
+    | "()" | "0'(')" -> <:patt< () >>
+    | "[]" | "0'[']" -> <:patt< [] >>
+    | "#[]" | "0'#[']" -> <:patt< [| |] >>
     | _ -> default ()
 
 let rec emit_apat = function
@@ -197,7 +199,9 @@ let rec emit_apat = function
 	<:patt< ($ox$ : $emit_atyp t$) >>, ocond_opt
 
 let emit_aval_fixed _loc default = function
-    | "[]" -> <:expr< [] >>
+    | "()" | "0'(')" -> <:expr< () >>
+    | "[]" | "0'[']" -> <:expr< [] >>
+    | "#[]" | "0'#[']" -> <:expr< [| |] >>
     | "[;]" -> <:expr< Data.List.push >>
     | _ -> default ()
 

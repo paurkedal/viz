@@ -21,7 +21,7 @@ open Leaf_types
 open FfPervasives
 
 let lit_to_string = function
-    | Lit_unit -> "unit"
+    | Lit_unit -> "()"
     | Lit_bool x -> if x then "true" else "false"
     | Lit_int i -> string_of_int i
     | Lit_float x -> string_of_float x
@@ -53,6 +53,8 @@ let idr_2o_symbol (Idr name) =
     if starts_with "2'" name then String.sub name 2 (String.length name - 2)
     else raise (Failure ("Expected a binary operator identifier: " ^ name))
 
+let idr_0b_c lname rname = Idr ("0'" ^ lname ^ "'" ^ rname)
+let idr_0b (Idr lname) (Idr rname) = idr_0b_c lname rname
 let idr_1b_c lname rname = Idr ("1'" ^ lname ^ "'" ^ rname)
 let idr_1b (Idr lname) (Idr rname) = idr_1b_c lname rname
 let idr_2b_c lname rname = Idr ("2'" ^ lname ^ "'" ^ rname)
