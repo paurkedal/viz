@@ -58,7 +58,7 @@ let atyp_action_pocket = function
 	World_pocket
     | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "action"))), pocket) ->
 	begin match pocket with
-	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world_pocket" ->
+	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world" ->
 	    World_pocket
 	| Atyp_uvar v ->
 	    Local_pocket v

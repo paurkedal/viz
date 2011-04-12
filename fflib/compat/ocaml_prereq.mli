@@ -25,10 +25,10 @@ type ('f, 'a) action = { __unsafe_thunk : unit -> 'a; }
     "pocket" in which the action is valid, and the second type parameter is
     the return type. *)
 
-type world_pocket
+type world
 (** A type tag for top-level "world" actions. *)
 
-type 'a io = (world_pocket, 'a) action
+type 'a io = (world, 'a) action
 (** The top-level monad. *)
 
 val __unsafe_action : (unit -> 'a) -> ('f, 'a) action

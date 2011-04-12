@@ -22,8 +22,8 @@ external op2_U2228 : bool -> bool -> bool = "%sequor"
 
 (* Dark spells about the world state. *)
 type ('f, 'a) action = { __unsafe_thunk : unit -> 'a; }
-type world_pocket
-type 'a io = (world_pocket, 'a) action
+type world
+type 'a io = (world, 'a) action
 let __unsafe_action f = { __unsafe_thunk = f; }
 let __unsafe_run_action m = m.__unsafe_thunk ()
 
