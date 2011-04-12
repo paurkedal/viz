@@ -57,7 +57,7 @@ let header = "\
 #define ffoc_none Val_int(0)
 value ffoc_some(value x);
 
-#define ffoc_ptr_of_value(x) *(void **)Data_custom_val(x)
+#define Voidp_val(x) *(void **)Data_custom_val(x)
 value ffoc_copy_ptr(void *);
 
 value ffoc_ustring_to_utf8(value x);
@@ -96,7 +96,7 @@ type conversion = {
 
 let rec nonoption_conversion state = function
     | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), _) ->
-	("void *", None, "ffoc_ptr_of_value", "ffoc_copy_ptr")
+	("void *", None, "Voidp_val", "ffoc_copy_ptr")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	begin try
 	    match String_map.find tname state.st_cti_map with
@@ -193,9 +193,12 @@ let output_cstub och v t cname is_fin state =
 	| Atyp_arrow _ -> output_arglist och (output_arg och) args;
 	| _ -> output_string och "()" in
     if is_unit then begin
+	if is_fin then output_string och "\tif (Voidp_val(x0)) {\n\t";
 	output_char och '\t';
 	output_call ();
-	output_string och ";\n\tCAMLreturn (Val_unit);\n"
+	output_string och ";\n";
+	if is_fin then output_string och "\t\tVoidp_val(x0) = NULL;\n\t}\n";
+	output_string och "\tCAMLreturn (Val_unit);\n";
     end else begin
 	let rcv = conversion state rt in
 	if rcv.cv_is_opt then begin
