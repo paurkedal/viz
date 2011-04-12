@@ -25,6 +25,13 @@ open Leaf_types
 val avar_idr : avar -> idr
 val avar_name : avar -> string
 
+val str_to_lid : string -> string
+val str_to_uid : string -> string
+val idr_to_lid : idr -> string
+val idr_to_uid : idr -> string
+val avar_to_lid : avar -> string
+val avar_to_uid : avar -> string
+
 val avar_loc : avar -> loc
 val apath_loc : apath -> loc
 val atyp_loc : atyp -> loc

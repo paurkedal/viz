@@ -35,7 +35,7 @@ let rec output_const och state v t cx =
 	    let t' = String_map.find tn state.st_aliases in
 	    output_const och state v t' cx
 	with Not_found ->
-	fprintf och "\tprintf(\"let %s = \"); " (avar_name v);
+	fprintf och "\tprintf(\"let %s = \"); " (avar_to_lid v);
 	begin match tn with
 	| "bool" -> fprintf och "fputs(%s? \"true\" : \"false\", stdout)" cx
 	| "int" -> fprintf och "printf(\"%%d\", %s)" cx

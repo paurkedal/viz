@@ -43,32 +43,6 @@ let p4loc loc =
          Location.Bound.charno ub,
          true)
 
-let ascii_encode s =
-    let buf = UString.Buf.create 16 in
-    let s' =
-	if String.length s >= 2 then
-	    match String.sub s 0 2 with
-	    | "0'" -> "op0_" ^ (String.after 2 s)
-	    | "1'" -> "op1_" ^ (String.after 2 s)
-	    | "2'" -> "op2_" ^ (String.after 2 s)
-	    | _ -> s
-	else s in
-    UString.iter
-	begin fun ch ->
-	    if UChar.is_ocaml_idrcnt ch then UString.Buf.add_char buf ch else
-	    let s = Printf.sprintf "U%04x" (UChar.uint_code ch) in
-	    UString.Buf.add_string buf (UString.of_utf8 s)
-	end
-	(UString.of_utf8 s');
-    UString.to_utf8 (UString.Buf.contents buf)
-
-let str_to_lid s = String.uncapitalize (ascii_encode s)
-let str_to_uid s = String.capitalize (ascii_encode s)
-let idr_to_lid (Idr s) = str_to_lid s
-let idr_to_uid (Idr s) = str_to_uid s
-let avar_to_lid (Avar (_, idr)) = idr_to_lid idr
-let avar_to_uid (Avar (_, idr)) = idr_to_uid idr
-
 let rec emit_apath_helper inner_loc final = function
     | [] -> final
     | av :: avs ->
