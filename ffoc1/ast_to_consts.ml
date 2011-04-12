@@ -39,6 +39,7 @@ let rec output_const och state v t cx =
 	begin match tn with
 	| "bool" -> fprintf och "fputs(%s? \"true\" : \"false\", stdout)" cx
 	| "int" -> fprintf och "printf(\"%%d\", %s)" cx
+	| "float" -> fprintf och "printf(\"%%lg\", %s)" cx
 	| "nativeint" | "size" | "offset" ->
 	    fprintf och "printf(\"%%ldn\", %s)" cx
 	| "utf8" -> fprintf och "fputq(%s, stdout)" cx
@@ -85,6 +86,7 @@ and output_adef_c och state = function
 		| _ -> ()
 	    end cases
     | Adef_include (loc, m) -> output_amod_c och state m
+    | Adef_in (loc, v, m) -> output_amod_c och state m
     | _ -> ()
 
 let output_consts och m =

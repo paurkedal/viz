@@ -113,6 +113,7 @@ let rec nonoption_conversion state = function
 	    ("nativeint", None, "Nativeint_val", "caml_copy_nativeint")
 	| "int32"  -> ("int32", None, "Int32_val", "caml_copy_int32")
 	| "int64"  -> ("int64", None, "Int64_val", "caml_copy_int64")
+	| "float"  -> ("double", None, "Double_val", "caml_copy_double")
 	| "octet"  -> ("char",  None, "Int_val",   "Val_int")
 	| "utf8"   -> ("char const *", None, "String_val", "caml_copy_string")
 	| "string" ->
@@ -264,7 +265,7 @@ let declare_ctype och v ctype state =
 	#define %s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
 	static struct custom_operations %s_ops;\n\n\
 	value\n%scopy_%s(%s x)\n{\n\
-	\tvalue v = alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
+	\tvalue v = caml_alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
 	\t%s_of_value(v) = x;\n\
 	\treturn v;\n\
 	}\n"
@@ -319,6 +320,7 @@ and output_adef_c och = function
 	if Ast_utils.atyp_is_const t || List.mem `Is_stub valopts then ident
 	else output_cstub och v t cn (List.mem `Is_finalizer valopts)
     | Adef_include (loc, m) -> output_amod_c och m
+    | Adef_in (loc, v, m) -> output_amod_c och m
     | _ -> ident
 
 let output_cstubs och sname m =
