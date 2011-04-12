@@ -83,7 +83,7 @@ esac
 
 # Dispatch to the Executable or Script
 #
-for ext in .ml .ff; do
+for ext in .ml .vz .viz .ff; do
     src="$FFORM_SRCDIR/bin/$prog$ext"
     if [ -e "$src" ]; then
 	FFDEV_TARGET=${FFDEV_TARGET-${OCAML_TARGET-byte}}

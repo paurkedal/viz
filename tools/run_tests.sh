@@ -10,7 +10,7 @@ fail()
 }
 
 for src in "$@"; do
-    p="${src%.ff}.$target"
+    p="${src%.*}.$target"
     echo ${OCAMLBUILD-ocamlbuild} -no-links -quiet $p
     ${OCAMLBUILD-ocamlbuild} -no-links -quiet $p || { fail FC $src; continue; }
     _build/$p || { fail FR $src; continue; }

@@ -48,7 +48,7 @@ for arg in "$@"; do
 	    pp_opts="$pp_opts -I"
 	    oc_args="$oc_args -I"
 	    ;;
-	*.ff)
+	*.vz|*.viz|*.ff)
 	    seen_source=true
 	    oc_args="$oc_args -impl $arg"
 	    ;;

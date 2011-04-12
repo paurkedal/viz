@@ -36,7 +36,8 @@ let print_error loc msg =
 let prune_path =
     String.strip_suffix "_FFIC" *> String.strip_suffix "_"
 
-let locate_source ?(exts = [".ff"; ".ml"; ".mlpack"]) ?(strip_ext = false)
+let locate_source ?(exts = [".vz"; ".viz"; ".ff"; ".ml"; ".mlpack"])
+		  ?(strip_ext = false)
 		  ?topdir ~roots rel_path_sans_ext =
     let rec check_roots = function
 	| [] -> raise Not_found
@@ -64,7 +65,7 @@ let load_stdlex root_paths =
 	let lexer = Lexer.lexer state in
 	grammar_main lexer
     with Not_found ->
-	print_error Location.dummy "Cannot find stdlex.ff";
+	print_error Location.dummy "Cannot find the stdlex structure.";
 	raise Not_found
 
 let parse_file ?exts ~roots path =
