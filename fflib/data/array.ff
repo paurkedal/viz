@@ -63,7 +63,7 @@ val afoldr : (α → β → action φ β) → t α → β → action φ β
 
 #?ffoc include compat.ocaml_array.array_const
 
-open action_ops
+open action
 
 let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) @> (_, y) ↦ y
 

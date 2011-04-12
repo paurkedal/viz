@@ -16,7 +16,7 @@
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
-open action_ops
+open action
 
 #?ffoc type t α := list α
 #?ffoc {#

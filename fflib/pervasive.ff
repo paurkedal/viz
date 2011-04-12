@@ -46,7 +46,7 @@ in string include data.string
 
 in list include data.list
 
-in action_ops include prereq.action_ops
+in action include prereq.action
 val print : string → io unit
 val eprint : string → io unit
 

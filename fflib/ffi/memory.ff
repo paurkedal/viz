@@ -16,7 +16,7 @@
 # along with Fform.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
-open action_ops
+open action
 use cabi.stub_prefix "ffoc_"
 
 # Z.  Direct Memory Access

@@ -43,7 +43,7 @@ in int_ops
     val 2'mod : int → int → int
     #?ffoc include compat.ocaml_pervasives.int_ops
 
-in action_ops
+in action
     val return : α → action φ α
     val 2'>>= : action φ α → (α → action φ β) → action φ β
     val 2'>> : action φ unit → action φ α → action φ α

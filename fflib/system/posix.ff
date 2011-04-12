@@ -17,7 +17,7 @@
 
 open prereq
 open data
-open action_ops
+open action
 open:c "unistd.h"
 
 use cabi.stub_prefix "ffoc_posix_"

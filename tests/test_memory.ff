@@ -1,5 +1,5 @@
 open ffi.memory
-open action_ops
+open action
 open:c "stdio.h"
 
 type:c cstring := "char *"

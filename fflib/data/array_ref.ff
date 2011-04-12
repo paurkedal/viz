@@ -73,7 +73,7 @@ val freeze : r α → action φ (array.t α)
 #?ffoc include compat.ocaml_array.array_act
 
 open prereq
-open prereq.action_ops
+open action
 
 let iter k a be fold (x +> m +> m >> k x) a (return ()) >>= ident
 let iterr k a be foldr (x +> m +> m >> k x) a (return ()) >>= ident
