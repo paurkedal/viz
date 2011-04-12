@@ -37,6 +37,23 @@ let header = "\
 #include <caml/alloc.h>
 #include <caml/custom.h>
 
+#ifndef CAMLparam6
+#  define CAMLparam6(x0, x1, x2, x3, x4, x5) \\
+	CAMLparam5 (x0, x1, x2, x3, x4); CAMLxparam1 (x5)
+#endif
+#ifndef CAMLparam7
+#  define CAMLparam7(x0, x1, x2, x3, x4, x5, x6) \\
+	CAMLparam5 (x0, x1, x2, x3, x4); CAMLxparam2 (x5, x6)
+#endif
+#ifndef CAMLparam8
+#  define CAMLparam8(x0, x1, x2, x3, x4, x5, x6, x7) \\
+	CAMLparam5 (x0, x1, x2, x3, x4); CAMLxparam3 (x5, x6, x7)
+#endif
+#ifndef CAMLparam9
+#  define CAMLparam9(x0, x1, x2, x3, x4, x5, x6, x7, x8) \\
+	CAMLparam5 (x0, x1, x2, x3, x4); CAMLxparam4 (x5, x6, x7, x8)
+#endif
+
 #define ffoc_none Val_int(0)
 value ffoc_some(value x);
 
@@ -150,6 +167,7 @@ let output_arg och (v, cv) =
     fprintf och "%s(%s)" cv.cv_conv_arg v
 
 let output_cstub och v t cname is_fin state =
+    let stub_name = state.st_stub_prefix ^ (avar_name v) in
     let is_io, rt, ats = Ast_utils.flatten_arrows_for_c t in
     let (r, args) = List.fold
 	begin fun at (i, args) ->
@@ -158,8 +176,7 @@ let output_cstub och v t cname is_fin state =
 	ats (0, []) in
     let args = List.rev args in
     output_char och '\n';
-    fprintf och "CAMLprim value %s%s" state.st_stub_prefix
-	    (Ast_core.avar_name v);
+    fprintf och "CAMLprim value %s" stub_name;
     output_arglist och (fun (arg, _) -> fprintf och "value %s" arg) args;
     fprintf och "\n{\n\tCAMLparam%d " r;
     output_arglist och (output_string och *< fst) args;
@@ -193,6 +210,13 @@ let output_cstub och v t cname is_fin state =
 	end
     end;
     output_string och "}\n";
+    if r > 5 then begin
+	fprintf och "CAMLprim value %s_byte(value *argv, int argc)\n{\n\
+		     \treturn %s(argv[0]"
+		stub_name stub_name;
+	for i = 1 to (r - 1) do fprintf och ", argv[%d]" i done;
+	output_string och ");\n}\n";
+    end;
     if is_fin then
 	begin match t with
 	| Atyp_arrow (loc, Atyp_ref (Apath ([], ftv)),

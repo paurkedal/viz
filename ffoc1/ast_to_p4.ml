@@ -308,6 +308,10 @@ let emit_inj_aliases (loc, v, params, ti) =
 	List.map emit_inj injs
     | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
+let external_names stubname t =
+    if Ast_utils.arity t <= 5 then Ast.LCons (stubname, Ast.LNil) else
+    Ast.LCons (stubname ^ "_byte", Ast.LCons (stubname, Ast.LNil))
+
 type amod_state = {
     mutable ams_stub_prefix : string;
     ams_module_name : string;
@@ -371,8 +375,7 @@ and emit_adec state = function
 	let stubname =
 	    if List.mem `Is_stub valopts then state.ams_stub_prefix ^ cn else
 	    state.ams_stub_prefix ^ avar_to_lid v in
-	let syms =
-	    Ast.LCons (stubname, Ast.LNil) in
+	let syms = external_names stubname t in
 	let name = avar_to_lid v in
 	let rt = Ast_utils.result_type t in
 	if fst (Ast_utils.unwrap_atyp_action rt) <> Ast_utils.No_pocket then
@@ -457,7 +460,7 @@ and emit_adef state = function
 	let stubname =
 	    if List.mem `Is_stub valopts then state.ams_stub_prefix ^ cn else
 	    state.ams_stub_prefix ^ avar_to_lid v in
-	let syms = Ast.LCons (stubname, Ast.LNil) in
+	let syms = external_names stubname t in
 	let name = avar_to_lid v in
 	let ot = emit_atyp ~typefor: Typefor_cabi t in
 	let rt = Ast_utils.result_type t in
