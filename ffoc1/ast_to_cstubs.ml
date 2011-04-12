@@ -71,34 +71,36 @@ type state = {
 
 type conversion = {
     cv_is_opt : bool;
+    cv_ctype : string;
     cv_prep_arg : string option;
     cv_conv_arg : string;
     cv_conv_res : string;
 }
 
 let rec nonoption_conversion state = function
-    | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), Atyp_uvar _) ->
-	(None, "ffoc_ptr_of_value", "ffoc_copy_ptr")
+    | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), _) ->
+	("void *", None, "ffoc_ptr_of_value", "ffoc_copy_ptr")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	begin try
 	    match String_map.find tname state.st_cti_map with
-	    | Cti_custom _ ->
-		(None, sprintf "%s_of_value" tname,
+	    | Cti_custom (ctype, _) ->
+		(ctype, None, sprintf "%s_of_value" tname,
 		 sprintf "%scopy_%s" state.st_stub_prefix tname)
 	    | Cti_alias tname' -> nonoption_conversion state tname'
 	with Not_found ->
 	match tname with
-	| "unit"   -> (None, "Int_val",    "Val_int")
-	| "bool"   -> (None, "Bool_val",   "Val_bool")
-	| "int"    -> (None, "Int_val",    "Val_int")
+	| "unit"   -> ("void", None, "Int_val",   "Val_int")
+	| "bool"   -> ("int",  None, "Bool_val",  "Val_bool")
+	| "int"    -> ("int",  None, "Int_val",   "Val_int")
 	| "nativeint" | "size" | "offset" ->
-	    (None, "Nativeint_val", "caml_copy_nativeint")
-	| "int32"  -> (None, "Int32_val",  "caml_copy_int32")
-	| "int64"  -> (None, "Int64_val",  "caml_copy_int64")
-	| "octet"  -> (None, "Int_val",    "Val_int")
-	| "utf8"   -> (None, "String_val", "caml_copy_string")
+	    ("nativeint", None, "Nativeint_val", "caml_copy_nativeint")
+	| "int32"  -> ("int32", None, "Int32_val", "caml_copy_int32")
+	| "int64"  -> ("int64", None, "Int64_val", "caml_copy_int64")
+	| "octet"  -> ("char",  None, "Int_val",   "Val_int")
+	| "utf8"   -> ("char const *", None, "String_val", "caml_copy_string")
 	| "string" ->
-	    (Some "ffoc_ustring_to_utf8", "String_val", "ffoc_copy_ustring")
+	    ("char const *", Some "ffoc_ustring_to_utf8", "String_val",
+	     "ffoc_copy_ustring")
 	| _ ->
 	    errf_at loc "Don't know how to pass values of type %s to \
 			 C functions." tname
@@ -107,11 +109,11 @@ let rec nonoption_conversion state = function
 		       Atyp_ref (Apath ([], Avar (tagloc, Idr tagname))))
 	    when avar_idr op = idr_2o_index ->
 	begin match tagname with
-	| "b" -> (None, "Bool_val", "Val_bool")
-	| "i" -> (None, "Int_val",  "Val_int")
-	| "e" -> (None, "Int_val",  "Val_int") (* enum *)
-	| "l" -> (None, "Long_val", "Val_long")
-	| "v" -> (None, "", "")
+	| "b" -> ("int", None, "Bool_val", "Val_bool")
+	| "i" -> ("int", None, "Int_val",  "Val_int")
+	| "e" -> ("int", None, "Int_val",  "Val_int") (* enum *)
+	| "l" -> ("long", None, "Long_val", "Val_long")
+	| "v" -> ("value", None, "", "")
 	| _ -> errf_at tagloc "Invalid conversion tag %s." tagname
 	end
     | t -> errf_at (atyp_loc t) "Unhandled type for the C ABI."
@@ -122,9 +124,10 @@ let conversion state t =
 	| Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "option"))), t) ->
 	       (true, t)
 	| t -> (false, t) in
-    let (prep_arg, conv_arg, conv_res) = nonoption_conversion state t in
+    let (ctype, prep_arg, conv_arg, conv_res) = nonoption_conversion state t in
     {
 	cv_is_opt = is_opt;
+	cv_ctype = ctype;
 	cv_prep_arg = prep_arg;
 	cv_conv_arg = conv_arg;
 	cv_conv_res = conv_res;
@@ -178,7 +181,7 @@ let output_cstub och v t cname is_fin state =
     end else begin
 	let rcv = conversion state rt in
 	if rcv.cv_is_opt then begin
-	    output_string och "\tvoid *y = ";
+	    fprintf och "\t%s y = " rcv.cv_ctype;
 	    output_call ();
 	    output_string och ";\n";
 	    fprintf och "\tCAMLreturn (y? ffoc_some(%s(y)) : ffoc_none);\n"
