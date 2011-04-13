@@ -36,6 +36,7 @@ let __builtin_action_bind k m =
 let none = None
 let some x = Some x
 
+(* A total order. Make sure the constructor order is in sync with C stubs. *)
 type torder = Tprec | Tcoin | Tsucc
 let tprec = Tprec
 let tcoin = Tcoin

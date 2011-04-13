@@ -25,6 +25,10 @@ in combinators
     let f <@ x be f x -- f "at" x
     let x @> f be f x -- x "under" f
 
+in misc
+    let fst (x, _) be x
+    let snd (_, y) be y
+
 in bool_ops
     #?ffoc include compat.ocaml_pervasives.bool_ops
     let (¬* f)   x0 be ¬ f x0
@@ -56,6 +60,7 @@ in action
 # library structure.  The pervasive structure does a similar inclusion for
 # client code.
 include combinators
+include misc
 include bool_ops
 include int_ops
 #?ffoc include compat.ocaml_unicode.pervasive

@@ -36,6 +36,7 @@ val 2'@> : α → (α → β) → β
  ## low-precedence application operator.  It can be pronounced "under".
 
 include prereq.combinators
+include prereq.misc
 include prereq.int_ops
 include prereq.bool_ops
 

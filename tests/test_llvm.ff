@@ -1,0 +1,64 @@
+open action
+
+in ll include llvm.core
+
+let newline be print "\n" >> flush_all
+
+let! build_fact ctx mdl
+    let int32t be ll.int32_type ctx
+    assert true  # FIXME: let-dependencies under let!.
+    let ft be ll.function_type int32t #[int32t]
+    assert __generic_eq (ll.type_kind ft) ll.lkind_function
+
+    let fact do ll.add_function mdl "fact" ft
+    do print "gc: "
+    do ll.get_function_gc fact >>= (none ↦ print "none"; some% s ↦ print s)
+    do newline
+    do ll.set_function_callconv fact ll.callconv_c
+
+    let n be ll.param fact 0
+
+    let entry do ll.append_block ctx fact "entry"
+    let if_eq_0 do ll.append_block ctx fact "if_eq_0"
+    let if_ne_0 do ll.append_block ctx fact "if_ne_0"
+    let end do ll.append_block ctx fact "end"
+
+    let B do ll.create_builder ctx
+
+    do ll.position_builder_at_end B entry
+    let zero do ll.const_int int32t 0
+    let eq_0 do ll.build_icmp B ll.iorder.EQ n zero "eq_0"
+    let _ do ll.build_cond_br B eq_0 if_eq_0 if_ne_0
+
+    do ll.position_builder_at_end B if_eq_0
+    let res_if_eq_0 do ll.const_int int32t 1
+    let _ do ll.build_br B end
+
+    do ll.position_builder_at_end B if_ne_0
+    let one do ll.const_int int32t 1
+    let n_minus_1 do ll.build_sub B n one "n - 1"
+    let fact_n_minus_1 do ll.build_call B fact #[n_minus_1] "fact (n - 1)"
+    let res_if_ne_0 do ll.build_mul B n fact_n_minus_1 "n * fact (n - 1)"
+    let _ do ll.build_br B end
+
+    do ll.position_builder_at_end B end
+    let res do ll.build_phi B int32t "result"
+    do ll.add_incoming res #[(res_if_eq_0, if_eq_0), (res_if_ne_0, if_ne_0)]
+    let _ do ll.build_ret B res
+
+    do ll.dispose_builder B
+    be fact
+
+let main
+    let ctx do ll.create_context
+    let mdl do ll.create_module ctx "test_llvm"
+    do print "layout: " >> (ll.get_data_layout mdl >>= print) >> newline
+    do print "target: " >> (ll.get_target mdl >>= print) >> newline
+
+    let fact do build_fact ctx mdl
+
+    do ll.dump_module mdl
+    do ll.dispose_module mdl
+    do ll.dispose_context ctx
+
+    do print "Done.\n"
