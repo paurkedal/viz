@@ -20,15 +20,16 @@ check: camlviz-check-fflib
 # The camlviz Preprocessor and Compatible Build of the Standard Library
 # =====================================================================
 
-PREFFORM_BYTE	= bin/camlvizpp.byte libfflib.a fflib.cma
-PREFFORM_NATIVE	= bin/camlvizpp.native libfflib.a fflib.cmxa
+camlviz_PROGRAMS = bin/camlvizpp bin/camlvizerror
+camlviz_BYTE	= $(camlviz_PROGRAMS:%=%.byte) libfflib.a fflib.cma
+camlviz_NATIVE	= $(camlviz_PROGRAMS:%=%.native) libfflib.a fflib.cmxa
 
 camlviz-native:
-	$(OCAMLBUILD) $(PREFFORM_NATIVE)
+	$(OCAMLBUILD) $(camlviz_NATIVE)
 camlviz-byte:
-	$(OCAMLBUILD) $(PREFFORM_BYTE)
+	$(OCAMLBUILD) $(camlviz_BYTE)
 camlviz-all:
-	$(OCAMLBUILD) $(PREFFORM_BYTE) $(PREFFORM_NATIVE)
+	$(OCAMLBUILD) $(camlviz_BYTE) $(camlviz_NATIVE)
 camlviz-clean:
 	$(OCAMLBUILD) -clean
 

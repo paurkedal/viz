@@ -1,4 +1,5 @@
 <**/*.{ml,mli,native,byte,d.byte,top}>: use_camlp4, use_camomile, use_dynlink, use_menhirLib, use_sexplib
+<bin/camlvizerror.{ml,mli,native,byte*}>: use_str
 
 <ffoc1/*.{cmo,cmx}>: for-pack(Ffoc1)
 <ffoc1/ast_to_p4.ml>: camlp4orf
