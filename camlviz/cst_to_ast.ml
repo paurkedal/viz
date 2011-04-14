@@ -320,7 +320,7 @@ let rec build_atcases is_sig atcases algtb = function
 	    when cidr_is_2o_coloneq op ->
 	let ati =
 	    match abi with
-	    | Abi_Fform -> Atypinfo_alias (build_atyp ct)
+	    | Abi_Viz -> Atypinfo_alias (build_atyp ct)
 	    | Abi_C -> build_atypinfo_cabi ct in
 	let av, ats = build_atyp_con_args p in
 	let atcase = (loc, av, ats, ati) in
@@ -329,7 +329,7 @@ let rec build_atcases is_sig atcases algtb = function
 	let av, ats = build_atyp_con_args p in
 	let atcase = (loc, av, ats, Atypinfo_cabi (avar_name av)) in
 	build_atcases is_sig (atcase :: atcases) algtb xs
-    | Cdef_type (loc, Abi_Fform, p) :: xs ->
+    | Cdef_type (loc, Abi_Viz, p) :: xs ->
 	let atcase, algtb' = Algt_builder.add_type loc p algtb in
 	build_atcases is_sig (atcase :: atcases) algtb' xs
     | Cdef_inj (loc, abi,
@@ -337,7 +337,7 @@ let rec build_atcases is_sig atcases algtb = function
 	    :: xs when cidr_is_2o_colon op ->
 	let ainjnum, ct =
 	    match abi with
-	    | Abi_Fform -> (Ainjnum_auto, ct)
+	    | Abi_Viz -> (Ainjnum_auto, ct)
 	    | Abi_C ->
 		begin match ct with
 		| Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (ceq, _), ct),
@@ -404,7 +404,7 @@ and build_adecs adecs = function
     | Cdef_include (loc, csig) :: xs ->
 	let adec = Adec_include (loc, build_asig csig) in
 	build_adecs (adec :: adecs) xs
-    | Cdef_open (loc, Abi_Fform, p) :: xs ->
+    | Cdef_open (loc, Abi_Viz, p) :: xs ->
 	let adec = Adec_open (loc, build_apath p) in
 	build_adecs (adec :: adecs) xs
     | Cdef_open (loc, Abi_C, x) :: xs ->
@@ -435,10 +435,10 @@ and build_adecs adecs = function
 	let at = build_atyp ct in
 	let adec =
 	    match abi, cn_opt with
-	    | Abi_Fform, None ->
+	    | Abi_Viz, None ->
 		assert (val_options = []);
 		Adec_val (loc, av, at)
-	    | Abi_Fform, Some _ ->
+	    | Abi_Viz, Some _ ->
 		errf_at loc "Invalid declaration."
 	    | Abi_C, Some cn ->
 		Adec_cabi_val (loc, av, at, cn, val_options)
@@ -501,7 +501,7 @@ and build_adefs adecmap adefs = function
     | Cdef_include (loc, m) :: xs ->
 	let adef = Adef_include (loc, build_amod m) in
 	build_adefs adecmap (adef :: adefs) xs
-    | Cdef_open (loc, Abi_Fform, p) :: xs ->
+    | Cdef_open (loc, Abi_Viz, p) :: xs ->
 	let adef = Adef_open (loc, build_apath p) in
 	build_adefs adecmap (adef :: adefs) xs
     | Cdef_open (loc, Abi_C, cinc) :: xs ->
@@ -537,10 +537,10 @@ and build_adefs adecmap adefs = function
 	let at = build_atyp ct in
 	let adefs =
 	    match abi, cn_opt with
-	    | Abi_Fform, None ->
+	    | Abi_Viz, None ->
 		assert (val_options = []);
 		adefs
-	    | Abi_Fform, Some _ -> errf_at loc "Invalid declaration."
+	    | Abi_Viz, Some _ -> errf_at loc "Invalid declaration."
 	    | Abi_C, Some cn ->
 		Adef_cabi_val (loc, av, at, cn, val_options) :: adefs
 	    | Abi_C, None ->

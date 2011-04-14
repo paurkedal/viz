@@ -1,6 +1,6 @@
 open OUnit
 
-let suite = "fform" >::: [
+let suite = "camlviz" >::: [
     Test_grammar.tests;
     Test_graphalgo.tests;
     Test_pervasives.tests;

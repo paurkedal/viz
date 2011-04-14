@@ -35,7 +35,7 @@ type lit =
 
 type stratum = [`Type | `Value | `Signature | `Structure]
 
-type abi = Abi_Fform | Abi_C with sexp
+type abi = Abi_Viz | Abi_C with sexp
 
 type type_exposure = [`Default | `Local | `Abstract | `Exported]
 type val_exposure = [`Default | `Local | `Exported]

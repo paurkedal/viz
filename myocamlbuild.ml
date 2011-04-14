@@ -35,11 +35,11 @@ let split_on_space s =
 let camlvizpp_path = "bin/camlvizpp.native"
 let static = true
 
-(* Ocamlbuild Plug-In for Fform/OC
- * =============================== *)
+(* Ocamlbuild Plug-In for The Camlviz Preprocessor
+ * =============================================== *)
 
-(** A modified version of [Ocaml_compiler.ocamlc_c] which adds an "-impl" option
-    in front ofthe input file, so that ocamlc accepts a non-standard
+(** A modified version of [Ocaml_compiler.ocamlc_c] which adds an "-impl"
+    option in front ofthe input file, so that ocamlc accepts a non-standard
     extension. *)
 let custom_ocamlc_c tags arg out =
     let tags = tags ++ "ocaml" ++ "byte" in
@@ -126,7 +126,7 @@ let native_compile_camlviz_implem ?tag ff env build =
 	(Tags.union (tags_of_pathname ff) (tags_of_pathname cmx) ++
 	 "implem" +++ tag) ff cmx
 
-(** Fform Stage 1 dependency analyzer. *)
+(** Camlviz Stage 1 dependency analyzer. *)
 let camlvizdep arg out env build =
     let arg = env arg and out = env out in
     let tags = tags_of_pathname arg ++ "camlvizpp" ++ "ocamldep" in
@@ -156,7 +156,7 @@ let runprog arg out env build =
     let arg = env arg and out = env out in
     Cmd (S[P arg; Sh ">"; Px out])
 
-(** Fform Stage 1 preprocessor subcommand. *)
+(** Camlviz Stage 1 preprocessor subcommand. *)
 let camlvizpp tag ff ff_ml env build =
     let ff = env ff and ff_ml = env ff_ml in
     let tags = tags_of_pathname ff ++ "ocaml" ++ "pp" ++ tag in
@@ -165,7 +165,7 @@ let camlvizpp tag ff ff_ml env build =
 	  P ff; A"-o"; Px ff_ml])
 
 ;;
-rule "Fform/OC Stage 1, Dependency Analysis"
+rule "camlviz Stage 1, Dependency Analysis"
     ~tags:["ocaml"; "pp"; "camlvizpp"]
     ~prod:"%.ff.depends"
     ~deps:[camlvizpp_path; "%.ff"; "fflib/stdlex.ff"]

@@ -25,8 +25,8 @@ open Cst_core
 open Leaf_types
 open Leaf_core
 
-let dlog_en = Diag.dlog_en_for "Fform.Lexer"
-let dlogf fmt ?loc = Diag.dlogf_for "Fform.Lexer" ?loc fmt
+let dlog_en = Diag.dlog_en_for "Camlviz.Lexer"
+let dlogf fmt ?loc = Diag.dlogf_for "Camlviz.Lexer" ?loc fmt
 
 type tokeninfo =
     | Ti_operator of Grammar.token * Opkind.t
@@ -79,24 +79,24 @@ type state = {
 let last_location state = state.st_last_location
 
 let initial_intro_keywords = [
-    "open",	Grammar.OPEN Abi_Fform;
+    "open",	Grammar.OPEN Abi_Viz;
     "open:c",	Grammar.OPEN Abi_C;
     "include",	Grammar.INCLUDE;
     "use",	Grammar.USE;
     "in",	Grammar.IN;
     "sig",	Grammar.SIG;
-    "type",	Grammar.TYPE Abi_Fform;
+    "type",	Grammar.TYPE Abi_Viz;
     "type:c",	Grammar.TYPE Abi_C;
     "let",	Grammar.LET None;
     "let!",	Grammar.LET (Some "");
-    "val",	Grammar.VAL (`Default,  Abi_Fform, []);
-    "val-",	Grammar.VAL (`Local,    Abi_Fform, []);
+    "val",	Grammar.VAL (`Default,  Abi_Viz, []);
+    "val-",	Grammar.VAL (`Local,    Abi_Viz, []);
     "val:c",	Grammar.VAL (`Default,  Abi_C, []);
     "val:cf",	Grammar.VAL (`Default,  Abi_C, [`Is_finalizer]);
     "val:cs",	Grammar.VAL (`Default,  Abi_C, [`Is_stub]);
     "val:c-",	Grammar.VAL (`Local,    Abi_C, []);
     "val:cf-",	Grammar.VAL (`Local,    Abi_C, [`Is_finalizer]);
-    "inj",	Grammar.INJ Abi_Fform;
+    "inj",	Grammar.INJ Abi_Viz;
     "inj:c",	Grammar.INJ Abi_C;
     "fail",	Grammar.FAIL;
     "assert",	Grammar.ASSERT;
@@ -112,9 +112,9 @@ let initial_intro_keywords = [
     "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
     "at",	Grammar.AT;
-    "#?ffoc open", Grammar.OPEN Abi_Fform;
+    "#?ffoc open", Grammar.OPEN Abi_Viz;
     "#?ffoc include", Grammar.INCLUDE;
-    "#?ffoc type", Grammar.TYPE Abi_Fform;
+    "#?ffoc type", Grammar.TYPE Abi_Viz;
     "#?ffoc {#", Grammar.SKIP;
     "#?ffoc #}", Grammar.ENDSKIP;
 ]

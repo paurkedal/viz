@@ -6,7 +6,7 @@ die()
     exit 69
 }
 
-[ x"$FFORM_SRCDIR" != x ] || die "Please run this script via a link to ffdev"
+[ x"$VIZ_SRCDIR" != x ] || die "Please run this script via a link to vizdev"
 
 show_command=false
 if [ x"$1" = x"-v" ]; then
@@ -80,7 +80,7 @@ for arg in "$@"; do
     esac
 done
 
-builddir=$FFORM_SRCDIR/_build
+builddir=$VIZ_SRCDIR/_build
 extra_includes="-I $builddir/fflib -I $builddir"
 extra_packages="-package camomile"
 case "$command" in
@@ -88,7 +88,7 @@ case "$command" in
 	if [ $have_c_flag = true ]; then
 	    oc_args="-nopervasives $oc_args"
 	elif [ $seen_source = true ]; then
-	    die "The -c flag is required for compiling Fform sources with" \
+	    die "The -c flag is required for compiling Viz sources with" \
 		"ocamlopt."
 	fi
 	oc_args="$builddir/fflib$libext $oc_args"
@@ -99,5 +99,5 @@ case "$command" in
 esac
 [ x$show_command != xtrue ] || set -x
 exec ocamlfind "$command" \
-	-pp "$FFORM_SRCDIR/bin/camlvizpp $extra_includes $pp_opts" \
+	-pp "$VIZ_SRCDIR/bin/camlvizpp $extra_includes $pp_opts" \
 	$extra_includes $extra_packages $oc_args

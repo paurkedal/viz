@@ -60,9 +60,9 @@ let emit_apath_uid (Apath (vs, v)) =
     emit_apath_helper (avar_loc (List.last (v :: vs)))
 		      <:ident< $uid: avar_to_uid v$ >> vs
 
-type typefor = Typefor_fform | Typefor_cabi | Typefor_cabi_io
+type typefor = Typefor_viz | Typefor_cabi | Typefor_cabi_io
 
-let rec emit_atyp ?(typefor = Typefor_fform) = function
+let rec emit_atyp ?(typefor = Typefor_viz) = function
     | Atyp_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	<:ctyp< '$lid: avar_to_lid v$ >>

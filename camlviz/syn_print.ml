@@ -170,13 +170,13 @@ and print_def fo cdef =
 	Fo.put_kw fo "include";
 	print_inline fo Opkind.p_min path
     | Cdef_open (_, abi, path) ->
-	let kw = match abi with Abi_Fform -> "open" | Abi_C -> "open/c" in
+	let kw = match abi with Abi_Viz -> "open" | Abi_C -> "open/c" in
 	Fo.put_kw fo kw;
 	print_inline fo Opkind.p_min path
     | Cdef_use (_, x) ->
 	Fo.put_kw fo "use";
 	print_inline fo Opkind.p_min x
-    | Cdef_type (_, Abi_Fform, eqn) ->
+    | Cdef_type (_, Abi_Viz, eqn) ->
 	Fo.put_kw fo "type";
 	print_inline fo Opkind.p_min eqn
     | Cdef_type (_, Abi_C, eqn) ->
@@ -203,7 +203,7 @@ and print_def fo cdef =
 	| _ -> Fo.put_kw fo "include"; print_inline fo Opkind.p_min body
 	end
     | Cdef_val (_, (expo, abi, valopts), typing) ->
-	let kw = (match abi with Abi_Fform -> "val" | Abi_C -> "val/c")
+	let kw = (match abi with Abi_Viz -> "val" | Abi_C -> "val/c")
 	       ^ (if List.mem `Is_finalizer valopts then "f" else "")
 	       ^ (if List.mem `Is_stub valopts then "s" else "")
 	       ^ (match expo with `Local -> "-" | _ -> "") in
@@ -217,7 +217,7 @@ and print_def fo cdef =
 	print_predicate fo pred;
 	Fo.leave_indent fo
     | Cdef_inj (_, abi, typing) ->
-	Fo.put_kw fo (match abi with Abi_Fform -> "inj" | Abi_C -> "inj:c");
+	Fo.put_kw fo (match abi with Abi_Viz -> "inj" | Abi_C -> "inj:c");
 	print_inline fo Opkind.p_min typing
     | Cdef_lex (_, okname, idrs) ->
 	Fo.put_kw fo "lex";

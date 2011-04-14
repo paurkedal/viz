@@ -1,12 +1,12 @@
-===============================
- The Fform Source Distribution
-===============================
+=============================
+ The Viz Source Distribution
+=============================
 
 
 About
 =====
 
-Fform is a statically typed, strict, and pure functional programming language
+Viz is a statically typed, strict, and pure functional programming language
 related to the ML family, and to some extent to Haskell.  Both the design and
 the implementation is under development.  At the moment, a subset of the
 language is implemented as an O'Caml preprocessor.  This will later be used to
@@ -30,8 +30,8 @@ alternative.
 
 You can then check out and build the preprocessor::
 
-    git checkout git@github.com:paurkedal/fform.git
-    cd fform
+    git checkout git@github.com:paurkedal/viz.git
+    cd viz
     make
 
 There is nothing to install at the moment due to the early development stage.
@@ -43,16 +43,16 @@ You may run example programs with either of the commands ::
 A convenience wrapper is available for compiling code outside the repository.
 To use it add the bin subdirectory to your $PATH, or create a link ::
 
-    ln -s $FFORM_SRCDIR/bin/ffdev $HOME/bin/prefform
+    ln -s $VIZ_SRCDIR/bin/vizdev $HOME/bin/camlviz
 
 or to somewhere else in your $PATH.  You can now compile programs with ::
 
-    prefform ocamlc -o foo foo.ff
+    camlviz ocamlc -o foo foo.viz
 
 or ::
 
-    prefform ocamlopt -c foo.ff
-    prefform ocamlopt foo.cmx -o foo
+    camlviz ocamlopt -c foo.viz
+    camlviz ocamlopt foo.cmx -o foo
 
 
 Directories
@@ -62,10 +62,10 @@ Directories
 * camlviz - The internal library used to implement the O'Caml preprocessor and
   related utilities named bin/camlviz*.
 * camlviz-tests - OUnit tests for camlviz.
-* fflib - The Fform Standard Library.
-* examples - Fform example programs.
-* tests - Fform tests programs.
+* vsl - The Viz Standard Library.
+* examples - Viz example programs.
+* tests - Viz tests.
 
 
 .. _Godi: http://godi.camlcity.org/godi/index.html
-.. _Wiki pages: https://github.com/paurkedal/fform/wiki.html
+.. _Wiki pages: https://github.com/paurkedal/viz/wiki.html

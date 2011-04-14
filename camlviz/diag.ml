@@ -30,7 +30,7 @@ module String_set = Set.Make(String)
 
 let dtags =
     try
-	let xs = String.split_on_char ':' (Unix.getenv "FFORM_DTAGS") in
+	let xs = String.split_on_char ':' (Unix.getenv "VIZ_DTAGS") in
 	List.fold String_set.add xs String_set.empty
     with Not_found ->
 	String_set.empty

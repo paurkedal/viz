@@ -20,7 +20,7 @@ set -e
 
 # Locate the Top-Level Source Directory
 #
-if [ x"$FFORM_SRCDIR" = x ]; then
+if [ x"$VIZ_SRCDIR" = x ]; then
     if have_command realpath; then
 	:
     elif have_command greadlink; then
@@ -31,16 +31,16 @@ if [ x"$FFORM_SRCDIR" = x ]; then
 	cat 1>&2 <<EOF
 
 Can't canonicalize the program path.  You may resolve this by installing
-'realpath' or a GNU 'readlink', or by setting \$FFORM_SRCDIR to the top-level
-directory of your Fform check-out.
+'realpath' or a GNU 'readlink', or by setting \$VIZ_SRCDIR to the top-level
+directory of your Viz check-out.
 
 EOF
 	exit 69
     fi
     mypath=`realpath $0`
-    FFORM_SRCDIR=${mypath%/bin/*}
+    VIZ_SRCDIR=${mypath%/bin/*}
 fi
-export FFORM_SRCDIR
+export VIZ_SRCDIR
 
 # Determine the Program Name
 #
@@ -50,7 +50,7 @@ case $0 in
 	    echo
 	    echo "This is a wrapper script, see:"
 	    echo
-	    for prog in "$FFORM_SRCDIR/bin"/*; do
+	    for prog in "$VIZ_SRCDIR/bin"/*; do
 		[ ! -h "$prog" ] || echo "    vizdev ${prog##*/}" --help
 	    done
 	    cat <<EOF
@@ -59,15 +59,15 @@ Additionally vizdev can provide the following information:
 
     vizdev --srcdir	Print the top-level source directory.
     vizdev --includes	Print -I flags for use with camlvizpp.  These are
-			already included when using the prefform script.
+			already included when using the camlviz script.
 
 EOF
 	    exit 0
 	elif [ "$1" = "--srcdir" ]; then
-	    echo "$FFORM_SRCDIR"
+	    echo "$VIZ_SRCDIR"
 	    exit 0
 	elif [ "$1" = "--includes" ]; then
-	    echo "-I $FFORM_SRCDIR/_build -I $FFORM_SRCDIR/_build/fflib"
+	    echo "-I $VIZ_SRCDIR/_build -I $VIZ_SRCDIR/_build/fflib"
 	    exit 0
 	fi
 	prog="$1"
@@ -84,20 +84,20 @@ esac
 # Dispatch to the Executable or Script
 #
 for ext in .ml .vz .viz .ff; do
-    src="$FFORM_SRCDIR/bin/$prog$ext"
+    src="$VIZ_SRCDIR/bin/$prog$ext"
     if [ -e "$src" ]; then
-	FFDEV_TARGET=${FFDEV_TARGET-${OCAML_TARGET-byte}}
-	progpath="$FFORM_SRCDIR/_build/bin/$prog.${FFDEV_TARGET}"
-	if [ ! -e "$progpath" -o x"$FFDEV_REBUILD" != x ]; then
-	    make 1>&2 -C "$FFORM_SRCDIR" $FFDEV_TARGET
+	VIZDEV_TARGET=${VIZDEV_TARGET-${OCAML_TARGET-byte}}
+	progpath="$VIZ_SRCDIR/_build/bin/$prog.${VIZDEV_TARGET}"
+	if [ ! -e "$progpath" -o x"$VIZDEV_REBUILD" != x ]; then
+	    make 1>&2 -C "$VIZ_SRCDIR" $VIZDEV_TARGET
 	fi
 	exec "$progpath" "$@"
 	exit 69
     fi
 done
-if [ -e "$FFORM_SRCDIR/bin/$prog.sh" ]; then
-    exec ${SHELL-/bin/sh} "$FFORM_SRCDIR/bin/$prog.sh" "$@"
+if [ -e "$VIZ_SRCDIR/bin/$prog.sh" ]; then
+    exec ${SHELL-/bin/sh} "$VIZ_SRCDIR/bin/$prog.sh" "$@"
     exit 69
 fi
-echo 1>&2 "Cannot locate '$prog' in $FFORM_SRCDIR/bin."
+echo 1>&2 "Cannot locate '$prog' in $VIZ_SRCDIR/bin."
 exit 69
