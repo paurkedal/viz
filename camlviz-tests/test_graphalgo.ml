@@ -1,5 +1,5 @@
 open OUnit
-open Ffoc1
+open Camlviz
 open FfPervasives
 open Printf
 

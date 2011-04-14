@@ -1,6 +1,6 @@
 open OUnit
 open CamomileLibrary.Default.Camomile
-open Ffoc1.Unicode
+open Camlviz.Unicode
 
 let test_helpers () =
     assert (UChar.is_idrchr (UChar.of_char 'a'));

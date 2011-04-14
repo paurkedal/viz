@@ -21,7 +21,7 @@
 (* These type definitions are kept in a separate file without an interface file
  * to avoid duplicating all the constructor cases. *)
 
-TYPE_CONV_PATH "Ffoc1.Cst_types"
+TYPE_CONV_PATH "Camlviz.Cst_types"
 open Sexplib
 open Leaf_types
 

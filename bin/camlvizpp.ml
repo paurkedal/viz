@@ -17,7 +17,7 @@
  *)
 
 open Printf
-open Ffoc1
+open Camlviz
 open Diag
 open Camlp4.PreCast
 open FfPervasives
@@ -25,7 +25,7 @@ open Cst_types
 open Ast_types
 open Leaf_types
 
-let usage = "ffoc1pp [--print | -o OUTPUT] INPUT"
+let usage = "camlvizpp [--print | -o OUTPUT] INPUT"
 
 module String_set = Set.Make (String)
 module Ocaml_printer = Camlp4.Printers.OCaml.Make(Camlp4.PreCast.Syntax)

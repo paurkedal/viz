@@ -1,5 +1,5 @@
 open OUnit
-open Ffoc1.Grammar
+open Camlviz.Grammar
 
 let test_grammar () =
     ()

@@ -76,7 +76,7 @@ let cpred_failure loc msg_opt =
 %token <Cst_types.cmonad option> LET WHAT WHICH
 %token <Leaf_types.val_info> VAL
 %token WHERE WITH
-%token SKIP ENDSKIP /* Hack for ffoc1pp only. */
+%token SKIP ENDSKIP
 
 %token ASSERT BE FAIL
 %token <Cst_types.cmonad> DO WHEN

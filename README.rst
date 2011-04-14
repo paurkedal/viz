@@ -59,8 +59,9 @@ Directories
 ===========
 
 * bin - Program source code and wrapper scripts.
-* ffoc1 - The O'Caml preprocessor library used by bin/ffoc1pp.
-* ffoc1-tests - OUnit tests for ffoc1.
+* camlviz - The internal library used to implement the O'Caml preprocessor and
+  related utilities named bin/camlviz*.
+* camlviz-tests - OUnit tests for camlviz.
 * fflib - The Fform Standard Library.
 * examples - Fform example programs.
 * tests - Fform tests programs.

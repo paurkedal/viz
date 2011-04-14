@@ -16,7 +16,7 @@
  * along with Fform/OC.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-TYPE_CONV_PATH "Ffoc1.Cst_types"
+TYPE_CONV_PATH "Camlviz.Cst_types"
 open Sexplib
 open Unicode
 

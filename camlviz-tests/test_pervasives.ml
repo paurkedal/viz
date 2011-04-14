@@ -1,5 +1,5 @@
 open OUnit
-open Ffoc1.FfPervasives
+open Camlviz.FfPervasives
 
 let test_list () =
     let xs = List.init 5 ident in

@@ -58,7 +58,7 @@ case $0 in
 Additionally vizdev can provide the following information:
 
     vizdev --srcdir	Print the top-level source directory.
-    vizdev --includes	Print -I flags for use with ffoc1pp.  These are
+    vizdev --includes	Print -I flags for use with camlvizpp.  These are
 			already included when using the prefform script.
 
 EOF

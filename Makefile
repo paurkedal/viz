@@ -33,17 +33,17 @@ camlviz-all:
 camlviz-clean:
 	$(OCAMLBUILD) -clean
 
-camlviz-check: camlviz-check-ffoc1 camlviz-check-fflib
+camlviz-check: camlviz-check-camlviz camlviz-check-fflib
 
-camlviz-check-ffoc1:
-	$(OCAMLBUILD) ffoc1-tests/test.byte -- -verbose
+camlviz-check-camlviz:
+	$(OCAMLBUILD) camlviz-tests/test.byte -- -verbose
 
 camlviz-check-fflib:
 	/bin/sh tools/run_tests.sh tests/*.ff
 
 camlviz-doc:
-	$(OCAMLBUILD) ffoc1.docdir/index.html
+	$(OCAMLBUILD) camlviz.docdir/index.html
 
 .PHONY: camlviz-all camlviz-byte camlviz-native
 .PHONY: camlviz-clean camlviz-doc
-.PHONY: camlviz-check camlviz-check-ffoc1 camlviz-check-fflib
+.PHONY: camlviz-check camlviz-check-camlviz camlviz-check-fflib
