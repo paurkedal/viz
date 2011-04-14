@@ -1,0 +1,7 @@
+vsl/compat
+vsl/prereq
+vsl/ffi
+vsl/data
+vsl/system
+vsl/pervasive
+compiler/llvm

@@ -7,20 +7,20 @@
 
 <camlviz-tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
 
-"fflib": include
+"vsl": include
 
-<fflib/**/*>: no_pervasive
-<fflib/pervasive.ff>: ocamlstdlib
-<fflib/compat/ocaml_*.ff>: ocamlstdlib
+<vsl/**/*>: no_pervasive
+<vsl/pervasive.ff>: ocamlstdlib
+<vsl/compat/ocaml_*.ff>: ocamlstdlib
 
-<fflib/compat/*.cmx>: for-pack(Compat)
-<fflib/ffi/*.cmx>: for-pack(Ffi)
-<fflib/data/*.cmx>: for-pack(Data)
-<fflib/system/*.cmx>: for-pack(System)
+<vsl/compat/*.cmx>: for-pack(Compat)
+<vsl/ffi/*.cmx>: for-pack(Ffi)
+<vsl/data/*.cmx>: for-pack(Data)
+<vsl/system/*.cmx>: for-pack(System)
 
-"libfflib.a": use_llvm_libs
-<fflib.{cma,cmxa}>: use_libfflib, use_llvm_libs
-<{examples,tests,tools}/**/*.{ff,byte,native}>: use_fflib
-<tests/test_memory.{byte,native}>: use_libtests, use_libfflib
+"libvsl.a": use_llvm_libs
+<vsl.{cma,cmxa}>: use_libvsl, use_llvm_libs
+<{examples,tests,tools}/**/*.{ff,byte,native}>: use_vsl
+<tests/test_memory.{byte,native}>: use_libtests, use_libvsl
 
 <compiler/llvm/*.cmx>: for-pack(Llvm)

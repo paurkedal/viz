@@ -168,33 +168,33 @@ let camlvizpp tag ff ff_ml env build =
 rule "camlviz Stage 1, Dependency Analysis"
     ~tags:["ocaml"; "pp"; "camlvizpp"]
     ~prod:"%.ff.depends"
-    ~deps:[camlvizpp_path; "%.ff"; "fflib/stdlex.ff"]
+    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
     (camlvizdep "%.ff" "%.ff.depends");;
 
 rule "camlviz, byte compilation: ff -> cmo & cmi"
     ~tags:["ocaml"; "byte"; "pp"; "camlvizpp"]
     ~prods:["%.cmo"; "%.cmi"]
-    ~deps:["%.ff"; "%.ff.depends"; "fflib/stdlex.ff"]
+    ~deps:["%.ff"; "%.ff.depends"; "vsl/stdlex.ff"]
     (byte_compile_camlviz_implem "%.ff" "%.cmo");;
 
 rule "camlviz, native compilation: ff & cmi -> cmx & o"
     ~tags:["ocaml"; "native"; "pp"; "camlvizpp"]
     ~prods:["%.cmx"; "%.o"]
-    ~deps:["%.ff"; "%.ff.depends"; "%.cmi"; "fflib/stdlex.ff"]
+    ~deps:["%.ff"; "%.ff.depends"; "%.cmi"; "vsl/stdlex.ff"]
     (native_compile_camlviz_implem "%.ff");;
 
 rule "camlviz, preprocessing only: ff -> ff.ml"
-    ~deps:[camlvizpp_path; "%.ff"; "fflib/stdlex.ff"]
+    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
     ~prod:"%.ff.ml"
     (camlvizpp "ff.ml" "%.ff" "%.ff.ml");;
 
 rule "camlviz, C stub generation: ff -> _FFIS.c"
-    ~deps:[camlvizpp_path; "%.ff"; "fflib/stdlex.ff"]
+    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
     ~prod:"%_FFIS.c"
     (camlvizcstubs "%.ff" "%_FFIS.c");;
 
 rule "camlviz, C program to emit ML source defining constants: ff -> %_FFICgen.c"
-    ~deps:[camlvizpp_path; "%.ff"; "fflib/stdlex.ff"]
+    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
     ~prod:"%_FFICgen.c"
     (camlvizconsts "%.ff" "%_FFICgen.c");;
 
@@ -276,18 +276,18 @@ let () = dispatch begin function
 	ocaml_pkg "camlp4";
 	ocaml_pp "type-conv" "pa_type_conv";
 	ocaml_pp "sexplib" "pa_sexp_conv";
-	ocaml_lib "fflib";
-	ocaml_cstubs "fflib";
+	ocaml_lib "vsl";
+	ocaml_cstubs "vsl";
 	ocaml_cstubs "tests";
 	flag ["extension:c"; "compile"] & S[A"-ccopt"; A"-I.."];
-	dep ["ocaml"; "compile"; "byte"; "use_fflib"] ["fflib.cma"];
-	dep ["ocaml"; "compile"; "native"; "use_fflib"] ["fflib.cmxa"];
+	dep ["ocaml"; "compile"; "byte"; "use_vsl"] ["vsl.cma"];
+	dep ["ocaml"; "compile"; "native"; "use_vsl"] ["vsl.cmxa"];
 	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
-	let fflib_includes = S[A"-I"; P"fflib"; A"-I"; P"compiler"] in
-	flag ["ocaml"; "camlvizpp"] fflib_includes;
-	flag ["cstubs"; "camlvizpp"] fflib_includes;
-	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"fflib"; A"-N"; P"compile"];
+	let vsl_includes = S[A"-I"; P"vsl"; A"-I"; P"compiler"] in
+	flag ["ocaml"; "camlvizpp"] vsl_includes;
+	flag ["cstubs"; "camlvizpp"] vsl_includes;
+	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compile"];
 	()
     | _ -> ()
 end

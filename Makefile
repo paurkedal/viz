@@ -12,7 +12,7 @@ install:
 	@echo 'There is no production compiler to install yet.  README.rst'
 	@echo 'explains how to the current code nevertheless.'
 
-check: camlviz-check-fflib
+check: camlviz-check-vsl
 
 .PHONY: all byte native clean check install
 
@@ -21,8 +21,8 @@ check: camlviz-check-fflib
 # =====================================================================
 
 camlviz_PROGRAMS = bin/camlvizpp bin/camlvizerror
-camlviz_BYTE	= $(camlviz_PROGRAMS:%=%.byte) libfflib.a fflib.cma
-camlviz_NATIVE	= $(camlviz_PROGRAMS:%=%.native) libfflib.a fflib.cmxa
+camlviz_BYTE	= $(camlviz_PROGRAMS:%=%.byte) libvsl.a vsl.cma
+camlviz_NATIVE	= $(camlviz_PROGRAMS:%=%.native) libvsl.a vsl.cmxa
 
 camlviz-native:
 	$(OCAMLBUILD) $(camlviz_NATIVE)
@@ -33,12 +33,12 @@ camlviz-all:
 camlviz-clean:
 	$(OCAMLBUILD) -clean
 
-camlviz-check: camlviz-check-camlviz camlviz-check-fflib
+camlviz-check: camlviz-check-camlviz camlviz-check-vsl
 
 camlviz-check-camlviz:
 	$(OCAMLBUILD) camlviz-tests/test.byte -- -verbose
 
-camlviz-check-fflib:
+camlviz-check-vsl:
 	/bin/sh tools/run_tests.sh tests/*.ff
 
 camlviz-doc:
@@ -46,4 +46,4 @@ camlviz-doc:
 
 .PHONY: camlviz-all camlviz-byte camlviz-native
 .PHONY: camlviz-clean camlviz-doc
-.PHONY: camlviz-check camlviz-check-camlviz camlviz-check-fflib
+.PHONY: camlviz-check camlviz-check-camlviz camlviz-check-vsl

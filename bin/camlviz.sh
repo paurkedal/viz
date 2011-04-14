@@ -81,7 +81,7 @@ for arg in "$@"; do
 done
 
 builddir=$VIZ_SRCDIR/_build
-extra_includes="-I $builddir/fflib -I $builddir"
+extra_includes="-I $builddir/vsl -I $builddir"
 extra_packages="-package camomile"
 case "$command" in
     ocamlopt|ocamlc)
@@ -91,7 +91,7 @@ case "$command" in
 	    die "The -c flag is required for compiling Viz sources with" \
 		"ocamlopt."
 	fi
-	oc_args="$builddir/fflib$libext $oc_args"
+	oc_args="$builddir/vsl$libext $oc_args"
 	;;
     ocamldep)
 	extra_packages=

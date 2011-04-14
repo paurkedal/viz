@@ -1,0 +1,5 @@
+vsl/compat/ocaml_prereq
+vsl/compat/ocaml_unicode
+vsl/compat/ocaml_pervasives
+vsl/compat/ocaml_array
+vsl/compat/ocaml_miscints

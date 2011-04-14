@@ -1,5 +1,0 @@
-camlviz/camlffoc.o
-fflib/ffi/memory_ocaml.o
-fflib/ffi/memory_FFIS.o
-fflib/system/posix_FFIS.o
-compiler/llvm/core_FFIS.o
