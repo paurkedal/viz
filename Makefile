@@ -1,46 +1,48 @@
-all: prefform-all
+OCAMLBUILD = ocamlbuild
 
-byte: prefform-byte
+all: camlviz-all
 
-native: prefform-native
+byte: camlviz-byte
 
-clean: prefform-clean
+native: camlviz-native
+
+clean: camlviz-clean
 
 install:
 	@echo 'There is no production compiler to install yet.  README.rst'
 	@echo 'explains how to the current code nevertheless.'
 
-check: prefform-check-fflib
+check: camlviz-check-fflib
 
 .PHONY: all byte native clean check install
 
-# The ffoc1 Camlp4 Preprocessor and Associated fflib
-# ==================================================
 
-OCAMLBUILD = ocamlbuild
-PREFFORM_BYTE	= bin/ffoc1pp.byte libfflib.a fflib.cma
-PREFFORM_NATIVE	= bin/ffoc1pp.native libfflib.a fflib.cmxa
+# The camlviz Preprocessor and Compatible Build of the Standard Library
+# =====================================================================
 
-prefform-native:
+PREFFORM_BYTE	= bin/camlvizpp.byte libfflib.a fflib.cma
+PREFFORM_NATIVE	= bin/camlvizpp.native libfflib.a fflib.cmxa
+
+camlviz-native:
 	$(OCAMLBUILD) $(PREFFORM_NATIVE)
-prefform-byte:
+camlviz-byte:
 	$(OCAMLBUILD) $(PREFFORM_BYTE)
-prefform-all:
+camlviz-all:
 	$(OCAMLBUILD) $(PREFFORM_BYTE) $(PREFFORM_NATIVE)
-prefform-clean:
+camlviz-clean:
 	$(OCAMLBUILD) -clean
 
-prefform-check: prefform-check-ffoc1 prefform-check-fflib
+camlviz-check: camlviz-check-ffoc1 camlviz-check-fflib
 
-prefform-check-ffoc1:
+camlviz-check-ffoc1:
 	$(OCAMLBUILD) ffoc1-tests/test.byte -- -verbose
 
-prefform-check-fflib:
+camlviz-check-fflib:
 	/bin/sh tools/run_tests.sh tests/*.ff
 
-prefform-doc:
+camlviz-doc:
 	$(OCAMLBUILD) ffoc1.docdir/index.html
 
-.PHONY: prefform-all prefform-byte prefform-native
-.PHONY: prefform-clean prefform-doc
-.PHONY: prefform-check prefform-check-ffoc1 prefform-check-fflib
+.PHONY: camlviz-all camlviz-byte camlviz-native
+.PHONY: camlviz-clean camlviz-doc
+.PHONY: camlviz-check camlviz-check-ffoc1 camlviz-check-fflib

@@ -15,16 +15,29 @@ if [ x"$1" = x"-v" ]; then
 fi
 case "$1" in
     ocamlc)
-	libext=cma
+	libext=.cma
 	;;
     ocamlopt)
-	libext=cmxa
+	libext=.cmxa
 	;;
     ocamldep)
 	;;
     *)
-	echo "Usage: prefform (ocamlc|ocamlopt|ocamldep) ARGUMENTS..."
-	exit 64
+	cat <<EOF
+
+Usage:	camlviz --help
+	camlviz [-v] (ocamlc|ocamlopt|ocamldep) ARGUMENTS...
+
+The arguments are passed to ocamlfind and the corresponding subcommand.  For
+compiling source files, the "-c" option is required, so you can't compile and
+link with the same command line.
+
+Examples:
+	camlviz ocamlopt -c test.viz -package foo
+	camlviz ocamlopt -o test.native test.cmx -package foo -linkpkg
+
+EOF
+	[ "$1" = "--help" ] && exit 0 || exit 64
 	;;
 esac
 command="$1"
@@ -35,6 +48,7 @@ pp_opts=
 oc_args=
 have_c_flag=false
 seen_source=false
+use_locations=false
 for arg in "$@"; do
     if [ x"$grab_arg" = true ]; then
 	pp_opts="$pp_opts $arg"
@@ -56,6 +70,10 @@ for arg in "$@"; do
 	    have_c_flag=true
 	    oc_args="$oc_args $arg"
 	    ;;
+	--add-locations)
+	    pp_opts="$pp_opts --add-locations"
+	    use_loctations=true
+	    ;;
 	*)
 	    oc_args="$oc_args $arg"
 	    ;;
@@ -64,22 +82,22 @@ done
 
 builddir=$FFORM_SRCDIR/_build
 extra_includes="-I $builddir/fflib -I $builddir"
+extra_packages="-package camomile"
 case "$command" in
-    ocamlc)
-	#oc_args="$oc_args -dllpath $builddir $builddir/fflib.cma"
-	oc_args="-nopervasives stdlib.cma $builddir/fflib.cma $oc_args"
-	;;
-    ocamlopt)
+    ocamlopt|ocamlc)
 	if [ $have_c_flag = true ]; then
 	    oc_args="-nopervasives $oc_args"
 	elif [ $seen_source = true ]; then
 	    die "The -c flag is required for compiling Fform sources with" \
 		"ocamlopt."
 	fi
-	oc_args="$builddir/fflib.cmxa $oc_args"
+	oc_args="$builddir/fflib$libext $oc_args"
+	;;
+    ocamldep)
+	extra_packages=
 	;;
 esac
 [ x$show_command != xtrue ] || set -x
-exec "$command" \
-	-pp "$FFORM_SRCDIR/bin/ffoc1pp $extra_includes $pp_opts" \
-	$extra_includes $oc_args
+exec ocamlfind "$command" \
+	-pp "$FFORM_SRCDIR/bin/camlvizpp $extra_includes $pp_opts" \
+	$extra_includes $extra_packages $oc_args

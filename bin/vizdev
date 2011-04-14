@@ -8,7 +8,7 @@
 #   * Create symbolic links corresponding to those in the "bin" subdirectory
 #     under some directory which is included in your $PATH.
 #
-#   * Create a single symbolic link named "ffdev" to this wrapper under some
+#   * Create a single symbolic link named "vizdev" to this wrapper under some
 #     directory which is included in your $PATH.
 
 have_command()
@@ -45,20 +45,20 @@ export FFORM_SRCDIR
 # Determine the Program Name
 #
 case $0 in
-    */ffdev|ffdev)
+    */vizdev|vizdev)
 	if [ "$#" -eq 0 -o "$1" = "--help" ]; then
 	    echo
 	    echo "This is a wrapper script, see:"
 	    echo
 	    for prog in "$FFORM_SRCDIR/bin"/*; do
-		[ ! -h "$prog" ] || echo "    ffdev ${prog##*/}" --help
+		[ ! -h "$prog" ] || echo "    vizdev ${prog##*/}" --help
 	    done
 	    cat <<EOF
 
-Additionally ffdev can provide the following information:
+Additionally vizdev can provide the following information:
 
-    ffdev --srcdir	Print the top-level source directory.
-    ffdev --includes	Print -I flags for use with ffoc1pp.  These are
+    vizdev --srcdir	Print the top-level source directory.
+    vizdev --includes	Print -I flags for use with ffoc1pp.  These are
 			already included when using the prefform script.
 
 EOF
