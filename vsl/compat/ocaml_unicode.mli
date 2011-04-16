@@ -21,11 +21,11 @@ open CamomileLibrary.Default.Camomile
 
 module Pervasive : sig
     type char = UChar.t
-    type utf8 = string
+    type uTF8string = string
     type string = UText.t
 
-    val __char_of_utf8 : utf8 -> char
-    val __string_of_utf8 : utf8 -> string
+    val __char_of_utf8 : uTF8string -> char
+    val __string_of_utf8 : uTF8string -> string
 end
 open Pervasive
 
@@ -38,9 +38,6 @@ module String_ : sig
     val length : string -> int
     val get : int -> string -> char
     val init : int -> (int -> char) -> string
-
-    val of_utf8 : utf8 -> string
-    val as_utf8 : string -> utf8
 
     val eq : string -> string -> bool
     val cmp : string -> string -> torder
@@ -55,4 +52,10 @@ module String_buf : sig
     val clear : 'f r -> ('f, unit) action
     val put_char : 'f r -> char -> ('f, unit) action
     val put_string : 'f r -> string -> ('f, unit) action
+end
+
+module UTF8string : sig
+    val of_string : string -> uTF8string
+    val as_string : uTF8string -> string
+    val length : uTF8string -> int
 end

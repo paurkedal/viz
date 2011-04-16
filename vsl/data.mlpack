@@ -6,3 +6,4 @@ vsl/data/array_
 vsl/data/array_ref
 vsl/data/char_
 vsl/data/string_
+vsl/data/UTF8string

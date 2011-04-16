@@ -95,9 +95,9 @@ val:c set_module_inline_asm : module → string → action φ unit
     := "LLVMSetModuleInlineAsm"
 
 
-val:c create_module_utf8 : utf8 → context → action φ module
+val:c _create_module : string → context → action φ module
     := "LLVMModuleCreateWithNameInContext"
-let create_module ctx nm be create_module_utf8 (string.as_utf8 nm) ctx
+let create_module ctx name be _create_module name ctx
 
 
 # Z.Z.  Types

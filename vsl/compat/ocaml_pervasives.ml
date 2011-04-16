@@ -45,7 +45,7 @@ module Int_ops = struct
 end
 
 module Int_misc = struct
-    let show i = String_.of_utf8 (Pervasives.string_of_int i)
+    let show i = UTF8string.as_string (Pervasives.string_of_int i)
 end
 
 module Pervasive = struct
@@ -55,13 +55,14 @@ module Pervasive = struct
     let flush chan = __unsafe_action (fun () -> Pervasives.flush chan)
     let flush_all = __unsafe_action (fun () -> Pervasives.flush_all ())
     let print s = __unsafe_action
-	(fun () -> Pervasives.print_string (String_.as_utf8 s))
+	(fun () -> Pervasives.print_string (UTF8string.of_string s))
     let eprint s = __unsafe_action
-	(fun () -> Pervasives.prerr_string (String_.as_utf8 s))
+	(fun () -> Pervasives.prerr_string (UTF8string.of_string s))
     let fprint ochan s = __unsafe_action
-	(fun () -> Pervasives.output_string ochan (String_.as_utf8 s))
+	(fun () -> Pervasives.output_string ochan (UTF8string.of_string s))
 
     let __failure loc msg =
-	Printf.eprintf "%s: %s\n" (String_.as_utf8 loc) (String_.as_utf8 msg);
+	Printf.eprintf "%s: %s\n" (UTF8string.of_string loc)
+	    (UTF8string.of_string msg);
 	assert false
 end

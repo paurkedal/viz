@@ -69,6 +69,9 @@ val of_utf8 : utf8 → t
 val cat : t → t → t
  ## Concatenates two strings.
 
+val cat_list : list t → t
+ ## Concatenates the elements of a list.
+
 val join : t → list t → t
  ## (join sep pieces) concatenates the elements of (pieces) with (sep) between
  ## each element.
