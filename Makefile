@@ -39,7 +39,7 @@ camlviz-check-camlviz:
 	$(OCAMLBUILD) camlviz-tests/test.byte -- -verbose
 
 camlviz-check-vsl:
-	/bin/sh tools/run_tests.sh tests/*.ff
+	/bin/sh tools/run_tests.sh tests/*.vz
 
 camlviz-doc:
 	$(OCAMLBUILD) camlviz.docdir/index.html

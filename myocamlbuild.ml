@@ -61,17 +61,17 @@ let custom_ocamlopt_c tags arg out =
 
 (** A version of [Ocaml_compiler.byte_compile_ocaml_interf] modified to use
     [custom_ocamlc_c]. *)
-let custom_byte_compile_ocaml_interf ff cmi env build =
-    let ff = env ff and cmi = env cmi in
-    Ocaml_compiler.prepare_compile build ff;
-    custom_ocamlc_c (tags_of_pathname ff ++ "interf") ff cmi
+let custom_byte_compile_ocaml_interf vz cmi env build =
+    let vz = env vz and cmi = env cmi in
+    Ocaml_compiler.prepare_compile build vz;
+    custom_ocamlc_c (tags_of_pathname vz ++ "interf") vz cmi
 
 (** A modified version of [Ocaml_compiler.byte_compile_ocaml_implem] which uses
     [custom_ocamlc_c]. *)
-let custom_byte_compile_ocaml_implem ?tag ff cmo env build =
-    let ff = env ff and cmo = env cmo in
-    Ocaml_compiler.prepare_compile build ff;
-    custom_ocamlc_c (tags_of_pathname ff ++ "implem" +++ tag) ff cmo
+let custom_byte_compile_ocaml_implem ?tag vz cmo env build =
+    let vz = env vz and cmo = env cmo in
+    Ocaml_compiler.prepare_compile build vz;
+    custom_ocamlc_c (tags_of_pathname vz ++ "implem" +++ tag) vz cmo
 
 (** A modified version of [Ocaml_compiler.native_compile_ocaml_implem] which
     uses [custom_ocamlopt_c]. *)
@@ -87,44 +87,44 @@ let camlviz_compile_flags tags =
     if Tags.does_match tags (Tags.of_list ["ocamlstdlib"]) then N
     else A"-nostdlib"
 
-let camlviz_ocamlc_c tags ff out =
+let camlviz_ocamlc_c tags vz out =
     let tags = tags ++ "ocaml" ++ "camlvizpp" ++ "byte" in
-    let include_flags = Ocaml_utils.ocaml_include_flags ff in
+    let include_flags = Ocaml_utils.ocaml_include_flags vz in
     let pp_flags =
 	S[A camlvizpp_path; include_flags; Flags.of_tags (tags ++ "pp")] in
     let pp_flags = Command.reduce pp_flags in
     Cmd (S [!Options.ocamlc; A"-c"; T(tags ++ "compile");
 	    A"-pp"; Quote pp_flags; camlviz_compile_flags tags; include_flags;
-	    A"-o"; Px out; A"-impl"; P ff])
+	    A"-o"; Px out; A"-impl"; P vz])
 
-let camlviz_ocamlopt_c tags ff out =
+let camlviz_ocamlopt_c tags vz out =
     let tags = tags ++ "ocaml" ++ "camlvizpp" ++ "native" in
-    let include_flags = Ocaml_utils.ocaml_include_flags ff in
+    let include_flags = Ocaml_utils.ocaml_include_flags vz in
     let pp_flags =
 	S[A camlvizpp_path; include_flags; Flags.of_tags (tags ++ "pp")] in
     let pp_flags = Command.reduce pp_flags in
     Cmd (S [!Options.ocamlopt; A"-c"; T(tags ++ "compile");
 	    A"-pp"; Quote pp_flags; camlviz_compile_flags tags; include_flags;
-	    A"-o"; Px out; A"-impl"; P ff])
+	    A"-o"; Px out; A"-impl"; P vz])
 
-let byte_compile_camlviz_interf ff cmi env build =
-    let ff = env ff and cmi = env cmi in
-    Ocaml_compiler.prepare_compile build ff;
-    camlviz_ocamlc_c (tags_of_pathname ff ++ "interf") ff cmi
+let byte_compile_camlviz_interf vz cmi env build =
+    let vz = env vz and cmi = env cmi in
+    Ocaml_compiler.prepare_compile build vz;
+    camlviz_ocamlc_c (tags_of_pathname vz ++ "interf") vz cmi
 
-let byte_compile_camlviz_implem ?tag ff cmo env build =
-    let ff = env ff and cmo = env cmo in
-    Ocaml_compiler.prepare_compile build ff;
-    camlviz_ocamlc_c (tags_of_pathname ff ++ "implem" +++ tag) ff cmo
+let byte_compile_camlviz_implem ?tag vz cmo env build =
+    let vz = env vz and cmo = env cmo in
+    Ocaml_compiler.prepare_compile build vz;
+    camlviz_ocamlc_c (tags_of_pathname vz ++ "implem" +++ tag) vz cmo
 
-let native_compile_camlviz_implem ?tag ff env build =
-    let ff = env ff in
-    let cmi = Pathname.update_extensions "cmi" ff in
-    let cmx = Pathname.update_extensions "cmx" ff in
+let native_compile_camlviz_implem ?tag vz env build =
+    let vz = env vz in
+    let cmi = Pathname.update_extensions "cmi" vz in
+    let cmx = Pathname.update_extensions "cmx" vz in
     Ocaml_compiler.prepare_link cmx cmi ["cmx"; "cmi"] build;
     camlviz_ocamlopt_c
-	(Tags.union (tags_of_pathname ff) (tags_of_pathname cmx) ++
-	 "implem" +++ tag) ff cmx
+	(Tags.union (tags_of_pathname vz) (tags_of_pathname cmx) ++
+	 "implem" +++ tag) vz cmx
 
 (** Camlviz Stage 1 dependency analyzer. *)
 let camlvizdep arg out env build =
@@ -157,46 +157,46 @@ let runprog arg out env build =
     Cmd (S[P arg; Sh ">"; Px out])
 
 (** Camlviz Stage 1 preprocessor subcommand. *)
-let camlvizpp tag ff ff_ml env build =
-    let ff = env ff and ff_ml = env ff_ml in
-    let tags = tags_of_pathname ff ++ "ocaml" ++ "pp" ++ tag in
+let camlvizpp tag vz vz_ml env build =
+    let vz = env vz and vz_ml = env vz_ml in
+    let tags = tags_of_pathname vz ++ "ocaml" ++ "pp" ++ tag in
     let _ = Rule.build_deps_of_tags build tags in
-    Cmd(S[A camlvizpp_path; Ocaml_utils.ocaml_include_flags ff;
-	  P ff; A"-o"; Px ff_ml])
+    Cmd(S[A camlvizpp_path; Ocaml_utils.ocaml_include_flags vz;
+	  P vz; A"-o"; Px vz_ml])
 
 ;;
 rule "camlviz Stage 1, Dependency Analysis"
     ~tags:["ocaml"; "pp"; "camlvizpp"]
-    ~prod:"%.ff.depends"
-    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
-    (camlvizdep "%.ff" "%.ff.depends");;
+    ~prod:"%.vz.depends"
+    ~deps:[camlvizpp_path; "%.vz"; "vsl/stdlex.vz"]
+    (camlvizdep "%.vz" "%.vz.depends");;
 
-rule "camlviz, byte compilation: ff -> cmo & cmi"
+rule "camlviz, byte compilation: vz -> cmo & cmi"
     ~tags:["ocaml"; "byte"; "pp"; "camlvizpp"]
     ~prods:["%.cmo"; "%.cmi"]
-    ~deps:["%.ff"; "%.ff.depends"; "vsl/stdlex.ff"]
-    (byte_compile_camlviz_implem "%.ff" "%.cmo");;
+    ~deps:["%.vz"; "%.vz.depends"; "vsl/stdlex.vz"]
+    (byte_compile_camlviz_implem "%.vz" "%.cmo");;
 
-rule "camlviz, native compilation: ff & cmi -> cmx & o"
+rule "camlviz, native compilation: vz & cmi -> cmx & o"
     ~tags:["ocaml"; "native"; "pp"; "camlvizpp"]
     ~prods:["%.cmx"; "%.o"]
-    ~deps:["%.ff"; "%.ff.depends"; "%.cmi"; "vsl/stdlex.ff"]
-    (native_compile_camlviz_implem "%.ff");;
+    ~deps:["%.vz"; "%.vz.depends"; "%.cmi"; "vsl/stdlex.vz"]
+    (native_compile_camlviz_implem "%.vz");;
 
-rule "camlviz, preprocessing only: ff -> ff.ml"
-    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
-    ~prod:"%.ff.ml"
-    (camlvizpp "ff.ml" "%.ff" "%.ff.ml");;
+rule "camlviz, preprocessing only: vz -> vz.ml"
+    ~deps:[camlvizpp_path; "%.vz"; "vsl/stdlex.vz"]
+    ~prod:"%.vz.ml"
+    (camlvizpp "vz.ml" "%.vz" "%.vz.ml");;
 
-rule "camlviz, C stub generation: ff -> _FFIS.c"
-    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
+rule "camlviz, C stub generation: vz -> _FFIS.c"
+    ~deps:[camlvizpp_path; "%.vz"; "vsl/stdlex.vz"]
     ~prod:"%_FFIS.c"
-    (camlvizcstubs "%.ff" "%_FFIS.c");;
+    (camlvizcstubs "%.vz" "%_FFIS.c");;
 
-rule "camlviz, C program to emit ML source defining constants: ff -> %_FFICgen.c"
-    ~deps:[camlvizpp_path; "%.ff"; "vsl/stdlex.ff"]
+rule "camlviz, C program to emit ML source defining constants: vz -> %_FFICgen.c"
+    ~deps:[camlvizpp_path; "%.vz"; "vsl/stdlex.vz"]
     ~prod:"%_FFICgen.c"
-    (camlvizconsts "%.ff" "%_FFICgen.c");;
+    (camlvizconsts "%.vz" "%_FFICgen.c");;
 
 rule "camlviz, Run C program to emit constant defs: %_FFICgen -> _FFIC.ml"
     ~deps:["%_FFICgen"]
@@ -209,7 +209,7 @@ rule "Compile and link the _FFICgen program"
     (compile_fficgen "%_FFICgen.c" "%_FFICgen");;
 
 copy_rule "camlviz, Underscored module names to avoid conflict with O'Caml."
-    "%.ff" "%_.ff";;
+    "%.vz" "%_.vz";;
 
 flag ["ocaml"; "camlvizpp"; "compile"] & A"-nopervasives";;
 flag ["ocaml"; "camlvizpp"; "link"] & A"-nopervasives";;
