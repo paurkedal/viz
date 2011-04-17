@@ -18,12 +18,24 @@
 
 open Lexing
 open CamomileLibrary.Default.Camomile.UPervasives
+open FfPervasives
+
+let min_lnum, min_cnum =
+    try
+	let s = Unix.getenv "VIZ_LOCATION_ORIGIN" in
+	begin match String.split_on_char ',' s with
+	| [sl; sc] -> int_of_string sl, int_of_string sc
+	| _ -> (1, 0)
+	end
+    with Not_found | Failure _ -> (1, 0)
+
+let string_of_lineno lnum = string_of_int (min_lnum + lnum)
+let string_of_colno cnum = string_of_int (min_cnum + cnum)
 
 module Bound = struct
     type t = position * int
 
-    let init p =
-	{pos_fname = p; pos_lnum = 1; pos_cnum = 0; pos_bol = 0}, 0
+    let init p = {pos_fname = p; pos_lnum = 0; pos_cnum = 0; pos_bol = 0}, 0
 
     let dummy = (dummy_pos, -1)
 
@@ -71,9 +83,9 @@ module Bound = struct
 	let buf = Buffer.create 8 in
 	Buffer.add_string buf pos.pos_fname;
 	Buffer.add_char buf ':';
-	Buffer.add_string buf (string_of_int pos.pos_lnum);
+	Buffer.add_string buf (string_of_lineno pos.pos_lnum);
 	Buffer.add_char buf ':';
-	Buffer.add_string buf (string_of_int (pos.pos_cnum - pos.pos_bol));
+	Buffer.add_string buf (string_of_colno (pos.pos_cnum - pos.pos_bol));
 	Buffer.contents buf
 
     let of_lexing_position pos = (pos, -1)
@@ -143,17 +155,18 @@ let to_string loc =
     let buf = Buffer.create 8 in
     Buffer.add_string buf loc.loc_fname;
     Buffer.add_char buf ':';
-    Buffer.add_string buf (string_of_int loc.loc_lb_lnum);
+    Buffer.add_string buf (string_of_lineno loc.loc_lb_lnum);
     Buffer.add_char buf ',';
-    Buffer.add_string buf (string_of_int (loc.loc_lb_cnum - loc.loc_lb_bol));
+    Buffer.add_string buf (string_of_colno (loc.loc_lb_cnum - loc.loc_lb_bol));
     let same_lnum = loc.loc_lb_lnum = loc.loc_ub_lnum in
     let same_cnum = loc.loc_lb_cnum = loc.loc_ub_cnum in
     if not same_lnum || not same_cnum then begin
 	Buffer.add_char buf '-';
 	if not same_lnum then begin
-	    Buffer.add_string buf (string_of_int loc.loc_ub_lnum);
+	    Buffer.add_string buf (string_of_lineno loc.loc_ub_lnum);
 	    Buffer.add_char buf ','
 	end;
-	Buffer.add_string buf (string_of_int (loc.loc_ub_cnum - loc.loc_ub_bol))
+	Buffer.add_string buf
+		(string_of_colno (loc.loc_ub_cnum - loc.loc_ub_bol))
     end;
     Buffer.contents buf

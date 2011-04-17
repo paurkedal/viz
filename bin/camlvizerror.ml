@@ -17,6 +17,7 @@
  *)
 
 open Printf
+open Camlviz
 open Camlviz.FfPervasives
 open Camlviz.Unicode
 
@@ -40,10 +41,17 @@ let show_error ich och mlpath mlline msg =
     let match_locline locln =
 	if not (Str.string_match loc0_re locln 0) then false else
 	let vzpath = Str.matched_group 1 locln in
-	let vzline = Str.matched_group 2 locln in
-	let scol = Str.matched_group 3 locln in
-	let ecol = Str.matched_group 4 locln in
-	fprintf och "%s:%s,%s-%s: %s\n" vzpath vzline scol ecol (demangle msg);
+	let vzline = int_of_string (Str.matched_group 2 locln) in
+	let scol = int_of_string (Str.matched_group 3 locln) in
+	let ecol = int_of_string (Str.matched_group 4 locln) in
+	let msg =
+	    if String.starts_with "Error: " msg then String.after 7 msg else
+	    msg in
+	fprintf och "%s:%s,%s-%s: %s\n" vzpath
+	    (Location.string_of_lineno vzline)
+	    (Location.string_of_colno scol)
+	    (Location.string_of_colno ecol)
+	    (demangle msg);
 	true in
     begin try
 	for i = 3 to mlline do ignore (input_line mlch) done;
@@ -70,19 +78,22 @@ let show_error ich och mlpath mlline msg =
 let error_re =
     rx "File \"\\([^\"]+\\)\", line \\([0-9]+\\), characters [0-9-]+:"
 let process_errors ich och =
-    try while true do
+    let err = ref 0 in
+    begin try while true do
 	let ln = input_line ich in
 	if Str.string_match error_re ln 0 then begin
 	    let mlpath = Str.matched_group 1 ln in
 	    let mlline = int_of_string (Str.matched_group 2 ln) in
 	    let msg = input_line ich in
+	    err := 1;
 	    show_error ich och mlpath mlline msg
 	end else
 	fprintf och "%s\n" ln
-    done with End_of_file -> ()
+    done with End_of_file -> () end;
+    !err
 
 let () =
     Arg.parse [] (fun _ -> raise (Arg.Bad "No arguments expected."))
 	"camlvizerror -- Filter error 'ocamlc' and 'ocamlopt' error messages\n\
 	\                from code generated with 'camlvizpp --add-locations'.";
-    process_errors stdin stdout
+    exit (process_errors stdin stdout)

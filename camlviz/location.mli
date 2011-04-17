@@ -20,6 +20,10 @@
 
 open Unicode
 
+val string_of_lineno : int -> string
+
+val string_of_colno : int -> string
+
 module Bound : sig
     (** A Source Code Location Boundary (Point) *)
 
