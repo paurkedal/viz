@@ -109,7 +109,7 @@ let camlviz_ocamlopt_c tags vz out =
     let tags = tags ++ "ocaml" ++ "camlvizpp" ++ "native" in
     let include_flags = Ocaml_utils.ocaml_include_flags vz in
     if use_camlviz_wrapper then
-	Cmd (S[P camlviz_path; A"ocamlc"; A"-c"; T(tags ++ "compile");
+	Cmd (S[P camlviz_path; A"ocamlopt"; A"-c"; T(tags ++ "compile");
 	       camlviz_compile_flags tags; include_flags;
 	       A"--no-vsl"; A"-o"; Px out; P vz]) else
     let pp_flags =

@@ -16,7 +16,7 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 open:c "llvm-c/Core.h"
-open prereq
+open pervasive
 open action
 open ffi.memory
 
