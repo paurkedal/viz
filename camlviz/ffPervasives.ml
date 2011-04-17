@@ -149,8 +149,8 @@ module String = struct
     let split_on_char ch s =
 	let rec split_before j accu =
 	    if j <= 0 then accu else
-	    let i = try rindex_from s j ch with Not_found -> 0 in
-	    split_before (i - 1) (String.sub s i j :: accu) in
+	    let i = try rindex_from s (j - 1) ch + 1 with Not_found -> 0 in
+	    split_before (i - 1) (String.sub s i (j - i) :: accu) in
 	split_before (String.length s) []
 
     let after i s = sub s i (String.length s - i)

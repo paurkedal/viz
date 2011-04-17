@@ -1,4 +1,4 @@
-OCAMLBUILD = ocamlbuild
+OCAMLBUILD = ocamlbuild -no-links
 
 all: camlviz-all
 
