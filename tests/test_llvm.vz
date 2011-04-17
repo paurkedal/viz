@@ -6,7 +6,6 @@ let newline be print "\n" >> flush_all
 
 let! build_fact ctx mdl
     let int32t be ll.int32_type ctx
-    assert true  # FIXME: let-dependencies under let!.
     let ft be ll.function_type int32t #[int32t]
     assert __generic_eq (ll.type_kind ft) ll.lkind_function
 

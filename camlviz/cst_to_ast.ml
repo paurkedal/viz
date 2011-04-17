@@ -119,6 +119,16 @@ let wrap_abstractions cpat arhs =
     let cpat, arhs = Cst_utils.fold_formal_args wrap (cpat, arhs) in
     (build_avar cpat, arhs)
 
+let wrap_let = function
+    | Adef_let (loc, apat, arhs) -> fun acont ->
+	Aval_let (loc, apat, arhs, acont)
+    | Adef_letrec bindings -> fun acont ->
+	let (loc_first, _, _, _) = List.hd bindings in
+	let (loc_last, _, _, _) = List.last bindings in
+	let loc = Location.span [loc_first; loc_last] in
+	Aval_letrec (loc, bindings, acont)
+    | _ -> assert false
+
 let rec build_aval cm_opt cpred =
     match cm_opt with
     | Some cm -> build_aval_monad (MM_quote cm) cpred
@@ -139,17 +149,12 @@ and build_aval_pure = function
 		(* TODO: Can extract typing from cpat and pass it here. *)
 		loop ((loc, avar, None, arhs) :: bindings) ccont
 	    | ccont -> (bindings, build_aval_pure ccont) in
-	let wrap_let = function
-	    | Adef_let (loc, apat, arhs) ->
-		fun acont -> Aval_let (loc, apat, arhs, acont)
-	    | Adef_letrec bindings ->
-		fun acont -> Aval_letrec (loc, bindings, acont)
-	    | _ -> assert false in
 	let bindings, acont = loop [] clet in
 	let adefs = collect_binding_components (List.rev bindings) [] in
 	List.fold wrap_let adefs acont
     | Cpred_if (loc, cond, cq, ccq) ->
-	Aval_if (loc, build_aval_expr cond, build_aval_pure cq, build_aval_pure ccq)
+	Aval_if (loc, build_aval_expr cond,
+		      build_aval_pure cq, build_aval_pure ccq)
     | Cpred_at (loc, cases) ->
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_pure cq) in
@@ -193,9 +198,8 @@ and build_aval_monad mm = function
 		loop ((loc, avar, None, arhs) :: bindings) ccont
 	    | ccont ->
 		let acont = build_aval_monad mm ccont in
-		let (last_loc, _, _, _) = List.hd bindings in
-		let loc = Location.span [cpred_loc ccont; last_loc] in
-		Aval_letrec (loc, List.rev bindings, acont) in
+		let adefs = collect_binding_components (List.rev bindings) [] in
+		List.fold wrap_let adefs acont in
 	loop [] clet
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond,
