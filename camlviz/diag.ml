@@ -24,7 +24,8 @@ exception Error_at of Location.t * string
 let errf_at loc msg = ksprintf (fun s -> raise (Error_at (loc, s))) msg
 
 let warnf_at loc msg =
-    ksprintf (fun s -> eprintf "%s: %s\n" (Location.to_string loc) s) msg
+    let fmt s = eprintf "%s: warning: %s\n" (Location.to_string loc) s in
+    ksprintf fmt msg
 
 module String_set = Set.Make(String)
 

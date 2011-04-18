@@ -401,7 +401,7 @@ nonempty_qseq:
 quantifier:
     QUANTIFIER expr DOT
     { (mkloc $startpos $endpos,
-       Cidr (mkloc $startpos($1) $endpos($1), idr_1q $1), $2) }
+       Cidr (mkloc $startpos($1) $endpos($1), $1), $2) }
   ;
 
 relational_expr:
