@@ -62,3 +62,5 @@ val fold_on_comma : (ctrm -> 'a -> 'a) -> ctrm -> 'a -> 'a
 
 val cpred_is_pure : cpred -> bool
 val ctrm_is_pure : ctrm -> bool
+
+val ctrm_is_exception_type : ctrm -> bool

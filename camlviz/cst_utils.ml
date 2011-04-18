@@ -160,3 +160,8 @@ and ctrm_is_pure = function
     | Ctrm_what (_, None, x) -> cpred_is_pure x
     | Ctrm_with _ | Ctrm_where _ | Ctrm_quantify _ ->
 	assert false (* unreachable *)
+
+let ctrm_is_exception_type t =
+    match flatten_arrow t with
+    | Ctrm_ref (Cidr (loc, Idr "exception"), _), _ -> true
+    | _ -> false

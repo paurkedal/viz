@@ -368,7 +368,9 @@ let rec build_atcases is_sig atcases algtb = function
 	build_atcases is_sig (atcase :: atcases) algtb' xs
     | Cdef_inj (loc, abi,
 		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct))
-	    :: xs when cidr_is_2o_colon op ->
+	    :: xs
+	    when cidr_is_2o_colon op
+	      && not (Cst_utils.ctrm_is_exception_type ct) ->
 	let ainjnum, ct =
 	    match abi with
 	    | Abi_Viz -> (Ainjnum_auto, ct)
@@ -382,8 +384,6 @@ let rec build_atcases is_sig atcases algtb = function
 		end in
 	let algtb' = Algt_builder.add_inj loc cf ct ainjnum algtb in
 	build_atcases is_sig atcases algtb' xs
-    | Cdef_inj (loc, _, _) :: _ ->
-	errf_at loc "A type judgement expected after \"inj\"."
     | xs ->
 	let finish_atcase = function
 	    | loc, av, ats, Atypinfo_abstract ->
@@ -482,6 +482,15 @@ and build_adecs adecs = function
 	build_adecs (adec :: adecs) xs
     | Cdef_let (loc, _, _, _) :: xs ->
 	errf_at loc "Signatures cannot contain value definitions."
+    | Cdef_inj (loc, Abi_Viz,
+		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct)) :: xs
+	    when cidr_is_2o_colon op && Cst_utils.ctrm_is_exception_type ct ->
+	let adec = Adec_injx (loc, build_avar cf, build_atyp ct) in
+	build_adecs (adec :: adecs) xs
+    | Cdef_inj (loc, abi,
+		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct)) :: xs
+	    when cidr_is_2o_colon op ->
+	errf_at loc "A type judgement is expected after \"inj\"."
     | Cdef_inj (loc, _, _) :: xs ->
 	errf_at loc "Injections must follow a type."
     | Cdef_lex _ :: xs | Cdef_lexalias _ :: xs -> build_adecs adecs xs
@@ -606,6 +615,11 @@ and build_adefs adecmap adefs = function
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
 	build_adefs adecmap (collect_binding_components avcases adefs) xs'
+    | Cdef_inj (loc, Abi_Viz,
+		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct)) :: xs
+	    when cidr_is_2o_colon op && Cst_utils.ctrm_is_exception_type ct ->
+	let adef = Adef_injx (loc, build_avar cf, build_atyp ct) in
+	build_adefs adecmap (adef :: adefs) xs
     | Cdef_inj (loc, _, _) :: xs ->
 	errf_at loc "Injections must follow a type definition."
     | Cdef_lex _ :: xs | Cdef_lexalias _ :: xs -> build_adefs adecmap adefs xs

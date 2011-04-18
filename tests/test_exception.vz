@@ -1,0 +1,11 @@
+open prereq
+open action
+
+inj test_error : string → exception
+
+let newline be print "\n" >> flush stdout
+
+let main
+    upon test_error s do print "Caught exception " >> print s >> newline
+    do print "startup" >> newline
+    raise test_error "raised from monad"

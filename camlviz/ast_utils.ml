@@ -198,6 +198,7 @@ and fold_adec_paths f = function
     | Adec_in (_, _, s) -> fold_asig_paths f s
     | Adec_sig (_, _, s) -> Option.fold (fold_asig_paths f) s
     | Adec_types bindings -> List.fold (fold_atypbind_paths f) bindings
+    | Adec_injx (loc, _, t) -> fold_atyp_paths (f `Type) t
     | Adec_val (_, _, t) -> fold_atyp_paths (f `Type) t
     | Adec_cabi_val (_, _, t, _, _) -> fold_atyp_paths (f `Type) t
 
@@ -217,6 +218,7 @@ and fold_adef_paths ?module_name f = function
     | Adef_in (_, _, m) -> fold_amod_paths ?module_name f m
     | Adef_sig (_, _, s) -> fold_asig_paths f s
     | Adef_types bindings -> List.fold (fold_atypbind_paths f) bindings
+    | Adef_injx (_, _, t) -> fold_atyp_paths (f `Type) t
     | Adef_let (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x
     | Adef_letrec bindings ->
 	List.fold
@@ -244,7 +246,7 @@ let rec fold_amod_cabi_open f = function
 and fold_adef_cabi_open f = function
     | Adef_include (_, m) | Adef_in (_, _, m) ->
 	fold_amod_cabi_open f m
-    | Adef_open _ | Adef_use _ | Adef_sig _ | Adef_types _
+    | Adef_open _ | Adef_use _ | Adef_sig _ | Adef_types _ | Adef_injx _
     | Adef_let _ | Adef_letrec _ ->
 	ident
     | Adef_cabi_val _ -> ident

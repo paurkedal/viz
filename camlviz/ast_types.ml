@@ -85,7 +85,7 @@ type asig =
     | Adec_in of loc * avar * asig
     | Adec_sig of loc * avar * asig option
     | Adec_types of (loc * avar * atyp list * atypinfo) list
-      (** Holds a non-empty list of mutually recursive type definitions. *)
+    | Adec_injx of loc * avar * atyp
     | Adec_val of loc * avar * atyp
     | Adec_cabi_val of loc * avar * atyp * string * val_option list
     with sexp
@@ -103,6 +103,7 @@ type amod =
     | Adef_in of loc * avar * amod
     | Adef_sig of loc * avar * asig
     | Adef_types of (loc * avar * atyp list * atypinfo) list
+    | Adef_injx of loc * avar * atyp
     | Adef_let of loc * apat * aval
     | Adef_letrec of (loc * avar * atyp option * aval) list
     | Adef_cabi_open of loc * string

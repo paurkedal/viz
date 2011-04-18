@@ -267,24 +267,27 @@ let emit_type_binding (loc, v, params, ti) =
 	    <:ctyp< [ $list: List.map emit_inj injs$ ] >> in
     Ast.TyDcl (_loc, avar_to_lid v, List.map emit_atyp params, rhs, [])
 
+let emit_curried_inj _loc inj_type inj_var =
+    let locd = Location.dummy in
+    let _, avars =
+	Ast_utils.fold_arg_types begin fun _ (i, avs) ->
+	    let name = Printf.sprintf "x%d" i in
+	    (i + 1, Avar (locd, Idr name) :: avs)
+	end inj_type (0, []) in
+    let ov = <:expr< $uid: avar_to_uid inj_var$ >> in
+    let ov = List.fold
+	(fun v ov -> <:expr< $ov$ $lid: avar_to_lid v$ >>)
+	(List.rev avars) ov in
+    List.fold
+	(fun v ov -> <:expr< fun $lid: avar_to_lid v$ -> $ov$ >>)
+	avars ov
+
 let emit_inj_aliases (loc, v, params, ti) =
     match ti with
     | Atypinfo_injs injs ->
 	let emit_inj (loc, v, inj_type, _) =
 	    let _loc = p4loc loc in
-	    let locd = Location.dummy in
-	    let _, avars =
-		Ast_utils.fold_arg_types begin fun _ (i, avs) ->
-		    let name = Printf.sprintf "x%d" i in
-		    (i + 1, Avar (locd, Idr name) :: avs)
-		end inj_type (0, []) in
-	    let ov = <:expr< $uid: avar_to_uid v$ >> in
-	    let ov = List.fold
-		(fun v ov -> <:expr< $ov$ $lid: avar_to_lid v$ >>)
-		(List.rev avars) ov in
-	    let ov = List.fold
-		(fun v ov -> <:expr< fun $lid: avar_to_lid v$ -> $ov$ >>)
-		avars ov in
+	    let ov = emit_curried_inj _loc inj_type v in
 	    <:binding< $lid: avar_to_lid v$ = $ov$ >> in
 	List.map emit_inj injs
     | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
@@ -345,6 +348,14 @@ and emit_adec state = function
 	let (uloc, _, _, _) = List.last bindings in
 	let _loc = p4loc (Location.span [lloc; uloc]) in
 	<:sig_item< type $list: List.map emit_type_binding bindings$ >>
+    | Adec_injx (loc, xv, xt) ->
+	let _loc = p4loc loc in
+	let rt, ats = Ast_utils.flatten_arrows xt in
+	let ots = List.map emit_atyp ats in
+	<:sig_item<
+	    exception $uid: avar_to_uid xv$ of $list: ots$;
+	    value $lid: avar_to_lid xv$ : $emit_atyp xt$
+	>>
     | Adec_val (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
@@ -412,6 +423,14 @@ and emit_adef state = function
 	if alias_bindings = [] then odef else
 	let odef_aliases = <:str_item< value $list: alias_bindings$ >> in
 	<:str_item< $list: [odef; odef_aliases]$ >>
+    | Adef_injx (loc, xv, xt) ->
+	let _loc = p4loc loc in
+	let rt, ats = Ast_utils.flatten_arrows xt in
+	let ots = List.map emit_atyp ats in
+	<:str_item<
+	    exception $uid: avar_to_uid xv$ of $list: ots$;
+	    value $lid: avar_to_lid xv$ = $emit_curried_inj _loc xt xv$
+	>>
     | Adef_let (loc, v, x) ->
 	let _loc = p4loc loc in
 	let ov, ocond_opt = emit_apat v None in
