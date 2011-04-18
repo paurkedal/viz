@@ -67,6 +67,10 @@ let rec build_atyp ?(strip_indices = false) = function
 	let at = build_atyp ~strip_indices ct in
 	let au = build_atyp ~strip_indices cu in
 	Atyp_apply (loc, at, au)
+    | Ctrm_quantify (loc, Cidr (_, q), v, x) when q = idr_2o_A ->
+	Atyp_A (loc, build_avar v, build_atyp x)
+    | Ctrm_quantify (loc, Cidr (_, q), v, x) when q = idr_2o_E ->
+	Atyp_E (loc, build_avar v, build_atyp x)
     | ct -> errf_at (ctrm_loc ct) "Invalid type expression."
 
 let build_atyp_con_args =

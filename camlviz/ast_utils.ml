@@ -40,6 +40,7 @@ let apath_to_avar = function
 
 let rec result_type = function
     | Atyp_arrow (_, _, rt) -> result_type rt
+    | Atyp_A (_, _, rt) | Atyp_E (_, _, rt) -> result_type rt
     | rt -> rt
 
 let rec fold_arg_types f = function
@@ -74,7 +75,8 @@ let unwrap_atyp_action = function
 	end
     | t -> (No_pocket, t)
 
-let atyp_is_const = function
+let rec atyp_is_const = function
+    | Atyp_A (_, _, t) | Atyp_E (_, _, t) -> atyp_is_const t
     | Atyp_arrow _ -> false
     | Atyp_apply (_, u, v) ->
 	begin match atyp_action_pocket u with
@@ -85,6 +87,7 @@ let atyp_is_const = function
 
 let flatten_arrows =
     let rec loop ats = function
+	| Atyp_A (_, _, t) | Atyp_E (_, _, t) -> loop ats t
 	| Atyp_arrow (_, at, rt) -> loop (at :: ats) rt
 	| rt -> (rt, List.rev ats) in
     loop []
@@ -127,6 +130,7 @@ let rec fold_apat_typed_vars f = function
 
 let rec fold_atyp_paths f = function
     | Atyp_ref p -> f p
+    | Atyp_A (_, _, t) | Atyp_E (_, _, t) -> fold_atyp_paths f t
     | Atyp_uvar _ -> ident
     | Atyp_apply (_, u, v) | Atyp_arrow (_, u, v) ->
 	fold_atyp_paths f u *> fold_atyp_paths f v

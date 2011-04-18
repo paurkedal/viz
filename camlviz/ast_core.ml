@@ -64,6 +64,8 @@ let apath_loc = function
 let atyp_loc = function
     | Atyp_ref p -> apath_loc p
     | Atyp_uvar v -> avar_loc v
+    | Atyp_A (loc, _, _) -> loc
+    | Atyp_E (loc, _, _) -> loc
     | Atyp_apply (loc, _, _) -> loc
     | Atyp_arrow (loc, _, _) -> loc
 

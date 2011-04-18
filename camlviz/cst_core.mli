@@ -47,6 +47,8 @@ val idr_2o_mapsto : idr
 val idr_2o_index : idr
 val idr_2o_eq : idr
 val idr_2o_coloneq : idr
+val idr_2o_A : idr
+val idr_2o_E : idr
 val idr_1o_not : idr
 val idr_2o_and : idr
 val idr_2o_or : idr

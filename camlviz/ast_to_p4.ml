@@ -69,6 +69,9 @@ let rec emit_atyp ?(typefor = Typefor_viz) = function
     | Atyp_ref p ->
 	let _loc = p4loc (apath_loc p) in
 	<:ctyp< $id: emit_apath_lid p$ >>
+    | Atyp_A (loc, v, t) | Atyp_E (loc, v, t) ->
+	warnf_at loc "Ignoring quantification of %s." (avar_name v);
+	emit_atyp ~typefor t
     | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t), u)
 	    when avar_idr op = Cst_core.idr_2o_times ->
 	let _loc = p4loc loc in

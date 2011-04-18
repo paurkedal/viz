@@ -33,6 +33,8 @@ type apath = Apath of avar list * avar with sexp
 type atyp =
     | Atyp_ref of apath
     | Atyp_uvar of avar
+    | Atyp_A of loc * avar * atyp
+    | Atyp_E of loc * avar * atyp
     | Atyp_apply of loc * atyp * atyp
     | Atyp_arrow of loc * atyp * atyp
     with sexp
