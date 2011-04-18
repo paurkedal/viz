@@ -32,6 +32,16 @@ let __builtin_action_bind k m =
     let f () = __unsafe_run_action (k (__unsafe_run_action m)) in
     { __unsafe_thunk = f; }
 
+type exception__ = exn
+
+let __builtin_action_throw e = __unsafe_action (fun () -> raise e)
+
+let __builtin_catch k m =
+    let f () = try __unsafe_run_action m with e -> __unsafe_run_action (k e) in
+    { __unsafe_thunk = f; }
+
+let __builtin_mask f = f (fun m -> m)  (* No async exceptions. *)
+
 (* Options *)
 let none = None
 let some x = Some x

@@ -49,6 +49,8 @@ let idr_1b_array	= idr_1b_c "#[" "]"
 let idr_2b_dotbracket	= idr_2b_c ".[" "]"
 let idr_1o_asterisk	= idr_1o_c "*"
 let idr_run_action	= Idr "__unsafe_run_action"
+let idr_action_throw	= Idr "__builtin_action_throw"
+let idr_catch		= Idr "__builtin_catch"
 let idr_list_null	= Idr "[]"
 let idr_list_push	= Idr "[;]"
 let idr_set_null	= Idr "{}"
@@ -79,7 +81,8 @@ let cpred_loc = function
     | Cpred_assert (loc, _, _)
     | Cpred_raise (loc, _)
     | Cpred_do1 (loc, _, _)
-    | Cpred_do2 (loc, _, _, _) ->
+    | Cpred_do2 (loc, _, _, _)
+    | Cpred_upon (loc, _, _, _) ->
 	loc
 let ctrm_loc = function
     | Ctrm_literal (loc, _)

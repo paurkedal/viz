@@ -42,6 +42,16 @@ val __builtin_action_return : 'a -> ('f, 'a) action
 val __builtin_action_bind
     : ('a -> ('f, 'b) action) -> ('f, 'a) action -> ('f, 'b) action
 
+type exception__ = exn
+
+val __builtin_action_throw : exception__ -> ('f, 'a) action
+
+val __builtin_catch : (exception__ -> 'a io) -> 'a io -> 'a io
+
+val __builtin_mask : (('a io -> 'a io) -> 'b io) -> 'b io
+(* This type should be (((∀'a. 'a io -> 'a io) -> 'b io) -> 'b io) but we
+ * don't rely on that for the standard definitions. *)
+
 val none : 'a option
 val some : 'a -> 'a option
 

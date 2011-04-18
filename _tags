@@ -14,6 +14,7 @@
 <vsl/compat/ocaml_*.vz>: ocamlstdlib
 
 <vsl/compat/*.cmx>: for-pack(Compat)
+<vsl/control/*.cmx>: for-pack(Control)
 <vsl/ffi/*.cmx>: for-pack(Ffi)
 <vsl/data/*.cmx>: for-pack(Data)
 <vsl/system/*.cmx>: for-pack(System)

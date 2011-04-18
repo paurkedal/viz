@@ -169,6 +169,7 @@ and build_aval_pure = function
 	Aval_assert (loc, build_aval_expr cx, build_aval_pure cy)
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)
+    | Cpred_upon (loc, _, _, _)
     | Cpred_raise (loc, _) ->
 	errf_at loc "Monadic code is not allowed here."
 and build_aval_monad mm = function
@@ -236,7 +237,32 @@ and build_aval_monad mm = function
 	end
     | Cpred_do2 (loc, cm, cx, cy) ->
 	make_aval_chop loc cm (build_aval_expr cx) (build_aval_monad mm cy)
-    | Cpred_raise (loc, _) -> raise (Failure "Unimplemented.")
+    | Cpred_upon (loc, _, _, _) as cupon ->
+	let rec collect cases = function
+	    | Cpred_upon (loc, cp, ch, ccont) ->
+		let ap = build_apat cp in
+		let ah = build_aval_monad mm ch in
+		collect ((ap, None, ah) :: cases) ccont
+	    | ccont ->
+		let e_idr = Idr "e" in
+		let athrow = aval_ref_of_idr loc idr_action_throw in
+		let cases = (* Add rethrow case if needed. *)
+		    match cases with
+		    | (Apat_uvar _, None, _) :: _ -> cases
+		    | _ ->
+			let default = (Apat_uvar (Avar (loc, e_idr)), None,
+			    Aval_apply (loc, athrow,
+				aval_ref_of_idr loc e_idr)) in
+			default :: cases in
+		let ah = Aval_at (loc, List.rev cases) in
+		let acont = build_aval_monad mm ccont in
+		Aval_apply (loc,
+		    Aval_apply (loc, aval_ref_of_idr loc idr_catch, ah),
+		    acont) in
+	collect [] cupon
+    | Cpred_raise (loc, cx) ->
+	let ax = build_aval_expr cx in
+	Aval_apply (loc, aval_ref_of_idr loc idr_action_throw, ax)
 
 and build_aval_expr = function
     | Ctrm_literal (loc, lit) ->

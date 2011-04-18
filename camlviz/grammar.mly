@@ -271,6 +271,8 @@ do_predicate:
     { Cpred_do1 (mkloc $startpos $endpos, $1, $2) }
   | DO expr nonfunction_predicate_with_participle
     { Cpred_do2 (mkloc $startpos $endpos, $1, $2, $3) }
+  | UPON expr predicate_block nonfunction_predicate_with_participle
+    { Cpred_upon (mkloc $startpos $endpos, $2, $3, $4) }
   | WHEN expr predicate_block
     {
 	let loc = mkloc $startpos $endpos in

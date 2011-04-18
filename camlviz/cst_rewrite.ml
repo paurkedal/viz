@@ -63,6 +63,11 @@ let rec subterm_rewrite_cpred rw stra = function
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
 	Cpred_do2 (loc, cm, x, y), accu
+    | Cpred_upon (loc, p, x, y), accu ->
+	let p, accu = rw.rw_ctrm rw stra (p, accu) in
+	let x, accu = rw.rw_cpred rw stra (x, accu) in
+	let y, accu = rw.rw_cpred rw stra (y, accu) in
+	Cpred_upon (loc, p, x, y), accu
 and subterm_rewrite_ctrm rw stra = function
     | Ctrm_ref _, _ | Ctrm_literal _, _ as d -> d
     | Ctrm_label (loc, l, x), accu ->

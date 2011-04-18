@@ -40,6 +40,7 @@ type cpred =
     | Cpred_raise	of loc * ctrm
     | Cpred_do1		of loc * cmonad * ctrm
     | Cpred_do2		of loc * cmonad * ctrm * cpred
+    | Cpred_upon	of loc * ctrm * cpred * cpred
  and ctrm =
     | Ctrm_ref		of cidr * idrhint
     | Ctrm_literal	of loc * lit

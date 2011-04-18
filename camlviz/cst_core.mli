@@ -59,6 +59,8 @@ val idr_1b_curly_bracket : idr
 val idr_1b_array : idr
 val idr_2b_dotbracket : idr
 val idr_run_action : idr
+val idr_action_throw : idr
+val idr_catch : idr
 val idr_list_null : idr
 val idr_list_push : idr
 val idr_set_null : idr

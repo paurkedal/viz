@@ -158,6 +158,14 @@ and print_predicate fo = function
 	Fo.put_kw fo "do";
 	print_inline fo Opkind.p_min cx;
 	print_predicate fo cpred
+    | Cpred_upon (_, cx, handler, thunk) ->
+	Fo.newline fo;
+	Fo.put_kw fo "upon";
+	print_inline fo Opkind.p_min cx;
+	Fo.enter_indent fo;
+	print_predicate fo handler;
+	Fo.leave_indent fo;
+	print_predicate fo thunk
     | Cpred_raise (_, cx) ->
 	Fo.newline fo;
 	Fo.put_kw fo "raise";

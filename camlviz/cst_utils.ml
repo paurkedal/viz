@@ -144,6 +144,7 @@ let rec cpred_is_pure = function
     | Cpred_be (_, x) -> ctrm_is_pure x
     | Cpred_do1 _ -> false
     | Cpred_do2 _ -> false
+    | Cpred_upon _ -> false
     | Cpred_assert (_, x, y) -> cpred_is_pure y
     | Cpred_raise _ -> false
 and ctrm_is_pure = function
