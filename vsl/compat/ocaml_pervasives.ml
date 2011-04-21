@@ -64,5 +64,6 @@ module Pervasive = struct
     let __failure loc msg =
 	Printf.eprintf "%s: %s\n" (UTF8string.of_string loc)
 	    (UTF8string.of_string msg);
+	Pervasives.flush_all ();
 	assert false
 end

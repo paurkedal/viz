@@ -19,7 +19,9 @@
 module Ast = Camlp4.PreCast.Ast
 module Loc = Camlp4.PreCast.Loc
 open Leaf_types
+open Leaf_core
 open Cst_types
+open Cst_core
 open Ast_types
 open Ast_core
 open Diag
@@ -235,7 +237,16 @@ let rec emit_aval = function
 	errf_at loc "Backtracking else-branch is not supported here."
     | Aval_assert (loc, x, y) ->
 	let _loc = p4loc loc in
-	<:expr< (assert $emit_aval x$; $emit_aval y$) >>
+	let msg = "Assertion failed." in
+	<:expr<
+	    begin
+		if $lid: idr_to_lid idr_1o_not$ ($emit_aval x$) then
+		    __failure
+			(__string_of_utf8 $str: Location.to_string loc$)
+			(__string_of_utf8 $str: msg$)
+		else $emit_aval y$
+	    end
+	>>
     | Aval_raise (loc, x) ->
 	let _loc = p4loc loc in
 	<:expr< raise $emit_aval x$ >>
