@@ -149,4 +149,6 @@ let aval_apply2i loc idr x y =
     Aval_apply (loc, aval_apply1i loc idr x, y)
 
 let aval_internal_error loc msg =
-    aval_apply1i loc (Idr "__failure") (aval_string loc msg)
+    aval_apply2i loc (Idr "__failure")
+		 (aval_string loc (Location.to_string loc))
+		 (aval_string loc msg)
