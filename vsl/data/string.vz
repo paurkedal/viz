@@ -15,10 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
+
+# Z.  Strings
+
 open prereq
 open action
 
 type t := string
+
+
+# Z.Z.  String Primitives
 
 in buf
     #?ffoc {#
@@ -66,6 +72,9 @@ val of_utf8 : utf8 → t
 # The above are primitives.
 #?ffoc include compat.ocaml_unicode.string
 
+
+# Z.Z.  Concatenation
+
 val cat : t → t → t
  ## Concatenates two strings.
 
@@ -76,6 +85,9 @@ val join : t → list t → t
  ## (join sep pieces) concatenates the elements of (pieces) with (sep) between
  ## each element.
 
+val tile : int → t → t
+ ## (tile n s) is the string containing (n) repetitions of (s).
+
 val slice : int → int → t → t
  ## (slice i j s) is the (n)-character substring of (s) starting at (i).
 
@@ -84,7 +96,7 @@ val as_list : t → list char
 val of_list : list char → t
 
 
-### Iteration
+# Z.Z.  Iteration
 
 val fold : (char → α → α) → t → α → α
 
@@ -99,7 +111,7 @@ val for_all : (char → bool) → t → bool
 val for_some : (char → bool) → t → bool
 
 
-### Containment
+# Z.Z.  Containment
 
 val starts_with : t → t → bool
 
@@ -114,7 +126,7 @@ val count_char : char → t → int
 val count_for : (char → bool) → t → int
 
 
-### Simple Skips and Scans
+# Z.Z.  Simple Skips and Scans
 
 val skip_while : (char → bool) → t → int → int
 
@@ -141,7 +153,7 @@ val rscan_to_char : char → t → int → t × int
 val scan_to_sub : t → t → int → t × int
 
 
-### Stripping Spaces or other Characters
+# Z.Z.  Stripping Spaces or other Characters
 
 val strip : t → t
 
@@ -150,7 +162,7 @@ val strip_left : t → t
 val strip_right : t → t
 
 
-### Splitting
+# Z.Z.  Splitting
 
 val csplit_where : (char → bool) → t → list t
  ## (csplit_where f s) splits (s) on contiguous characters where (f) is true,
@@ -180,6 +192,15 @@ let join s
 	let buf do buf.create
 	do buf.put_string buf x
 	do list.iter (x ↦ buf.put_string buf s >> buf.put_string buf x) xs
+	do buf.contents buf
+
+let tile n s
+    if n ≤ 0 be ""
+    be __unsafe_run_action what!
+	let buf do buf.create
+	let! loop at 0 be ()
+		  at n do buf.put_string buf s >> loop (n - 1)
+	do loop n
 	do buf.contents buf
 
 let slice i j x
