@@ -34,7 +34,9 @@ val result_type : atyp -> atyp
 val fold_arg_types : (atyp -> 'a -> 'a) -> atyp -> 'a -> 'a
 val arity : atyp -> int
 
-val flatten_application : atyp -> apath * atyp list
+val atyp_unapply : atyp -> apath * atyp list
+
+val atyp_apply : apath -> atyp list -> atyp
 
 type pocket =
     | No_pocket

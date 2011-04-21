@@ -57,7 +57,7 @@ type cpred =
     | Cdef_include	of loc * ctrm
     | Cdef_open		of loc * abi * ctrm
     | Cdef_use		of loc * ctrm
-    | Cdef_type		of loc * abi * ctrm
+    | Cdef_type		of loc * abi * ctrm * cdef list
     | Cdef_in		of loc * ctrm * ctrm
     | Cdec_sig		of loc * cidr
     | Cdef_sig		of loc * cidr * ctrm

@@ -82,8 +82,9 @@ let cpred_loc = function
     | Cpred_raise (loc, _)
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)
-    | Cpred_upon (loc, _, _, _) ->
-	loc
+    | Cpred_upon (loc, _, _, _)
+    -> loc
+
 let ctrm_loc = function
     | Ctrm_literal (loc, _)
     | Ctrm_ref (Cidr (loc, _), _)
@@ -95,8 +96,23 @@ let ctrm_loc = function
     | Ctrm_array (loc, _)
     | Ctrm_what (loc, _, _)
     | Ctrm_where (loc, _)
-    | Ctrm_with (loc, _, _) ->
-	loc
+    | Ctrm_with (loc, _, _)
+    -> loc
+
+let cdef_loc = function
+    | Cdef_include (loc, _)
+    | Cdef_open (loc, _, _)
+    | Cdef_use (loc, _)
+    | Cdef_type (loc, _, _, _)
+    | Cdef_in (loc, _, _)
+    | Cdec_sig (loc, _)
+    | Cdef_sig (loc, _, _)
+    | Cdef_val (loc, _, _)
+    | Cdef_let (loc, _, _, _)
+    | Cdef_inj (loc, _, _)
+    | Cdef_lex (loc, _, _)
+    | Cdef_lexalias (loc, _)
+    -> loc
 
 let application_depth i f x =
     let rec loop n xs = function

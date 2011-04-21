@@ -326,17 +326,15 @@ module Algt_builder = struct
 	let atcase = (loc, av, ats, ati) in
 	(atcase, Idr_map.add (avar_idr av) (ats, []) algtb)
 
-    let add_inj loc cf ct ainjnum algtb =
+    let add_inj loc cf at ainjnum algtb =
 	let af = build_avar cf in
-	let at = build_atyp ct in
 	let art = Ast_utils.result_type at in
-	let ap, ats = Ast_utils.flatten_application art in
+	let ap, ats = Ast_utils.atyp_unapply art in
 	let apts, injs =
 	    try Idr_map.find (avar_idr (Ast_utils.apath_to_avar ap)) algtb
 	    with Not_found ->
-		let crt, _ = Cst_utils.flatten_arrow ct in
 		errf_at loc "The type %s has not been defined in this scope."
-			(Syn_print.ctrm_to_string crt) in
+			(Ast_utils.atyp_to_string art) in
 	Idr_map.add (avar_idr (apath_to_avar ap))
 		    (ats, (loc, af, at, ainjnum) :: injs) algtb
 
@@ -347,30 +345,12 @@ let build_atypinfo_cabi = function
     | Ctrm_literal (_, Lit_string s) -> Atypinfo_cabi (UString.to_utf8 s)
     | ctrm -> errf_at (ctrm_loc ctrm) "Invalid C type specification."
 
-let rec build_atcases is_sig atcases algtb = function
-    | Cdef_type (loc, abi, Ctrm_rel (_, p, [(_, op, ct)])) :: xs
-    | Cdef_type (loc, abi,
-		 Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), p), ct)) :: xs
-	    when cidr_is_2o_coloneq op ->
-	let ati =
-	    match abi with
-	    | Abi_Viz -> Atypinfo_alias (build_atyp ct)
-	    | Abi_C -> build_atypinfo_cabi ct in
-	let av, ats = build_atyp_con_args p in
-	let atcase = (loc, av, ats, ati) in
-	build_atcases is_sig (atcase :: atcases) algtb xs
-    | Cdef_type (loc, Abi_C, p) :: xs ->
-	let av, ats = build_atyp_con_args p in
-	let atcase = (loc, av, ats, Atypinfo_cabi (avar_name av)) in
-	build_atcases is_sig (atcase :: atcases) algtb xs
-    | Cdef_type (loc, Abi_Viz, p) :: xs ->
-	let atcase, algtb' = Algt_builder.add_type loc p algtb in
-	build_atcases is_sig (atcase :: atcases) algtb' xs
+let rec build_atinjs at_opt algtb = function
     | Cdef_inj (loc, abi,
 		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct))
-	    :: xs
-	    when cidr_is_2o_colon op
-	      && not (Cst_utils.ctrm_is_exception_type ct) ->
+	    :: xs as xs', matched
+	    when cidr_is_2o_colon op ->
+	if Cst_utils.ctrm_is_exception_type ct then (xs', matched, algtb) else
 	let ainjnum, ct =
 	    match abi with
 	    | Abi_Viz -> (Ainjnum_auto, ct)
@@ -382,9 +362,64 @@ let rec build_atcases is_sig atcases algtb = function
 		    (Ainjnum_cabi (UString.to_utf8 cn), ct)
 		| _ -> errf_at (ctrm_loc ct) "Invalid C enum specification."
 		end in
-	let algtb' = Algt_builder.add_inj loc cf ct ainjnum algtb in
-	build_atcases is_sig atcases algtb' xs
+	let at = build_atyp ct in
+	let algtb' = Algt_builder.add_inj loc cf at ainjnum algtb in
+	build_atinjs at_opt algtb' (xs, true)
+    | Cdef_inj (loc, Abi_C,
+	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (ceq, _), cf),
+			   Ctrm_literal (_, Lit_string cn))) :: xs, _
+	    when cidr_is_2o_coloneq ceq ->
+	let at =
+	    match at_opt with
+	    | None -> errf_at loc "Which type does this C enum belong to?"
+	    | Some at -> at in
+	let ainjnum = Ainjnum_cabi (UString.to_utf8 cn) in
+	let algtb' = Algt_builder.add_inj loc cf at ainjnum algtb in
+	build_atinjs at_opt algtb' (xs, true)
+    | Cdef_inj (loc, abi, cf) :: xs, _ ->
+	let at =
+	    match at_opt with
+	    | None -> errf_at loc "Which type does this injection belong to?"
+	    | Some at -> at in
+	let algtb' = Algt_builder.add_inj loc cf at Ainjnum_auto algtb in
+	build_atinjs at_opt algtb' (xs, true)
+    | xs, matched ->
+	begin match at_opt, xs with
+	| Some _, x :: xs ->
+	    errf_at (cdef_loc x)
+		    "This clause is invalid under a type definition."
+	| _ -> ()
+	end;
+	(xs, matched, algtb)
+
+let rec build_atcases is_sig atcases algtb = function
+    | Cdef_type (loc, abi, Ctrm_rel (_, p, [(_, op, ct)]), cinjs) :: xs
+    | Cdef_type (loc, abi,
+		 Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), p), ct),
+		 cinjs) :: xs
+	    when cidr_is_2o_coloneq op ->
+	let ati =
+	    match abi with
+	    | Abi_Viz -> Atypinfo_alias (build_atyp ct)
+	    | Abi_C -> build_atypinfo_cabi ct in
+	let av, ats = build_atyp_con_args p in
+	let atcase = (loc, av, ats, ati) in
+	build_atcases is_sig (atcase :: atcases) algtb xs
+    | Cdef_type (loc, Abi_C, p, cinjs) :: xs ->
+	let av, ats = build_atyp_con_args p in
+	let atcase = (loc, av, ats, Atypinfo_cabi (avar_name av)) in
+	let at = Ast_utils.atyp_apply (Apath ([], av)) ats in
+	let _, _, algtb = build_atinjs (Some at) algtb (cinjs, false) in
+	build_atcases is_sig (atcase :: atcases) algtb xs
+    | Cdef_type (loc, Abi_Viz, p, cinjs) :: xs ->
+	let atcase, algtb = Algt_builder.add_type loc p algtb in
+	let _, av, ats, _ = atcase in
+	let at = Ast_utils.atyp_apply (Apath ([], av)) ats in
+	let _, _, algtb = build_atinjs (Some at) algtb (cinjs, false) in
+	build_atcases is_sig (atcase :: atcases) algtb xs
     | xs ->
+	let xs, matched, algtb = build_atinjs None algtb (xs, false) in
+	if matched then build_atcases is_sig atcases algtb xs else
 	let finish_atcase = function
 	    | loc, av, ats, Atypinfo_abstract ->
 		let typinfo =

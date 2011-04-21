@@ -184,12 +184,14 @@ and print_def fo cdef =
     | Cdef_use (_, x) ->
 	Fo.put_kw fo "use";
 	print_inline fo Opkind.p_min x
-    | Cdef_type (_, Abi_Viz, eqn) ->
+    | Cdef_type (_, Abi_Viz, eqn, defs) ->
 	Fo.put_kw fo "type";
-	print_inline fo Opkind.p_min eqn
-    | Cdef_type (_, Abi_C, eqn) ->
+	print_inline fo Opkind.p_min eqn;
+	if defs <> [] then print_defs fo defs
+    | Cdef_type (_, Abi_C, eqn, defs) ->
 	Fo.put_kw fo "type:c";
-	print_inline fo Opkind.p_min eqn
+	print_inline fo Opkind.p_min eqn;
+	if defs <> [] then print_defs fo defs
     | Cdef_in (_, pat, body) ->
 	Fo.put_kw fo "in";
 	Fo.enter_indent fo;

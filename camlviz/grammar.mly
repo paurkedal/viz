@@ -205,12 +205,20 @@ modular_clause:
   | SIG identifier signature_block
     { Cdef_sig (mkloc $startpos $endpos, $2, $3) }
   | TYPE type_equation
-    { Cdef_type (mkloc $startpos $endpos, $1, $2) }
+    { Cdef_type (mkloc $startpos $endpos, $1, $2, []) }
+  | TYPE type_equation BEGIN inj_seq END
+    { Cdef_type (mkloc $startpos $endpos, $1, $2, List.rev $4) }
   | INJ term_pattern
     { Cdef_inj (mkloc $startpos $endpos, $1, $2) }
   | VAL term_pattern
     { Cdef_val (mkloc $startpos $endpos, $1, $2) }
   | PREPARED_DEF { $1 }
+  ;
+
+inj_seq:
+    /* empty */ { [] }
+  | inj_seq INJ term_pattern
+    { Cdef_inj (mkloc $startpos $endpos, $2, $3) :: $1 }
   ;
 
 type_equation: expr {$1};

@@ -101,13 +101,18 @@ let flatten_arrows_for_c t =
     else
 	(false, rt, ats)
 
-let flatten_application =
+let atyp_unapply =
     let rec loop args = function
 	| Atyp_apply (_, at, arg) -> loop (arg :: args) at
 	| Atyp_ref p -> (p, List.rev args)
 	| at -> errf_at (atyp_loc at) "Expecting a type constructor." in
     loop []
 
+let atyp_apply p tas =
+    let apply ta t =
+	let loc = Location.span [atyp_loc t; atyp_loc ta] in
+	Atyp_apply (loc, t, ta) in
+    List.fold apply tas (Atyp_ref p)
 
 (* Folds over Variable Subterms *)
 

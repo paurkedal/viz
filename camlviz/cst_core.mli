@@ -28,6 +28,7 @@ val cidr_to_string : cidr -> string
 
 val cpred_loc : cpred -> loc
 val ctrm_loc : ctrm -> loc
+val cdef_loc : cdef -> loc
 
 val cmonad_io : cmonad
 
