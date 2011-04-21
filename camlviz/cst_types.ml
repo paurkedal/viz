@@ -34,6 +34,7 @@ type cmonad = string
 type cpred =
     | Cpred_let		of loc * cmonad option * ctrm * cpred * cpred
     | Cpred_if		of loc * ctrm * cpred * cpred
+    | Cpred_back	of loc
     | Cpred_at		of loc * (ctrm * cpred) list
     | Cpred_be		of loc * ctrm
     | Cpred_assert	of loc * ctrm * cpred

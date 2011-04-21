@@ -231,6 +231,8 @@ let rec emit_aval = function
     | Aval_if (loc, cond, cq, ccq) ->
 	let _loc = p4loc loc in
 	<:expr< if $emit_aval cond$ then $emit_aval cq$ else $emit_aval ccq$ >>
+    | Aval_back loc ->
+	errf_at loc "Backtracking else-branch is not supported here."
     | Aval_assert (loc, x, y) ->
 	let _loc = p4loc loc in
 	<:expr< (assert $emit_aval x$; $emit_aval y$) >>
@@ -239,8 +241,19 @@ let rec emit_aval = function
 	<:expr< raise $emit_aval x$ >>
 and emit_match_case (pat, ocond_opt, body) =
     let opat, ocond_opt = emit_apat pat (Option.map emit_aval ocond_opt) in
-    let obody = emit_aval body in
+    let guard_opt, body = Ast_utils.extract_backtrack_guard body in
     let _loc = p4loc (Location.span [apat_loc pat; aval_loc body]) in
+    let ocond_opt =
+	match guard_opt with
+	| None -> ocond_opt
+	| Some guard ->
+	    let oguard = emit_aval guard in
+	    begin match ocond_opt with
+	    | None -> Some oguard
+	    | Some ocond ->
+		Some <:expr< ocond && (oguard) >>
+	    end in
+    let obody = emit_aval body in
     match ocond_opt with
     | Some ocond ->
 	<:match_case< $pat: opat$ when $ocond$ -> $obody$ >>

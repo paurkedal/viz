@@ -131,6 +131,8 @@ and print_predicate fo = function
 	print_predicate fo cq;
 	Fo.leave_indent fo;
 	print_predicate fo ccq
+    | Cpred_back _ ->
+	Fo.put fo `Comment "{# backtrack #}"
     | Cpred_at (_, cases) ->
 	List.iter (fun (pat, cq) ->
 	    Fo.newline fo;

@@ -78,6 +78,7 @@ let rec aval_loc = function
     | Aval_let (loc, _, _, _) -> loc
     | Aval_letrec (loc, _, _) -> loc
     | Aval_if (loc, _, _, _) -> loc
+    | Aval_back loc -> loc
     | Aval_match (loc, _, _) -> loc
     | Aval_assert (loc, _, _) -> loc
     | Aval_raise (loc, _) -> loc
@@ -138,3 +139,14 @@ let apat_uvar_any loc = Apat_uvar (Avar (loc, Idr "_"))
 let apat_uvar_of_idr loc idr = Apat_uvar (Avar (loc, idr))
 let aval_ref_of_idr loc idr =
     Aval_ref (Apath ([], Avar (loc, idr)))
+
+let aval_string loc s =
+    Aval_literal (loc, Lit_string (UString.of_utf8 s))
+
+let aval_apply1i loc idr x =
+    Aval_apply (loc, Aval_ref (Apath ([], Avar (loc, idr))), x)
+let aval_apply2i loc idr x y =
+    Aval_apply (loc, aval_apply1i loc idr x, y)
+
+let aval_internal_error loc msg =
+    aval_apply1i loc (Idr "__failure") (aval_string loc msg)

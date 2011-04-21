@@ -18,7 +18,9 @@
 
 (** A Pretty-Printing Utility *)
 
-type tag = [`Error | `Keyword | `Label | `Literal | `Name | `Operator]
+type tag = [
+    `Comment | `Error | `Keyword | `Label | `Literal | `Name | `Operator
+]
 
 type t
 

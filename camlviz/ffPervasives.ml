@@ -74,6 +74,11 @@ module List = struct
 		loop (y :: ys) accu' xs in
 	loop [] accu xs
 
+    let combine f = function
+	| [] -> raise (Failure "reduce on empty list")
+	| [x] -> x
+	| x :: xs -> fold f xs x
+
     let rev_filter f =
 	let rec loop accu = function
 	    | [] -> accu

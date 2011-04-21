@@ -76,6 +76,7 @@ let cmonad_io = ""
 let cpred_loc = function
     | Cpred_let (loc, _, _, _, _)
     | Cpred_if (loc, _, _, _)
+    | Cpred_back loc
     | Cpred_at (loc, _)
     | Cpred_be (loc, _)
     | Cpred_assert (loc, _, _)

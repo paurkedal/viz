@@ -18,7 +18,9 @@
 
 open FfPervasives
 
-type tag = [`Error | `Keyword | `Label | `Literal | `Name | `Operator]
+type tag = [
+    `Comment | `Error | `Keyword | `Label | `Literal | `Name | `Operator
+]
 
 type t = {
     fo_buf : Buffer.t;

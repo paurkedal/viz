@@ -65,3 +65,5 @@ val fold_amod_cabi_open : (string -> 'a -> 'a) -> amod -> 'a -> 'a
 val fold_adef_cabi_open : (string -> 'a -> 'a) -> adef -> 'a -> 'a
 
 val interpret_use : aval -> ause
+
+val extract_backtrack_guard : aval -> aval option * aval

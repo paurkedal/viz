@@ -39,6 +39,8 @@ let rec subterm_rewrite_cpred rw stra = function
 	let cq, accu = rw.rw_cpred rw stra (cq, accu) in
 	let ccq, accu = rw.rw_cpred rw stra (ccq, accu) in
 	Cpred_if (loc, cond, cq, ccq), accu
+    | Cpred_back loc, accu ->
+	Cpred_back loc, accu
     | Cpred_at (loc, cases), accu ->
 	let recase ((x, pred), accu) =
 	    let x, accu = rw.rw_ctrm rw stra (x, accu) in

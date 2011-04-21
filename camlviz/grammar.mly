@@ -261,6 +261,7 @@ if_predicate:
     { Cpred_if (mkloc $startpos $endpos, $2, $3, $4) }
 if_predicate_cont:
     nonfunction_predicate_with_participle { $1 }
+  | /* empty */ { Cpred_back (mkloc $startpos $endpos) }
   | ELSE predicate_block { $2 }
   ;
 at_predicate:

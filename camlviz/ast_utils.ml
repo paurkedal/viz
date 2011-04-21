@@ -17,6 +17,7 @@
  *)
 
 open Leaf_types
+open Cst_core
 open Ast_core
 open Ast_types
 open Diag
@@ -175,6 +176,7 @@ let rec fold_aval_paths f =
 	fold_aval_paths f body
     | Aval_if (_, c, cq, ccq) ->
 	fold_aval_paths f c *> fold_aval_paths f cq *> fold_aval_paths f ccq
+    | Aval_back _ -> ident
     | Aval_assert (_, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
     | Aval_raise (_, x) -> fold_aval_paths f x
 
@@ -275,3 +277,24 @@ let interpret_use use =
 	end
     | _ ->
 	errf_at (aval_loc directive) "Invalid use-directive."
+
+let extract_backtrack_guard x =
+    let rec have_back = function
+	| Aval_if (_, _, _, ccq) -> have_back ccq
+	| Aval_back _ -> true
+	| _ -> false in
+    if not (have_back x) then (None, x) else
+    let rec rewrite = function
+	| Aval_if (loc, cond, cq, ccq) ->
+	    let guards, ccq = rewrite ccq in
+	    cond :: guards, Aval_if (loc, cond, cq, ccq)
+	| Aval_back loc ->
+	    [], aval_internal_error loc "backtrack-else replacement"
+	| _ -> assert false in
+    let guards, y = rewrite x in
+    let guard = List.combine
+	begin fun x y ->
+	    let loc = Location.span [aval_loc x; aval_loc y;] in
+	    aval_apply2i loc idr_2o_and x y
+	end guards in
+    (Some guard, y)

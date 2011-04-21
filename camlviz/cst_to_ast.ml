@@ -159,6 +159,8 @@ and build_aval_pure = function
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond,
 		      build_aval_pure cq, build_aval_pure ccq)
+    | Cpred_back loc ->
+	Aval_back loc
     | Cpred_at (loc, cases) ->
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_pure cq) in
@@ -209,6 +211,8 @@ and build_aval_monad mm = function
     | Cpred_if (loc, cond, cq, ccq) ->
 	Aval_if (loc, build_aval_expr cond,
 		 build_aval_monad mm cq, build_aval_monad mm ccq)
+    | Cpred_back loc ->
+	Aval_back loc
     | Cpred_at (loc, cases) ->
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_monad mm cq) in

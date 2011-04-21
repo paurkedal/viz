@@ -139,6 +139,7 @@ let rec cpred_is_pure = function
 	cpred_is_pure y
     | Cpred_if (_, cond, cq, ccq) ->
 	ctrm_is_pure cond && cpred_is_pure cq && cpred_is_pure ccq
+    | Cpred_back _ -> true
     | Cpred_at (_, cases) ->
 	List.for_all (fun (_, cq) -> cpred_is_pure cq) cases
     | Cpred_be (_, x) -> ctrm_is_pure x

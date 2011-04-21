@@ -47,3 +47,10 @@ val apat_uvar_of_idr : loc -> idr -> apat
 val aval_ref_of_idr : loc -> idr -> aval
 
 val fresh_avar_at : ?prefix: string -> loc -> avar
+
+val aval_string : loc -> string -> aval
+
+val aval_apply1i : loc -> idr -> aval -> aval
+val aval_apply2i : loc -> idr -> aval -> aval -> aval
+
+val aval_internal_error : loc -> string -> aval
