@@ -82,6 +82,7 @@ shift
 
 # Scan through the Subcommand Parameters
 #
+builddir=$VIZ_SRCDIR/_build
 grab_arg=false
 pp_opts=
 oc_args=
@@ -124,7 +125,6 @@ done
 
 # Determine and Run the Final Command
 #
-builddir=$VIZ_SRCDIR/_build
 case "$command" in
     ocamlopt|ocamlc)
 	if [ $have_c_flag = true ]; then

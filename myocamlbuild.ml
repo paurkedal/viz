@@ -97,7 +97,7 @@ let camlviz_ocamlc_c tags vz out =
     if use_camlviz_wrapper then
 	Cmd (S[P camlviz_path; A"ocamlc"; A"-c"; T(tags ++ "compile");
 	       camlviz_compile_flags tags; include_flags;
-	       A"--no-vsl"; A"-o"; Px out; P vz]) else
+	       A"-o"; Px out; P vz]) else
     let pp_flags =
 	[A camlvizpp_path; include_flags; Flags.of_tags (tags ++ "pp")] in
     let pp_flags = Command.reduce (S pp_flags) in
@@ -111,7 +111,7 @@ let camlviz_ocamlopt_c tags vz out =
     if use_camlviz_wrapper then
 	Cmd (S[P camlviz_path; A"ocamlopt"; A"-c"; T(tags ++ "compile");
 	       camlviz_compile_flags tags; include_flags;
-	       A"--no-vsl"; A"-o"; Px out; P vz]) else
+	       A"-o"; Px out; P vz]) else
     let pp_flags =
 	[A camlvizpp_path; include_flags; Flags.of_tags (tags ++ "pp")] in
     let pp_flags = Command.reduce (S pp_flags) in
@@ -300,6 +300,7 @@ let () = dispatch begin function
 	flag ["ocaml"; "camlvizpp"] vsl_includes;
 	flag ["cstubs"; "camlvizpp"] vsl_includes;
 	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compile"];
+	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";
 	()
     | _ -> ()
 end
