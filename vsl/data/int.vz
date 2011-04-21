@@ -30,8 +30,12 @@ in ops
 
 val eq : t → t → bool
 
+val cmp : t → t → torder
+
 val show : t → string
 
 #?ffoc include compat.ocaml_pervasives.int_misc
 
 let eq be __generic_eq
+
+let cmp be __generic_cmp

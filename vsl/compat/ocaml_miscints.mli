@@ -16,6 +16,8 @@
  * along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_unicode.Pervasive
+
 module type A_basic_int = sig
     type t
 
@@ -27,6 +29,7 @@ module type A_basic_int = sig
     val rem : t -> t -> t
     val of_int : int -> t
     val as_int : t -> int
+    val show : t -> string
 end
 
 module Pervasive : sig

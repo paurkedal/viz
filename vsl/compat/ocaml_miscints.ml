@@ -16,6 +16,8 @@
  * along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_unicode.Pervasive
+
 module type A_basic_int = sig
     type t
     val neg : t -> t
@@ -26,6 +28,7 @@ module type A_basic_int = sig
     val rem : t -> t -> t
     val of_int : int -> t
     val as_int : t -> int
+    val show : t -> string
 end
 
 module Adapt
@@ -39,10 +42,12 @@ module Adapt
 	val rem : t -> t -> t
 	val of_int : int -> t
 	val to_int : t -> int
+	val to_string : t -> uTF8string
     end) =
 struct
     include M
     let as_int = to_int
+    let show i = __string_of_utf8 (to_string i)
 end
 
 module Pervasive = struct
