@@ -78,6 +78,10 @@ type state = {
 
 let last_location state = state.st_last_location
 
+let initial_plain_keywords = [
+    "true",	Grammar.LITERAL (Lit_bool true);
+    "false",	Grammar.LITERAL (Lit_bool false);
+]
 let initial_intro_keywords = [
     "open",	Grammar.OPEN Abi_Viz;
     "open:c",	Grammar.OPEN Abi_C;
@@ -108,19 +112,12 @@ let initial_intro_keywords = [
     "lex",	Grammar.LEX;
     "lex alias",Grammar.LEXALIAS;
     "lex open",	Grammar.LEXOPEN;
-    "if",	Grammar.IF;
-    "else",	Grammar.ELSE;
     "otherwise",Grammar.OTHERWISE;
-    "at",	Grammar.AT;
     "#?ffoc open", Grammar.OPEN Abi_Viz;
     "#?ffoc include", Grammar.INCLUDE;
     "#?ffoc type", Grammar.TYPE Abi_Viz;
     "#?ffoc {#", Grammar.SKIP;
     "#?ffoc #}", Grammar.ENDSKIP;
-]
-let initial_plain_keywords = [
-    "true",	Grammar.LITERAL (Lit_bool true);
-    "false",	Grammar.LITERAL (Lit_bool false);
 ]
 let initial_continued_keywords = [
     "where",	Grammar.WHERE;
@@ -130,14 +127,24 @@ let initial_continued_keywords = [
     "which",	Grammar.WHICH None;
     "which!",	Grammar.WHICH (Some "");
 ]
+let initial_conditional_keywords = [
+    "at",	Grammar.AT;
+    "if",	Grammar.IF;
+    "else",	Grammar.ELSE;
+]
 let initial_lookahead = 40
 
 let initial_keywords =
-    let addkw lk (name, token) =
+    let addkw introducer connective (name, token) =
+	let lk = {
+	    Opkind.lk_introducer = introducer;
+	    Opkind.lk_connective = connective;
+	} in
 	UString_trie.add_utf8 name (Ti_keyword (token, lk)) in
-    List.fold (addkw Opkind.Lex_intro) initial_intro_keywords @<
-    List.fold (addkw Opkind.Lex_regular) initial_plain_keywords @<
-    List.fold (addkw Opkind.Lex_continued) initial_continued_keywords @<
+    List.fold (addkw false false) initial_plain_keywords @<
+    List.fold (addkw true false) initial_intro_keywords @<
+    List.fold (addkw false true) initial_continued_keywords @<
+    List.fold (addkw true true) initial_conditional_keywords @<
     UString_trie.empty
 
 let rec skip_line state =
@@ -360,7 +367,8 @@ let scan_custom state =
     | [ch0; ch1] when UChar.code ch0 = 0x2e && UChar.is_space ch1 ->
 	LStream.skip state.st_stream;
 	let loc_ub = LStream.locbound state.st_stream in
-	Some (Location.between loc_lb loc_ub, Grammar.DOT, Opkind.Lex_regular)
+	Some (Location.between loc_lb loc_ub, Grammar.DOT,
+	      Opkind.lexkind_regular)
     | _ -> None
     end
 
@@ -522,7 +530,7 @@ let scan_literal state =
 let scan_eof state =
     if LStream.peek state.st_stream = None then
 	let loc = Location.at (LStream.locbound state.st_stream) in
-	Some (loc, Grammar.EOF, Opkind.Lex_intro)
+	Some (loc, Grammar.EOF, Opkind.lexkind_intro)
     else
 	None
 
@@ -551,7 +559,7 @@ let pop_manifest_token state =
 	let loc_ub = LStream.locbound state.st_stream in
 	let loc = Location.between loc_lb loc_ub in
 	if dlog_en then dlogf ~loc "Scanned regular token.";
-	state.st_holding <- (loc, tok, Opkind.Lex_regular)
+	state.st_holding <- (loc, tok, Opkind.lexkind_regular)
     end;
     (loc', tok')
 
@@ -559,9 +567,12 @@ let pop_virtual_token state =
     let cur_col = holding_column state in
     let (loc, tok, lk) = state.st_holding in
     let loc_lb = Location.lbound loc in
-    match lk with
-    | Opkind.Lex_intro ->
-	begin match state.st_pending with
+    if not lk.Opkind.lk_introducer then begin
+	if lk.Opkind.lk_connective then
+	    state.st_pending <- Pending_BEGIN :: state.st_pending;
+	pop_manifest_token state
+    end else
+	match state.st_pending with
 	| Pending_BEGIN :: pending ->
 	    let loc_begin = Location.between loc_lb loc_lb in
 	    state.st_pending <- Pending_END (loc_begin, cur_col)
@@ -570,6 +581,8 @@ let pop_virtual_token state =
 	    (loc_begin, Grammar.BEGIN)
 	| Pending_END (_, col) :: pending when cur_col = col ->
 	    if dlog_en then dlogf ~loc "ITEM[col = %d]" col;
+	    if lk.Opkind.lk_connective then
+		state.st_pending <- Pending_BEGIN :: state.st_pending;
 	    pop_manifest_token state
 	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
 	    state.st_pending <- pending;
@@ -582,17 +595,11 @@ let pop_virtual_token state =
 			     :: pending;
 	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
 	    (loc_begin, Grammar.BEGIN)
-	end
-    | Opkind.Lex_continued ->
-	state.st_pending <- Pending_BEGIN :: state.st_pending;
-	pop_manifest_token state
-    | Opkind.Lex_regular ->
-	pop_manifest_token state
 
 let default_state_template = {
     st_stream = LStream.null;
     st_indent = -1;
-    st_holding = (Location.dummy, Grammar.EOF, Opkind.Lex_intro);
+    st_holding = (Location.dummy, Grammar.EOF, Opkind.lexkind_intro);
     st_pending = [];
     st_keywords = initial_keywords;
     st_renames = Idr_map.empty;

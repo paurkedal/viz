@@ -27,7 +27,13 @@ exception Invalid_definition of string
 
 type printer = int -> Formatter.t -> unit
 
-type lexkind = Lex_regular | Lex_intro | Lex_continued
+type lexkind = {
+    lk_introducer : bool;
+    lk_connective : bool;
+}
+
+let lexkind_regular = { lk_introducer = false; lk_connective = false; }
+let lexkind_intro = { lk_introducer = true; lk_connective = false; }
 
 type t = {
     ok_name : string;
@@ -144,7 +150,7 @@ let preinfix_logic = Array.init 9
 	ok_prec = p_logic n;
 	ok_print = print_infix;
 	ok_id = make_id ();
-	ok_lexkind = Lex_regular;
+	ok_lexkind = lexkind_regular;
 	ok_create =
 	    begin match n with
 	    | 0 -> fun spec -> Grammar.LOGIC0 (name_1o2o spec)
@@ -165,7 +171,7 @@ let mixfix_quantifier = {
     ok_prec = p_rel;
     ok_print = print_quantifier;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.QUANTIFIER (name_2o spec));
 }
 let transfix_judgement = {
@@ -174,7 +180,7 @@ let transfix_judgement = {
     ok_prec = p_judgement;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.JUDGEMENT (name_2o spec));
 }
 let transfix_relation = {
@@ -183,7 +189,7 @@ let transfix_relation = {
     ok_prec = p_rel;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.RELATION (name_2o spec));
 }
 let preinfix_arith = Array.init 10
@@ -193,7 +199,7 @@ let preinfix_arith = Array.init 10
 	ok_prec = p_arith n;
 	ok_print = print_infix;
 	ok_id = make_id ();
-	ok_lexkind = Lex_regular;
+	ok_lexkind = lexkind_regular;
 	ok_create =
 	    begin match n with
 	    | 0 -> fun spec -> Grammar.ARITH0 (name_1o2o spec)
@@ -216,7 +222,7 @@ let suffix_arith = Array.init 10
 	ok_prec = p_arith n;
 	ok_print = print_suffix;
 	ok_id = make_id ();
-	ok_lexkind = Lex_regular;
+	ok_lexkind = lexkind_regular;
 	ok_create =
 	    begin match n with
 	    | 0 -> fun spec -> Grammar.ARITH0_S (name_1o spec)
@@ -239,7 +245,7 @@ let prefix_script = Array.init 3
 	ok_prec = p_script n;
 	ok_print = print_prefix;
 	ok_id = make_id ();
-	ok_lexkind = Lex_regular;
+	ok_lexkind = lexkind_regular;
 	ok_create =
 	    begin match n with
 	    | 0 -> fun spec -> Grammar.SCRIPT0_P (name_1o spec)
@@ -255,7 +261,7 @@ let suffix_script = Array.init 3
 	ok_prec = p_script n;
 	ok_print = print_suffix;
 	ok_id = make_id ();
-	ok_lexkind = Lex_regular;
+	ok_lexkind = lexkind_regular;
 	ok_create =
 	    begin match n with
 	    | 0 -> fun spec -> Grammar.SCRIPT0_S (name_1o spec)
@@ -271,7 +277,7 @@ let infix_script = Array.init 3
 	ok_prec = p_script n;
 	ok_print = print_infix;
 	ok_id = make_id ();
-	ok_lexkind = Lex_regular;
+	ok_lexkind = lexkind_regular;
 	ok_create =
 	    begin match n with
 	    | 0 -> fun spec -> Grammar.SCRIPT0_I (name_2o spec)
@@ -286,7 +292,7 @@ let suffix_project = {
     ok_prec = p_project;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.PROJECT (name_raw spec));
 }
 let circumfix_lbracket = {
@@ -295,7 +301,7 @@ let circumfix_lbracket = {
     ok_prec = p_max;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.LBRACKET (name_raw spec));
 }
 let circumfix_rbracket = {
@@ -304,7 +310,7 @@ let circumfix_rbracket = {
     ok_prec = p_max;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.RBRACKET (name_raw spec));
 }
 let postcircumfix_lbracket = {
@@ -313,7 +319,7 @@ let postcircumfix_lbracket = {
     ok_prec = p_project;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.PROJECT_LBRACKET (name_raw spec));
 }
 let identifier_quote = {
@@ -322,7 +328,7 @@ let identifier_quote = {
     ok_prec = p_max;
     ok_print = print_unimplemented;
     ok_id = make_id ();
-    ok_lexkind = Lex_regular;
+    ok_lexkind = lexkind_regular;
     ok_create = (fun spec -> Grammar.IDENTIFIER (name_0o spec));
 }
 

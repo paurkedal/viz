@@ -26,7 +26,12 @@ exception Invalid_definition of string
 
 type printer = int -> Formatter.t -> unit
 
-type lexkind = Lex_regular | Lex_intro | Lex_continued
+type lexkind = {
+    lk_introducer : bool;
+    lk_connective : bool;
+}
+val lexkind_regular : lexkind
+val lexkind_intro : lexkind
 
 type t = {
     ok_name : string;
