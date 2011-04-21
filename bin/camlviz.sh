@@ -47,10 +47,10 @@ if [ "$1" = "--help" ]; then
 fi
 while getopts ":vu" opt; do
     case $opt in
-	-v)
+	v)
 	    show_command=true
 	    ;;
-	-u)
+	u)
 	    filter_errors=false
 	    ;;
 	'?')

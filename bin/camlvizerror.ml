@@ -62,10 +62,12 @@ let show_error ich och mlpath mlline msg =
 	    match_locline locln0 || match_locline locln1
 	end then begin
 	    flush och;
-	    eprintf "camlvizerror: Did not find a location at %s:%d.\n"
-		    mlpath mlline;
-	    flush stderr;
-	    fprintf och "%s\n" (demangle msg)
+	    if msg <> "Error: Preprocessor error" then begin
+		eprintf "camlvizerror: Did not find a location at %s:%d.\n"
+			mlpath mlline;
+		flush stderr;
+		fprintf och "%s\n" (demangle msg)
+	    end
 	end
     with End_of_file ->
 	flush och;
