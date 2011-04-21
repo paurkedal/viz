@@ -256,15 +256,12 @@ let rec emit_aval = function
 			 $id: emit_apath_uid t$.show $emit_aval x$)
 		>>
 	    | x -> errf_at (aval_loc x) "Unsupported trace argument." in
-	let rec mkargs = function
-	    | Aval_apply (_, Aval_apply (_, Aval_ref comma, x), y)
-		    when apath_eq_idr idr_2o_comma comma ->
-		<:expr< [ $mkarg x$ :: $mkargs y$ ] >>
-	    | x -> <:expr< [ $mkarg x$ ] >> in
+	let xs = Ast_utils.extract_aval_o2left_idr idr_2o_comma x in
+	let os = List.fold (fun x os -> <:expr< [ $mkarg x$ :: $os$ ] >>) xs
+			   <:expr< [] >> in
 	<:expr<
 	    begin
-		__trace (__string_of_utf8 $str: Location.to_string loc$)
-			$mkargs x$;
+		__trace (__string_of_utf8 $str: Location.to_string loc$) $os$;
 		$emit_aval y$
 	    end
 	>>

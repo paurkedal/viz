@@ -131,6 +131,15 @@ let rec fold_apat_typed_vars f = function
     | Apat_intype (_, t, Apat_uvar v) -> f (t, v)
     | Apat_intype (_, _, p) -> fold_apat_typed_vars f p
 
+(* Value Helpers *)
+
+let rec extract_aval_o2left_idr idr =
+    let rec loop accu = function
+	| Aval_apply (_, Aval_apply (_, Aval_ref op, x), y)
+		when apath_eq_idr idr op ->
+	    loop (y :: accu) x
+	| x -> (x :: accu) in
+    loop []
 
 (* Folds over Path Subterms *)
 

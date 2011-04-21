@@ -66,4 +66,11 @@ module Pervasive = struct
 	    (UTF8string.of_string msg);
 	Pervasives.flush_all ();
 	assert false
+    let __trace loc bindings =
+	Printf.eprintf "%s: trace:" (UTF8string.of_string loc);
+	let print_binding (v, x) =
+	    Printf.eprintf " %s = %s;" (UTF8string.of_string v)
+				       (UTF8string.of_string x) in
+	List.iter print_binding bindings;
+	Printf.eprintf "\n"
 end

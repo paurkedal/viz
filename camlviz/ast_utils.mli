@@ -54,6 +54,8 @@ val flatten_arrows_for_c : atyp -> bool * atyp * atyp list
 val fold_apat_vars : (avar -> 'a -> 'a) -> apat -> 'a -> 'a
 val fold_apat_typed_vars : (atyp * avar -> 'a -> 'a) -> apat -> 'a -> 'a
 
+val extract_aval_o2left_idr : idr -> aval -> aval list
+
 val fold_atyp_paths : (apath -> 'a -> 'a) -> atyp -> 'a -> 'a
 val fold_apat_paths : (stratum -> apath -> 'a -> 'a) -> apat -> 'a -> 'a
 val fold_aval_paths : (stratum -> apath -> 'a -> 'a) -> aval -> 'a -> 'a
