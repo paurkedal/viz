@@ -2,6 +2,7 @@ camlviz/ast_core
 camlviz/ast_letrec
 camlviz/ast_types
 camlviz/ast_utils
+camlviz/ast_print
 camlviz/ast_to_cstubs
 camlviz/ast_to_consts
 camlviz/ast_to_p4

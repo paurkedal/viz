@@ -252,7 +252,7 @@ let rec emit_aval = function
 	let mkarg = function
 	    | Aval_apply (_, Aval_apply (_, Aval_ref colon, x), Aval_ref t)
 		    when apath_eq_idr idr_2o_colon colon ->
-		<:expr< (__string_of_utf8 $str: Ast_utils.aval_to_string x$,
+		<:expr< (__string_of_utf8 $str: Ast_print.aval_to_string x$,
 			 $id: emit_apath_uid t$.show $emit_aval x$)
 		>>
 	    | x -> errf_at (aval_loc x) "Unsupported trace argument." in
