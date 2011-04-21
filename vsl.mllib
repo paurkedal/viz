@@ -1,4 +1,5 @@
 vsl/compat
+vsl/control
 vsl/prereq
 vsl/ffi
 vsl/data
