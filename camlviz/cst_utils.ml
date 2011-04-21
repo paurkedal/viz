@@ -72,9 +72,12 @@ let fold_formal_args f (trm, accu) =
     if count_formal_args trm = 0 then (trm, accu) else
     fold_ctrm_args f (trm, accu)
 
+let is_injname cidr =
+    cidr_is_2o_comma cidr
+
 let rec is_formal = function
     | Ctrm_ref (_, Ih_inj) -> false
-    | Ctrm_ref (_, _) -> true
+    | Ctrm_ref (cidr, _) -> not (is_injname cidr)
     | Ctrm_label (_, _, x) -> is_formal x
     | Ctrm_quantify _ -> assert false
     | Ctrm_rel _ -> false
