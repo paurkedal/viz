@@ -1,12 +1,22 @@
+open pervasive
 open action
-open system.posix
+open system.posix.stdlib
+open system.posix.unistd
 
 let show_str h s be print h >> print " --> " >> print s >> print "\n"
 let show_int h be show_str h ∘ int.show
+let show_int32 h be show_str h ∘ int32.show
 let show_bool h be show_str h ∘ bool.show
 let show_err be show_int
 
 let main
+    # stdlib
+    do lrand48 >>= show_int32 "lrand48"
+    do lrand48 >>= show_int32 "lrand48"
+    do mrand48 >>= show_int32 "mrand48"
+    do mrand48 >>= show_int32 "mrand48"
+
+    # unistd
     do getegid >>= show_int "getegid"
     do geteuid >>= show_int "geteuid"
     do getgid >>= show_int "getgid"

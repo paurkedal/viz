@@ -18,6 +18,7 @@
 <vsl/ffi/*.cmx>: for-pack(Ffi)
 <vsl/data/*.cmx>: for-pack(Data)
 <vsl/system/*.cmx>: for-pack(System)
+<vsl/system/posix/*.cmx>: for-pack(System.Posix)
 
 "libvsl.a": use_llvm_libs
 <vsl.{cma,cmxa}>: use_libvsl, use_llvm_libs
