@@ -55,6 +55,10 @@ let rec subterm_rewrite_cpred rw stra = function
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
 	Cpred_assert (loc, x, y), accu
+    | Cpred_trace (loc, x, y), accu ->
+	let x, accu = rw.rw_ctrm rw stra (x, accu) in
+	let y, accu = rw.rw_cpred rw stra (y, accu) in
+	Cpred_trace (loc, x, y), accu
     | Cpred_raise (loc, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cpred_raise (loc, x), accu

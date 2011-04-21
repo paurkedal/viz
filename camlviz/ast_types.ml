@@ -59,6 +59,7 @@ type aval =
     | Aval_if of loc * aval * aval * aval
     | Aval_back of loc
     | Aval_assert of loc * aval * aval
+    | Aval_trace of loc * aval * aval
     | Aval_raise of loc * aval
     with sexp
 

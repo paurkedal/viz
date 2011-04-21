@@ -78,7 +78,7 @@ let cpred_failure loc msg_opt =
 %token WHERE WITH
 %token SKIP ENDSKIP
 
-%token ASSERT BE FAIL
+%token ASSERT BE FAIL TRACE
 %token <Cst_types.cmonad> DO WHEN
 %token RAISE
 %token UPON
@@ -244,6 +244,8 @@ nonfunction_predicate:
     atomic_predicate { $1 }
   | ASSERT term nonfunction_predicate_with_participle
     { Cpred_assert (mkloc $startpos $endpos, $2, $3) }
+  | TRACE term nonfunction_predicate_with_participle
+    { Cpred_trace (mkloc $startpos $endpos, $2, $3) }
   | atomic_predicate WHICH predicate_block
     { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
       let that_trm = Ctrm_ref (that, Ih_none) in

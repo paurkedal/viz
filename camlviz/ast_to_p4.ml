@@ -247,6 +247,27 @@ let rec emit_aval = function
 		else $emit_aval y$
 	    end
 	>>
+    | Aval_trace (loc, x, y) ->
+	let _loc = p4loc loc in
+	let mkarg = function
+	    | Aval_apply (_, Aval_apply (_, Aval_ref colon, x), Aval_ref t)
+		    when apath_eq_idr idr_2o_colon colon ->
+		<:expr< (__string_of_utf8 $str: Ast_utils.aval_to_string x$,
+			 $id: emit_apath_uid t$.show $emit_aval x$)
+		>>
+	    | x -> errf_at (aval_loc x) "Unsupported trace argument." in
+	let rec mkargs = function
+	    | Aval_apply (_, Aval_apply (_, Aval_ref comma, x), y)
+		    when apath_eq_idr idr_2o_comma comma ->
+		<:expr< [ $mkarg x$ :: $mkargs y$ ] >>
+	    | x -> <:expr< [ $mkarg x$ ] >> in
+	<:expr<
+	    begin
+		__trace (__string_of_utf8 $str: Location.to_string loc$)
+			$mkargs x$;
+		$emit_aval y$
+	    end
+	>>
     | Aval_raise (loc, x) ->
 	let _loc = p4loc loc in
 	<:expr< raise $emit_aval x$ >>

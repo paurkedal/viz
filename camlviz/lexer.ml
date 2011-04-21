@@ -104,6 +104,7 @@ let initial_intro_keywords = [
     "inj:c",	Grammar.INJ Abi_C;
     "fail",	Grammar.FAIL;
     "assert",	Grammar.ASSERT;
+    "__trace",	Grammar.TRACE;
     "be",	Grammar.BE;
     "do",	Grammar.DO "";
     "when",	Grammar.WHEN "";

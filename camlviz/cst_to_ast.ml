@@ -169,6 +169,8 @@ and build_aval_pure = function
 	build_aval_expr cx
     | Cpred_assert (loc, cx, cy) ->
 	Aval_assert (loc, build_aval_expr cx, build_aval_pure cy)
+    | Cpred_trace (loc, cx, cy) ->
+	Aval_trace (loc, build_aval_expr cx, build_aval_pure cy)
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)
     | Cpred_upon (loc, _, _, _)
@@ -230,6 +232,8 @@ and build_aval_monad mm = function
 	end
     | Cpred_assert (loc, cx, cy) ->
 	Aval_assert (loc, build_aval_expr cx, build_aval_monad mm cy)
+    | Cpred_trace (loc, cx, cy) ->
+	Aval_trace (loc, build_aval_expr cx, build_aval_monad mm cy)
     | Cpred_do1 (loc, cm, cx) ->
 	let ax = build_aval_expr cx in
 	begin match mm with

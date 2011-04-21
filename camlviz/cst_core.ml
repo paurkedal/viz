@@ -80,6 +80,7 @@ let cpred_loc = function
     | Cpred_at (loc, _)
     | Cpred_be (loc, _)
     | Cpred_assert (loc, _, _)
+    | Cpred_trace (loc, _, _)
     | Cpred_raise (loc, _)
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)

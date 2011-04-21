@@ -19,6 +19,7 @@
 open Ast_types
 open Cst_types
 open Leaf_types
+open Leaf_core
 open FfPervasives
 open Unicode
 
@@ -81,6 +82,7 @@ let rec aval_loc = function
     | Aval_back loc -> loc
     | Aval_match (loc, _, _) -> loc
     | Aval_assert (loc, _, _) -> loc
+    | Aval_trace (loc, _, _) -> loc
     | Aval_raise (loc, _) -> loc
 
 let rec apat_loc = function
@@ -134,6 +136,14 @@ and adef_loc = function
 	Location.span [lloc; uloc]
     | Adef_cabi_val (loc, _, _, _, _) -> loc
     | Adef_cabi_open (loc, _) -> loc
+
+let apath_to_idr = function
+    | Apath ([], Avar (_, idr)) -> idr
+    | _ -> assert false
+let apath_to_string p = idr_to_string (apath_to_idr p)
+let apath_eq_idr idr = function
+    | Apath ([], Avar (_, idr')) -> idr = idr'
+    | _ -> false
 
 let apat_uvar_any loc = Apat_uvar (Avar (loc, Idr "_"))
 let apat_uvar_of_idr loc idr = Apat_uvar (Avar (loc, idr))
