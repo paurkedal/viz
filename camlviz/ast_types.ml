@@ -44,6 +44,7 @@ type apat =
     | Apat_ref of apath
     | Apat_uvar of avar
     | Apat_apply of loc * apat * apat
+    | Apat_as of loc * avar * apat
     | Apat_intype of loc * atyp * apat
     with sexp
 

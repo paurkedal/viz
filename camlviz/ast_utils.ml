@@ -121,6 +121,7 @@ let rec fold_apat_vars f = function
     | Apat_literal _ | Apat_ref _ -> ident
     | Apat_uvar v -> f v
     | Apat_apply (_, p, q) -> fold_apat_vars f p *> fold_apat_vars f q
+    | Apat_as (_, v, p) -> f v *> fold_apat_vars f p
     | Apat_intype (_, t, p) -> fold_apat_vars f p
 
 let rec fold_apat_typed_vars f = function
@@ -128,6 +129,7 @@ let rec fold_apat_typed_vars f = function
     | Apat_uvar v -> ident
     | Apat_apply (_, p, q) ->
 	fold_apat_typed_vars f p *> fold_apat_typed_vars f q
+    | Apat_as (_, v, p) -> fold_apat_typed_vars f p
     | Apat_intype (_, t, Apat_uvar v) -> f (t, v)
     | Apat_intype (_, _, p) -> fold_apat_typed_vars f p
 
@@ -156,6 +158,7 @@ let rec fold_apat_paths f = function
     | Apat_uvar _ -> ident
     | Apat_apply (_, p, q) ->
 	fold_apat_paths f p *> fold_apat_paths f q
+    | Apat_as (_, v, p) -> fold_apat_paths f p
     | Apat_intype (_, t, p) ->
 	fold_atyp_paths (f `Type) t *< fold_apat_paths f p
 

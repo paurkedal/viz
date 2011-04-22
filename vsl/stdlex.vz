@@ -101,7 +101,7 @@ lex S2	# @
 
 lex BL	( [ { ⌈ ⌊ ⟦ #[
 lex BR	) ] } ⌉ ⌋ ⟧
-lex S2L	.[
+lex S2L	@( .[
 
 
 # Z.8.  Identifiers

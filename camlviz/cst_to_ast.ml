@@ -94,6 +94,9 @@ let rec build_apat ?(adecmap = Idr_map.empty) ?(fpos = false) = function
 	with Not_found -> apat end
     | Ctrm_project _ as ctrm ->
 	Apat_ref (build_apath ctrm)
+    | Ctrm_apply (loc, Ctrm_apply (_, op, cx), cy)
+	    when ctrm_eq_ref idr_2b_as op ->
+	Apat_as (loc, build_avar cx, build_apat cy)
     | Ctrm_apply (loc, cx, cy) ->
 	let ax = build_apat ~adecmap ~fpos:true cx in
 	let ay = build_apat ~adecmap cy in

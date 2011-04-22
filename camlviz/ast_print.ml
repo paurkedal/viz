@@ -80,6 +80,11 @@ let rec print_apat fo p = function
 	Fo.space fo;
 	print_apat fo (p_apply + 1) y;
 	if p > p_apply then Fo.put fo `Operator ")"
+    | Apat_as (_, v, x) ->
+	print_avar fo v;
+	Fo.put fo `Operator "@(";
+	print_apat fo p_min x;
+	Fo.put fo `Operator ")"
     | Apat_intype (_, t, x) ->
 	if p > p_colon then Fo.put fo `Operator "(";
 	print_apat fo (p_colon + 1) x;

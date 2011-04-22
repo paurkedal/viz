@@ -90,6 +90,7 @@ let rec apat_loc = function
     | Apat_ref p -> apath_loc p
     | Apat_uvar x -> avar_loc x
     | Apat_apply (loc, _, _) -> loc
+    | Apat_as (loc, _, _) -> loc
     | Apat_intype (loc, _, _) -> loc
 
 let rec asig_loc = function

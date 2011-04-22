@@ -172,6 +172,10 @@ let rec emit_apat = function
 	let ox, ocond_opt = emit_apat x ocond_opt in
 	let oy, ocond_opt = emit_apat y ocond_opt in
 	<:patt< $ox$ $oy$ >>, ocond_opt
+    | Apat_as (loc, v, x) -> fun ocond_opt ->
+	let _loc = p4loc loc in
+	let ox, ocond_opt = emit_apat x ocond_opt in
+	<:patt< ($ox$ as $lid: avar_to_lid v$) >>, ocond_opt
     | Apat_intype (loc, t, x) -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat x ocond_opt in
