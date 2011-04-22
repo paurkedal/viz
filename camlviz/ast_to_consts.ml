@@ -42,7 +42,7 @@ let rec output_const och state v t cx =
 	| "float" -> fprintf och "printf(\"%%lg\", %s)" cx
 	| "nativeint" | "size" | "offset" ->
 	    fprintf och "printf(\"%%ldn\", %s)" cx
-	| "utf8" -> fprintf och "fputq(%s, stdout)" cx
+	| "UTF8string" -> fprintf och "fputq(%s, stdout)" cx
 	  (* TODO: Fix string quoting. *)
 	| _ -> errf_at (atyp_loc t) "Unsupported type %s for C constant." tn
 	end;

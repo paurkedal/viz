@@ -569,9 +569,15 @@ let pop_virtual_token state =
     let (loc, tok, lk) = state.st_holding in
     let loc_lb = Location.lbound loc in
     if not lk.Opkind.lk_introducer then begin
-	if lk.Opkind.lk_connective then
+	if not lk.Opkind.lk_connective then pop_manifest_token state else
+	match state.st_pending with
+	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
+	    state.st_pending <- Pending_BEGIN :: pending;
+	    if dlog_en then dlogf ~loc "END[col = %d]" col;
+	    (loc, Grammar.END)
+	| _ ->
 	    state.st_pending <- Pending_BEGIN :: state.st_pending;
-	pop_manifest_token state
+	    pop_manifest_token state
     end else
 	match state.st_pending with
 	| Pending_BEGIN :: pending ->

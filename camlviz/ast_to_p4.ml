@@ -261,8 +261,8 @@ let rec emit_aval = function
 		>>
 	    | x -> errf_at (aval_loc x) "Unsupported trace argument." in
 	let xs = Ast_utils.extract_aval_o2left_idr idr_2o_comma x in
-	let os = List.fold (fun x os -> <:expr< [ $mkarg x$ :: $os$ ] >>) xs
-			   <:expr< [] >> in
+	let os = List.fold (fun x os -> <:expr< [ $mkarg x$ :: $os$ ] >>)
+			   (List.rev xs) <:expr< [] >> in
 	<:expr<
 	    begin
 		__trace (__string_of_utf8 $str: Location.to_string loc$) $os$;

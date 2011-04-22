@@ -166,6 +166,7 @@ signature_block:
 signature_clause_seq:
     /* empty */ { [] }
   | signature_clause_seq signature_clause { $2 :: $1 }
+  | signature_clause_seq SKIP signature_clause_seq ENDSKIP { $1 }
   ;
 structure_block:
     BEGIN structure_clause_seq END {

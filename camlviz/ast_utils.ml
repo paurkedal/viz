@@ -309,6 +309,6 @@ let extract_backtrack_guard x =
     let guard = List.combine
 	begin fun x y ->
 	    let loc = Location.span [aval_loc x; aval_loc y;] in
-	    aval_apply2i loc idr_2o_and x y
+	    aval_apply2i loc idr_2o_or x y
 	end guards in
     (Some guard, y)
