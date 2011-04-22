@@ -72,6 +72,14 @@ let fold_formal_args f (trm, accu) =
     if count_formal_args trm = 0 then (trm, accu) else
     fold_ctrm_args f (trm, accu)
 
+let rec fold_functor_args f (trm, accu) =
+    match trm with
+    | Ctrm_apply (loc, Ctrm_apply (_, op, trm'), arg)
+	    when ctrm_eq_ref idr_2b_dotparen op ->
+	fold_functor_args f (trm', f arg accu)
+    | _ ->
+	    (trm, accu)
+
 let is_injname cidr =
     cidr_is_2o_comma cidr
 

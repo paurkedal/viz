@@ -39,6 +39,7 @@ val count_formal_args : ctrm -> int
     Returns 0 when applied to a constructor. *)
 
 val fold_formal_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
+val fold_functor_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
 
 val is_formal : ctrm -> bool
 

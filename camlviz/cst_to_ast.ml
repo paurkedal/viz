@@ -33,9 +33,9 @@ let apath_to_avar = function
     | Apath ([], av) -> av
     | ap -> errf_at (apath_loc ap) "Expecting an unqualified name."
 
-let build_avar = function
+let build_avar ?(error_message = "Expecting an identifer") = function
     | Ctrm_ref (cidr, idrhint) -> cidr_to_avar cidr
-    | ctrm -> errf_at (ctrm_loc ctrm) "Expecting an identifier."
+    | ctrm -> errf_at (ctrm_loc ctrm) "%s" error_message
 
 let build_apath ctrm =
     let rec loop avs = function
@@ -571,7 +571,8 @@ and build_amod = function
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), cx), cxsig)
 	    when cidr_is_2o_colon op ->
 	Amod_coercion (loc, build_amod cx, build_asig cxsig)
-    | Ctrm_apply (loc, cf, cx) ->
+    | Ctrm_apply (loc, Ctrm_apply (_, op, cf), cx)
+	    when ctrm_eq_ref idr_2b_dotparen op ->
 	Amod_apply (loc, build_amod cf, build_amod cx)
     | ctrm -> errf_at (ctrm_loc ctrm) "Invalid module expression."
 
@@ -607,8 +608,10 @@ and build_adefs adecmap adefs = function
 	let cpat, cmod = Cst_utils.move_typing (cpat, cmod) in
 	let amod = build_amod cmod in
 	let cpat, amod =
-	    Cst_utils.fold_formal_args wrap_amod_lambda (cpat, amod) in
-	let adef = Adef_in (loc, build_avar cpat, amod) in
+	    Cst_utils.fold_functor_args wrap_amod_lambda (cpat, amod) in
+	let error_message =
+	    "Expecting a structure name or a formal functor application." in
+	let adef = Adef_in (loc, build_avar ~error_message cpat, amod) in
 	build_adefs adecmap (adef :: adefs) xs
     | Cdec_sig (loc, cidr) :: xs ->
 	errf_at loc "Missing signature definition."
