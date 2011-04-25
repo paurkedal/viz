@@ -69,7 +69,7 @@ let cpred_failure loc msg_opt =
 
 %token <Leaf_types.abi> OPEN
 %token INCLUDE USE
-%token IN
+%token DOT_AT IN
 %token SIG
 %token <Leaf_types.abi> TYPE
 %token <Leaf_types.abi> INJ
@@ -222,9 +222,22 @@ inj_seq:
     { Cdef_inj (mkloc $startpos $endpos, $2, $3) :: $1 }
   ;
 
+structure_pattern:
+    expr { $1 }
+  | structure_pattern DOT_AT identifier signature_block
+    {
+	let loc = mkloc $startpos $endpos in
+	let loc_at = mkloc $startpos($2) $endpos($2) in
+	let loc_argdec = mkloc $startpos($3) $endpos($4) in
+	let dotparen = Ctrm_ref (Cidr (loc_at, idr_2b_dotparen), Ih_none) in
+	let colon = Ctrm_ref (Cidr (loc_at, idr_2o_colon), Ih_none) in
+	let argdec = apply2 loc_argdec colon (Ctrm_ref ($3, Ih_none)) $4 in
+	apply2 loc dotparen $1 argdec
+    }
+  ;
+
 type_equation: expr {$1};
 term_pattern: expr {$1};
-structure_pattern: expr {$1};
 term: expr {$1};
 
 

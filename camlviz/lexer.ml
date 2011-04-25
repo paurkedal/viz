@@ -121,6 +121,7 @@ let initial_intro_keywords = [
     "#?ffoc #}", Grammar.ENDSKIP;
 ]
 let initial_continued_keywords = [
+    ".at",	Grammar.DOT_AT;
     "where",	Grammar.WHERE;
     "with",	Grammar.WITH;
     "what",	Grammar.WHAT None;
