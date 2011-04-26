@@ -15,25 +15,48 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
+
+# Z.  FFI Utility Functions
+#
+# Note:  This is not properly organized, and is subject to heavy changes.
+
 open prereq
 open action
 open memory
+open:c "string.h"
 use cabi.stub_prefix "ffoc_"
 
-val unsafe_ptr_array_of_function :
+val malloc_ptrarray_init :
     int → (int → action φ (ptr φ)) → action φ (ptr φ)
 
-val unsafe_ptr_array_of_array : array α → action φ (ptr φ)
+val malloc_ptrarray_of_array : array α → action φ (ptr φ)
 
-let! unsafe_ptr_array_of_function n f
+let unsafe_ptrarray_load i be unsafe_load_ptr (scale_size i sizeof_ptr)
+let unsafe_ptrarray_store i be unsafe_store_ptr (scale_size i sizeof_ptr)
+
+let! malloc_ptrarray_init n f
     let p do unsafe_malloc (scale_size n sizeof_ptr)
     let! loop i
 	when i < n let x do f i
-		   do unsafe_store_ptr (scale_size i sizeof_ptr) p x
+		   do unsafe_ptrarray_store i p x
 		   do loop (i + 1)
     do loop 0
     be p
 
-let unsafe_ptr_array_of_array xa
-    be unsafe_ptr_array_of_function (data.array.length xa)
+let malloc_ptrarray_of_array xa
+    be malloc_ptrarray_init (data.array.length xa)
 		(i ↦ unsafe_custom_load_ptr (data.array.get i xa))
+
+let! unsafe_ptrarray_free_elements p n
+    if n = 0 be ()
+    do unsafe_ptrarray_load (n - 1) p >>= unsafe_free
+    do unsafe_ptrarray_free_elements p (n - 1)
+
+val:c strcpy_UTF8string : ptr φ → UTF8string → action φ unit := "strcpy"
+
+let! malloc_strcpy_string s
+    let us be data.UTF8string.of_string s
+    let n be data.UTF8string.length us
+    let p do unsafe_malloc (nativeint.of_int (n + 1))
+    do strcpy_UTF8string p us
+    be p

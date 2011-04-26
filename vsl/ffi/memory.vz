@@ -30,6 +30,7 @@ use cabi.stub_prefix "ffoc_"
 type offset := nativeint
 type size := nativeint
 
+let null_offset be nativeint.of_int 0
 let scale_size n size be nativeint.mul (nativeint.of_int n) size
 
 
@@ -108,3 +109,9 @@ val:cs unsafe_store_int64 : offset → ptr φ → int64 → action φ unit
 
 val:c unsafe_malloc : size → action φ (ptr φ) := "malloc"
 val:c unsafe_free : ptr φ → action φ unit := "free"
+
+val unsafe_lalloc : size → (ptr φ → action φ α) → action φ α
+let unsafe_lalloc size f
+    be unsafe_malloc size >>= p ↦ f p >>= r ↦ unsafe_free p >> return r
+
+val:c unsafe_copy_cstring : ptr φ → string#v := "ffoc_copy_ustring"

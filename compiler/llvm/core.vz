@@ -103,21 +103,21 @@ let create_module ctx name be _create_module name ctx
 # Z.Z.  Types
 
 type lkind
-inj:c lkind_void	: lkind := "LLVMVoidTypeKind"
-inj:c lkind_float	: lkind := "LLVMFloatTypeKind"
-inj:c lkind_double	: lkind := "LLVMDoubleTypeKind"
-inj:c lkind_x86_fp80	: lkind := "LLVMX86_FP80TypeKind"
-inj:c lkind_fp128	: lkind := "LLVMFP128TypeKind"
-inj:c lkind_ppc_fp128	: lkind := "LLVMPPC_FP128TypeKind"
-inj:c lkind_label	: lkind := "LLVMLabelTypeKind"
-inj:c lkind_integer	: lkind := "LLVMIntegerTypeKind"
-inj:c lkind_function	: lkind := "LLVMFunctionTypeKind"
-inj:c lkind_struct	: lkind := "LLVMStructTypeKind"
-inj:c lkind_array	: lkind := "LLVMArrayTypeKind"
-inj:c lkind_pointer	: lkind := "LLVMPointerTypeKind"
-inj:c lkind_opaque	: lkind := "LLVMOpaqueTypeKind"
-inj:c lkind_vector	: lkind := "LLVMVectorTypeKind"
-inj:c lkind_metadata	: lkind := "LLVMMetadataTypeKind"
+ inj:c lkind_void	:= "LLVMVoidTypeKind"
+ inj:c lkind_float	:= "LLVMFloatTypeKind"
+ inj:c lkind_double	:= "LLVMDoubleTypeKind"
+ inj:c lkind_x86_fp80	:= "LLVMX86_FP80TypeKind"
+ inj:c lkind_fp128	:= "LLVMFP128TypeKind"
+ inj:c lkind_ppc_fp128	:= "LLVMPPC_FP128TypeKind"
+ inj:c lkind_label	:= "LLVMLabelTypeKind"
+ inj:c lkind_integer	:= "LLVMIntegerTypeKind"
+ inj:c lkind_function	:= "LLVMFunctionTypeKind"
+ inj:c lkind_struct	:= "LLVMStructTypeKind"
+ inj:c lkind_array	:= "LLVMArrayTypeKind"
+ inj:c lkind_pointer	:= "LLVMPointerTypeKind"
+ inj:c lkind_opaque	:= "LLVMOpaqueTypeKind"
+ inj:c lkind_vector	:= "LLVMVectorTypeKind"
+ inj:c lkind_metadata	:= "LLVMMetadataTypeKind"
 
 type:c ltype := "LLVMTypeRef"
 
@@ -251,7 +251,7 @@ val function_type : ltype → array ltype → ltype
 val:c _function_type : ltype → ptr φ → int → bool → ltype
     := "LLVMFunctionType"
 let function_type rt ats be __unsafe_run_action what!
-    let cta do ffi.utils.unsafe_ptr_array_of_array ats
+    let cta do ffi.utils.malloc_ptrarray_of_array ats
     let r be _function_type rt cta (array.length ats) false
     do unsafe_free cta
     be r
@@ -380,7 +380,7 @@ val:c build_unreachable : builder → action φ value := "LLVMBuildUnreachable"
 val:c _build_aggregate_ret : builder → ptr φ → int → action φ value
     := "LLVMBuildAggregateRet"
 let! build_aggregate_ret b xa
-    let ca do ffi.utils.unsafe_ptr_array_of_array xa
+    let ca do ffi.utils.malloc_ptrarray_of_array xa
     let r do _build_aggregate_ret b ca (array.length xa)
     do unsafe_free ca
     be r
@@ -389,7 +389,7 @@ val:c _build_invoke :
 	builder → value → ptr φ → int → block → block → string → action φ value
     := "LLVMBuildInvoke"
 let! build_invoke b f args bb unwind_bb name
-    let cargs do ffi.utils.unsafe_ptr_array_of_array args
+    let cargs do ffi.utils.malloc_ptrarray_of_array args
     let r do _build_invoke b f cargs (array.length args) bb unwind_bb name
     do unsafe_free cargs
     be r
@@ -497,7 +497,7 @@ val:c build_select : builder → value → value → value → string → action
 val:c _build_call : builder → value → ptr φ → int → string → action φ value
     := "LLVMBuildCall"
 let! build_call b f args name
-    let cargs do ffi.utils.unsafe_ptr_array_of_array args
+    let cargs do ffi.utils.malloc_ptrarray_of_array args
     let r do _build_call b f cargs (array.length args) name
     do unsafe_free cargs
     be r
@@ -506,9 +506,9 @@ val:c _add_incoming : value → ptr φ → ptr φ → int → action φ unit
     := "LLVMAddIncoming"
 let! add_incoming phi incoming
     let n be array.length incoming
-    let cva do ffi.utils.unsafe_ptr_array_of_function n
+    let cva do ffi.utils.malloc_ptrarray_init n
 		(i ↦ unsafe_custom_load_ptr (fst (array.get i incoming)))
-    let cba do ffi.utils.unsafe_ptr_array_of_function n
+    let cba do ffi.utils.malloc_ptrarray_init n
 		(i ↦ unsafe_custom_load_ptr (snd (array.get i incoming)))
     do _add_incoming phi cva cba n
 

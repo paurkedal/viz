@@ -1,6 +1,7 @@
 vsl/compat/caml_support.o
 vsl/ffi/memory_ocaml.o
 vsl/ffi/memory_FFIS.o
+vsl/ffi/utils_FFIS.o
 vsl/system/posix/stdlib_FFIS.o
 vsl/system/posix/unistd_FFIS.o
 compiler/llvm/core_FFIS.o
