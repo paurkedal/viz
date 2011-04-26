@@ -1,0 +1,283 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open collection_sigs
+open action
+
+sig S
+    include an_ordered_map.[elt α = α]
+
+    val is_valid : t α → bool
+    val dump_tree : (index → α → io unit) → t α → io unit
+
+in make.(I : a_total_order) : S.[index = I.t] include where
+
+# Based on "Balanced search trees made simple" by A. Andersson and on
+# <http://en.wikipedia.org/wiki/AA_tree>, adapted for purity and avoiding some
+# excessive skews and splits.
+
+type index := I.t
+type elt α := α
+
+type t α
+ inj O : t α
+ inj Y : I.t → α → int → t α → t α → t α
+
+type map α := t α
+
+let is_valid
+    at O% be true
+    at Y% k d l tL tR
+	be is_valid tL ∧ is_valid tR
+	 ∧ l = level tL + 1
+	 ∧ l - 1 ≤ level tR ≤ l
+	 ∧ that tR which
+	    at O% be l = 1
+	    at Y% kR dR lR tA tB
+		be l > level tB
+
+let empty be O
+
+let is_empty be O% ↦ true; _ ↦ false
+
+let singleton k d be Y k d 1 O O
+
+let find k'
+    at O% be none
+    at Y k d l tL tR be I.cmp k' k @> what
+	at tprec% be find k' tL
+	at tsucc% be find k' tR
+	at tcoin% be some d
+
+let level at O% be 0
+	  at Y _ _ l _ _ be l
+
+#         *       *               *        *             T     | l + 1
+#      L<-T  =>   L->T   or    L<-T->R =>  L->T->R =>  L   R   | l
+#     A B  R     A  B R       A B         A  B        A B      | l - 1
+let _skew
+    at Y k d l (Y kL dL lL tA tB) tR if lL = l
+	be _split (Y kL dL lL tA (Y k d l tB tR))
+    at t be t
+
+#      *              R     | l + 1
+#      T->R->X  =>  T   X   | l
+#     A  B         A B      | l - 1
+let _split
+    at Y k d l tA (Y kR dR lR tB tX) if l = level tX
+	assert l = lR  # otherwise use _split_after_remove
+	be Y kR dR (l + 1) (Y k d l tA tB) tX
+    at t be t
+
+# A variant of _split where the R node may already be at level (l + 1):
+#                   *,->R        ,-R-.   | l + 1
+#     as above or   T  B X  =>  T->B  X  | l
+#                  A           A         | l - 1
+# In this extra case, B may already have a horizontal link, so call _split,
+# which may increase the level of T, so call _skew on the final result.
+let _split_after_remove
+    at Y k d l tA (Y kR dR lR tB tX)
+	if l < lR be _skew (Y kR dR lR (_split (Y k d l tA tB)) tX)
+	if l = level tX be Y kR dR (l + 1) (Y k d l tA tB) tX
+    at t be t
+
+# A variant of _skew where the left-hand node may have a horizontal link.
+#         *       *                   *       *            | l + 1
+#      L<-T  =>   L->T    or  [L->B]<-T   =>  L->[B<-T]    | l
+#     A B  R     A  B R       A        R     A        R    | l - 1
+# In the latter case, we need to _skew the [B<-T].  One time is enough since B
+# cannot have a horizontal link due to the initial.  The result may increase
+# the level, so _split the final result.
+let _skew_after_remove
+    at Y k d l (Y kL dL lL tA tB) tR if lL = l
+	be _split (Y kL dL lL tA (_skew (Y k d l tB tR)))
+    at t be t
+
+let add k' d'
+    at O% be Y k' d' 1 O O
+    at Y k d l tL tR
+	be I.cmp k' k @> what
+	at tprec% be _skew (Y k d l (add k' d' tL) tR)
+	at tsucc% be _split (Y k d l tL (add k' d' tR))
+	at tcoin% be Y k' d' l tL tR
+
+let _postrmL_Y k d l tL tR
+  # Reconstruct after removing one element from tL.  The other arguments are
+  # the original values from the Y-node.
+    if l = level tL + 1 be Y k d l tL tR
+    be _split_after_remove (Y k d (l - 1) tL tR)
+
+let _postrmR_Y k d l tL tR
+ ## Reconstruct after removing one element from tR.  The other arguments are
+ ## the original values from the Y-node.
+    if l ≤ level tR + 1 be Y k d l tL tR
+    be _skew_after_remove (Y k d (l - 1) tL tR)
+
+let tagged_pop_min
+    at O% be none
+    at Y k d _ O% tR be some (k, d, tR)
+    at Y k d l tL tR
+	be option.map that (tagged_pop_min tL) which
+	at (kX, dX, tL') be (kX, dX, _postrmL_Y k d l tL' tR)
+
+let tagged_pop_max
+    at O% be none
+    at Y k d _ tL O% be some (k, d, tL)
+    at Y k d l tL tR
+	be option.map that (tagged_pop_max tR) which
+	at (kX, dX, tR') be (kX, dX, _postrmR_Y k d l tL tR')
+
+let pop k'
+    at O% be none
+    at Y k d l tL tR be I.cmp k' k @> what
+	at tprec% be option.map that (pop k' tL) which
+		  at (dX, tL') be (dX, _postrmL_Y k d l tL' tR)
+	at tsucc% be option.map that (pop k' tR) which
+		  at (dX, tR') be (dX, _postrmR_Y k d l tL tR')
+	at tcoin%
+	    be tagged_pop_max tL @> what
+	    at some (kP, dP, tL')
+		be some (d, _postrmL_Y kP dP l tL' tR)
+	    at none%
+		be option.map that (tagged_pop_min tR) which
+		at (kS, dS, tR') be (d, _postrmR_Y kS dS l tL tR')
+
+let remove k' t be pop k' t @> (none% ↦ t; some (_, t) ↦ t)
+
+let fold f
+    at O% be ident
+    at Y _ d _ tL tR be fold f tL *> f d *> fold f tR
+
+let foldr f
+    at O% be ident
+    at Y _ d _ tL tR be foldr f tR *> f d *> foldr f tL
+
+let for_all f
+    at O% be true
+    at Y _ d _ tL tR be f d ∧ for_all f tL ∧ for_all f tR
+
+let for_some f
+    at O% be false
+    at Y _ d _ tL tR be f d ∨ for_some f tL ∨ for_some f tR
+
+let iter f
+    at O% be return ()
+    at Y _ d _ tL tR be iter f tL >> f d >> iter f tR
+
+let iterr f
+    at O% be return ()
+    at Y _ d _ tL tR be iterr f tR >> f d >> iterr f tL
+
+in tagged
+    type elt α := index × α
+    type t α := map α
+
+    let fold f
+	at O% be ident
+	at Y k d _ tL tR be fold f tL *> f (k, d) *> fold f tR
+
+    let foldr f
+	at O% be ident
+	at Y k d _ tL tR be foldr f tR *> f (k, d) *> foldr f tL
+
+    let for_all f
+	at O% be true
+	at Y k d _ tL tR be f (k, d) ∧ for_all f tL ∧ for_all f tR
+
+    let for_some f
+	at O% be false
+	at Y k d _ tL tR be f (k, d) ∨ for_some f tL ∨ for_some f tR
+
+    let iter f
+	at O% be return ()
+	at Y k d _ tL tR be iter f tL >> f (k, d) >> iter f tR
+
+    let iterr f
+	at O% be return ()
+	at Y k d _ tL tR be iterr f tR >> f (k, d) >> iterr f tL
+
+    let min
+	at O% be none
+	at Y k d _ O% tR be some (k, d)
+	at Y k d _ tL tR be min tL
+
+    let max
+	at O% be none
+	at Y k d _ tL O% be some (k, d)
+	at Y k d _ tL tR be max tR
+
+    let pop_min be tagged_pop_min
+    let pop_max be tagged_pop_max
+
+in stripped
+    type elt α := index
+    type t α := map α
+
+    let fold f
+	at O% be ident
+	at Y k _ _ tL tR be fold f tL *> f k *> fold f tR
+
+    let foldr f
+	at O% be ident
+	at Y k _ _ tL tR be foldr f tR *> f k *> foldr f tL
+
+    let for_all f
+	at O% be true
+	at Y k _ _ tL tR be f k ∧ for_all f tL ∧ for_all f tR
+
+    let for_some f
+	at O% be false
+	at Y k _ _ tL tR be f k ∨ for_some f tL ∨ for_some f tR
+
+    let iter f
+	at O% be return ()
+	at Y k _ _ tL tR be iter f tL >> f k >> iter f tR
+
+    let iterr f
+	at O% be return ()
+	at Y k _ _ tL tR be iterr f tR >> f k >> iterr f tL
+
+    let min t be option.map fst (tagged.min t)
+    let max t be option.map fst (tagged.max t)
+
+    let pop_min t
+	be option.map that (tagged_pop_min t) which
+	at (k, d, t) be (k, t)
+
+    let pop_max t
+	be option.map that (tagged_pop_max t) which
+	at (k, d, t) be (k, t)
+
+let map f
+    at O% be O
+    at Y k d l tL tR be Y k (f d) l (map f tL) (map f tR)
+
+let mapi f
+    at O% be O
+    at Y k d l tL tR be Y k (f k d) l (mapi f tL) (mapi f tR)
+
+let! dump_tree' dump_elt ind
+    at O% do print (string.tile ind "  ") >> print "0 {}\n"
+    at Y k d n tL tR
+	do dump_tree' dump_elt (ind + 1) tL
+	do print (string.tile ind "  ")
+	do print (int.show n) >> print " {"
+	do dump_elt k d >> print "}\n"
+	do dump_tree' dump_elt (ind + 1) tR
+
+let dump_tree dump_elt be dump_tree' dump_elt 0

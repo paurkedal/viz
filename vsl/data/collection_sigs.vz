@@ -1,0 +1,164 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Z.  Collection Signatures
+
+open prereq
+
+
+sig a_total_order
+    type t
+
+    val cmp : t → t → torder
+
+
+# Z.Z.  A Collection
+
+sig a_collection
+    type t α
+    type elt α
+
+
+    # Z.Z.Z.  Iteration and Transformations
+
+    val fold : (elt α → β → β) → t α → β → β
+
+    val foldr : (elt α → β → β) → t α → β → β
+
+    val for_all : (elt α → bool) → t α → bool
+
+    val for_some : (elt α → bool) → t α → bool
+
+    val iter : (elt α → action φ unit) → t α → action φ unit
+
+    val iterr : (elt α → action φ unit) → t α → action φ unit
+
+
+# Z.Z.  An Indexed Family
+
+sig an_indexed_family
+    include a_collection
+
+    type index
+    in tagged include a_collection.[t α = t α, elt α = index × elt α]
+    in stripped include a_collection.[t α = t α, elt α = index]
+
+
+# Z.Z.  A Set
+
+sig a_set
+    include a_collection
+
+
+    # Z.Z.Z.  Building or Querying
+
+    val empty : t α
+
+    val is_empty : t α → bool
+
+    val singleton : elt α → t α
+
+    val contains : elt α → bool
+
+    val add : elt α → t α → t α
+
+    val remove : elt α → t α → t α
+
+    val pop : elt α → t α → option (t α)
+
+
+    # Z.Z.Z.  Transformations
+
+    val map : (elt α → elt β) → t α → t β
+
+    val filter : (elt α → bool) → t α → t α
+
+    val filter_map : (elt α → option (elt β)) → t α → t β
+
+
+    # Z.Z.Z.  Binary Operatiors
+
+    val union : t α → t α → t α
+
+    val isecn : t α → t α → t α
+
+    val complement : t α → t α → t α
+
+
+# Z.Z.  A Map
+
+sig a_map
+    include an_indexed_family
+
+
+    # Z.Z.Z.  Building or Querying
+
+    val empty : t α
+
+    val is_empty : t α → bool
+
+    val singleton : index → elt α → t α
+
+    val find : index → t α → option α
+
+    val add : index → elt α → t α → t α
+
+    val remove : index → t α → t α
+
+    val pop : index → t α → option (elt α × t α)
+
+
+    # Z.Z.Z.  Transformations
+
+    val map : (elt α → elt β) → t α → t β
+
+    val mapi : (index → elt α → elt β) → t α → t β
+
+    # TODO: filter, union, isecn, complement
+
+
+# Z.Z.  An Ordered Map
+
+sig an_ordered_map
+    include a_map
+
+    #?ffoc {#
+
+    in tagged
+	val min : t α → option (index × elt α)
+
+	val max : t α → option (index × elt α)
+
+	val pop_min : t α → option (index × elt α × t α)
+
+	val pop_max : t α → option (index × elt α × t α)
+
+    in stripped
+	val min : t α → option index
+
+	val max : t α → option index
+
+	val pop_min : t α → option (index × t α)
+
+	val pop_max : t α → option (index × t α)
+
+    #?ffoc #}
+    # FIXME: Camlviz can't handle the above signature extension, so alias the
+    # most important functions for the time being.
+    val tagged_pop_min : t α → option (index × elt α × t α)
+    val tagged_pop_max : t α → option (index × elt α × t α)

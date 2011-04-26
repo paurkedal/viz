@@ -1,0 +1,56 @@
+open pervasive
+open action
+
+let! random n
+    let i do system.posix.stdlib.lrand48
+    be (int32.as_int (int32.rem i (int32.of_int n)))
+
+in M
+    include data.AAmap.make.(data.int)
+
+    let! dump_s t
+	do dump_tree (k ↦ d ↦ print (int.show k) >> print " ↦ " >> print d) t
+	do print "\n"
+	assert is_valid t
+	be ()
+    let! dump_i t
+	do dump_tree (k ↦ d ↦ print (int.show k) >> print " ↦ " >>
+			      print (int.show d)) t
+	do print "\n" >> flush stdout
+	do __unsafe_action what
+	    at () assert is_valid t
+		  be ()
+	be ()
+
+    let! add_random n m t
+	if n = 0 be t
+	let i do random m
+	do add_random (n - 1) m (add i (- i) t)
+
+    let! remove_random n m t
+	if n = 0 be t
+	let i do random m
+	do remove_random (n - 1) m (remove i t)
+
+let main
+    when false
+	do M.dump_s M.empty
+	do M.dump_s (M.singleton 0 "a")
+	do M.dump_s (M.add 0 "a" M.empty)
+	do M.dump_s (M.add 1 "b" (M.singleton 0 "a"))
+    let! loop nR
+	if nR = 0 be ()
+	let n do random 100
+	let m do random 100
+	let t do M.add_random (n + 1) (m + 1) M.empty
+	assert M.is_valid t
+	when ¬ M.is_empty t
+	    let (i, d, t') be option.get (M.tagged_pop_min t)
+	    assert M.is_valid t'
+	    let (i, d, t') be option.get (M.tagged_pop_max t)
+	    assert M.is_valid t'
+	    let t' do M.remove_random (n + 1) (m + 1) t
+	    assert M.is_valid t'
+	    be ()
+	do loop (nR - 1)
+    do loop 2000
