@@ -16,6 +16,7 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
+open action
 
 type t α := option α
 
@@ -26,6 +27,10 @@ val for_all : (α → bool) → option α → bool
 val for_some : (α → bool) → option α → bool
 val filter : (α → bool) → option α → option α
 val flatten : option (option α) → option α
+
+let get
+    at none% fail "option.get none%"
+    at some x be x
 
 let default x
     at none% be x
@@ -45,6 +50,10 @@ let for_all f
 
 let for_some f
     at none% be false
+    at some x be f x
+
+let iter f
+    at none% be return ()
     at some x be f x
 
 let filter f

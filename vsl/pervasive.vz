@@ -45,6 +45,7 @@ in char include data.char
 in int include data.int
 in string include data.string
 
+in option include data.option
 in list include data.list
 in array include data.array
 
