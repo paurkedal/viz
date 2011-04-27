@@ -17,6 +17,11 @@
 
 #?ffoc include compat.ocaml_prereq
 
+in basic_sigs
+    sig a_total_order
+	type t
+	val cmp : t → t → torder
+
 in combinators
     let ident x be x
     let konst x y be x
@@ -59,6 +64,7 @@ in action
 # This is for our own use, as we typically open prereq on the top of each
 # library structure.  The pervasive structure does a similar inclusion for
 # client code.
+include basic_sigs
 include combinators
 include misc
 include bool_ops

@@ -21,15 +21,29 @@
 open prereq
 
 
-sig a_total_order
-    type t
-
-    val cmp : t → t → torder
-
-
 # Z.Z.  A Collection
 
 sig a_collection
+    type t
+    type elt
+
+
+    # Z.Z.Z.  Iteration and Transformations
+
+    val fold : (elt → β → β) → t → β → β
+
+    val foldr : (elt → β → β) → t → β → β
+
+    val for_all : (elt → bool) → t → bool
+
+    val for_some : (elt → bool) → t → bool
+
+    val iter : (elt → action φ unit) → t → action φ unit
+
+    val iterr : (elt → action φ unit) → t → action φ unit
+
+
+sig a_collection'
     type t α
     type elt α
 
@@ -51,12 +65,12 @@ sig a_collection
 
 # Z.Z.  An Indexed Family
 
-sig an_indexed_family
-    include a_collection
+sig an_indexed_family'
+    include a_collection'
 
     type index
-    in tagged include a_collection.[t α = t α, elt α = index × elt α]
-    in stripped include a_collection.[t α = t α, elt α = index]
+    in tagged include a_collection'.[t α = t α, elt α = index × elt α]
+    in stripped include a_collection'.[t α = t α, elt α = index]
 
 
 # Z.Z.  A Set
@@ -67,43 +81,43 @@ sig a_set
 
     # Z.Z.Z.  Building or Querying
 
-    val empty : t α
+    val empty : t
 
-    val is_empty : t α → bool
+    val is_empty : t → bool
 
-    val singleton : elt α → t α
+    val singleton : elt → t
 
-    val contains : elt α → bool
+    val contains : elt → bool
 
-    val add : elt α → t α → t α
+    val add : elt → t → t
 
-    val remove : elt α → t α → t α
+    val remove : elt → t → t
 
-    val pop : elt α → t α → option (t α)
+    val pop : elt → t → option t
 
 
     # Z.Z.Z.  Transformations
 
-    val map : (elt α → elt β) → t α → t β
+    val map : (elt → elt) → t → t
 
-    val filter : (elt α → bool) → t α → t α
+    val filter : (elt → bool) → t → t
 
-    val filter_map : (elt α → option (elt β)) → t α → t β
+    val filter_map : (elt → option elt) → t → t
 
 
     # Z.Z.Z.  Binary Operatiors
 
-    val union : t α → t α → t α
+    val union : t → t → t
 
-    val isecn : t α → t α → t α
+    val isecn : t → t → t
 
-    val complement : t α → t α → t α
+    val complement : t → t → t
 
 
 # Z.Z.  A Map
 
-sig a_map
-    include an_indexed_family
+sig a_map'
+    include an_indexed_family'
 
 
     # Z.Z.Z.  Building or Querying
@@ -134,8 +148,8 @@ sig a_map
 
 # Z.Z.  An Ordered Map
 
-sig an_ordered_map
-    include a_map
+sig an_ordered_map'
+    include a_map'
 
     #?ffoc {#
 

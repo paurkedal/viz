@@ -35,6 +35,7 @@ val 2'@> : α → (α → β) → β
  ## (x @> f ≡ f x) is the image of (x) under (f).  I.e. (@>) is a reversed
  ## low-precedence application operator.  It can be pronounced "under".
 
+include prereq.basic_sigs
 include prereq.combinators
 include prereq.misc
 include prereq.int_ops
@@ -48,6 +49,7 @@ in string include data.string
 in option include data.option
 in list include data.list
 in array include data.array
+in map.(X : a_total_order) include data.AAmap.make.(X)
 
 in action include prereq.action
 val print : string → io unit

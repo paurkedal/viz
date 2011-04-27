@@ -20,7 +20,7 @@ open collection_sigs
 open action
 
 sig S
-    include an_ordered_map.[elt α = α]
+    include an_ordered_map'.[elt α = α]
 
     val is_valid : t α → bool
     val dump_tree : (index → α → io unit) → t α → io unit
