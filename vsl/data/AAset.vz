@@ -32,6 +32,8 @@ let fold be M.stripped.fold
 let foldr be M.stripped.foldr
 let for_all be M.stripped.for_all
 let for_some be M.stripped.for_some
+let count be M.stripped.count
+let card be M.stripped.card
 let iter be M.stripped.iter
 let iterr be M.stripped.iterr
 
@@ -52,6 +54,8 @@ let map be M._stripped_map
 let filter be M._stripped_filter
 let filter_map be M._stripped_filter_map
 
+let subeq be M._stripped_subeq
+let eq be M._stripped_eq
 let union be M.left_union
 let isecn be M.left_isecn
 let complement be M.complement

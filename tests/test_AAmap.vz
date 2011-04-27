@@ -10,27 +10,44 @@ in M
 
     let! dump_s t
 	do dump_tree (k ↦ d ↦ print (int.show k) >> print " ↦ " >> print d) t
-	do print "\n"
-	assert is_valid t
-	be ()
+	do print "\n" >> flush stdout
     let! dump_i t
 	do dump_tree (k ↦ d ↦ print (int.show k) >> print " ↦ " >>
 			      print (int.show d)) t
 	do print "\n" >> flush stdout
-	do __unsafe_action what
-	    at () assert is_valid t
-		  be ()
-	be ()
 
-    let! add_random n m t
+    let! add_random n m f t
 	if n = 0 be t
 	let i do random m
-	do add_random (n - 1) m (add i (- i) t)
+	do add_random (n - 1) m f (add i (f i) t)
 
     let! remove_random n m t
 	if n = 0 be t
 	let i do random m
 	do remove_random (n - 1) m (remove i t)
+
+    let eq be eq_for int.eq
+    let subeq be subeq_for int.eq
+
+lex R =* =~ ⊆~
+lex A4 ∖
+
+let x ⊆ y be M.subeq x y
+let x =* y be M.eq x y
+let x ⊆~ y be M._stripped_subeq x y
+let x =~ y be M._stripped_eq x y
+let x ∪ y be M.left_union x y
+let x ∩ y be M.left_isecn x y
+let x ∖ y be M.complement x y
+let O be M.empty
+
+let! print_map_i name t
+    do print name >> print " = {"
+    let! show_elt (i, x)
+	when i ≠ 0 do print ", "
+	do print (int.show i) >> print " ↦ " >> print (int.show x)
+    do M.tagged.iter show_elt t
+    do print "}\n" >> flush stdout
 
 let main
     when false
@@ -38,11 +55,12 @@ let main
 	do M.dump_s (M.singleton 0 "a")
 	do M.dump_s (M.add 0 "a" M.empty)
 	do M.dump_s (M.add 1 "b" (M.singleton 0 "a"))
-    let! loop nR
+
+    let! test_unary nR
 	if nR = 0 be ()
 	let n do random 100
 	let m do random 100
-	let t do M.add_random (n + 1) (m + 1) M.empty
+	let t do M.add_random (n + 1) (m + 1) (i ↦ -i) M.empty
 	assert M.is_valid t
 	when ¬ M.is_empty t
 	    let (i, d, t') be option.get (M._tagged_pop_min t)
@@ -52,5 +70,37 @@ let main
 	    let t' do M.remove_random (n + 1) (m + 1) t
 	    assert M.is_valid t'
 	    be ()
-	do loop (nR - 1)
-    do loop 2000
+	do test_unary (nR - 1)
+    do test_unary 2000
+
+    let! test_binary nR
+	if nR = 0 be ()
+	let! mkset i0
+	    let n do random 20
+	    let m do random 20
+	    do M.add_random n (n + 1) (i ↦ i + i0) M.empty
+	let A do mkset 100
+	let B do mkset 200
+	let C do mkset 300
+	assert O ⊆ A
+	assert M.is_empty A ∨ ¬ A ⊆ O
+	assert (A ∪ B) ∪ C =* A ∪ (B ∪ C)
+	assert (A ∩ B) ∩ C =* A ∩ (B ∩ C)
+	assert A ⊆  A ∪ B
+	assert B ⊆~ A ∪ B
+	assert A ∩ B ⊆  A
+	assert A ∩ B ⊆~ B
+	assert M.is_empty ((A ∩ B) ∖ A)
+	assert M.is_empty (A ∖ A)
+	assert M.is_empty (O ∖ A)
+	assert A ∖ O =* A
+	assert A ∖ (B ∖ A) =* A
+	assert A ∖ (A ∖ B) =* A ∩ B
+	assert B ∖ (B ∖ A) =~ A ∩ B
+	assert C ∖ (A ∩ B) =* (C ∖ A) ∪ (C ∖ B)
+	assert C ∖ (A ∪ B) =* (C ∖ A) ∩ (C ∖ B)
+	assert C ∖ (B ∖ A) =* (C ∩ A) ∪ (C ∖ B)
+	assert (B ∖ A) ∩ C =* (B ∩ C) ∖ A =* B ∩ (C ∖ A)
+	assert (B ∖ A) ∪ C =~ (B ∪ C) ∖ (A ∖ C)
+	do test_binary (nR - 1)
+    do test_binary 1000

@@ -38,6 +38,10 @@ sig a_collection
 
     val for_some : (elt → bool) → t → bool
 
+    val count : (elt → bool) → t → int
+
+    val card : t → int
+
     val iter : (elt → action φ unit) → t → action φ unit
 
     val iterr : (elt → action φ unit) → t → action φ unit
@@ -57,6 +61,10 @@ sig a_collection'
     val for_all : (elt α → bool) → t α → bool
 
     val for_some : (elt α → bool) → t α → bool
+
+    val count : (elt α → bool) → t α → int
+
+    val card : t α → int
 
     val iter : (elt α → action φ unit) → t α → action φ unit
 
@@ -106,6 +114,10 @@ sig a_set
 
 
     # Z.Z.Z.  Binary Operations
+
+    val eq : t → t → bool
+
+    val subeq : t → t → bool
 
     val union : t → t → t
 
@@ -158,6 +170,10 @@ sig a_map'
 
     # Z.Z.Z.  Binary Operations
 
+    val eq_for : (α → β → bool) → t α → t β → bool
+
+    val subeq_for : (α → β → bool) → t α → t β → bool
+
     val left_union : t α → t α → t α
 
     val left_isecn : t α → t α → t α
@@ -174,6 +190,10 @@ sig a_map'
 	val filter_map : (index × elt α → option (index × elt β)) → t α → t β
 
     in stripped
+	val eq : t α → t β → bool
+
+	val subeq : t α → t β → bool
+
 	val map : (index → index) → t α → t β
 
 	val filter : (index → bool) → t α → t α

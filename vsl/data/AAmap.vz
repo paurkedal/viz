@@ -32,6 +32,8 @@ sig S
     val _tagged_map : (index × elt α → index × elt β) → t α → t β
     val _tagged_filter_map : (index × elt α → option (index × elt β)) →
 			     t α → t β
+    val _stripped_eq : t α → t β → bool
+    val _stripped_subeq : t α → t β → bool
     val _stripped_min : t α → option index
     val _stripped_max : t α → option index
     val _stripped_pop_min : t α → option (index × t α)
@@ -234,6 +236,14 @@ let for_some f
     at O% be false
     at Y _ d _ tL tR be f d ∨ for_some f tL ∨ for_some f tR
 
+let count f
+    at O% be 0
+    at Y _ d _ tL tR be (f d ⇒ 1; 0) + count f tL + count f tR
+
+let card
+    at O% be 0
+    at Y _ _ _ tL tR be 1 + card tL + card tR
+
 let iter f
     at O% be return ()
     at Y _ d _ tL tR be iter f tL >> f d >> iter f tR
@@ -270,6 +280,33 @@ let _stripped_filter_map f t
     be _tagged_fold ((k, v) ↦ f k @> (none% ↦ ident; some k' ↦ add k' v))
 		    t empty
 
+let _stripped_subeq
+    at O% at _ be true
+    at Y kt _ _ tL tR
+	at O% be false
+	at u@(Y ku _ _ uL uR) be I.cmp kt ku @> what
+	    at tcoin% be _stripped_subeq tL uL ∧ _stripped_subeq tR uR
+	    at tprec% be contains kt uL
+		       ∧ _stripped_subeq tL uL ∧ _stripped_subeq tR u
+	    at tsucc% be contains kt uR
+		       ∧ _stripped_subeq tL u  ∧ _stripped_subeq tR uR
+
+let subeq_for f
+    at O% at _ be true
+    at Y kt dt _ tL tR
+	at O% be false
+	at u@(Y ku du _ uL uR) be I.cmp kt ku @> what
+	    at tcoin% be f dt du
+		       ∧ subeq_for f tL uL ∧ subeq_for f tR uR
+	    at tprec% be option.for_some (f dt) (find kt uL)
+		       ∧ subeq_for f tL uL ∧ subeq_for f tR u
+	    at tsucc% be option.for_some (f dt) (find kt uR)
+		       ∧ subeq_for f tL u  ∧ subeq_for f tR uR
+
+let _stripped_eq t u be card t = card u ∧ _stripped_subeq t u
+
+let eq_for f t u be card t = card u ∧ subeq_for f t u
+
 let left_union t u
     be _tagged_fold ((k, v) ↦ add k v) t u
 
@@ -296,6 +333,12 @@ in tagged
     let for_some f
 	at O% be false
 	at Y k d _ tL tR be f (k, d) ∨ for_some f tL ∨ for_some f tR
+
+    let count f
+	at O% be 0
+	at Y k d _ tL tR be (f (k, d) ⇒ 1; 0) + count f tL + count f tR
+
+    let card be card%
 
     let iter f
 	at O% be return ()
@@ -335,6 +378,12 @@ in stripped
 	at O% be false
 	at Y k _ _ tL tR be f k ∨ for_some f tL ∨ for_some f tR
 
+    let count f
+	at O% be 0
+	at Y k _ _ tL tR be (f k ⇒ 1; 0) + count f tL + count f tR
+
+    let card be card%
+
     let iter f
 	at O% be return ()
 	at Y k _ _ tL tR be iter f tL >> f k >> iter f tR
@@ -352,6 +401,9 @@ in stripped
     let map be _stripped_map
     let filter be _stripped_filter
     let filter_map be _stripped_filter_map
+
+    let eq be _stripped_eq
+    let subeq be _stripped_subeq
 
 let map f
     at O% be O
