@@ -117,6 +117,8 @@ let initial_intro_keywords = [
     "#?ffoc open", Grammar.OPEN Abi_Viz;
     "#?ffoc include", Grammar.INCLUDE;
     "#?ffoc type", Grammar.TYPE Abi_Viz;
+    "#?ffoc let", Grammar.LET None;
+    "#?ffoc let!", Grammar.LET (Some "");
     "#?ffoc {#", Grammar.SKIP;
     "#?ffoc #}", Grammar.ENDSKIP;
 ]

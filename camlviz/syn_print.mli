@@ -19,5 +19,6 @@
 open Cst_types
 
 val print : Formatter.t -> ctrm -> unit
+val cpred_to_string : cpred -> string
 val ctrm_to_string : ctrm -> string
 val cdef_to_string : cdef -> string

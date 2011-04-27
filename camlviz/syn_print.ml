@@ -267,6 +267,11 @@ and print_defs fo defs =
 let print fo =
     print_inline fo Opkind.p_min
 
+let cpred_to_string cpred =
+    let fo = Formatter.create () in
+    print_predicate fo cpred;
+    Formatter.contents fo
+
 let ctrm_to_string ctrm =
     let fo = Formatter.create () in
     print fo ctrm;
