@@ -20,6 +20,8 @@ open action
 
 type t α := option α
 
+val is_empty : option α → bool
+val get : option α → α
 val default : α → option α → α
 val map : (α → β) → option α → option β
 val fold : (α → β → β) → option α → β → β
@@ -27,6 +29,10 @@ val for_all : (α → bool) → option α → bool
 val for_some : (α → bool) → option α → bool
 val filter : (α → bool) → option α → option α
 val flatten : option (option α) → option α
+
+let is_empty
+    at none% be true
+    at some _ be false
 
 let get
     at none% fail "option.get none%"

@@ -87,7 +87,7 @@ sig a_set
 
     val singleton : elt → t
 
-    val contains : elt → bool
+    val contains : elt → t → bool
 
     val add : elt → t → t
 
@@ -105,13 +105,21 @@ sig a_set
     val filter_map : (elt → option elt) → t → t
 
 
-    # Z.Z.Z.  Binary Operatiors
+    # Z.Z.Z.  Binary Operations
 
     val union : t → t → t
 
     val isecn : t → t → t
 
     val complement : t → t → t
+
+
+sig an_ordered_set
+    include a_set
+
+    val pop_min : t → option (elt × t)
+
+    val pop_max : t → option (elt × t)
 
 
 # Z.Z.  A Map
@@ -128,6 +136,8 @@ sig a_map'
 
     val singleton : index → elt α → t α
 
+    val contains : index → t α → bool
+
     val find : index → t α → option α
 
     val add : index → elt α → t α → t α
@@ -143,7 +153,34 @@ sig a_map'
 
     val mapi : (index → elt α → elt β) → t α → t β
 
-    # TODO: filter, union, isecn, complement
+    val filter : (elt α → bool) → t α → t α
+
+
+    # Z.Z.Z.  Binary Operations
+
+    val left_union : t α → t α → t α
+
+    val left_isecn : t α → t α → t α
+
+    val complement : t α → t α → t α
+
+    #?ffoc {#
+
+    in tagged
+	val map : (index × elt α → index × elt α) → t α → t β
+
+	val filter : (index × elt α → bool) → t α → t α
+
+	val filter_map : (index × elt α → option (index × elt β)) → t α → t β
+
+    in stripped
+	val map : (index → index) → t α → t β
+
+	val filter : (index → bool) → t α → t α
+
+	val filter_map : (index → option index) → t α → t α
+
+    #?ffoc #}
 
 
 # Z.Z.  An Ordered Map
@@ -172,7 +209,3 @@ sig an_ordered_map'
 	val pop_max : t α → option (index × t α)
 
     #?ffoc #}
-    # FIXME: Camlviz can't handle the above signature extension, so alias the
-    # most important functions for the time being.
-    val tagged_pop_min : t α → option (index × elt α × t α)
-    val tagged_pop_max : t α → option (index × elt α × t α)

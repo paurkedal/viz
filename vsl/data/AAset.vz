@@ -1,0 +1,57 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open collection_sigs
+
+sig S
+    include an_ordered_set
+
+in make.(E : a_total_order) : S.[elt = E.t] include where
+
+in M include AAmap.make.(E)
+
+type elt := E.t
+type t := M.t unit
+
+let fold be M.stripped.fold
+let foldr be M.stripped.foldr
+let for_all be M.stripped.for_all
+let for_some be M.stripped.for_some
+let iter be M.stripped.iter
+let iterr be M.stripped.iterr
+
+let min be M._stripped_min
+let max be M._stripped_max
+let pop_min be M._stripped_pop_min
+let pop_max be M._stripped_pop_max
+
+let empty be M.empty
+let is_empty be M.is_empty
+let singleton k be M.singleton k ()
+let contains be M.contains
+let add k be M.add k ()
+let remove be M.remove
+let pop k s be M.pop k s @> (none% ↦ none; some ((), s) ↦ some s)
+
+let map be M._stripped_map
+let filter be M._stripped_filter
+let filter_map be M._stripped_filter_map
+
+let union be M.left_union
+let isecn be M.left_isecn
+let complement be M.complement

@@ -22,6 +22,24 @@ open action
 sig S
     include an_ordered_map'.[elt α = α]
 
+    # FIXME:  These aliases are added as camlviz can't handle the signature
+    # extensions used in an_ordered_map'.
+    val _tagged_min : t α → option (index × elt α)
+    val _tagged_max : t α → option (index × elt α)
+    val _tagged_pop_min : t α → option (index × elt α × t α)
+    val _tagged_pop_max : t α → option (index × elt α × t α)
+    val _tagged_filter : (index × elt α → bool) → t α → t α
+    val _tagged_map : (index × elt α → index × elt β) → t α → t β
+    val _tagged_filter_map : (index × elt α → option (index × elt β)) →
+			     t α → t β
+    val _stripped_min : t α → option index
+    val _stripped_max : t α → option index
+    val _stripped_pop_min : t α → option (index × t α)
+    val _stripped_pop_max : t α → option (index × t α)
+    val _stripped_filter : (index → bool) → t α → t α
+    val _stripped_map : (index → index) → t α → t α
+    val _stripped_filter_map : (index → option index) → t α → t α
+
     val is_valid : t α → bool
     val dump_tree : (index → α → io unit) → t α → io unit
 
@@ -56,6 +74,13 @@ let empty be O
 let is_empty be O% ↦ true; _ ↦ false
 
 let singleton k d be Y k d 1 O O
+
+let contains k'
+    at O% be false
+    at Y k d l tL tR be I.cmp k' k @> what
+	at tprec% be contains k' tL
+	at tsucc% be contains k' tR
+	at tcoin% be true
 
 let find k'
     at O% be none
@@ -128,19 +153,53 @@ let _postrmR_Y k d l tL tR
     if l ≤ level tR + 1 be Y k d l tL tR
     be _skew_after_remove (Y k d (l - 1) tL tR)
 
-let tagged_pop_min
+let _tagged_min
+    at O% be none
+    at Y k d _ O% tR be some (k, d)
+    at Y k d _ tL tR be _tagged_min tL
+
+let _tagged_max
+    at O% be none
+    at Y k d _ tL O% be some (k, d)
+    at Y k d _ tL tR be _tagged_max tR
+
+let _tagged_pop_min
     at O% be none
     at Y k d _ O% tR be some (k, d, tR)
     at Y k d l tL tR
-	be option.map that (tagged_pop_min tL) which
+	be option.map that (_tagged_pop_min tL) which
 	at (kX, dX, tL') be (kX, dX, _postrmL_Y k d l tL' tR)
 
-let tagged_pop_max
+let _tagged_pop_max
     at O% be none
     at Y k d _ tL O% be some (k, d, tL)
     at Y k d l tL tR
-	be option.map that (tagged_pop_max tR) which
+	be option.map that (_tagged_pop_max tR) which
 	at (kX, dX, tR') be (kX, dX, _postrmR_Y k d l tL tR')
+
+let _stripped_min
+    at O% be none
+    at Y k d _ O% tR be some k
+    at Y k d _ tL tR be _stripped_min tL
+
+let _stripped_max
+    at O% be none
+    at Y k d _ tL O% be some k
+    at Y k d _ tL tR be _stripped_max tR
+
+let _stripped_pop_min
+    at O% be none
+    at Y k d _ O% tR be some (k, tR)
+    at Y k d l tL tR
+	be option.map that (_stripped_pop_min tL) which
+	at (kX, tL') be (kX, _postrmL_Y k d l tL' tR)
+
+let _stripped_pop_max
+    at O% be none
+    at Y k d _ tL O% be some (k, tL)
+    at Y k d l tL tR
+	be option.map that (_stripped_pop_max tR) which
+	at (kX, tR') be (kX, _postrmR_Y k d l tL tR')
 
 let pop k'
     at O% be none
@@ -150,11 +209,11 @@ let pop k'
 	at tsucc% be option.map that (pop k' tR) which
 		  at (dX, tR') be (dX, _postrmR_Y k d l tL tR')
 	at tcoin%
-	    be tagged_pop_max tL @> what
+	    be _tagged_pop_max tL @> what
 	    at some (kP, dP, tL')
 		be some (d, _postrmL_Y kP dP l tL' tR)
 	    at none%
-		be option.map that (tagged_pop_min tR) which
+		be option.map that (_tagged_pop_min tR) which
 		at (kS, dS, tR') be (d, _postrmR_Y kS dS l tL tR')
 
 let remove k' t be pop k' t @> (none% ↦ t; some (_, t) ↦ t)
@@ -183,13 +242,48 @@ let iterr f
     at O% be return ()
     at Y _ d _ tL tR be iterr f tR >> f d >> iterr f tL
 
+let _tagged_fold f
+    at O% be ident
+    at Y k d _ tL tR be _tagged_fold f tL *> f (k, d) *> _tagged_fold f tR
+
+# TODO:  Optimize filter, union, isecn, etc.
+
+let filter f t
+    be _tagged_fold ((k, v) ↦ (f v ⇒ add k v; ident)) t empty
+
+let _tagged_filter f t
+    be _tagged_fold ((k, v) ↦ (f (k, v) ⇒ add k v; ident)) t empty
+
+let _tagged_map f t
+    be _tagged_fold (f *> (k', v') ↦ add k' v') t empty
+
+let _tagged_filter_map f t
+    be _tagged_fold (f *> (none% ↦ ident; some (k', v') ↦ add k' v')) t empty
+
+let _stripped_filter f t
+    be _tagged_fold ((k, v) ↦ (f k ⇒ add k v; ident)) t empty
+
+let _stripped_map f t
+    be _tagged_fold ((k, v) ↦ f k @> k' ↦ add k' v) t empty
+
+let _stripped_filter_map f t
+    be _tagged_fold ((k, v) ↦ f k @> (none% ↦ ident; some k' ↦ add k' v))
+		    t empty
+
+let left_union t u
+    be _tagged_fold ((k, v) ↦ add k v) t u
+
+let left_isecn t u
+    be _tagged_fold ((k, v) ↦ (contains k u ⇒ add k v; ident)) t empty
+
+let complement t u
+    be _tagged_fold ((k, v) ↦ (contains k u ⇒ ident; add k v)) t empty
+
 in tagged
     type elt α := index × α
     type t α := map α
 
-    let fold f
-	at O% be ident
-	at Y k d _ tL tR be fold f tL *> f (k, d) *> fold f tR
+    let fold be _tagged_fold
 
     let foldr f
 	at O% be ident
@@ -211,18 +305,15 @@ in tagged
 	at O% be return ()
 	at Y k d _ tL tR be iterr f tR >> f (k, d) >> iterr f tL
 
-    let min
-	at O% be none
-	at Y k d _ O% tR be some (k, d)
-	at Y k d _ tL tR be min tL
+    let min be _tagged_min
+    let max be _tagged_max
 
-    let max
-	at O% be none
-	at Y k d _ tL O% be some (k, d)
-	at Y k d _ tL tR be max tR
+    let pop_min be _tagged_pop_min
+    let pop_max be _tagged_pop_max
 
-    let pop_min be tagged_pop_min
-    let pop_max be tagged_pop_max
+    let map be _tagged_map
+    let filter be _tagged_filter
+    let filter_map be _tagged_filter_map
 
 in stripped
     type elt α := index
@@ -252,16 +343,15 @@ in stripped
 	at O% be return ()
 	at Y k _ _ tL tR be iterr f tR >> f k >> iterr f tL
 
-    let min t be option.map fst (tagged.min t)
-    let max t be option.map fst (tagged.max t)
+    let min t be _stripped_min
+    let max t be _stripped_max
 
-    let pop_min t
-	be option.map that (tagged_pop_min t) which
-	at (k, d, t) be (k, t)
+    let pop_min be _stripped_pop_min
+    let pop_max be _stripped_pop_max
 
-    let pop_max t
-	be option.map that (tagged_pop_max t) which
-	at (k, d, t) be (k, t)
+    let map be _stripped_map
+    let filter be _stripped_filter
+    let filter_map be _stripped_filter_map
 
 let map f
     at O% be O

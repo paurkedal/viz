@@ -45,9 +45,9 @@ let main
 	let t do M.add_random (n + 1) (m + 1) M.empty
 	assert M.is_valid t
 	when ¬ M.is_empty t
-	    let (i, d, t') be option.get (M.tagged_pop_min t)
+	    let (i, d, t') be option.get (M._tagged_pop_min t)
 	    assert M.is_valid t'
-	    let (i, d, t') be option.get (M.tagged_pop_max t)
+	    let (i, d, t') be option.get (M._tagged_pop_max t)
 	    assert M.is_valid t'
 	    let t' do M.remove_random (n + 1) (m + 1) t
 	    assert M.is_valid t'

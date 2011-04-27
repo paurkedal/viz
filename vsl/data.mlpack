@@ -9,3 +9,4 @@ vsl/data/char_
 vsl/data/string_
 vsl/data/UTF8string
 vsl/data/AAmap
+vsl/data/AAset

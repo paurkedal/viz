@@ -49,7 +49,8 @@ in string include data.string
 in option include data.option
 in list include data.list
 in array include data.array
-in map.(X : a_total_order) include data.AAmap.make.(X)
+in map.(I : a_total_order) include data.AAmap.make.(I)
+in set.(E : a_total_order) include data.AAset.make.(E)
 
 in action include prereq.action
 val print : string → io unit
