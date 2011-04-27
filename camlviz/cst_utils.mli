@@ -43,6 +43,10 @@ val fold_functor_args : (ctrm -> 'a -> 'a) -> ctrm * 'a -> ctrm * 'a
 
 val is_formal : ctrm -> bool
 
+val formal_idr : ctrm -> idr
+
+val cpred_uses_shadowed : idr -> cpred -> bool
+
 val collect_pattern_vars : ctrm -> idr list
 
 val move_typing : ctrm * ctrm -> ctrm * ctrm

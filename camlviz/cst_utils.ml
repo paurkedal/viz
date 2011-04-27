@@ -23,6 +23,60 @@ open Cst_types
 open Cst_core
 open Diag
 
+let fold_cpred_sub fp ft fd = function
+    | Cpred_let (_, _, x, p, q) -> ft x *> fp p *> fp q
+    | Cpred_if (_, x, p, q) -> ft x *> fp q *> fp q
+    | Cpred_back _ -> ident
+    | Cpred_at (_, bx) -> List.fold (fun (x, p) -> ft x *> fp p) bx
+    | Cpred_be (_, x) -> ft x
+    | Cpred_assert (_, x, p) -> ft x *> fp p
+    | Cpred_trace (_, x, p) -> ft x *> fp p
+    | Cpred_raise (_, x) -> ft x
+    | Cpred_do1 (_, _, x) -> ft x
+    | Cpred_do2 (_, _, x, p) -> ft x *> fp p
+    | Cpred_upon (_, x, p, q) -> ft x *> fp p *> fp q
+let fold_ctrm_sub fp ft fd = function
+    | Ctrm_ref _ | Ctrm_literal _ -> ident
+    | Ctrm_label (_, _, x) -> ft x
+    | Ctrm_quantify (_, _, x, y) -> ft x *> ft y
+    | Ctrm_rel (_, x, rs) -> ft x *> List.fold (fun (_, _, x) -> ft x) rs
+    | Ctrm_apply (_, x, y) -> ft x *> ft y
+    | Ctrm_project (_, _, x) -> ft x
+    | Ctrm_array (_, xs) -> List.fold ft xs
+    | Ctrm_what (_, _, p) -> fp p
+    | Ctrm_where (_, ds) -> List.fold fd ds
+    | Ctrm_with (_, xo, ds) -> Option.fold ft xo *> List.fold fd ds
+
+let for_all_cpred_sub fp ft fd = function
+    | Cpred_let (_, _, x, p, q) -> ft x && fp p && fp q
+    | Cpred_if (_, x, p, q) -> ft x && fp q && fp q
+    | Cpred_back _ -> true
+    | Cpred_at (_, bx) -> List.for_all (fun (x, p) -> ft x && fp p) bx
+    | Cpred_be (_, x) -> ft x
+    | Cpred_assert (_, x, p) -> ft x && fp p
+    | Cpred_trace (_, x, p) -> ft x && fp p
+    | Cpred_raise (_, x) -> ft x
+    | Cpred_do1 (_, _, x) -> ft x
+    | Cpred_do2 (_, _, x, p) -> ft x && fp p
+    | Cpred_upon (_, x, p, q) -> ft x && fp p && fp q
+let for_all_ctrm_sub fp ft fd = function
+    | Ctrm_ref _ | Ctrm_literal _ -> true
+    | Ctrm_label (_, _, x) -> ft x
+    | Ctrm_quantify (_, _, x, y) -> ft x && ft y
+    | Ctrm_rel (_, x, rs) -> ft x && List.for_all (fun (_, _, x) -> ft x) rs
+    | Ctrm_apply (_, x, y) -> ft x && ft y
+    | Ctrm_project (_, _, x) -> ft x
+    | Ctrm_array (_, xs) -> List.for_all ft xs
+    | Ctrm_what (_, _, p) -> fp p
+    | Ctrm_where (_, ds) -> List.for_all fd ds
+    | Ctrm_with (_, xo, ds) -> Option.for_all ft xo && List.for_all fd ds
+
+let for_some_cpred_sub fp ft fd p =
+    not (for_all_cpred_sub (fp *> not) (ft *> not) (fd *> not) p)
+
+let for_some_ctrm_sub fp ft fd x =
+    not (for_all_ctrm_sub (fp *> not) (ft *> not) (fd *> not) x)
+
 let extract_ctrm_coercion = function
     | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
 	    when cidr_is_2o_colon op ->
@@ -65,7 +119,10 @@ let count_formal_args ctrm =
 
 let rec fold_ctrm_args f (trm, accu) =
     match trm with
-    | Ctrm_apply (loc, trm', arg) -> fold_ctrm_args f (trm', f arg accu)
+    | Ctrm_apply (loc, trm', arg) ->
+	fold_ctrm_args f (trm', f arg accu)
+    | Ctrm_rel (loc, cx, [_, cf, cy]) ->
+	fold_ctrm_args f (Ctrm_ref (cf, Ih_none), f cy (f cx accu))
     | _ -> (trm, accu)
 
 let fold_formal_args f (trm, accu) =
@@ -88,9 +145,27 @@ let rec is_formal = function
     | Ctrm_ref (cidr, _) -> not (is_injname cidr)
     | Ctrm_label (_, _, x) -> is_formal x
     | Ctrm_quantify _ -> assert false
+    | Ctrm_rel (_, _, [_]) -> true
     | Ctrm_rel _ -> false
     | Ctrm_apply (_, x, _) -> is_formal x
     | _ -> false
+
+let rec formal_idr = function (* only valid if the above succeeds *)
+    | Ctrm_ref (_, Ih_inj) -> assert false
+    | Ctrm_ref (Cidr (_, idr), _) -> idr
+    | Ctrm_label (_, _, x)
+    | Ctrm_apply (_, x, _) -> formal_idr x
+    | Ctrm_rel (_, _, [(_, Cidr (_, idr), _)]) -> idr
+    | _ -> assert false
+
+let rec cpred_uses_shadowed idr p =
+    for_some_cpred_sub (cpred_uses_shadowed idr) (ctrm_uses_shadowed idr)
+		       (fun _ -> false) p
+and ctrm_uses_shadowed idr = function
+    | Ctrm_ref (Cidr (_, idr'), Ih_inj) when idr' = idr -> true
+    | x ->
+	for_some_ctrm_sub (cpred_uses_shadowed idr) (ctrm_uses_shadowed idr)
+			  (fun _ -> false) x
 
 let collect_pattern_vars x =
     let rec coll fpos = function
@@ -114,6 +189,9 @@ let rec move_applications (src, dst) =
     match src with
     | Ctrm_apply (loc', src', arg) ->
 	move_applications (src', Cpred_at (loc', [arg, dst]))
+    | Ctrm_rel (loc', x, [(_, op, y)]) ->
+	(Ctrm_ref (op, Ih_none),
+	 Cpred_at (loc', [x, Cpred_at (loc', [y, dst])]))
     | _ -> (src, dst)
 
 let flatten_tycon_application typ =

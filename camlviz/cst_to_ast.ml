@@ -554,6 +554,10 @@ let build_actypinfo = function
     | Ctrm_literal (loc, Lit_string s) -> Atypinfo_cabi (UString.to_utf8 s)
     | ctrm -> errf_at (ctrm_loc ctrm) "The C type name must be a string."
 
+let can_letrec cpat cpred =
+    Cst_utils.is_formal cpat
+    && not (Cst_utils.cpred_uses_shadowed (Cst_utils.formal_idr cpat) cpred)
+
 let rec build_amod_of_pred = function
     | Cpred_at (loc, [cxvarsig, cymod]) ->
 	wrap_amod_lambda cxvarsig (build_amod_of_pred cymod)
@@ -641,15 +645,14 @@ and build_adefs adecmap adefs = function
 	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
 	build_adefs adecmap adefs xs
     | Cdef_let (loc, cm_opt, cpat, cpred) :: xs
-	    when not (Cst_utils.is_formal cpat) ->
+	    when not (can_letrec cpat cpred) ->
 	let apat = build_apat ~adecmap cpat in
 	let aval = build_toplevel_aval loc cm_opt cpred in
 	let adef = Adef_let (loc, apat, aval) in
 	build_adefs adecmap (adef :: adefs) xs
     | (Cdef_let _ :: _) as xs ->
 	let build_avcase = function
-	    | Cdef_let (loc, cm_opt, cpat, cpred)
-		    when Cst_utils.is_formal cpat ->
+	    | Cdef_let (loc, cm_opt, cpat, cpred) when can_letrec cpat cpred ->
 		let cvar, cpred = Cst_utils.move_applications (cpat, cpred) in
 		let at_opt =
 		    begin match cvar with
@@ -663,6 +666,7 @@ and build_adefs adecmap adefs = function
 		Some (loc, avar, at_opt, aval)
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
+	assert (avcases <> []);
 	build_adefs adecmap (collect_binding_components avcases adefs) xs'
     | Cdef_inj (loc, Abi_Viz,
 		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), cf), ct)) :: xs
