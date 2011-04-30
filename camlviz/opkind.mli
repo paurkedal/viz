@@ -32,7 +32,7 @@ type lexical_role =
     | Lr_conditional
 
 val is_introducer : lexical_role -> bool
-val is_connective : lexical_role -> bool
+val is_connective : follows_verb: bool -> lexical_role -> bool
 
 type printer = int -> Formatter.t -> unit
 

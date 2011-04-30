@@ -58,6 +58,9 @@ type state = {
     (* Things to take into account before reading any further. *)
     mutable st_pending : pending_work list;
 
+    (* The lexical role of the last seen introducer. *)
+    mutable st_last_lexical_role : Opkind.lexical_role;
+
     (* The currently active keywords and operators. *)
     mutable st_keywords : tokeninfo UString_trie.t;
 
@@ -560,14 +563,20 @@ let pop_manifest_token state =
 	if dlog_en then dlogf ~loc "Scanned regular token.";
 	state.st_holding <- (loc, tok, Opkind.Lr_inert)
     end;
+    begin match lr' with
+    | Opkind.Lr_inert -> ()
+    | _ -> state.st_last_lexical_role <- lr'
+    end;
     (loc', tok')
 
 let pop_virtual_token state =
     let cur_col = holding_column state in
     let (loc, tok, lr) = state.st_holding in
     let loc_lb = Location.lbound loc in
+    let follows_verb = state.st_last_lexical_role = Opkind.Lr_verb in
     if not (Opkind.is_introducer lr) then begin
-	if not (Opkind.is_connective lr) then pop_manifest_token state else
+	if not (Opkind.is_connective ~follows_verb lr) then
+	    pop_manifest_token state else
 	match state.st_pending with
 	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
 	    state.st_pending <- Pending_BEGIN :: pending;
@@ -586,7 +595,7 @@ let pop_virtual_token state =
 	    (loc_begin, Grammar.BEGIN)
 	| Pending_END (_, col) :: pending when cur_col = col ->
 	    if dlog_en then dlogf ~loc "ITEM[col = %d]" col;
-	    if (Opkind.is_connective lr) then
+	    if Opkind.is_connective ~follows_verb lr then
 		state.st_pending <- Pending_BEGIN :: state.st_pending;
 	    pop_manifest_token state
 	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
@@ -606,6 +615,7 @@ let default_state_template = {
     st_indent = -1;
     st_holding = (Location.dummy, Grammar.EOF, Opkind.Lr_declarator);
     st_pending = [];
+    st_last_lexical_role = Opkind.Lr_inert;
     st_keywords = initial_keywords;
     st_renames = Idr_map.empty;
     st_lookahead = initial_lookahead;

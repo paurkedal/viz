@@ -35,8 +35,9 @@ type lexical_role =
 let is_introducer = function
     | Lr_declarator | Lr_verb | Lr_conditional -> true
     | Lr_inert | Lr_connective -> false
-let is_connective = function
-    | Lr_connective | Lr_conditional -> true
+let is_connective ~follows_verb = function
+    | Lr_connective -> true
+    | Lr_conditional -> not follows_verb
     | Lr_inert | Lr_declarator | Lr_verb -> false
 
 type printer = int -> Formatter.t -> unit
