@@ -6,6 +6,7 @@
 "
 " Variables to disable certain features:
 "   viz_disable_patterns - Don't try to recognise constructors in patterns.
+"   viz_disable_types    - Don't try to recognise type names from the context.
 
 let s:verbs =
   \ ['assert', 'be', 'fail', 'do', 'raise']
@@ -21,13 +22,25 @@ let s:connectives =
 let s:conditionals = s:nonpattern_conditionals + s:pattern_conditionals
 let s:keywords = s:verbs + s:conditionals + s:declarators + s:connectives
 let s:keyword_re = '\<\('.join(s:keywords, '\|').'\)\>'
-function! s:delimit_clause(group, keywords, contains)
+
+" A variant of the below, accepting a regular expression in place of the list
+" of keywords.
+fun! s:delimit_clause_re(group, keyword_re, contains)
   exe 'syn region' a:group 'transparent keepend matchgroup='.a:group
-    \ 'start="\<\('.join(a:keywords, '\|').'\)\>"'
-    \ 'skip="#[!#? \t].*\|{#.*#}"'
+    \ 'start="'.a:keyword_re.'"'
+    \ 'skip="#[!#? \t].*"'
     \ 'end="\('.s:keyword_re.'\)\@="'
     \ 'contains='.a:contains
-endfunction
+endfun
+
+" Highlight the body of the list of clause introducers a:keywords as
+" a:contains.  Make sure a:contains includes comments and, if needed, strings.
+" The extend-flag on these ensures we don't terminate on a keyword buried in a
+" string or a comment.
+fun! s:delimit_clauses(group, keywords, contains)
+  call s:delimit_clause_re(a:group, '\<\('.join(a:keywords, '\|').'\)\>',
+     \                     a:contains)
+endfun
 
 set iskeyword=@,',`,48-57,_,192-255
 syn case match
@@ -86,6 +99,21 @@ syn region VizTypeExpr transparent fold
     \ contains=@VizTypeExpr
 hi link VizTypeParam vizTypeName
 
+" Operators
+"
+syn cluster VizOperator contains=VizOperator,VizParen,VizOperatorName
+syn match VizOperator
+  \ '[-!#&*+,/;<=>@|~¬×\u2190-\u21ff\u2200-\u22ff\u2a00-\u2aff]\+\'*'
+syn match VizOperator '\k\@<!:\k\@!'
+syn region VizParen matchgroup=VizOperator start='(' end=')' fold transparent
+syn region VizParen matchgroup=VizOperator start='\[' end='\]' fold transparent
+if !exists('viz_disable_types')
+  syn region VizTyping contained containedin=VizParen transparent
+    \ matchgroup=VizOperator start='\S\@<!:\S\@!' end=')\@='
+    \ contains=@VizTypeExpr
+endif
+syn match VizOperatorName '\<[0-2]\'[^ \t()\[\]{}]\+'
+
 " Patterns and Constructor Names
 "
 if !exists("viz_disable_patterns")
@@ -104,49 +132,47 @@ if !exists("viz_disable_patterns")
 endif
 syn keyword VizInjName true false
 
-" Operators
-"
-syn cluster VizOperator contains=VizOperator,VizParen,VizOperatorName
-syn match VizOperator
-  \ '[-!#&*+,/;<=>@|~¬×\u2190-\u21ff\u2200-\u22ff\u2a00-\u2aff]\+\'*'
-syn match VizOperator '\k\@<!:\k\@!'
-syn region VizParen matchgroup=VizOperator start='(' end=')' fold transparent
-syn region VizParen matchgroup=VizOperator start='\[' end='\]' fold transparent
-if !exists('viz_disable_types')
-  syn region VizTyping contained containedin=VizParen transparent
-    \ matchgroup=VizOperator start='\S\@<!:\S\@!' end=')\@='
-    \ contains=@VizTypeExpr
-endif
-syn match VizOperatorName '\<[0-2]\'[^ \t()\[\]{}]\+'
-
 " Keywords
 "
 syn cluster @VizKeyword contains=VizConditional,VizConnective,VizDeclarator,VizVerb
+let s:k_let = '\<let\>!\?'
 if exists("viz_disable_patterns")
   exe 'syn keyword VizConditional' join(s:conditionals)
+  exe 'syn match VizDeclarator' s:k_let
 else
   exe 'syn keyword VizConditional' join(s:nonpattern_conditionals)
-  call s:delimit_clause('VizConditional', s:pattern_conditionals, '@VizPattern')
+  call s:delimit_clauses('VizConditional', s:pattern_conditionals, '@VizPattern')
+  call s:delimit_clause_re('VizDeclarator', s:k_let, '@VizPatternCont')
 endif
+let s:k_type = '\<type\>[-+~]*\(:\K\+\)\?'
+let s:k_inj_or_val = '\<\(inj\|val\)\>[-+]*\(:\K\+\)\?'
 if exists('viz_disable_types')
-  syn keyword VizDeclarator type nextgroup=VizTypeDecor
-  syn keyword VizDeclarator inj val
+  exe 'syn keyword VizDeclarator' s:k_type
+  exe 'syn match VizDeclarator' s:k_inj_or_val
 else
-  call s:delimit_clause('VizDeclarator', ['type'], '@VizTypeExpr')
-  call s:delimit_clause('VizDeclarator', ['inj', 'val'], '@VizValExpr')
+  call s:delimit_clause_re('VizDeclarator', s:k_type, '@VizTypeExpr')
+  call s:delimit_clause_re('VizDeclarator', s:k_inj_or_val, '@VizValExpr')
 endif
 syn keyword VizConnective with where what which
 syn keyword VizDeclarator include use
 syn keyword VizDeclarator in skipwhite nextgroup=VizSctExprStart
 syn keyword VizDeclarator sig skipwhite nextgroup=@VizSigExpr
 syn keyword VizDeclarator open nextgroup=VizOpenDecor
-syn keyword VizDeclarator lex
-syn keyword VizDeclarator let nextgroup=VizLetDecor
 exe 'syn keyword VizVerb' join(s:verbs)
 
 syn match VizOpenDecor contained '\(:c\)\?' skipwhite nextgroup=VizSctExprStart
-syn match VizTypeDecor contained '[~]\?'
-syn match VizLetDecor contained '!\?'
+hi link VizOpenDecor VizDeclarator
+
+syn keyword VizDeclarator lex skipwhite nextgroup=VizPrecedence,VizLexAlias
+syn match VizPrecedence contained skipwhite nextgroup=VizLexOperator
+  \ '\<\([IJQR]\|A[0-9]S\?\|B[LR]\|L[0-8]\|S[0-2][IPS]\?\|S2L\)\>'
+syn match VizLexOperator contained '\S\+' skipwhite nextgroup=VizLexOperator
+syn keyword VizLexAlias contained alias skipwhite nextgroup=VizLexAliasOperator
+syn match VizLexAliasOperator contained '\S\+' skipwhite nextgroup=VizLexAliasAs
+syn match VizLexAliasAs contained '\S\+' skipwhite nextgroup=VizLexAliasOperator
+hi link VizLexAlias VizDeclarator
+hi link VizLexOperator VizOperator
+hi link VizLexAliasOperator VizOperator
 
 syn keyword VizPronoun that
 
@@ -159,13 +185,13 @@ syn match VizNumber '-\?\<0o[0-7]\+\>' contains=ffBasePrefix
 syn match VizNumber '-\?\<0x\x\+\>' contains=ffBasePrefix
 syn match VizNumberBase contained '\<0[bvx]'
 
-syn region VizString start='"' end='"' skip='\\.' contains=@VizString
+syn region VizString start='"' end='"' skip='\\.' extend contains=@VizString
 syn cluster VizString contains=VizStringEscape
 syn match VizStringEscape contained '\\.'
 
 " Comments
 "
-syn region VizComment start='{#' end='#}' contains=VizComment,@VizComment
+syn region VizComment start='{#' end='#}' extend contains=VizComment,@VizComment
 syn match VizCommentLine '#\([!#? \t].*\|$\)'
 hi link VizCommentLine VizComment
 syn cluster VizComment contains=VizCommentHeader
@@ -179,6 +205,7 @@ hi def link VizConnective Statement
 hi def link VizDeclarator Statement
 hi def link VizVerb Statement
 
+hi def link VizPrecedence Special
 hi def link VizOperator Operator
 hi def link VizPathOperator Special
 
