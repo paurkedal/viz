@@ -24,14 +24,17 @@ open Leaf_types
 exception Domain_error
 exception Invalid_definition of string
 
-type printer = int -> Formatter.t -> unit
+type lexical_role =
+    | Lr_inert
+    | Lr_declarator
+    | Lr_verb
+    | Lr_connective
+    | Lr_conditional
 
-type lexkind = {
-    lk_introducer : bool;
-    lk_connective : bool;
-}
-val lexkind_regular : lexkind
-val lexkind_intro : lexkind
+val is_introducer : lexical_role -> bool
+val is_connective : lexical_role -> bool
+
+type printer = int -> Formatter.t -> unit
 
 type t = {
     ok_name : string;
@@ -39,7 +42,7 @@ type t = {
     ok_prec : int;
     ok_print : t * string -> printer list -> printer;
     ok_id : int;
-    ok_lexkind : lexkind;
+    ok_lexical_role : lexical_role;
     ok_create : idr * idr list -> Grammar.token;
 }
 

@@ -30,14 +30,11 @@ let dlogf fmt ?loc = Diag.dlogf_for "Camlviz.Lexer" ?loc fmt
 
 type tokeninfo =
     | Ti_operator of Grammar.token * Opkind.t
-    | Ti_keyword of Grammar.token * Opkind.lexkind
+    | Ti_keyword of Grammar.token * Opkind.lexical_role
 
 let tokeninfo_token = function
     | Ti_operator (tok, _) -> tok
     | Ti_keyword (tok, _) -> tok
-let tokeninfo_lexkind = function
-    | Ti_operator (_, ok) -> ok.Opkind.ok_lexkind
-    | Ti_keyword (_, lk) -> lk
 
 type pending_work =
     | Pending_BEGIN
@@ -56,7 +53,7 @@ type state = {
     mutable st_indent : int;
 
     (* A look-ahead token. *)
-    mutable st_holding : Location.t * Grammar.token * Opkind.lexkind;
+    mutable st_holding : Location.t * Grammar.token * Opkind.lexical_role;
 
     (* Things to take into account before reading any further. *)
     mutable st_pending : pending_work list;
@@ -78,11 +75,11 @@ type state = {
 
 let last_location state = state.st_last_location
 
-let initial_plain_keywords = [
+let initial_inerts = [
     "true",	Grammar.LITERAL (Lit_bool true);
     "false",	Grammar.LITERAL (Lit_bool false);
 ]
-let initial_intro_keywords = [
+let initial_declarators = [
     "open",	Grammar.OPEN Abi_Viz;
     "open:c",	Grammar.OPEN Abi_C;
     "include",	Grammar.INCLUDE;
@@ -102,13 +99,7 @@ let initial_intro_keywords = [
     "val:cf-",	Grammar.VAL (`Local,    Abi_C, [`Is_finalizer]);
     "inj",	Grammar.INJ Abi_Viz;
     "inj:c",	Grammar.INJ Abi_C;
-    "fail",	Grammar.FAIL;
-    "assert",	Grammar.ASSERT;
-    "__trace",	Grammar.TRACE;
-    "be",	Grammar.BE;
-    "do",	Grammar.DO "";
     "when",	Grammar.WHEN "";
-    "raise",	Grammar.RAISE;
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
     "lex alias",Grammar.LEXALIAS;
@@ -122,7 +113,15 @@ let initial_intro_keywords = [
     "#?ffoc {#", Grammar.SKIP;
     "#?ffoc #}", Grammar.ENDSKIP;
 ]
-let initial_continued_keywords = [
+let initial_verbs = [
+    "assert",	Grammar.ASSERT;
+    "be",	Grammar.BE;
+    "do",	Grammar.DO "";
+    "fail",	Grammar.FAIL;
+    "raise",	Grammar.RAISE;
+    "__trace",	Grammar.TRACE;
+]
+let initial_connectives = [
     ".at",	Grammar.DOT_AT;
     "where",	Grammar.WHERE;
     "with",	Grammar.WITH;
@@ -131,7 +130,7 @@ let initial_continued_keywords = [
     "which",	Grammar.WHICH None;
     "which!",	Grammar.WHICH (Some "");
 ]
-let initial_conditional_keywords = [
+let initial_conditionals = [
     "at",	Grammar.AT;
     "if",	Grammar.IF;
     "else",	Grammar.ELSE;
@@ -139,16 +138,13 @@ let initial_conditional_keywords = [
 let initial_lookahead = 40
 
 let initial_keywords =
-    let addkw introducer connective (name, token) =
-	let lk = {
-	    Opkind.lk_introducer = introducer;
-	    Opkind.lk_connective = connective;
-	} in
-	UString_trie.add_utf8 name (Ti_keyword (token, lk)) in
-    List.fold (addkw false false) initial_plain_keywords @<
-    List.fold (addkw true false) initial_intro_keywords @<
-    List.fold (addkw false true) initial_continued_keywords @<
-    List.fold (addkw true true) initial_conditional_keywords @<
+    let addkw lr (name, token) =
+	UString_trie.add_utf8 name (Ti_keyword (token, lr)) in
+    List.fold (addkw Opkind.Lr_inert)		initial_inerts @<
+    List.fold (addkw Opkind.Lr_declarator)	initial_declarators @<
+    List.fold (addkw Opkind.Lr_verb)		initial_verbs @<
+    List.fold (addkw Opkind.Lr_connective)	initial_connectives @<
+    List.fold (addkw Opkind.Lr_conditional)	initial_conditionals @<
     UString_trie.empty
 
 let rec skip_line state =
@@ -371,24 +367,23 @@ let scan_custom state =
     | [ch0; ch1] when UChar.code ch0 = 0x2e && UChar.is_space ch1 ->
 	LStream.skip state.st_stream;
 	let loc_ub = LStream.locbound state.st_stream in
-	Some (Location.between loc_lb loc_ub, Grammar.DOT,
-	      Opkind.lexkind_regular)
+	Some (Location.between loc_lb loc_ub, Grammar.DOT, Opkind.Lr_inert)
     | _ -> None
     end
 
 let scan_keyword state =
     let unwrap (ti, tokstr, loc) =
 	match ti with
-	| Ti_keyword (Grammar.LEX, lk) ->
+	| Ti_keyword (Grammar.LEX, lr) ->
 	    let (tok, loc_spec) = scan_lexdef state loc in
 	    let loc_full = Location.span [loc; loc_spec] in
-	    (loc_full, tok, lk)
-	| Ti_keyword (Grammar.LEXALIAS, lk) ->
+	    (loc_full, tok, lr)
+	| Ti_keyword (Grammar.LEXALIAS, lr) ->
 	    let (tok, loc_spec) = scan_lexalias state loc in
 	    let loc_full = Location.span [loc; loc_spec] in
-	    (loc_full, tok, lk)
-	| Ti_keyword (tok, lk) -> (loc, tok, lk)
-	| Ti_operator (tok, ok) -> (loc, tok, ok.Opkind.ok_lexkind) in
+	    (loc_full, tok, lr)
+	| Ti_keyword (tok, lr) -> (loc, tok, lr)
+	| Ti_operator (tok, ok) -> (loc, tok, ok.Opkind.ok_lexical_role) in
     Option.map unwrap (triescan state state.st_keywords)
 
 let scan_regular_identifier state =
@@ -534,7 +529,7 @@ let scan_literal state =
 let scan_eof state =
     if LStream.peek state.st_stream = None then
 	let loc = Location.at (LStream.locbound state.st_stream) in
-	Some (loc, Grammar.EOF, Opkind.lexkind_intro)
+	Some (loc, Grammar.EOF, Opkind.Lr_declarator)
     else
 	None
 
@@ -543,10 +538,10 @@ let default_scanners = [scan_literal; scan_identifier]
 
 let pop_manifest_token state =
     skip_space state;
-    let (loc', tok', lk') = state.st_holding in
+    let (loc', tok', lr') = state.st_holding in
     begin match List.find_image (fun f -> f state) fixed_scanners with
-    | Some (loc, tok, lk) ->
-	state.st_holding <- (loc, tok, lk)
+    | Some (loc, tok, lr) ->
+	state.st_holding <- (loc, tok, lr)
     | None ->
 	let loc_lb = LStream.locbound state.st_stream in
 	let tok =
@@ -563,16 +558,16 @@ let pop_manifest_token state =
 	let loc_ub = LStream.locbound state.st_stream in
 	let loc = Location.between loc_lb loc_ub in
 	if dlog_en then dlogf ~loc "Scanned regular token.";
-	state.st_holding <- (loc, tok, Opkind.lexkind_regular)
+	state.st_holding <- (loc, tok, Opkind.Lr_inert)
     end;
     (loc', tok')
 
 let pop_virtual_token state =
     let cur_col = holding_column state in
-    let (loc, tok, lk) = state.st_holding in
+    let (loc, tok, lr) = state.st_holding in
     let loc_lb = Location.lbound loc in
-    if not lk.Opkind.lk_introducer then begin
-	if not lk.Opkind.lk_connective then pop_manifest_token state else
+    if not (Opkind.is_introducer lr) then begin
+	if not (Opkind.is_connective lr) then pop_manifest_token state else
 	match state.st_pending with
 	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
 	    state.st_pending <- Pending_BEGIN :: pending;
@@ -591,7 +586,7 @@ let pop_virtual_token state =
 	    (loc_begin, Grammar.BEGIN)
 	| Pending_END (_, col) :: pending when cur_col = col ->
 	    if dlog_en then dlogf ~loc "ITEM[col = %d]" col;
-	    if lk.Opkind.lk_connective then
+	    if (Opkind.is_connective lr) then
 		state.st_pending <- Pending_BEGIN :: state.st_pending;
 	    pop_manifest_token state
 	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
@@ -609,7 +604,7 @@ let pop_virtual_token state =
 let default_state_template = {
     st_stream = LStream.null;
     st_indent = -1;
-    st_holding = (Location.dummy, Grammar.EOF, Opkind.lexkind_intro);
+    st_holding = (Location.dummy, Grammar.EOF, Opkind.Lr_declarator);
     st_pending = [];
     st_keywords = initial_keywords;
     st_renames = Idr_map.empty;
