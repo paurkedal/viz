@@ -17,22 +17,21 @@
 
 #?ffoc include compat.ocaml_prereq
 
-in basic_sigs
-    sig a_total_order
-	type t
-	val cmp : t → t → torder
-
 in combinators
     let ident x be x
     let konst x y be x
-    let (g <* f) x be g (f x) -- also g ∘ f
+    let (g <* f) x be g (f x)  # also g ∘ f
     let (f *> g) x be g (f x)
-    let f <@ x be f x -- f "at" x
-    let x @> f be f x -- x "under" f
+    let f <@ x be f x  # f "at" x
+    let x @> f be f x  # x "under" f
 
-in misc
+in basics
     let fst (x, _) be x
     let snd (_, y) be y
+
+    sig a_total_order
+	type t
+	val cmp : t → t → torder
 
 in bool_ops
     #?ffoc include compat.ocaml_pervasives.bool_ops
@@ -64,9 +63,8 @@ in action
 # This is for our own use, as we typically open prereq on the top of each
 # library structure.  The pervasive structure does a similar inclusion for
 # client code.
-include basic_sigs
+include basics
 include combinators
-include misc
 include bool_ops
 include int_ops
 #?ffoc include compat.ocaml_unicode.pervasive
