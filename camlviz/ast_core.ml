@@ -47,7 +47,10 @@ let ascii_encode s =
     UString.to_utf8 (UString.Buf.contents buf)
 
 let str_to_lid s = String.uncapitalize (ascii_encode s)
-let str_to_uid s = String.capitalize (ascii_encode s)
+let str_to_uid s =
+    assert (String.length s > 0);
+    if String.get s 0 = '_' then "Z_" ^ s else
+    String.capitalize (ascii_encode s)
 let idr_to_lid (Idr s) = str_to_lid s
 let idr_to_uid (Idr s) = str_to_uid s
 let avar_to_lid (Avar (_, idr)) = idr_to_lid idr
