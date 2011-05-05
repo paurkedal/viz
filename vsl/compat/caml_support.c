@@ -41,7 +41,7 @@ load_callback(value *p, char const *s)
 }
 
 value
-ffoc_some(value x)
+cviz_some(value x)
 {
     value xopt;
     xopt = caml_alloc(1, 0);
@@ -50,24 +50,24 @@ ffoc_some(value x)
 }
 
 value
-ffoc_ustring_of_utf8(value x)
+cviz_ustring_of_utf8(value x)
 {
     CAMLparam1 (x);
     CAMLreturn (caml_callback(CALLBACK(ustring_of_utf8), x));
 }
 
 value
-ffoc_ustring_to_utf8(value x)
+cviz_ustring_to_utf8(value x)
 {
     CAMLparam1 (x);
     CAMLreturn (caml_callback(CALLBACK(ustring_to_utf8), x));
 }
 
 value
-ffoc_copy_ustring(char const *s)
+cviz_copy_ustring(char const *s)
 {
     CAMLparam0 ();
     CAMLlocal1 (v);
     v = caml_copy_string(s);
-    CAMLreturn (ffoc_ustring_of_utf8(v));
+    CAMLreturn (cviz_ustring_of_utf8(v));
 }

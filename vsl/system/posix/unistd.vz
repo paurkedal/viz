@@ -23,7 +23,7 @@ open data
 open action
 open:c "unistd.h"
 
-use cabi.stub_prefix "ffoc_posix_"
+use cabi.stub_prefix "cviz_posix_"
 
 val access : string → int → io bool
 

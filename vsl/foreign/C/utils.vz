@@ -24,7 +24,7 @@ open prereq
 open action
 open memory
 open:c "string.h"
-use cabi.stub_prefix "ffoc_"
+use cabi.stub_prefix "cviz_"
 
 val malloc_ptrarray_init :
     int → (int → action φ (ptr φ)) → action φ (ptr φ)

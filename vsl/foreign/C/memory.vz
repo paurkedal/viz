@@ -17,7 +17,7 @@
 
 open prereq
 open action
-use cabi.stub_prefix "ffoc_"
+use cabi.stub_prefix "cviz_"
 
 # Z.  Direct Memory Access
 #
@@ -114,4 +114,4 @@ val unsafe_lalloc : size → (ptr φ → action φ α) → action φ α
 let unsafe_lalloc size f
     be unsafe_malloc size >>= p ↦ f p >>= r ↦ unsafe_free p >> return r
 
-val:c unsafe_copy_cstring : ptr φ → string#v := "ffoc_copy_ustring"
+val:c unsafe_copy_cstring : ptr φ → string#v := "cviz_copy_ustring"

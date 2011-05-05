@@ -54,14 +54,14 @@ let header = "\
 	CAMLparam5 (x0, x1, x2, x3, x4); CAMLxparam4 (x5, x6, x7, x8)
 #endif
 
-#define ffoc_none Val_int(0)
-value ffoc_some(value x);
+#define cviz_none Val_int(0)
+value cviz_some(value x);
 
 #define Voidp_val(x) *(void **)Data_custom_val(x)
-value ffoc_copy_ptr(void *);
+value cviz_copy_ptr(void *);
 
-value ffoc_ustring_to_utf8(value x);
-value ffoc_copy_ustring(char const *);
+value cviz_ustring_to_utf8(value x);
+value cviz_copy_ustring(char const *);
 "
 
 let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
@@ -96,7 +96,7 @@ type conversion = {
 
 let rec nonoption_conversion state = function
     | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), _) ->
-	("void *", None, "Voidp_val", "ffoc_copy_ptr")
+	("void *", None, "Voidp_val", "cviz_copy_ptr")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	begin try
 	    match String_map.find tname state.st_cti_map with
@@ -118,8 +118,8 @@ let rec nonoption_conversion state = function
 	| "UTF8string" ->
 	    ("char const *", None, "String_val", "caml_copy_string")
 	| "string" ->
-	    ("char const *", Some "ffoc_ustring_to_utf8", "String_val",
-	     "ffoc_copy_ustring")
+	    ("char const *", Some "cviz_ustring_to_utf8", "String_val",
+	     "cviz_copy_ustring")
 	| _ ->
 	    errf_at loc "Don't know how to pass values of type %s to \
 			 C functions." tname
@@ -206,7 +206,7 @@ let output_cstub och v t cname is_fin state =
 	    fprintf och "\t%s y = " rcv.cv_ctype;
 	    output_call ();
 	    output_string och ";\n";
-	    fprintf och "\tCAMLreturn (y? ffoc_some(%s(y)) : ffoc_none);\n"
+	    fprintf och "\tCAMLreturn (y? cviz_some(%s(y)) : cviz_none);\n"
 			rcv.cv_conv_res
 	end else begin
 	    fprintf och "\tCAMLreturn (%s(" rcv.cv_conv_res;
