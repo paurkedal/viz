@@ -1,7 +1,7 @@
 vsl/compat
 vsl/control
 vsl/prereq
-vsl/ffi
+vsl/foreign
 vsl/data
 vsl/system
 vsl/pervasive

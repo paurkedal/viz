@@ -85,6 +85,7 @@ let initial_inerts = [
 let initial_declarators = [
     "open",	Grammar.OPEN Abi_Viz;
     "open:c",	Grammar.OPEN Abi_C;
+    "sealed",	Grammar.SEALED;
     "include",	Grammar.INCLUDE;
     "use",	Grammar.USE;
     "in",	Grammar.IN;

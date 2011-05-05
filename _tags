@@ -8,6 +8,7 @@
 <camlviz-tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
 
 "vsl": include
+"vsl/foreign": include
 
 <vsl/**/*>: no_pervasive, no_vsl
 <vsl/pervasive.vz>: ocamlstdlib
@@ -15,7 +16,8 @@
 
 <vsl/compat/*.cmx>: for-pack(Compat)
 <vsl/control/*.cmx>: for-pack(Control)
-<vsl/ffi/*.cmx>: for-pack(Ffi)
+<vsl/foreign/*.cmx>: for-pack(Foreign)
+<vsl/foreign/C/*.cmx>: for-pack(Foreign.C)
 <vsl/data/*.cmx>: for-pack(Data)
 <vsl/system/*.cmx>: for-pack(System)
 <vsl/system/posix/*.cmx>: for-pack(System.Posix)

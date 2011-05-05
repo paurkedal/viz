@@ -1,4 +1,4 @@
-open ffi.memory
+open foreign.C.memory
 open action
 open:c "stdio.h"
 open:c "tests/testutils.h"

@@ -68,7 +68,7 @@ let cpred_failure loc msg_opt =
 %token BEGIN END
 
 %token <Leaf_types.abi> OPEN
-%token INCLUDE USE
+%token INCLUDE USE SEALED
 %token DOT_AT IN
 %token SIG
 %token <Leaf_types.abi> TYPE
@@ -169,9 +169,21 @@ signature_clause_seq:
   | signature_clause_seq SKIP signature_clause_seq ENDSKIP { $1 }
   ;
 structure_block:
-    BEGIN structure_clause_seq END {
+    BEGIN structure_clause_seq END
+    {
 	let body_loc = mkloc $startpos($2) $endpos($2) in
 	Ctrm_where (body_loc, List.rev $2)
+    }
+  | BEGIN structure_clause_seq SEALED expr structure_clause_seq END
+    {
+	let loc = mkloc $startpos $endpos in
+	let sct1_loc = mkloc $startpos($5) $endpos($5) in
+	let sct1 = Ctrm_where (sct1_loc, List.rev $5) in
+	let op_loc = mkloc $startpos($3) $endpos($3) in
+	let op = Ctrm_ref (Cidr (op_loc, idr_2o_colon), Ih_none) in
+	let sct1_loc' = mkloc $startpos($3) $endpos($4) in
+	let sct1' = apply2 sct1_loc' op sct1 $4 in
+	Ctrm_where (loc, List.rev (Cdef_include (sct1_loc', sct1') :: $2))
     }
   ;
 structure_clause_seq:
