@@ -405,13 +405,18 @@ and emit_adec state = function
     | Adec_val (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid xv$ : $emit_atyp xt$ >>
-    | Adec_cabi_val (loc, v, t, cn, valopts) when Ast_utils.atyp_is_const t ->
+    | Adec_cabi_val (loc, v, t, cn_opt, valopts)
+	    when Ast_utils.atyp_is_const t ->
 	let _loc = p4loc loc in
 	<:sig_item< value $lid: avar_to_lid v$ : $emit_atyp t$ >>
-    | Adec_cabi_val (loc, v, t, cn, valopts) ->
+    | Adec_cabi_val (loc, v, t, cn_opt, valopts) ->
 	let _loc = p4loc loc in
 	let stubname =
-	    if List.mem `Is_stub valopts then state.ams_stub_prefix ^ cn else
+	    if List.mem `Is_stub valopts then
+		begin match cn_opt with
+		| None -> state.ams_stub_prefix ^ avar_to_lid v
+		| Some cn -> cn
+		end else
 	    state.ams_stub_prefix ^ avar_to_lid v in
 	let syms = external_names stubname t in
 	let name = avar_to_lid v in
@@ -496,15 +501,20 @@ and emit_adef state = function
 		<:binding< $lid: avar_to_lid v$ : $emit_atyp t$
 			    = $emit_aval x$ >> in
 	<:str_item< value rec $list: List.map emit_value_binding bindings$ >>
-    | Adef_cabi_val (loc, v, t, cn, valopts) when Ast_utils.atyp_is_const t ->
+    | Adef_cabi_val (loc, v, t, cn_opt, valopts)
+	    when Ast_utils.atyp_is_const t ->
 	let _loc = p4loc loc in
 	<:str_item< value $lid: avar_to_lid v$ : $emit_atyp t$
 			= $uid: str_to_uid (state.ams_module_name ^ "_FFIC")$
 			. $lid: avar_to_lid v$ >>
-    | Adef_cabi_val (loc, v, t, cn, valopts) ->
+    | Adef_cabi_val (loc, v, t, cn_opt, valopts) ->
 	let _loc = p4loc loc in
 	let stubname =
-	    if List.mem `Is_stub valopts then state.ams_stub_prefix ^ cn else
+	    if List.mem `Is_stub valopts then
+		begin match cn_opt with
+		| None -> state.ams_stub_prefix ^ avar_to_lid v
+		| Some cn -> cn
+		end else
 	    state.ams_stub_prefix ^ avar_to_lid v in
 	let syms = external_names stubname t in
 	let name = avar_to_lid v in

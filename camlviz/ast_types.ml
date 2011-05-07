@@ -90,7 +90,7 @@ type asig =
     | Adec_types of (loc * avar * atyp list * atypinfo) list
     | Adec_injx of loc * avar * atyp
     | Adec_val of loc * avar * atyp
-    | Adec_cabi_val of loc * avar * atyp * string * val_option list
+    | Adec_cabi_val of loc * avar * atyp * string option * val_option list
     with sexp
 
 type amod =
@@ -110,5 +110,5 @@ type amod =
     | Adef_let of loc * apat * aval
     | Adef_letrec of (loc * avar * atyp option * aval) list
     | Adef_cabi_open of loc * string
-    | Adef_cabi_val of loc * avar * atyp * string * val_option list
+    | Adef_cabi_val of loc * avar * atyp * string option * val_option list
     with sexp

@@ -520,10 +520,8 @@ and build_adecs adecs = function
 		Adec_val (loc, av, at)
 	    | Abi_Viz, Some _ ->
 		errf_at loc "Invalid declaration."
-	    | Abi_C, Some cn ->
-		Adec_cabi_val (loc, av, at, cn, val_options)
-	    | Abi_C, None ->
-		Adec_cabi_val (loc, av, at, avar_name av, val_options)
+	    | Abi_C, cn_opt ->
+		Adec_cabi_val (loc, av, at, cn_opt, val_options)
 	    in
 	build_adecs (adec :: adecs) xs
     | Cdef_let (loc, _, _, _) :: xs ->
@@ -637,11 +635,8 @@ and build_adefs adecmap adefs = function
 		assert (val_options = []);
 		adefs
 	    | Abi_Viz, Some _ -> errf_at loc "Invalid declaration."
-	    | Abi_C, Some cn ->
-		Adef_cabi_val (loc, av, at, cn, val_options) :: adefs
-	    | Abi_C, None ->
-		Adef_cabi_val (loc, av, at, avar_name av, val_options)
-		    :: adefs in
+	    | Abi_C, cn_opt ->
+		Adef_cabi_val (loc, av, at, cn_opt, val_options) :: adefs in
 	let adecmap = Idr_map.add (cidr_to_idr cv) (loc, at) adecmap in
 	build_adefs adecmap adefs xs
     | Cdef_let (loc, cm_opt, cpat, cpred) :: xs

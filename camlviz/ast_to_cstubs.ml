@@ -168,7 +168,8 @@ let output_arg och (v, cv) =
     if cv.cv_is_opt then fprintf och "%s_p" v else
     fprintf och "%s(%s)" cv.cv_conv_arg v
 
-let output_cstub och v t cname is_fin state =
+let output_cstub och v t cn_opt is_fin state =
+    let cn = match cn_opt with Some cn -> cn | None -> avar_to_lid v in
     let stub_name = state.st_stub_prefix ^ (avar_name v) in
     let is_io, rt, ats = Ast_utils.flatten_arrows_for_c t in
     let (r, args) = List.fold
@@ -189,7 +190,7 @@ let output_cstub och v t cname is_fin state =
        | Atyp_ref (Apath ([], Avar (loc, Idr "unit"))) -> true
        | _ -> false in
     let output_call () =
-	output_string och cname;
+	output_string och cn;
 	match t with
 	| Atyp_arrow _ -> output_arglist och (output_arg och) args;
 	| _ -> output_string och "()" in

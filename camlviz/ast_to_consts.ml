@@ -74,8 +74,10 @@ let rec output_amod_c och state = function
     | Amod_lambda (_, _, s, m) | Amod_coercion (_, m, s) ->
 	output_amod_c och state m
 and output_adef_c och state = function
-    | Adef_cabi_val (loc, v, t, cx, valopts) ->
-	if Ast_utils.atyp_is_const t then output_const och state v t cx
+    | Adef_cabi_val (loc, v, t, cx_opt, valopts) ->
+	if Ast_utils.atyp_is_const t then
+	    let cx = match cx_opt with Some cx -> cx | None -> avar_to_lid v in
+	    output_const och state v t cx
     | Adef_types cases ->
 	List.iter
 	    begin function
