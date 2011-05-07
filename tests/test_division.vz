@@ -1,0 +1,23 @@
+
+let check_div_mod ai ni
+    let a be int32.of_int ai
+    let n be int32.of_int ni
+    let q be int32.div a n
+    let r be int32.mod a n
+    let 2'= be int32.eq
+    let 2'+ be int32.add
+    let 2'* be int32.mul
+    assert q*n + r = a
+    assert r = int32.mod (a + n) n
+    be ()
+
+let main
+    let loop a n
+	if a > 12 be ()
+	let _ be check_div_mod a n
+	be loop (a + 1) n
+    let () be loop -50 5
+    let () be loop -50 -5
+    let () be loop -50 1
+    let () be loop -50 -1
+    be ()

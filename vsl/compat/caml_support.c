@@ -21,6 +21,7 @@
 #include <caml/alloc.h>
 #include <caml/callback.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <assert.h>
 
 static value ustring_of_utf8 = 0;
@@ -71,3 +72,33 @@ cviz_copy_ustring(char const *s)
     v = caml_copy_string(s);
     CAMLreturn (cviz_ustring_of_utf8(v));
 }
+
+value cviz_nat32_mul(value x, value y)
+{ return caml_copy_int32((uint32_t)Int32_val(x) * (uint32_t)Int32_val(y)); }
+
+value cviz_nat32_div(value x, value y)
+{ return caml_copy_int32((uint32_t)Int32_val(x) / (uint32_t)Int32_val(y)); }
+
+value cviz_nat32_mod(value x, value y)
+{ return caml_copy_int32((uint32_t)Int32_val(x) % (uint32_t)Int32_val(y)); }
+
+value cviz_nat64_mul(value x, value y)
+{ return caml_copy_int64((uint64_t)Int64_val(x) * (uint64_t)Int64_val(y)); }
+
+value cviz_nat64_div(value x, value y)
+{ return caml_copy_int64((uint64_t)Int64_val(x) / (uint64_t)Int64_val(y)); }
+
+value cviz_nat64_mod(value x, value y)
+{ return caml_copy_int64((uint64_t)Int64_val(x) % (uint64_t)Int64_val(y)); }
+
+value cviz_nat32_as_int(value x)
+{ return Val_int((uint32_t)Int32_val(x)); }
+
+value cviz_nat64_as_int(value x)
+{ return Val_int((uint32_t)Int64_val(x)); }
+
+value cviz_nat32_of_int(value x)
+{ return caml_copy_int32((uint32_t)Int_val(x)); }
+
+value cviz_nat64_of_int(value x)
+{ return caml_copy_int64((uint64_t)Int_val(x)); }

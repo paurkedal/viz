@@ -18,22 +18,46 @@
 
 open Ocaml_unicode.Pervasive
 
-module type A_basic_int = sig
+module type A_basic_nat = sig
     type t
 
-    val neg : t -> t
+    val eq : t -> t -> bool
+
+    val width : int
+    val zero : t
+    val one : t
+
     val add : t -> t -> t
     val sub : t -> t -> t
     val mul : t -> t -> t
-    val div : t -> t -> t
-    val rem : t -> t -> t
+    val div : t -> t -> t   (* if signed, floored division *)
+    val (mod) : t -> t -> t (* if signed, from floored division *)
+    val quo : t -> t -> t   (* if signed, truncated division *)
+    val rem : t -> t -> t   (* if signed, from truncated division *)
+
+    val bitnot : t -> t
+    val bitand : t -> t -> t
+    val bitor : t -> t -> t
+    val bitxor : t -> t -> t
+    val shift : int -> t -> t
+
     val of_int : int -> t
     val as_int : t -> int
-    val show : t -> string
+end
+
+module type A_basic_int = sig
+    include A_basic_nat
+
+    val neg : t -> t
+    val abs : t -> t
 end
 
 module Pervasive : sig
-    module Nativeint	: A_basic_int with type t = nativeint
-    module Int32	: A_basic_int with type t = int32
-    module Int64	: A_basic_int with type t = int64
+    module Nativeint : A_basic_int with type t = nativeint
+    module Int32 : A_basic_int with type t = int32
+    module Int64 : A_basic_int with type t = int64
+    module Nat32 : A_basic_nat
+    module Nat64 : A_basic_nat
+    type nat32 = Nat32.t
+    type nat64 = Nat64.t
 end
