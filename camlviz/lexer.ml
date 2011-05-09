@@ -396,8 +396,12 @@ let scan_regular_identifier state =
 
 let scan_operator_identifier state =
     let buf = UString.Buf.create 8 in
-    UString.Buf.add_char buf (LStream.pop_e state.st_stream);
-    UString.Buf.add_char buf (LStream.pop_e state.st_stream);
+    begin
+	if LStream.peek_code state.st_stream = 0x30 then
+	    LStream.skip_n 2 state.st_stream else
+	UString.Buf.add_char buf (LStream.pop_e state.st_stream);
+	UString.Buf.add_char buf (LStream.pop_e state.st_stream)
+    end;
     let level = ref 0 in
     LStream.skip_while
 	begin fun ch ->
