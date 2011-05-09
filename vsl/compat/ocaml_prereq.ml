@@ -42,6 +42,14 @@ let __builtin_catch k m =
 
 let __builtin_mask f = f (fun m -> m)  (* No async exceptions. *)
 
+(* References *)
+module Ref = struct
+    type ('f, 'a) r = 'a ref
+    let init x = __unsafe_action (fun () -> ref x)
+    let get r = __unsafe_action (fun () -> !r)
+    let set r x = __unsafe_action (fun () -> r := x)
+end
+
 (* Options *)
 let none = None
 let some x = Some x

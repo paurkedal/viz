@@ -52,6 +52,13 @@ val __builtin_mask : (('a io -> 'a io) -> 'b io) -> 'b io
 (* This type should be (((∀'a. 'a io -> 'a io) -> 'b io) -> 'b io) but we
  * don't rely on that for the standard definitions. *)
 
+module Ref : sig
+    type ('f, 'a) r
+    val init : 'a -> ('f, ('f, 'a) r) action
+    val get : ('f, 'a) r -> ('f, 'a) action
+    val set : ('f, 'a) r -> 'a -> ('f, unit) action
+end
+
 val none : 'a option
 val some : 'a -> 'a option
 

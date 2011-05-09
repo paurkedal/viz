@@ -16,12 +16,15 @@
  * along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_prereq
 open Ocaml_unicode.Pervasive
 
 module type A_basic_nat = sig
     type t
 
     val eq : t -> t -> bool
+    val leq : t -> t -> bool
+    val cmp : t -> t -> torder
 
     val width : int
     val zero : t
@@ -52,12 +55,13 @@ module type A_basic_int = sig
     val abs : t -> t
 end
 
+module Nativeint : A_basic_int with type t = nativeint
+module Int32 : A_basic_int with type t = int32
+module Int64 : A_basic_int with type t = int64
+module Nat32 : A_basic_nat
+module Nat64 : A_basic_nat
+
 module Pervasive : sig
-    module Nativeint : A_basic_int with type t = nativeint
-    module Int32 : A_basic_int with type t = int32
-    module Int64 : A_basic_int with type t = int64
-    module Nat32 : A_basic_nat
-    module Nat64 : A_basic_nat
     type nat32 = Nat32.t
     type nat64 = Nat64.t
 end

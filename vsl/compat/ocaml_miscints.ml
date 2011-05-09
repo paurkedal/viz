@@ -16,12 +16,15 @@
  * along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+open Ocaml_prereq
 open Ocaml_unicode.Pervasive
 
 module type A_basic_nat = sig
     type t
 
     val eq : t -> t -> bool
+    val leq : t -> t -> bool
+    val cmp : t -> t -> torder
 
     val width : int
     val zero : t
@@ -78,6 +81,8 @@ module Adapt (M : Ocaml_int) = struct
     include M
 
     let eq x y = x = y
+    let leq x y = x <= y
+    let cmp = __generic_cmp
 
     let width =
 	let rec loop n x =
@@ -117,6 +122,8 @@ module Nat32 = struct
     type t = int32
 
     let eq x y = x = y
+    let leq x y = x <= y
+    let cmp = __generic_cmp
 
     let width = 32
     let zero = Int32.zero
@@ -146,6 +153,8 @@ module Nat64 = struct
     type t = int64
 
     let eq x y = x = y
+    let leq x y = x <= y
+    let cmp = __generic_cmp
 
     let width = 64
     let zero = Int64.zero
@@ -171,12 +180,11 @@ module Nat64 = struct
     external of_int : int -> t = "cviz_nat64_of_int"
 end
 
+module Nativeint = Adapt (Nativeint)
+module Int32 = Adapt (Int32)
+module Int64 = Adapt (Int64)
+
 module Pervasive = struct
-    module Nativeint = Adapt (Nativeint)
-    module Int32 = Adapt (Int32)
-    module Int64 = Adapt (Int64)
-    module Nat32 = Nat32
-    module Nat64 = Nat64
     type nat32 = Nat32.t
     type nat64 = Nat64.t
 end

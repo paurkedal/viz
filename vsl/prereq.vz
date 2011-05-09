@@ -42,6 +42,22 @@ in bool_ops
     let (f ∧** g) x0 x1 be f x0 x1 ∧ g x0 x1
     let (f ∨** g) x0 x1 be f x0 x1 ∨ g x0 x1
 
+in extend_basic_nat.(Nat : compat.ocaml_miscints.a_basic_nat)
+    open Nat
+    let min x y be leq x y ⇒ x; y
+    let max x y be leq x y ⇒ y; x
+
+in nativeint include compat.ocaml_miscints.nativeint
+	     include extend_basic_nat.(compat.ocaml_miscints.nativeint)
+in int32 include compat.ocaml_miscints.int32
+	 include extend_basic_nat.(compat.ocaml_miscints.int32)
+in int64 include compat.ocaml_miscints.int64
+	 include extend_basic_nat.(compat.ocaml_miscints.int64)
+in nat32 include compat.ocaml_miscints.nat32
+	 include extend_basic_nat.(compat.ocaml_miscints.nat32)
+in nat64 include compat.ocaml_miscints.nat64
+	 include extend_basic_nat.(compat.ocaml_miscints.nat64)
+
 in int_ops
     val 1'- : int → int
     val 2'+ : int → int → int
