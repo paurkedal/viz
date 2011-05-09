@@ -42,30 +42,84 @@ in bool_ops
     let (f ∧** g) x0 x1 be f x0 x1 ∧ g x0 x1
     let (f ∨** g) x0 x1 be f x0 x1 ∨ g x0 x1
 
-in extend_basic_nat.(Nat : compat.ocaml_miscints.a_basic_nat)
+sig a_basic_nat
+    type t
+
+    val eq : t → t → bool
+    val leq : t → t → bool
+    val cmp : t → t → torder
+
+    val width : int
+    val zero : t
+    val one : t
+
+    val add : t → t → t
+    val sub : t → t → t
+    val mul : t → t → t
+    val 0'div : t → t → t
+    val 0'mod : t → t → t
+    val 0'quo : t → t → t
+    val 0'rem : t → t → t
+
+    val bitnot : t → t
+    val bitand : t → t → t
+    val bitor : t → t → t
+    val bitxor : t → t → t
+    val shift : int → t → t
+    val of_int : int → t
+    val as_int : t → int
+
+sig a_basic_int
+    include a_basic_nat
+
+    val neg : t → t
+    val abs : t → t → t
+
+in nat_ops.(Nat : a_basic_nat)
+    let 2'+ be Nat.add
+    let 2'− be Nat.sub
+    let 2'× be Nat.mul
+    let 2'div be Nat.div
+    let 2'mod be Nat.mod
+    let 2'quo be Nat.quo
+    let 2'rem be Nat.rem
+
+in int_ops.(Int : a_basic_int)
+    include nat_ops.(Int)
+    let 1'− be Int.neg
+
+in extend_basic_int_or_nat.(Nat : a_basic_nat)
     open Nat
     let min x y be leq x y ⇒ x; y
     let max x y be leq x y ⇒ y; x
 
-in nativeint include compat.ocaml_miscints.nativeint
-	     include extend_basic_nat.(compat.ocaml_miscints.nativeint)
-in int32 include compat.ocaml_miscints.int32
-	 include extend_basic_nat.(compat.ocaml_miscints.int32)
-in int64 include compat.ocaml_miscints.int64
-	 include extend_basic_nat.(compat.ocaml_miscints.int64)
-in nat32 include compat.ocaml_miscints.nat32
-	 include extend_basic_nat.(compat.ocaml_miscints.nat32)
-in nat64 include compat.ocaml_miscints.nat64
-	 include extend_basic_nat.(compat.ocaml_miscints.nat64)
+in extend_basic_nat.(Nat : a_basic_nat)
+    include extend_basic_int_or_nat.(Nat)
+    in ops include nat_ops.(Nat)
 
-in int_ops
-    val 1'- : int → int
-    val 2'+ : int → int → int
-    val 2'- : int → int → int
-    val 2'× : int → int → int
-    val 2'/ : int → int → int
-    val 2'mod : int → int → int
-    #?ffoc include compat.ocaml_pervasives.int_ops
+in extend_basic_int.(Int : a_basic_int)
+    include extend_basic_int_or_nat.(Int)
+    in ops include int_ops.(Int)
+
+in int
+    #?ffoc include compat.ocaml_miscints.int
+    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.int)
+    #?ffoc include compat.ocaml_pervasives.int_misc
+in nativeint
+    #?ffoc include compat.ocaml_miscints.nativeint
+    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nativeint)
+in int32
+    #?ffoc include compat.ocaml_miscints.int32
+    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.int32)
+in int64
+    #?ffoc include compat.ocaml_miscints.int64
+    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.int64)
+in nat32
+    #?ffoc include compat.ocaml_miscints.nat32
+    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nat32)
+in nat64
+    #?ffoc include compat.ocaml_miscints.nat64
+    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nat64)
 
 in action
     val return : α → action φ α
@@ -82,7 +136,7 @@ in action
 include basics
 include combinators
 include bool_ops
-include int_ops
+include int.ops
 #?ffoc include compat.ocaml_unicode.pervasive
 #?ffoc include compat.ocaml_pervasives.pervasive
 #?ffoc include compat.ocaml_miscints.pervasive

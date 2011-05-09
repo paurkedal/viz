@@ -28,22 +28,6 @@ module Bool_ops = struct
     let op2_U2265 = Pervasives.(>=)
 end
 
-module Int_ops = struct
-    let op1_U2212 = Pervasives.(~-)
-    let op2_U002b = Pervasives.(+)
-    let op2_U2212 = Pervasives.(-)
-    let op2_U00d7 = Pervasives.( * )
-    let op2_U2215 = Pervasives.(/)
-    let op2_mod = Pervasives.(mod)
-
-    let bitand = Pervasives.(land)
-    let bitor = Pervasives.(lor)
-    let bitxor = Pervasives.(lxor)
-    let bitlsl = Pervasives.(lsl)
-    let bitlsr = Pervasives.(lsr)
-    let bitasr = Pervasives.(asr)
-end
-
 module Int_misc = struct
     let show i = UTF8string.as_string (Pervasives.string_of_int i)
 end

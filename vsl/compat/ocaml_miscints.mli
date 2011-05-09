@@ -55,6 +55,7 @@ module type A_basic_int = sig
     val abs : t -> t
 end
 
+module Int : A_basic_int with type t = int
 module Nativeint : A_basic_int with type t = nativeint
 module Int32 : A_basic_int with type t = int32
 module Int64 : A_basic_int with type t = int64

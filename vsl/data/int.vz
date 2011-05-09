@@ -15,27 +15,4 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
-open prereq
-
-type t := int
-
-in ops
-    val 1'- : int → int
-    val 2'+ : int → int → int
-    val 2'- : int → int → int
-    val 2'* : int → int → int
-    val 2'/ : int → int → int
-    val 2'mod : int → int → int
-    include int_ops
-
-val eq : t → t → bool
-
-val cmp : t → t → torder
-
-val show : t → string
-
-#?ffoc include compat.ocaml_pervasives.int_misc
-
-let eq be __generic_eq
-
-let cmp be __generic_cmp
+include prereq.int

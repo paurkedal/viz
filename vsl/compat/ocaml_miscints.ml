@@ -118,6 +118,51 @@ module Adapt (M : Ocaml_int) = struct
     let as_int = to_int
 end
 
+module Int = struct
+    type t = int
+
+    let zero = 0
+    let one = 1
+
+    let eq x y = x = y
+    let leq x y = x <= y
+    let cmp = __generic_cmp
+
+    let width =
+	let rec loop n x =
+	    if x = zero then n else
+	    loop (n + 1) (x lsl 1) in
+	loop 0 one
+
+    let add = Pervasives.(+)
+    let sub = Pervasives.(-)
+    let mul = Pervasives.( * )
+    let quo = Pervasives.(/)
+    let rem = Pervasives.(mod)
+    let div x y =
+	match x < zero, y < zero with
+	| false, false | true, true -> quo x y
+	| true, false -> quo (x - y + one) y
+	| false, true -> quo (x - y - one) y
+    let (mod) x y =
+	match x < zero, y < zero with
+	| false, false | true, true -> rem x y
+	| true, false -> rem (x + one) y + y - one
+	| false, true -> rem (x - y - one) y + y + one
+
+    let bitnot = Pervasives.lnot
+    let bitand = Pervasives.(land)
+    let bitor = Pervasives.(lor)
+    let bitxor = Pervasives.(lxor)
+    let shift i x = if i >= 0 then x lsl i else x asr (- i)
+
+    let of_int x = x
+    let as_int x = x
+
+    let neg = Pervasives.(~-)
+    let abs = abs
+end
+
 module Nat32 = struct
     type t = int32
 
