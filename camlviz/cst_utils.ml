@@ -110,10 +110,14 @@ let move_typing (src, dst) =
     | _ ->
 	(src, dst)
 
+let is_injname cidr = cidr_is_2o_comma cidr
+
 let count_formal_args ctrm =
     let rec loop n = function
 	| Ctrm_apply (loc, f, _) -> loop (n + 1) f
-	| Ctrm_ref (_, Ih_none) -> n
+	| Ctrm_ref (cidr, Ih_inj) -> 0
+	| Ctrm_ref (cidr, Ih_univ) -> n
+	| Ctrm_ref (cidr, Ih_none) when not (is_injname cidr) -> n
 	| _ -> 0 in
     loop 0 ctrm
 
@@ -137,12 +141,10 @@ let rec fold_functor_args f (trm, accu) =
     | _ ->
 	    (trm, accu)
 
-let is_injname cidr =
-    cidr_is_2o_comma cidr
-
 let rec is_formal = function
-    | Ctrm_ref (_, Ih_inj) -> false
-    | Ctrm_ref (cidr, _) -> not (is_injname cidr)
+    | Ctrm_ref (cidr, Ih_inj) -> false
+    | Ctrm_ref (cidr, Ih_univ) -> true
+    | Ctrm_ref (cidr, Ih_none) -> not (is_injname cidr)
     | Ctrm_label (_, _, x) -> is_formal x
     | Ctrm_quantify _ -> assert false
     | Ctrm_rel (_, _, [_]) -> true
