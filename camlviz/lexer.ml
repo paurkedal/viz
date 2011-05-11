@@ -86,9 +86,11 @@ let initial_declarators = [
     "open",	Grammar.OPEN Abi_Viz;
     "open:c",	Grammar.OPEN Abi_C;
     "sealed",	Grammar.SEALED;
-    "include",	Grammar.INCLUDE;
+    "include",	Grammar.INCLUDE false;
+    "include!",	Grammar.INCLUDE true;
     "use",	Grammar.USE;
-    "in",	Grammar.IN;
+    "in",	Grammar.IN false;
+    "in!",	Grammar.IN true;
     "sig",	Grammar.SIG;
     "type",	Grammar.TYPE Abi_Viz;
     "type:c",	Grammar.TYPE Abi_C;
@@ -110,7 +112,7 @@ let initial_declarators = [
     "lex open",	Grammar.LEXOPEN;
     "otherwise",Grammar.OTHERWISE;
     "#?ffoc open", Grammar.OPEN Abi_Viz;
-    "#?ffoc include", Grammar.INCLUDE;
+    "#?ffoc include", Grammar.INCLUDE false;
     "#?ffoc type", Grammar.TYPE Abi_Viz;
     "#?ffoc let", Grammar.LET None;
     "#?ffoc let!", Grammar.LET (Some "");

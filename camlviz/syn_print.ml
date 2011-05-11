@@ -181,8 +181,8 @@ and print_predicate fo = function
 and print_def fo cdef =
     Fo.newline fo;
     match cdef with
-    | Cdef_include (_, path) ->
-	Fo.put_kw fo "include";
+    | Cdef_include (_, gen, path) ->
+	Fo.put_kw fo (if gen then "include!" else "include");
 	print_inline fo Opkind.p_min path
     | Cdef_open (_, abi, path) ->
 	let kw = match abi with Abi_Viz -> "open" | Abi_C -> "open/c" in
@@ -199,8 +199,8 @@ and print_def fo cdef =
 	Fo.put_kw fo "type:c";
 	print_inline fo Opkind.p_min eqn;
 	if defs <> [] then print_defs fo defs
-    | Cdef_in (_, pat, body) ->
-	Fo.put_kw fo "in";
+    | Cdef_in (_, gen, pat, body) ->
+	Fo.put_kw fo (if gen then "in!" else "in");
 	Fo.enter_indent fo;
 	print_inline fo Opkind.p_min pat;
 	Fo.leave_indent fo;

@@ -79,6 +79,7 @@ type asig =
     | Asig_ref of apath
     | Asig_decs of loc * adec list
     | Asig_product of loc * avar * asig * asig
+    | Asig_suspension of loc * asig
     | Asig_with_type of loc * asig * atyp * atyp
     | Asig_with_struct of loc * asig * avar * apath
  and adec =
@@ -98,6 +99,8 @@ type amod =
     | Amod_defs of loc * adef list
     | Amod_apply of loc * amod * amod
     | Amod_lambda of loc * avar * asig * amod
+    | Amod_suspend of loc * amod
+    | Amod_generate of loc * amod
     | Amod_coercion of loc * amod * asig
  and adef =
     | Adef_include of loc * amod

@@ -68,8 +68,9 @@ let cpred_failure loc msg_opt =
 %token BEGIN END
 
 %token <Leaf_types.abi> OPEN
-%token INCLUDE USE SEALED
-%token DOT_AT IN
+%token <bool> IN INCLUDE
+%token USE SEALED
+%token DOT_AT
 %token SIG
 %token <Leaf_types.abi> TYPE
 %token <Leaf_types.abi> INJ
@@ -183,7 +184,8 @@ structure_block:
 	let op = Ctrm_ref (Cidr (op_loc, idr_2o_colon), Ih_none) in
 	let sct1_loc' = mkloc $startpos($3) $endpos($4) in
 	let sct1' = apply2 sct1_loc' op sct1 $4 in
-	Ctrm_where (loc, List.rev (Cdef_include (sct1_loc', sct1') :: $2))
+	let inc = Cdef_include (sct1_loc', false, sct1') in
+	Ctrm_where (loc, List.rev (inc :: $2))
     }
   ;
 structure_clause_seq:
@@ -195,13 +197,13 @@ structure_clause_seq:
 signature_clause:
     modular_clause { $1 }
   | IN structure_pattern signature_block
-    { Cdef_in (mkloc $startpos $endpos, $2, $3) }
+    { Cdef_in (mkloc $startpos $endpos, $1, $2, $3) }
   ;
 
 structure_clause:
     modular_clause { $1 }
   | IN structure_pattern structure_block
-    { Cdef_in (mkloc $startpos $endpos, $2, $3) }
+    { Cdef_in (mkloc $startpos $endpos, $1, $2, $3) }
   | LET term_pattern predicate_block
     { Cdef_let (mkloc $startpos $endpos, $1, $2, $3) }
   ;
@@ -212,7 +214,7 @@ modular_clause:
   | USE expr
     { Cdef_use (mkloc $startpos $endpos, $2) }
   | INCLUDE expr
-    { Cdef_include (mkloc $startpos $endpos, $2) }
+    { Cdef_include (mkloc $startpos $endpos, $1, $2) }
   | SIG identifier
     { Cdec_sig (mkloc $startpos $endpos, $2) }
   | SIG identifier signature_block

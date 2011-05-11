@@ -208,6 +208,7 @@ let rec fold_asig_paths f = function
     | Asig_ref p -> f `Signature p
     | Asig_decs (_, decs) -> List.fold (fold_adec_paths f) decs
     | Asig_product (_, _, r, s) -> fold_asig_paths f r *> fold_asig_paths f s
+    | Asig_suspension (_, s) -> fold_asig_paths f s
     | Asig_with_type (_, s, _, u) ->
 	fold_asig_paths f s *> fold_atyp_paths (f `Type) u
     | Asig_with_struct (_, s, _, p) ->
@@ -230,6 +231,8 @@ let rec fold_amod_paths ?module_name f = function
 	fold_amod_paths ?module_name f m0 *> fold_amod_paths ?module_name f m1
     | Amod_lambda (_, _, s, m) ->
 	fold_asig_paths f s *> fold_amod_paths ?module_name f m
+    | Amod_suspend (_, m) -> fold_amod_paths ?module_name f m
+    | Amod_generate (_, m) -> fold_amod_paths ?module_name f m
     | Amod_coercion (_, m, s) ->
 	fold_amod_paths ?module_name f m *> fold_asig_paths f s
 and fold_adef_paths ?module_name f = function
@@ -262,7 +265,8 @@ let rec fold_amod_cabi_open f = function
     | Amod_defs (_, defs) -> List.fold (fold_adef_cabi_open f) defs
     | Amod_apply (_, mf, ma) ->
 	fold_amod_cabi_open f mf *> fold_amod_cabi_open f ma
-    | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _) ->
+    | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _)
+    | Amod_suspend (_, m) | Amod_generate (_, m) ->
 	fold_amod_cabi_open f m
 and fold_adef_cabi_open f = function
     | Adef_include (_, m) | Adef_in (_, _, m) ->

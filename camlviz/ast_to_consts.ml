@@ -71,7 +71,8 @@ let rec output_amod_c och state = function
     | Amod_apply (_, mf, ma) ->
 	output_amod_c och state mf;
 	output_amod_c och state ma
-    | Amod_lambda (_, _, s, m) | Amod_coercion (_, m, s) ->
+    | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _)
+    | Amod_suspend (_, m) | Amod_generate (_, m) ->
 	output_amod_c och state m
 and output_adef_c och state = function
     | Adef_cabi_val (loc, v, t, cx_opt, valopts) ->

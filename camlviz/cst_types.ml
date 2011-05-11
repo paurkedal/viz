@@ -56,11 +56,11 @@ type cpred =
     | Ctrm_where	of loc * cdef list
     | Ctrm_with		of loc * ctrm option * cdef list
  and cdef =
-    | Cdef_include	of loc * ctrm
+    | Cdef_include	of loc * bool * ctrm
     | Cdef_open		of loc * abi * ctrm
     | Cdef_use		of loc * ctrm
     | Cdef_type		of loc * abi * ctrm * cdef list
-    | Cdef_in		of loc * ctrm * ctrm
+    | Cdef_in		of loc * bool * ctrm * ctrm
     | Cdec_sig		of loc * cidr
     | Cdef_sig		of loc * cidr * ctrm
     | Cdef_val		of loc * val_info * ctrm

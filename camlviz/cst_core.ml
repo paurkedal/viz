@@ -108,11 +108,11 @@ let ctrm_loc = function
     -> loc
 
 let cdef_loc = function
-    | Cdef_include (loc, _)
+    | Cdef_include (loc, _, _)
     | Cdef_open (loc, _, _)
     | Cdef_use (loc, _)
     | Cdef_type (loc, _, _, _)
-    | Cdef_in (loc, _, _)
+    | Cdef_in (loc, _, _, _)
     | Cdec_sig (loc, _)
     | Cdef_sig (loc, _, _)
     | Cdef_val (loc, _, _)

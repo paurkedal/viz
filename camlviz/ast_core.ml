@@ -100,6 +100,7 @@ let rec asig_loc = function
     | Asig_ref p -> apath_loc p
     | Asig_decs (loc, bs) -> loc
     | Asig_product (loc, _, _, _) -> loc
+    | Asig_suspension (loc, _) -> loc
     | Asig_with_type (loc, _, _, _) -> loc
     | Asig_with_struct (loc, _, _, _) -> loc
 and adec_loc = function
@@ -121,6 +122,8 @@ and amod_loc = function
     | Amod_defs (loc, _) -> loc
     | Amod_apply (loc, _, _) -> loc
     | Amod_lambda (loc, _, _, _) -> loc
+    | Amod_suspend (loc, _) -> loc
+    | Amod_generate (loc, _) -> loc
     | Amod_coercion (loc, _, _) -> loc
 and adef_loc = function
     | Adef_include (loc, _) -> loc

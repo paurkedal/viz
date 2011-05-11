@@ -113,9 +113,9 @@ and subterm_rewrite_ctrm rw stra = function
 	    List.map_fold (rw.rw_cdef rw `Signature) (defs, accu) in
 	Ctrm_with (loc, mo, defs), accu
 and subterm_rewrite_cdef rw stra = function
-    | Cdef_include (loc, x), accu ->
+    | Cdef_include (loc, gen, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
-	Cdef_include (loc, x), accu
+	Cdef_include (loc, gen, x), accu
     | Cdef_open (loc, abi, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cdef_open (loc, abi, x), accu
@@ -124,10 +124,10 @@ and subterm_rewrite_cdef rw stra = function
 	let t, accu = rw.rw_ctrm rw `Type (t, accu)  in
 	let defs, accu = List.map_fold (rw.rw_cdef rw stra) (defs, accu) in
 	Cdef_type (loc, abi, t, defs), accu
-    | Cdef_in (loc, x, y), accu ->
+    | Cdef_in (loc, gen, x, y), accu ->
 	let x, accu = rw.rw_ctrm rw `Structure (x, accu) in
 	let y, accu = rw.rw_ctrm rw stra (y, accu) in
-	Cdef_in (loc, x, y), accu
+	Cdef_in (loc, gen, x, y), accu
     | Cdec_sig (loc, name), accu -> Cdec_sig (loc, name), accu
     | Cdef_sig (loc, name, x), accu ->
 	let x, accu = rw.rw_ctrm rw `Signature (x, accu) in

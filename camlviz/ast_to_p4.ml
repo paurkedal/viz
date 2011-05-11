@@ -357,8 +357,14 @@ let rec emit_asig state = function
     | Asig_product (loc, xv, xsig, ysig) ->
 	let _loc = p4loc loc in
 	<:module_type<
-	    functor ( $uid: avar_to_uid xv$ : $emit_asig state xsig$ ) ->
+	    functor ($uid: avar_to_uid xv$ : $emit_asig state xsig$) ->
 		$emit_asig state ysig$ >>
+    | Asig_suspension (loc, xsig) ->
+	let _loc = p4loc loc in
+	let dec = <:sig_item< type suspended_ >> in
+	<:module_type<
+	    functor (Suspended_ : sig $list: [dec]$ end) ->
+		$emit_asig state xsig$ >>
     | Asig_with_type (loc, s, x, y) ->
 	let _loc = p4loc loc in
 	let constr = <:with_constr< type $emit_atyp x$ = $emit_atyp y$ >> in
@@ -443,6 +449,16 @@ let rec emit_amod state = function
 	<:module_expr<
 	    functor ($uid: avar_to_uid xv$ : $emit_asig state xsig$) ->
 		$emit_amod state ymod$ >>
+    | Amod_suspend (loc, xmod) ->
+	let _loc = p4loc loc in
+	let dec = <:sig_item< type suspended_ >> in
+	<:module_expr<
+	    functor (Suspended_ : sig $list: [dec]$ end) ->
+		$emit_amod state xmod$ >>
+    | Amod_generate (loc, xmod) ->
+	let _loc = p4loc loc in
+	let def = <:str_item< type suspended_ = unit >> in
+	<:module_expr< $emit_amod state xmod$ (struct $list: [def]$ end) >>
     | Amod_coercion (loc, m, s) ->
 	let _loc = p4loc loc in
 	<:module_expr< ($emit_amod state m$ : $emit_asig state s$) >>

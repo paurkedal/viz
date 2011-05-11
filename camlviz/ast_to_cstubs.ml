@@ -305,7 +305,8 @@ let rec output_amod_c och = function
     | Amod_defs (_, defs) -> List.fold (output_adef_c och) defs
     | Amod_apply (_, mf, ma) ->
        output_amod_c och mf *> output_amod_c och ma
-    | Amod_lambda (_, _, s, m) | Amod_coercion (_, m, s) ->
+    | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _)
+    | Amod_suspend (_, m) | Amod_generate (_, m) ->
        output_amod_c och m
 and output_adef_c och = function
     | Adef_use (_, x) ->

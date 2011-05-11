@@ -481,7 +481,8 @@ let rec build_asig = function
 	build_constraints loc eqns (build_asig csig)
     | ctrm -> errf_at (ctrm_loc ctrm) "Invalid signature expression."
 and build_adecs adecs = function
-    | Cdef_include (loc, csig) :: xs ->
+    | Cdef_include (loc, gen, csig) :: xs ->
+	if gen then errf_at loc "Generative include invalid in signatures.";
 	let adec = Adec_include (loc, build_asig csig) in
 	build_adecs (adec :: adecs) xs
     | Cdef_open (loc, Abi_Viz, p) :: xs ->
@@ -492,8 +493,10 @@ and build_adecs adecs = function
     | Cdef_use (loc, x) :: xs ->
 	let adec = Adec_use (loc, build_aval_expr x) in
 	build_adecs (adec :: adecs) xs
-    | Cdef_in (loc, p, csig) :: xs ->
-	let adec = Adec_in (loc, build_avar p, build_asig csig) in
+    | Cdef_in (loc, gen, p, csig) :: xs ->
+	let asig = build_asig csig in
+	let asig = if gen then Asig_suspension (loc, asig) else asig in
+	let adec = Adec_in (loc, build_avar p, asig) in
 	build_adecs (adec :: adecs) xs
     | Cdec_sig (loc, cidr) :: xs ->
 	let adec = Adec_sig (loc, cidr_to_avar cidr, None) in
@@ -590,8 +593,10 @@ and build_toplevel_aval loc cm_opt cpred =
 	Aval_apply (loc, af, ax)
     end
 and build_adefs adecmap adefs = function
-    | Cdef_include (loc, m) :: xs ->
-	let adef = Adef_include (loc, build_amod m) in
+    | Cdef_include (loc, gen, m) :: xs ->
+	let amod = build_amod m in
+	let amod = if gen then Amod_generate (loc, amod) else amod in
+	let adef = Adef_include (loc, amod) in
 	build_adefs adecmap (adef :: adefs) xs
     | Cdef_open (loc, Abi_Viz, p) :: xs ->
 	let adef = Adef_open (loc, build_apath p) in
@@ -606,9 +611,10 @@ and build_adefs adecmap adefs = function
     | Cdef_use (loc, x) :: xs ->
 	let adef = Adef_use (loc, build_aval_expr x) in
 	build_adefs adecmap (adef :: adefs) xs
-    | Cdef_in (loc, cpat, cmod) :: xs ->
+    | Cdef_in (loc, gen, cpat, cmod) :: xs ->
 	let cpat, cmod = Cst_utils.move_typing (cpat, cmod) in
 	let amod = build_amod cmod in
+	let amod = if gen then Amod_suspend (loc, amod) else amod in
 	let cpat, amod =
 	    Cst_utils.fold_functor_args wrap_amod_lambda (cpat, amod) in
 	let error_message =
