@@ -76,6 +76,7 @@ let cidr_is_2o_coloneq	(Cidr (_, idr)) = idr = idr_2o_coloneq
 let cidr_is_1q_functor	(Cidr (_, idr)) = idr = idr_1q_functor
 let cidr_is_1o_asterisk	(Cidr (_, idr)) = idr = idr_1o_asterisk
 let cidr_is_2b_dotbracket (Cidr (_, idr)) = idr = idr_2b_dotbracket
+let cidr_is_2b_dotparen	(Cidr (_, idr)) = idr = idr_2b_dotparen
 
 let cmonad_io = ""
 

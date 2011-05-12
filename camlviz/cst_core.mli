@@ -85,3 +85,4 @@ val cidr_is_2o_coloneq : cidr -> bool
 val cidr_is_1o_asterisk : cidr -> bool
 val cidr_is_1q_functor : cidr -> bool
 val cidr_is_2b_dotbracket : cidr -> bool
+val cidr_is_2b_dotparen : cidr -> bool

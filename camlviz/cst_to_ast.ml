@@ -493,10 +493,20 @@ and build_adecs adecs = function
     | Cdef_use (loc, x) :: xs ->
 	let adec = Adec_use (loc, build_aval_expr x) in
 	build_adecs (adec :: adecs) xs
-    | Cdef_in (loc, gen, p, csig) :: xs ->
+    | Cdef_in (loc, gen, cpat, csig) :: xs ->
 	let asig = build_asig csig in
 	let asig = if gen then Asig_suspension (loc, asig) else asig in
-	let adec = Adec_in (loc, build_avar p, asig) in
+	let rec shuffle = function
+	    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (dotparen, _), cpat),
+		Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (colon, _), cx), cxsig))
+		    when cidr_is_2b_dotparen dotparen
+		      && cidr_is_2o_colon colon ->
+		fun asig ->
+		    let ax = build_avar cx and axsig = build_asig cxsig in
+		    shuffle cpat (Asig_product (loc, ax, axsig, asig))
+	    | cpat -> fun asig -> cpat, asig in
+	let cvar, asig = shuffle cpat asig in
+	let adec = Adec_in (loc, build_avar cvar, asig) in
 	build_adecs (adec :: adecs) xs
     | Cdec_sig (loc, cidr) :: xs ->
 	let adec = Adec_sig (loc, cidr_to_avar cidr, None) in
