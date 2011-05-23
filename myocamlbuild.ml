@@ -271,6 +271,12 @@ let ocaml_cstubs name =
 	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name)]);
     dep ["ocaml"; "link"; "use_lib" ^ name] ["lib" ^ name ^ ".a"]
 
+let cdep target deps =
+    dep ["ocaml"; "compile"; "native"; "file:" ^ target ^ ".cmx"]
+	(List.map (fun p -> p ^ ".cmx") deps);
+    dep ["ocaml"; "compile"; "byte"; "file:" ^ target ^ ".cmo"]
+	(List.map (fun p -> p ^ ".cmo") deps)
+
 let () = dispatch begin function
     | Before_options ->
 	Options.use_ocamlfind := true;
@@ -301,6 +307,10 @@ let () = dispatch begin function
 	flag ["cstubs"; "camlvizpp"] vsl_includes;
 	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compile"];
 	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";
+
+	(* Some dependencies from the depend-files are not interpreted
+	 * correctly, probably due to the nested mlpack-hierarchy. *)
+	cdep "vsl/foreign/C/record" ["vsl/foreign/field_allocation"];
 	()
     | _ -> ()
 end

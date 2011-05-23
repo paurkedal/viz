@@ -1,0 +1,292 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# 0.  Describing and Accessing Hierarchical Data
+#
+# This file defines an abstraction for describing, building, and accessing
+# data.  It's tailored for native memory, but formulated generically enough to
+# work for objects embedded e.g. in an interpreted language like JavaScript,
+# or other virtual environments.
+#
+# Safety Remark.  Implementations of these signatures may be unsafe even if not
+# indicated by the function names.  Issues include uninitialized references,
+# unchecked array bounds, and over- and underflow during conversion.
+
+# 0.0.  Concepts
+#
+# A record here refers to a layout of data which itself can be embedded in
+# other records.  A record includes single primitive types and fixed-size
+# arrays.  Variable-sized arrays are encoded as a "spill".
+#
+# A spill is a combination of two record descriptions.  An instance of a spill
+# is an instance of the first record combined with any number of instances of
+# the second record, indexed by an integer.  A spill encodes the common
+# C-idiom of adding variable sized arrays as the last field of a struct.  A
+# spill is not a record, since its size is unknown.
+#
+# A record can be a pointer to another record or to a spill.  In addition, a
+# pointer is tagged as either internal or external.  During construction of a
+# record instance, instances pointed to by external pointers are immutable.
+
+open prereq
+
+# 0.0.  Phantom Types Used Below
+#
+# Phantom types are used to describe records which do not have a corresponding
+# Viz type.  Below, type parameters (δ), (ε), and (ζ) run over phantoms
+# describing records and (σ) runs over phantoms describing spills.
+
+in phantoms
+
+    # 0.0.0.  Phantoms used to Express Type Compatibility
+
+    type TRUE		inj _TRUE
+    type FALSE		inj _FALSE
+    type ORD π π'	inj _ORD
+    type UN := ORD FALSE FALSE
+    type LE := ORD TRUE FALSE
+    type GE := ORD FALSE TRUE
+    type EQ := ORD TRUE TRUE
+
+    # 0.0.0.  Phantoms for Pointers and Compounds
+
+    type internal	inj _internal
+    type external	inj _external
+    type ptr_ph δ χ	inj _ptr_ph	# χ ∈ {internal, external}
+    type iptr_ph δ := ptr_ph δ internal
+    type xptr_ph δ := ptr_ph δ external
+    type array_ph δ	inj _array_ph
+    type spill_ph δ ε	inj _spill_ph
+    type pair_ph δ ε	inj _pair_ph
+
+    # 0.0.0.  Phantoms for Fixed-Sized Integers
+    #
+    # The 32 and 64 bit variants are omitted, as we use the real types
+    # instead.
+
+    type int8_ph	inj _int8_ph
+    type int16_ph	inj _int16_ph
+    type nat8_ph	inj _nat8_ph
+    type nat16_ph	inj _nat16_ph
+
+    # 0.0.0.  Phantoms Specific to the C ABI
+
+    type sshort_ph	inj _sshort_ph
+    type ushort_ph	inj _ushort_ph
+    type sint_ph	inj _sint_ph
+    type uint_ph	inj _uint_ph
+    type slong_ph	inj _slong_ph
+    type ulong_ph	inj _ulong_ph
+    type slonglong_ph	inj _slonglong_ph
+    type ulonglong_ph	inj _ulonglong_ph
+    type sintptr_ph	inj _sintptr_ph
+    type uintptr_ph	inj _uintptr_ph
+    type sintmax_ph	inj _sintmax_ph
+    type uintmax_ph	inj _uintmax_ph
+
+# 0.0.  Record Architecture
+
+sig a_record_architecture
+    open phantoms
+
+    # 0.0.0.  Propositions and Meta-Information about Records
+
+    type is_record δ
+      ## A value of type (is_record δ) witness the fact that (δ) is a record,
+      ## and may carry information about the record needed by the
+      ## implementation.
+
+    type has_field δ ε
+      ## A value of type (has_field δ ε) witness that (δ) has a field of type
+      ## (ε), and also carries the information to select it.
+
+    type has_components δ ε
+      ## A value of type (has_components δ ε) witness the fact that (δ)
+      ## contains a fixed number of components of type (ε), and may carry
+      ## information needed to index them, such as the size of components and
+      ## the number of components if bonds are checked.
+
+    type has_elements σ ε
+      ## A value of type (has_elements σ ε) witness that (σ) has a
+      ## variable-sized array of elements of type (ε), and carry details to
+      ## access it.  Typical implementations only populate this type where (σ)
+      ## is a spill, as they require records to have fixed size.
+
+
+    # 0.0.0.  Axioms and Meta-Information
+    #
+    # A record is described by producing evidence that it is a record, and
+    # evidence for any fields, components, or elements it may have.  We use
+    # the term evidence here as an informal term for an axiom or proof coupled
+    # with meta-information used by the implementation.
+    #
+    # First, two generic facts:
+
+    val field_is_transitive : has_field δ ε → has_field ε ζ → has_field δ ζ
+     ## A lookup of a record field followed by a lookup within that record can
+     ## be combined into one operation.
+
+    val components_are_elements : has_components δ ε → has_elements δ ε
+     ## Components of an array can be accessed as if they were part of a spill
+     ## where the fixed part is the unit record.
+
+
+    # 0.0.0.0.  Pointers
+
+    val record_iptr_ev : is_record δ → is_record (iptr_ph δ)
+     ## A pointer to an internal record is a record.
+
+    val record_xptr_ev : is_record δ → is_record (xptr_ph δ)
+     ## A pointer to an external record is a record.
+
+    val spill_iptr_ev :
+	is_record δ → is_record ε → is_record (iptr_ph (spill_ph δ ε))
+     ## A pointer to an internal spill is a record.
+
+    val spill_xptr_ev :
+	is_record δ → is_record ε → is_record (xptr_ph (spill_ph δ ε))
+     ## A pointer to an external spill is a record.
+
+
+    # 0.0.0.0.  Compound Types
+
+    val array_ev :
+	int → is_record δ →
+	is_record (array_ph δ) × has_components (array_ph δ) δ
+
+    val spill_ev :
+	is_record δ → is_record σ →
+	has_field (spill_ph δ ε) δ × has_elements (spill_ph δ ε) ε
+
+    in! fabric
+	type self_ph
+	val self_iptr_ev : is_record (iptr_ph self_ph)
+	val self_xptr_ev : is_record (xptr_ph self_ph)
+	val acquire : is_record δ → io (has_field self_ph δ)
+	val realize : io (is_record self_ph)
+
+
+    # 0.0.0.  Inspection
+    #
+    # Lenses provides read-only, suitable for implementing a pure interface to
+    # objects after their construction.
+
+    in lens
+	type t δ
+
+	val cmp : t δ → t δ → torder
+
+	val focus_field : has_field δ ε → t δ → t ε
+	val focus_component : has_components α ε → int → t α → t ε
+	val focus_element : has_elements σ ε → int → t σ → t ε
+
+	val unsafe_defocus_field : has_field δ ε → t ε → t δ
+
+	val get_ptr : t (ptr_ph δ χ) → t δ
+
+
+    # 0.0.0.  Mutable Access
+    #
+    # Reference lenses provide mutable access including to data pointed to by
+    # internal pointers.  This is suitable for implementing constructors of a
+    # pure interface, or for implementing a monadic interface.
+
+    in reflens
+	type r φ δ
+
+	val cmp : r φ δ → r φ δ → torder
+
+	val focus_field : has_field δ ε → r φ δ → r φ ε
+	val focus_component : has_components δ ε → int → r φ δ → r φ ε
+	val focus_element : has_elements σ ε → int → r φ σ → r φ ε
+
+	val unsafe_defocus_field : has_field δ ε → r φ ε → r φ δ
+
+	val load_iptr : r φ (iptr_ph δ) → action φ (r φ δ)
+	val load_xptr : r φ (xptr_ph δ) → action φ (lens.t δ)
+
+	val store_iptr : r φ δ → r φ (iptr_ph δ) → action φ unit
+	val store_xptr : lens.t δ → r φ (xptr_ph δ) → action φ unit
+
+
+    # 0.0.0.  Complete Objects
+    #
+    # Safety Remark.  Implementations of memory-allocating functions may pass
+    # uninitialized data to the client.  Make sure to initialize all pointers.
+
+    type t δ
+      ## A handle to a complete object.
+
+    val alloc_record : is_record δ → action φ (reflens.r φ δ)
+
+    val init_record : is_record δ → (∀φ. reflens.r φ δ → action φ α) → α × t δ
+     ## (init_record ev f) allocates an instance of (ev) and passes a
+     ## reference to (f) for initialization.  The value returned by (f) is
+     ## paired with the object handle as the result.
+
+    val alloc_spill :
+	is_record δ → int → is_record ε → action φ (reflens.r φ (spill_ph δ ε))
+
+    val init_spill :
+	is_record δ → int → is_record ε →
+	(∀φ. reflens.r φ (spill_ph δ ε) → action φ α) → α × t (spill_ph δ ε)
+     ## (init_spill ev n elt_ev f) allocates a spill with an instance of (ev)
+     ## and (n) instances of (elt_ev), initialized by (f), which receives a
+     ## reference lens to the newly allocated object.  The result of (f)
+     ## paired with the constructed object is returned.
+
+    val focus : t δ → lens.t δ
+     ## Acquire read access to a constructed object.
+
+
+    # 0.0.0.  Primitive Types
+
+    val unit_ev : is_record unit
+
+    val int_ev : is_record int
+
+    val int8_ev : is_record int8_ph
+    val int16_ev : is_record int16_ph
+    val int32_ev : is_record int32
+    val int64_ev : is_record int64
+
+    val nat8_ev : is_record nat8_ph
+    val nat16_ev : is_record nat16_ph
+    val nat32_ev : is_record nat32
+    val nat64_ev : is_record nat64
+
+    sig a_conversion
+	type ph
+	type t
+	val get : lens.t ph → t
+	val load : reflens.r φ ph → action φ t
+	val store : t → reflens.r φ ph → action φ unit
+
+    in int_as_int	include a_conversion.[ph = int]		.[t = int]
+    in int8_as_intT	include a_conversion.[ph = int8_ph]	.[t = int]
+    in int16_as_intT	include a_conversion.[ph = int16_ph]	.[t = int]
+    in int32T_as_intT	include a_conversion.[ph = int32]	.[t = int]
+    in int32_as_int32	include a_conversion.[ph = int32]	.[t = int32]
+    in int64T_as_intT	include a_conversion.[ph = int64]	.[t = int]
+    in int64_as_int64	include a_conversion.[ph = int64]	.[t = int64]
+    in nat8_as_intT	include a_conversion.[ph = nat8_ph]	.[t = int]
+    in nat16_as_intT	include a_conversion.[ph = nat16_ph]	.[t = int]
+    in nat32T_as_intT	include a_conversion.[ph = nat32]	.[t = int]
+    in nat32_as_nat32	include a_conversion.[ph = nat32]	.[t = nat32]
+    in nat64T_as_intT	include a_conversion.[ph = nat64]	.[t = int]
+    in nat64_as_nat64	include a_conversion.[ph = nat64]	.[t = nat64]

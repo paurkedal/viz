@@ -21,6 +21,7 @@
 #include <caml/custom.h>
 #include <caml/memory.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #define LOAD_PTR_IS_IDENT 1
 
@@ -67,6 +68,12 @@ CAMLprim value
 cviz_ptr_add(value offset, value p)
 {
     return cviz_copy_ptr((char *)Voidp_val(p) + Offset_val(offset));
+}
+
+CAMLprim value
+cviz_ptr_sub(value offset, value p)
+{
+    return cviz_copy_ptr((char *)Voidp_val(p) - Offset_val(offset));
 }
 
 CAMLprim value
@@ -183,4 +190,76 @@ cviz_unsafe_custom_load_ptr(value obj)
 #else
     return cviz_copy_ptr(*(void **)Data_custom_val(obj));
 #endif
+}
+
+
+/* Stubs for record.vz
+ * =================== */
+
+CAMLprim value cviz_load_ptr(value p)
+{ return cviz_copy_ptr(*(void **)Voidp_val(p)); }
+CAMLprim value cviz_store_ptr(value x, value p)
+{ *(void **)Voidp_val(p) = Voidp_val(x); return Val_unit; }
+
+#define CONV(tn, vn, t, of_val, to_val)					\
+									\
+    CAMLprim value cviz_##tn##_load_##vn(value p)			\
+    {									\
+	return to_val(*(t *)Voidp_val(p));				\
+    }									\
+									\
+    CAMLprim value cviz_##tn##_store_##vn(value x, value p)		\
+    {									\
+	*(t *)Voidp_val(p) = of_val(x);					\
+	return Val_unit;						\
+    }
+CONV(intnat, int, intnat, Long_val, Val_long)
+CONV(int8,  int,   int8_t, Long_val, Val_long)
+CONV(nat8,  int,   uint8_t, Long_val, Val_long)
+CONV(int16, int,   int16_t, Long_val, Val_long)
+CONV(nat16, int,   uint16_t, Long_val, Val_long)
+CONV(int32, int,   int32_t, Long_val, Val_long)
+CONV(nat32, int,   uint32_t, Long_val, Val_long)
+CONV(int32, int32, int32_t, Int32_val, caml_copy_int32)
+CONV(int64, int,   int64_t, Long_val, Val_long)
+CONV(nat64, int,   uint64_t, Long_val, Val_long)
+CONV(int64, int64, int64_t, Int64_val, caml_copy_int64)
+CONV(sshort,	int, short, Long_val, Val_long)
+CONV(ushort,	int, unsigned short, Long_val, Val_long)
+CONV(sint,	int, int, Long_val, Val_long)
+CONV(uint,	int, unsigned int, Long_val, Val_long)
+CONV(slong,	int, long, Long_val, Val_long)
+CONV(ulong,	int, unsigned long, Long_val, Val_long)
+CONV(slonglong,	int, long long, Long_val, Val_long)
+CONV(ulonglong,	int, unsigned long long, Long_val, Val_long)
+CONV(sintptr,	int, intptr_t, Long_val, Val_long)
+CONV(uintptr,	int, uintptr_t, Long_val, Val_long)
+CONV(sintmax,	int, intmax_t, Long_val, Val_long)
+CONV(uintmax,	int, uintmax_t, Long_val, Val_long)
+CONV(sint,	nint, int, Nativeint_val, caml_copy_nativeint)
+CONV(uint,	nint, unsigned int, Nativeint_val, caml_copy_nativeint)
+CONV(slong,	nint, long, Nativeint_val, caml_copy_nativeint)
+CONV(ulong,	nint, unsigned long, Nativeint_val, caml_copy_nativeint)
+CONV(slonglong,	nint, long long, Nativeint_val, caml_copy_nativeint)
+CONV(ulonglong,	nint, unsigned long long, Nativeint_val, caml_copy_nativeint)
+CONV(sintptr,	nint, intptr_t, Nativeint_val, caml_copy_nativeint)
+CONV(uintptr,	nint, uintptr_t, Nativeint_val, caml_copy_nativeint)
+CONV(sintmax,	nint, intmax_t, Nativeint_val, caml_copy_nativeint)
+CONV(uintmax,	nint, uintmax_t, Nativeint_val, caml_copy_nativeint)
+#undef CONV
+
+
+static struct custom_operations _record_ops = {
+    "camlviz.record",
+    custom_finalize_default,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default,
+};
+
+CAMLprim value
+cviz_record_alloc(value size)
+{
+    return caml_alloc_custom(&_record_ops, Offset_val(size), 0, 1);
 }

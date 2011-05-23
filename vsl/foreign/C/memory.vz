@@ -17,6 +17,7 @@
 
 open prereq
 open action
+open:c "stdint.h"
 use cabi.stub_prefix "cviz_"
 
 # Z.  Direct Memory Access
@@ -87,6 +88,12 @@ val:c sizeof_clong : size := "(intnat)sizeof(long)"
 
 val:c sizeof_clonglong : size := "(intnat)sizeof(long long)"
  ## The size of the C long long and unsigned long long types.
+
+val:c sizeof_cintptr : size := "(intnat)sizeof(intptr_t)"
+ ## The size of the C intptr_t and uintptr_t types.
+
+val:c sizeof_cintmax : size := "(intnat)sizeof(intmax_t)"
+ ## The size of the C intmax_t and uintptr_t types.
 
 
 # Z.Z.  Load and Store

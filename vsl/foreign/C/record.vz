@@ -1,0 +1,501 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open field_allocation
+open intf.record
+open phantoms
+open action
+
+sealed with
+    include a_record_architecture
+
+    type alignment := int
+    type offset := int
+
+    val record_size : is_record δ → offset
+    val record_alignment : is_record δ → offset
+
+    val field_offset : has_field δ δ' → offset
+
+    val elements_offset : has_elements σ δ → offset
+
+    val unsafe_conjecture_field : is_record ε → offset → has_field δ ε
+
+    sig a_fabric
+	type self_ph := unit
+	val self_iptr_ev : is_record (iptr_ph self_ph)
+	val self_xptr_ev : is_record (xptr_ph self_ph)
+	val acquire : is_record δ → io (has_field self_ph δ)
+	val realize : io (is_record self_ph)
+
+    in! make_fabric
+	.(F : a_field_allocator.[alignment = alignment].[offset = offset])
+	include a_fabric
+    in! monotonic_fabric include a_fabric
+
+    val sshort_ev : is_record sshort_ph
+    val ushort_ev : is_record ushort_ph
+    val sint_ev : is_record sint_ph
+    val uint_ev : is_record uint_ph
+    val slong_ev : is_record slong_ph
+    val ulong_ev : is_record ulong_ph
+    val slonglong_ev : is_record slonglong_ph
+    val ulonglong_ev : is_record ulonglong_ph
+
+    in sshort_as_intT	include a_conversion.[ph = sshort_ph].[t = int]
+    in ushort_as_intT	include a_conversion.[ph = ushort_ph].[t = int]
+    in sintT_as_intT	include a_conversion.[ph = sint_ph].[t = int]
+    in uintT_as_intT	include a_conversion.[ph = uint_ph].[t = int]
+    in slongT_as_intT	include a_conversion.[ph = slong_ph].[t = int]
+    in ulongT_as_intT	include a_conversion.[ph = ulong_ph].[t = int]
+    in slonglongT_as_intT include a_conversion.[ph = slonglong_ph].[t = int]
+    in ulonglongT_as_intT include a_conversion.[ph = ulonglong_ph].[t = int]
+    in sintptrT_as_int	include a_conversion.[ph = sintptr_ph].[t = int]
+    in uintptrT_as_int	include a_conversion.[ph = uintptr_ph].[t = int]
+    in sintmaxT_as_int	include a_conversion.[ph = sintmax_ph].[t = int]
+    in uintmaxT_as_int	include a_conversion.[ph = uintmax_ph].[t = int]
+    in sint_as_nintT	include a_conversion.[ph = sint_ph].[t = nint]
+    in uintT_as_nintT	include a_conversion.[ph = uint_ph].[t = nint]
+    in slong_as_nintT	include a_conversion.[ph = slong_ph].[t = nint]
+    in ulongT_as_nintT	include a_conversion.[ph = ulong_ph].[t = nint]
+    in slonglongT_as_nintT include a_conversion.[ph = slonglong_ph].[t = nint]
+    in ulonglongT_as_nintT include a_conversion.[ph = ulonglong_ph].[t = nint]
+    in sintptr_as_nint	include a_conversion.[ph = sintptr_ph].[t = nint]
+    in uintptrT_as_nint	include a_conversion.[ph = uintptr_ph].[t = nint]
+    in sintmaxT_as_nint	include a_conversion.[ph = sintmax_ph].[t = nint]
+    in uintmaxT_as_nint	include a_conversion.[ph = uintmax_ph].[t = nint]
+
+type alignment := int
+type offset := int
+in offset include int
+
+# 0.0.  Internal Helpers
+
+type:c gptr := "void *"
+val:cs gptr_cmp : gptr → gptr → torder := "cviz_ptr_cmp"
+val:cs gptr_add : offset → gptr → gptr := "cviz_ptr_add"
+val:cs gptr_sub : offset → gptr → gptr := "cviz_ptr_sub"
+
+let unbounded be -1
+ ## The value used in place of the array size for spill-arrays.
+
+in alignment
+    include int
+    let none be zero
+    let is_none be eq zero
+
+let align al' off
+    let al be offset.of_int al'
+    let 2'+ , 2'- be offset.add, offset.sub
+    be offset.bitand (off + al - offset.one) (offset.bitnot (al - offset.one))
+
+# 0.0.  Propositions
+
+type is_record δ         inj record_sc : alignment → offset → is_record δ
+type has_field δ ε       inj field_sc : offset → has_field δ ε
+type has_components δ ε  inj components_sc : int → offset → has_components δ ε
+type has_elements σ ε    inj elements_sc : offset → offset → has_elements σ ε
+
+let elem_record_sc s be record_sc (offset.as_int s) s
+
+let record_size (record_sc al sz) be sz
+let record_alignment (record_sc al sz) be al
+let field_offset (field_sc off) be off
+let elements_offset (elements_sc off sz) be off
+
+let unsafe_conjecture_field d off be field_sc off
+
+# 0.0.  Axioms
+
+let field_is_transitive (field_sc offA) (field_sc offB)
+    be field_sc (offset.add offA offB)
+let components_are_elements (components_sc n sz)
+    be elements_sc offset.zero sz
+
+let record_iptr_ev r be elem_record_sc memory.sizeof_ptr
+let record_xptr_ev r be elem_record_sc memory.sizeof_ptr
+let forward_iptr_ev r be elem_record_sc memory.sizeof_ptr
+let forward_xptr_ev r be elem_record_sc memory.sizeof_ptr
+
+let unit_ev be record_sc alignment.one offset.zero
+
+let int_ev be elem_record_sc memory.sizeof_clong
+let nint_ev be elem_record_sc memory.sizeof_clong
+
+# Compounds
+
+let array_ev n (record_sc alE szE)
+    be (record_sc alE (offset.mul (offset.of_int n) szE), components_sc n szE)
+let spill_ev (record_sc alM szM) (record_sc alS szS)
+    be (field_sc offset.zero, elements_sc (align alS szM) szS)
+let spill_iptr_ev _ _ be elem_record_sc memory.sizeof_ptr
+let spill_xptr_ev _ _ be elem_record_sc memory.sizeof_ptr
+
+sig a_fabric
+    type self_ph := unit
+    val self_iptr_ev : is_record (iptr_ph self_ph)
+    val self_xptr_ev : is_record (xptr_ph self_ph)
+    val acquire : is_record δ → io (has_field self_ph δ)
+    val realize : io (is_record self_ph)
+
+in! make_fabric.(A : a_field_allocator.[alignment = alignment]
+				      .[offset = offset])
+    type self_ph := unit
+    let _state do ref.init (A.empty, false)
+
+    let self_iptr_ev be record_iptr_ev ()
+    let self_xptr_ev be record_xptr_ev ()
+
+    let! acquire (record_sc al sz)
+	let (state, complete) do ref.get _state
+	if complete fail "Attempt to extend a realized record."
+	let (offset, state') be A.alloc al sz state
+	do ref.set _state (state', false)
+	be field_sc offset
+
+    let! realize
+	let (state, complete) do ref.get _state
+	if complete fail "Attempt to realize a record multiple times."
+	do ref.set _state (state, true)
+	be record_sc (A.alignment state) (A.size state)
+
+in! monotonic_fabric include! make_fabric.(monotonic_field_allocator.(int))
+in! fabric include! monotonic_fabric
+
+# 0.0.  Immutable Access
+
+in lens
+    type t δ := gptr
+
+    let cmp be gptr_cmp
+
+    let focus_field (field_sc off) p be gptr_add off p
+    let focus_component (components_sc _ sz) n p
+	be gptr_add (offset.mul sz (offset.of_int n)) p
+    let focus_element (elements_sc off sz) n p
+	be gptr_add (offset.add off (offset.mul sz (offset.of_int n))) p
+
+    let unsafe_defocus_field (field_sc off) p be gptr_sub off p
+
+    val:cs get_ptr : t (ptr_ph δ χ) → t δ := "cviz_load_ptr"
+
+# 0.0.  Mutable Access
+
+in reflens
+    type r φ δ := gptr
+
+    let cmp be gptr_cmp
+
+    let focus_field (field_sc off) p be gptr_add off p
+    let focus_component (components_sc _ sz) n p
+	be gptr_add (offset.mul sz (offset.of_int n)) p
+    let focus_element (elements_sc off sz) n p
+	be gptr_add (offset.add off (offset.mul sz (offset.of_int n))) p
+
+    let unsafe_defocus_field (field_sc off) p be gptr_sub off p
+
+    val:cs load_iptr : r φ (iptr_ph δ) → action φ (r φ δ) := "cviz_load_ptr"
+    val:cs load_xptr : r φ (xptr_ph δ) → action φ (r φ δ) := "cviz_load_ptr"
+    val:cs store_iptr : r φ δ → r φ (iptr_ph δ) → action φ unit
+	    := "cviz_store_ptr"
+    val:cs store_xptr : r φ δ → r φ (xptr_ph δ) → action φ unit
+	    := "cviz_store_ptr"
+
+# 0.0.  Evidence for Primitive Types
+
+# 0.0.0.  Generic Types
+
+let int_ev   be elem_record_sc (offset.of_int memory.sizeof_cintptr)
+let int8_ev  be elem_record_sc (offset.of_int 1)
+let nat8_ev  be elem_record_sc (offset.of_int 1)
+let int16_ev be elem_record_sc (offset.of_int 2)
+let nat16_ev be elem_record_sc (offset.of_int 2)
+let int32_ev be elem_record_sc (offset.of_int 4)
+let nat32_ev be elem_record_sc (offset.of_int 4)
+let int64_ev be elem_record_sc (offset.of_int 8)
+let nat64_ev be elem_record_sc (offset.of_int 8)
+
+# 0.0.0.  C-Specific Types
+
+let sshort_ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
+let ushort_ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
+let sint_ev be elem_record_sc (offset.of_int memory.sizeof_cint)
+let uint_ev be elem_record_sc (offset.of_int memory.sizeof_cint)
+let slong_ev be elem_record_sc (offset.of_int memory.sizeof_clong)
+let ulong_ev be elem_record_sc (offset.of_int memory.sizeof_clong)
+let slonglong_ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
+let ulonglong_ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
+let sintptr_ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
+let uintptr_ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
+let sintmax_ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
+let uintmax_ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
+
+
+# 0.0.  Primitive Type Conversions
+
+sig a_conversion
+    type ph
+    type t
+    val get : gptr → t
+    val load : gptr → action φ t
+    val store : t → gptr → action φ unit
+
+# 0.0.0.  Generic Types
+
+in int_as_int
+    type ph := int
+    type t := int
+    val:cs get : gptr → t			:= "cviz_intnat_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_intnat_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_intnat_store_int"
+in int8_as_intT
+    type ph := int8_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_int8_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_int8_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int8_store_int"
+in int16_as_intT
+    type ph := int16_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_int16_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_int16_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int16_store_int"
+in int32T_as_intT
+    type ph := int32
+    type t := int
+    val:cs get : gptr → t			:= "cviz_int32_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_int32_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int32_store_int"
+in int32_as_int32
+    type ph := int32
+    type t := int32
+    val:cs get : gptr → t			:= "cviz_int32_load_int32"
+    val:cs load : gptr → action φ t		:= "cviz_int32_load_int32"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int32_store_int32"
+in int64T_as_intT
+    type ph := int64
+    type t := int
+    val:cs get : gptr → t			:= "cviz_int64_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_int64_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int64_store_int"
+in int64_as_int64
+    type ph := int64
+    type t := int64
+    val:cs get : gptr → int64			:= "cviz_int64_load_int64"
+    val:cs load : gptr → action φ int64		:= "cviz_int64_load_int64"
+    val:cs store : int64 → gptr → action φ unit	:= "cviz_int64_store_int64"
+in nat8_as_intT
+    type ph := nat8_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_nat8_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_nat8_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_nat8_store_int"
+in nat16_as_intT
+    type ph := nat16_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_nat16_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_nat16_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_nat16_store_int"
+in nat32T_as_intT
+    type ph := nat32
+    type t := int
+    val:cs get : gptr → t			:= "cviz_nat32_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_nat32_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_nat32_store_int"
+in nat32_as_nat32
+    type ph := nat32
+    type t := nat32
+    val:cs get : gptr → t			:= "cviz_int32_load_int32"
+    val:cs load : gptr → action φ t		:= "cviz_int32_load_int32"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int32_store_int32"
+in nat64T_as_intT
+    type ph := nat64
+    type t := int
+    val:cs get : gptr → t			:= "cviz_nat64_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_nat64_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_nat64_store_int"
+in nat64_as_nat64
+    type ph := nat64
+    type t := nat64
+    val:cs get : gptr → t			:= "cviz_int64_load_int64"
+    val:cs load : gptr → action φ t		:= "cviz_int64_load_int64"
+    val:cs store : t → gptr → action φ unit	:= "cviz_int64_store_int64"
+
+# 0.0.0.  C-Specific Types
+
+in sshort_as_intT
+    type ph := sshort_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_sshort_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_sshort_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sshort_store_int"
+in ushort_as_intT
+    type ph := ushort_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_ushort_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_ushort_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_ushort_store_int"
+in sintT_as_intT
+    type ph := sint_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_sint_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_sint_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sint_store_int"
+in uintT_as_intT
+    type ph := uint_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_uint_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_uint_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_uint_store_int"
+in slongT_as_intT
+    type ph := slong_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_slong_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_slong_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_slong_store_int"
+in ulongT_as_intT
+    type ph := ulong_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_ulong_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_ulong_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_ulong_store_int"
+in slonglongT_as_intT
+    type ph := slonglong_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_slonglong_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_slonglong_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_slonglong_store_int"
+in ulonglongT_as_intT
+    type ph := ulonglong_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_ulonglong_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_ulonglong_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_ulonglong_store_int"
+in sintptrT_as_int
+    type ph := sintptr_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_sintptr_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_sintptr_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sintptr_store_int"
+in uintptrT_as_int
+    type ph := uintptr_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_uintptr_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_uintptr_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_uintptr_store_int"
+in sintmaxT_as_int
+    type ph := sintmax_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_sintmax_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_sintmax_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sintmax_store_int"
+in uintmaxT_as_int
+    type ph := uintmax_ph
+    type t := int
+    val:cs get : gptr → t			:= "cviz_uintmax_load_int"
+    val:cs load : gptr → action φ t		:= "cviz_uintmax_load_int"
+    val:cs store : t → gptr → action φ unit	:= "cviz_uintmax_store_int"
+in sint_as_nintT
+    type ph := sint_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_sint_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_sint_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sint_store_nint"
+in uintT_as_nintT
+    type ph := uint_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_uint_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_uint_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_uint_store_nint"
+in slong_as_nintT
+    type ph := slong_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_slong_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_slong_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_slong_store_nint"
+in ulongT_as_nintT
+    type ph := ulong_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_ulong_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_ulong_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_ulong_store_nint"
+in slonglongT_as_nintT
+    type ph := slonglong_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_slonglong_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_slonglong_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_slonglong_store_nint"
+in ulonglongT_as_nintT
+    type ph := ulonglong_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_ulonglong_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_ulonglong_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_ulonglong_store_nint"
+in sintptr_as_nint
+    type ph := sintptr_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_sintptr_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_sintptr_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sintptr_store_nint"
+in uintptrT_as_nint
+    type ph := uintptr_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_uintptr_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_uintptr_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_uintptr_store_nint"
+in sintmaxT_as_nint
+    type ph := sintmax_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_sintmax_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_sintmax_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_sintmax_store_nint"
+in uintmaxT_as_nint
+    type ph := uintmax_ph
+    type t := nint
+    val:cs get : gptr → t			:= "cviz_uintmax_load_nint"
+    val:cs load : gptr → action φ t		:= "cviz_uintmax_load_nint"
+    val:cs store : t → gptr → action φ unit	:= "cviz_uintmax_store_nint"
+
+# 0.0.  Construction and Inspection
+
+type:c t δ
+
+val:cs prim_alloc : offset → action φ (t δ) := "cviz_record_alloc"
+val:cs get_ref : t δ → action φ (reflens.r φ δ) := "cviz_unsafe_custom_address"
+val:cs get_obj : t δ → lens.t δ := "cviz_unsafe_custom_address"
+
+let alloc_record (record_sc al sz) be prim_alloc sz >>= get_ref
+
+let init_record (record_sc al sz) f be __unsafe_run_action what!
+    let p do prim_alloc sz
+    let x do get_ref p >>= f
+    be (x, p)
+
+let! alloc_spill (record_sc al sz) n (record_sc alE szE)
+    let offE be align alE sz
+    let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
+    do get_ref p
+
+let init_spill (record_sc al sz) n (record_sc alE szE) f
+    be __unsafe_run_action what!
+    let offE be align alE sz
+    let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
+    let x do get_ref p >>= f
+    be (x, p)
+
+let focus be get_obj

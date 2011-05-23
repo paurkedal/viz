@@ -1,0 +1,29 @@
+open prereq
+
+sig a_field_allocator
+    type alignment
+    type offset
+    type t
+
+    val empty : t
+    val alignment : t → alignment
+    val size : t → offset
+    val alloc : alignment → offset → t → offset × t
+
+in monotonic_field_allocator.(offset : a_basic_nat) :
+	a_field_allocator.[alignment = int].[offset = int]
+
+    type alignment := int
+    type offset := int
+    type t := alignment * offset
+
+    let align al sz be int.bitor (sz - 1) (al - 1) + 1
+
+    let empty be (1, 0)
+
+    let alignment (alR, szR) be alR
+    let size (alR, szR) be align alR szR
+
+    let alloc alF szF (alR, szR)
+	let offF be align alF szR
+	be (offF, (int.max alF alR, offF + szF))
