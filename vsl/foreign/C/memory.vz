@@ -27,11 +27,12 @@ use cabi.stub_prefix "cviz_"
 
 # Z.Z.  Size and Offset
 
-type offset := nativeint
-type size := nativeint
+type offset := int
+type size := offset
 
-let null_offset be nativeint.of_int 0
-let scale_size n size be nativeint.mul (nativeint.of_int n) size
+in offset
+    include int
+    let scale n size be mul (of_int n) size
 
 
 # Z.Z.  Pointer Objects
@@ -69,22 +70,22 @@ val:cs unsafe_custom_load_ptr : α → action φ (ptr φ)
 
 # Z.Z.  Sizes of Elementary C Values
 
-val:c sizeof_ptr : size := "sizeof(void *)"
+val:c sizeof_ptr : size := "(intnat)sizeof(void *)"
  ## The size of a pointer.
 
-val:c sizeof_size : size := "sizeof(size_t)"
+val:c sizeof_size : size := "(intnat)sizeof(size_t)"
  ## The size of the size_t type.
 
-val:c sizeof_cshort : size := "sizeof(short)"
+val:c sizeof_cshort : size := "(intnat)sizeof(short)"
  ## The size of the C short and unsigned short types.
 
-val:c sizeof_cint : size := "sizeof(int)"
+val:c sizeof_cint : size := "(intnat)sizeof(int)"
  ## The size of the C int and unsigned int types.
 
-val:c sizeof_clong : size := "sizeof(long)"
+val:c sizeof_clong : size := "(intnat)sizeof(long)"
  ## The size of the C long and unsigned long types.
 
-val:c sizeof_clonglong : size := "sizeof(long long)"
+val:c sizeof_clonglong : size := "(intnat)sizeof(long long)"
  ## The size of the C long long and unsigned long long types.
 
 

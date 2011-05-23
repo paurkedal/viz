@@ -31,11 +31,11 @@ val malloc_ptrarray_init :
 
 val malloc_ptrarray_of_array : array α → action φ (ptr φ)
 
-let unsafe_ptrarray_load i be unsafe_load_ptr (scale_size i sizeof_ptr)
-let unsafe_ptrarray_store i be unsafe_store_ptr (scale_size i sizeof_ptr)
+let unsafe_ptrarray_load i be unsafe_load_ptr (offset.scale i sizeof_ptr)
+let unsafe_ptrarray_store i be unsafe_store_ptr (offset.scale i sizeof_ptr)
 
 let! malloc_ptrarray_init n f
-    let p do unsafe_malloc (scale_size n sizeof_ptr)
+    let p do unsafe_malloc (offset.scale n sizeof_ptr)
     let! loop i
 	when i < n let x do f i
 		   do unsafe_ptrarray_store i p x
@@ -57,6 +57,6 @@ val:c strcpy_UTF8string : ptr φ → UTF8string → action φ unit := "strcpy"
 let! malloc_strcpy_string s
     let us be data.UTF8string.of_string s
     let n be data.UTF8string.length us
-    let p do unsafe_malloc (nativeint.of_int (n + 1))
+    let p do unsafe_malloc (offset.of_int (n + 1))
     do strcpy_UTF8string p us
     be p

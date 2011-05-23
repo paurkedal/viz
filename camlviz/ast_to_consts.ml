@@ -38,10 +38,12 @@ let rec output_const och state v t cx =
 	fprintf och "\tprintf(\"let %s = \"); " (avar_to_lid v);
 	begin match tn with
 	| "bool" -> fprintf och "fputs(%s? \"true\" : \"false\", stdout)" cx
-	| "int" -> fprintf och "printf(\"%%d\", %s)" cx
-	| "float" -> fprintf och "printf(\"%%lg\", %s)" cx
-	| "nativeint" | "size" | "offset" ->
+	| "int" | "size" | "offset" ->
+	    fprintf och
+		"printf(\"%%\"ARCH_INTNAT_PRINTF_FORMAT\"d\", (intnat)%s)" cx
+	| "nativeint" ->
 	    fprintf och "printf(\"%%ldn\", %s)" cx
+	| "float" -> fprintf och "printf(\"%%lg\", %s)" cx
 	| "UTF8string" -> fprintf och "fputq(%s, stdout)" cx
 	  (* TODO: Fix string quoting. *)
 	| _ -> errf_at (atyp_loc t) "Unsupported type %s for C constant." tn
@@ -99,6 +101,7 @@ let output_consts och m =
 #define __STDC_CONSTANT_MACROS 1
 #include <stdio.h>
 #include <stdlib.h>
+#include <caml/config.h>
 ";
     Ast_utils.fold_amod_cabi_open
 	(fun inc () -> fprintf och "#include <%s>\n" inc) m ();

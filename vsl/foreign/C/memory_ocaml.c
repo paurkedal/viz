@@ -23,10 +23,22 @@
 #include <stdio.h>
 
 #define LOAD_PTR_IS_IDENT 1
+
+/* Use the nativeint rather than the int O'Caml type for offset and size.  If
+ * this is changed, also change camlviz/ast_to_cstubs.ml,
+ * camlviz/ast_to_costs.ml, and vsl/foreign/C/memory.vz. */
+#define OFFSET_IS_NATIVEINT 0
+
 #define DEBUG_STORE 0
 
 #define Voidp_val(v) (*(void **)Data_custom_val(v))
-#define Offset_val(v) Nativeint_val(v)
+#if OFFSET_IS_NATIVEINT
+#  define Offset_val(v) Nativeint_val(v)
+#  define copy_offset(i) caml_copy_nativeint(i)
+#else
+#  define Offset_val(v) Long_val(v)
+#  define copy_offset(i) Val_long(i)
+#endif
 
 value cviz_copy_ustring(char const *);
 value cviz_copy_ptr(void *p);
@@ -54,13 +66,13 @@ cviz_is_null(value p)
 CAMLprim value
 cviz_ptr_add(value offset, value p)
 {
-    return cviz_copy_ptr((char *)Voidp_val(p) + Long_val(offset));
+    return cviz_copy_ptr((char *)Voidp_val(p) + Nativeint_val(offset));
 }
 
 CAMLprim value
 cviz_ptr_diff(value pb, value pa)
 {
-    return Val_long((char *)pb - (char *)pa);
+    return copy_offset((char *)pb - (char *)pa);
 }
 
 CAMLprim value
@@ -97,6 +109,7 @@ CAMLprim value cviz_unsafe_load_int64(value off, value p)
 { return caml_copy_int64(*ADDR(int64, off, p)); }
 
 
+
 CAMLprim value
 cviz_unsafe_store_ptr(value off, value p, value x)
 {
@@ -112,7 +125,7 @@ CAMLprim value
 cviz_unsafe_store_8(value off, value p, value x)
 {
 #if DEBUG_STORE
-    printf("Storing byte %d to %p + %ld = %p\n", Int_val(x),
+    printf("Storing byte %x to %p + %ld = %p\n", Int_val(x),
 	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
 #endif
     *ADDR(unsigned char, off, p) = Int_val(x);
@@ -123,7 +136,7 @@ CAMLprim value
 cviz_unsafe_store_16(value off, value p, value x)
 {
 #if DEBUG_STORE
-    printf("Storing 16 bit %d to %p + %ld = %p\n", Int_val(x),
+    printf("Storing 16 bit value %#x to %p + %ld = %p\n", Int_val(x),
 	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
 #endif
     *ADDR(unsigned short, off, p) = Int_val(x);
@@ -134,7 +147,7 @@ CAMLprim value
 cviz_unsafe_store_int32(value off, value p, value x)
 {
 #if DEBUG_STORE
-    printf("Storing 32 bits %d to %p + %ld = %p\n", Int32_val(x),
+    printf("Storing 32 bit value %#x to %p + %ld = %p\n", Int32_val(x),
 	   Voidp_val(p), Offset_val(off), ADDR(unsigned char, off, p));
 #endif
     *ADDR(int32, off, p) = Int32_val(x);
@@ -156,6 +169,9 @@ cviz_unsafe_store_int64(value off, value p, value x)
 CAMLprim value
 cviz_unsafe_custom_address(value obj)
 {
+#if DEBUG_STORE
+    printf("Using custom address %p.\n", Data_custom_val(obj));
+#endif
     return cviz_copy_ptr(Data_custom_val(obj));
 }
 

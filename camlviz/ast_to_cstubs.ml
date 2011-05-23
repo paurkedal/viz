@@ -108,8 +108,9 @@ let rec nonoption_conversion state = function
 	match tname with
 	| "unit"   -> ("void", None, "Int_val",   "Val_int")
 	| "bool"   -> ("int",  None, "Bool_val",  "Val_bool")
-	| "int"    -> ("int",  None, "Int_val",   "Val_int")
-	| "nativeint" | "size" | "offset" ->
+	| "int" | "size" | "offset" ->
+	    ("intnat",  None, "Long_val", "Val_long")
+	| "nativeint" ->
 	    ("nativeint", None, "Nativeint_val", "caml_copy_nativeint")
 	| "int32"  -> ("int32", None, "Int32_val", "caml_copy_int32")
 	| "int64"  -> ("int64", None, "Int64_val", "caml_copy_int64")

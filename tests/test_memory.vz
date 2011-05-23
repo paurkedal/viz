@@ -17,7 +17,7 @@ val:c puts_ptr : ptr φ → action φ int := "puts"
 let! test_cstring
     let s do malloc_cstring 16
     let slot do unsafe_custom_address s
-    let p do unsafe_load_ptr (nativeint.of_int 0) slot
+    let p do unsafe_load_ptr (offset.of_int 0) slot
     let p' do unsafe_custom_load_ptr s
     let p'' do unsafe_custom_load_ptr p'
     ##do print "slot = " >> print (show_ptr slot) >> newline
@@ -26,20 +26,20 @@ let! test_cstring
     ##do print "p'' = " >> print (show_ptr p') >> newline
     assert ptr_eq p p'
     assert ptr_eq p' p''
-    do unsafe_store_8 (nativeint.of_int 0) p 0x70
-    do unsafe_store_8 (nativeint.of_int 1) p 0x75
-    do unsafe_store_8 (nativeint.of_int 2) p 0x74
-    do unsafe_store_8 (nativeint.of_int 3) p 0x73
-    do unsafe_store_8 (nativeint.of_int 4) p 0x00
+    do unsafe_store_8 (offset.of_int 0) p 0x70
+    do unsafe_store_8 (offset.of_int 1) p 0x75
+    do unsafe_store_8 (offset.of_int 2) p 0x74
+    do unsafe_store_8 (offset.of_int 3) p 0x73
+    do unsafe_store_8 (offset.of_int 4) p 0x00
     let _ do puts_cstring s
     do free_cstring s
 
 let! test_ptr
-    let q do unsafe_malloc (nativeint.of_int 3)
+    let q do unsafe_malloc (offset.of_int 3)
     do print (show_ptr q) >> print "\n" >> flush stdout
-    do unsafe_store_8 (nativeint.of_int 0) q 0x4f
-    do unsafe_store_8 (nativeint.of_int 1) q 0x4b
-    do unsafe_store_8 (nativeint.of_int 2) q 0
+    do unsafe_store_8 (offset.of_int 0) q 0x4f
+    do unsafe_store_8 (offset.of_int 1) q 0x4b
+    do unsafe_store_8 (offset.of_int 2) q 0
     let _ do puts_ptr q
     do unsafe_free q
 
