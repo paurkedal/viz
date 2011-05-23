@@ -59,7 +59,7 @@ val eprint : string → io unit
 #?ffoc include compat.ocaml_pervasives.pervasive
 #?ffoc include compat.ocaml_unicode.pervasive
 #?ffoc include compat.ocaml_miscints.pervasive
-in nativeint include prereq.nativeint
+in nint include prereq.nint
 in int32 include prereq.int32
 in int64 include prereq.int64
 in nat32 include prereq.nat32

@@ -225,11 +225,13 @@ module Nat64 = struct
     external of_int : int -> t = "cviz_nat64_of_int"
 end
 
-module Nativeint = Adapt (Nativeint)
+module Nint = Adapt (Nativeint)
 module Int32 = Adapt (Int32)
 module Int64 = Adapt (Int64)
 
 module Pervasive = struct
+    type nint = nativeint
+    type nativeint = unit
     type nat32 = Nat32.t
     type nat64 = Nat64.t
 end

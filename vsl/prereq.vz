@@ -105,9 +105,9 @@ in int
     #?ffoc include compat.ocaml_miscints.int
     #?ffoc include extend_basic_int.(compat.ocaml_miscints.int)
     #?ffoc include compat.ocaml_pervasives.int_misc
-in nativeint
-    #?ffoc include compat.ocaml_miscints.nativeint
-    #?ffoc include extend_basic_int.(compat.ocaml_miscints.nativeint)
+in nint
+    #?ffoc include compat.ocaml_miscints.nint
+    #?ffoc include extend_basic_int.(compat.ocaml_miscints.nint)
 in int32
     #?ffoc include compat.ocaml_miscints.int32
     #?ffoc include extend_basic_int.(compat.ocaml_miscints.int32)
