@@ -73,7 +73,7 @@ sig a_basic_int
     include a_basic_nat
 
     val neg : t → t
-    val abs : t → t → t
+    val abs : t → t
 
 in nat_ops.(Nat : a_basic_nat)
     let 2'+ be Nat.add
@@ -103,17 +103,17 @@ in extend_basic_int.(Int : a_basic_int)
 
 in int
     #?ffoc include compat.ocaml_miscints.int
-    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.int)
+    #?ffoc include extend_basic_int.(compat.ocaml_miscints.int)
     #?ffoc include compat.ocaml_pervasives.int_misc
 in nativeint
     #?ffoc include compat.ocaml_miscints.nativeint
-    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nativeint)
+    #?ffoc include extend_basic_int.(compat.ocaml_miscints.nativeint)
 in int32
     #?ffoc include compat.ocaml_miscints.int32
-    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.int32)
+    #?ffoc include extend_basic_int.(compat.ocaml_miscints.int32)
 in int64
     #?ffoc include compat.ocaml_miscints.int64
-    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.int64)
+    #?ffoc include extend_basic_int.(compat.ocaml_miscints.int64)
 in nat32
     #?ffoc include compat.ocaml_miscints.nat32
     #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nat32)
