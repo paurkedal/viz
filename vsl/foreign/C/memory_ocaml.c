@@ -66,7 +66,7 @@ cviz_is_null(value p)
 CAMLprim value
 cviz_ptr_add(value offset, value p)
 {
-    return cviz_copy_ptr((char *)Voidp_val(p) + Nativeint_val(offset));
+    return cviz_copy_ptr((char *)Voidp_val(p) + Offset_val(offset));
 }
 
 CAMLprim value
