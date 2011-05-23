@@ -86,8 +86,8 @@ syn cluster VizSigExpr contains=VizSigName,VizSigProduct,VizSigPath,
   \ VizSigPrefix,VizConnective
 syn match VizSigName contained '\.\?\K\k*\>\(\.\S\)\@!'
   \ skipwhite nextgroup=VizTypeParam
-syn region VizSigProduct transparent fold
-  \ matchgroup=VizPathOperator start='\<Pi\>' end='\.\S\@!' keepend extend
+syn region VizSigProduct transparent fold keepend extend
+  \ matchgroup=VizPathOperator start='\<\(Fun\|Pi\)\>' end='\.\S\@!'
   \ contains=@VizSctExpr,VizSigProduct
   \ skipwhite skipnl nextgroup=@VizSigExpr
 
@@ -95,7 +95,7 @@ syn region VizSigProduct transparent fold
 "
 syn cluster VizTypeExpr
     \ contains=VizTypeParam,VizTypeExpr,VizOperator,@VizCommon,VizTypeName
-syn match VizTypeParam '\'\K\k*' skipwhite nextgroup=VizTypeParam
+syn match VizTypeParam '\<\'\K\k*' skipwhite nextgroup=VizTypeParam
 syn match VizTypeParam '[α-ω]\k*' skipwhite nextgroup=VizTypeParam
 syn match VizTypeName contained '\.\?\K\k*\>\(\.\S\)\@!'
 syn region VizTypeExpr transparent fold
@@ -109,6 +109,7 @@ syn cluster VizOperator contains=VizOperator,VizParen,VizOperatorName
 syn match VizOperator
   \ '[-!#&*+,/;<=>@|~¬×\u2190-\u21ff∁∂\u2206-\u22ff\u2a00-\u2aff]\+\'*'
 syn match VizOperator '\k\@<!:\k\@!'
+syn match VizOperator '\.\S\@=\k\@!'
 syn region VizParen matchgroup=VizOperator start='(' end=')' fold transparent
 syn region VizParen matchgroup=VizOperator start='\[' end='\]' fold transparent
 if !exists('viz_disable_types')
@@ -166,8 +167,9 @@ else
 endif
 syn keyword VizConnective with where
 syn match VizConnective '\<wh\(at\|ich\)\>!\?'
-syn keyword VizDeclarator include use
-syn keyword VizDeclarator in skipwhite nextgroup=VizSctExprStart
+syn keyword VizDeclarator use
+syn match VizDeclarator '\<include\>!\?'
+syn match VizDeclarator '\<in\>!\?' skipwhite nextgroup=VizSctExprStart
 syn keyword VizDeclarator sig sealed skipwhite nextgroup=@VizSigExpr
 syn keyword VizDeclarator open nextgroup=VizOpenDecor
 exe 'syn keyword VizVerb' join(s:verbs)
