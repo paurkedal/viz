@@ -17,7 +17,7 @@
 
 open prereq
 open collection_sigs
-open action
+open effect
 
 sig S
     include an_ordered_map'.[elt α = α]

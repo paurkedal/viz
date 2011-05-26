@@ -20,7 +20,7 @@
 
 open prereq
 open data
-open action
+open effect
 open:c "unistd.h"
 
 use cabi.stub_prefix "cviz_posix_"

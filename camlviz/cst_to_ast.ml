@@ -256,7 +256,7 @@ and build_aval_monad mm = function
 		collect ((ap, None, ah) :: cases) ccont
 	    | ccont ->
 		let e_idr = Idr "e" in
-		let athrow = aval_ref_of_idr loc idr_action_throw in
+		let athrow = aval_ref_of_idr loc idr_effect_throw in
 		let cases = (* Add rethrow case if needed. *)
 		    match cases with
 		    | (Apat_uvar _, None, _) :: _ -> cases
@@ -273,7 +273,7 @@ and build_aval_monad mm = function
 	collect [] cupon
     | Cpred_raise (loc, cx) ->
 	let ax = build_aval_expr cx in
-	Aval_apply (loc, aval_ref_of_idr loc idr_action_throw, ax)
+	Aval_apply (loc, aval_ref_of_idr loc idr_effect_throw, ax)
 
 and build_aval_expr = function
     | Ctrm_literal (loc, lit) ->
@@ -599,7 +599,7 @@ and build_toplevel_aval loc cm_opt cpred =
 	build_aval_pure cpred
     | None ->
 	let ax = build_aval_monad (MM_quote cmonad_io) cpred in
-	let af = aval_ref_of_idr loc idr_run_action in
+	let af = aval_ref_of_idr loc idr_effect_run in
 	Aval_apply (loc, af, ax)
     end
 and build_adefs adecmap adefs = function

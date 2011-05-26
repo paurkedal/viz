@@ -84,7 +84,7 @@ let rec emit_atyp ?(typefor = Typefor_viz) = function
 	emit_atyp ~typefor t
     | Atyp_apply (loc, at, au) ->
 	if typefor = Typefor_cabi_io
-		&& Ast_utils.atyp_action_pocket at <> Ast_utils.No_pocket then
+		&& Ast_utils.atyp_effect_pocket at <> Ast_utils.No_pocket then
 	    emit_atyp ~typefor au
 	else
 	    let _loc = p4loc loc in
@@ -427,7 +427,7 @@ and emit_adec state = function
 	let syms = external_names stubname t in
 	let name = avar_to_lid v in
 	let rt = Ast_utils.result_type t in
-	if fst (Ast_utils.unwrap_atyp_action rt) <> Ast_utils.No_pocket then
+	if fst (Ast_utils.unwrap_atyp_effect rt) <> Ast_utils.No_pocket then
 	    let ot = emit_atyp_cabi_io t in
 	    <:sig_item< value $lid: name$ : $ot$ >>
 	else
@@ -536,7 +536,7 @@ and emit_adef state = function
 	let name = avar_to_lid v in
 	let ot = emit_atyp ~typefor: Typefor_cabi t in
 	let rt = Ast_utils.result_type t in
-	let (pocket, rt) = Ast_utils.unwrap_atyp_action rt in
+	let (pocket, rt) = Ast_utils.unwrap_atyp_effect rt in
 	if pocket <> Ast_utils.No_pocket then
 	    let cname = state.ams_stub_prefix ^ name in
 	    let oxt = emit_atyp_cabi_io t in
@@ -549,11 +549,11 @@ and emit_adef state = function
 		    let args = List.init r mkarg in
 		    let y = List.fold (fun x f -> <:expr< $f$ $lid: x$ >>) args
 				      <:expr< $lid: cname$ >> in
-		    let y = <:expr< __unsafe_action (fun () -> $y$) >> in
+		    let y = <:expr< __builtin_effect (fun () -> $y$) >> in
 		    List.fold (fun x y -> <:expr< fun $lid: x$ -> $y$ >>)
 			      (List.rev args) y
 		else
-		    <:expr< __unsafe_action $lid: cname$ >> in
+		    <:expr< __builtin_effect $lid: cname$ >> in
 	    let ov = <:str_item< value $lid: name$ : $ot$ = $z$ >> in
 	    <:str_item< $list: [ox; ov]$ >>
 	else

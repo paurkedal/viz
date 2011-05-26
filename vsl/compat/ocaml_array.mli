@@ -51,43 +51,43 @@ end
 module Array_act : sig
     type 'a r
 
-    val init : int -> (int -> 'a) -> ('f, 'a r) action
+    val init : int -> (int -> 'a) -> ('f, 'a r) effect
 
-    val uniform : int -> 'a -> ('f, 'a r) action
+    val uniform : int -> 'a -> ('f, 'a r) effect
 
-    val get : int -> 'a r -> ('f, 'a) action
+    val get : int -> 'a r -> ('f, 'a) effect
 
-    val slice : int -> int -> 'a r -> ('f, 'a r) action
+    val slice : int -> int -> 'a r -> ('f, 'a r) effect
 
-    val set : int -> 'a -> 'a r -> ('f, unit) action
+    val set : int -> 'a -> 'a r -> ('f, unit) effect
 
-    val copy : 'a r -> ('f, 'a r) action
+    val copy : 'a r -> ('f, 'a r) effect
 
-    val fill : int -> int -> 'a -> 'a r -> ('f, unit) action
+    val fill : int -> int -> 'a -> 'a r -> ('f, unit) effect
 
-    val blit : int -> int -> 'a r -> int -> 'a r -> ('f, unit) action
+    val blit : int -> int -> 'a r -> int -> 'a r -> ('f, unit) effect
 
-    val map : ('a -> 'b) -> 'a r -> ('f, 'b r) action
+    val map : ('a -> 'b) -> 'a r -> ('f, 'b r) effect
 
-    val mapi : (int -> 'a -> 'b) -> 'a r -> ('f, 'b r) action
+    val mapi : (int -> 'a -> 'b) -> 'a r -> ('f, 'b r) effect
 
-    val fold : ('a -> 'b -> 'b) -> 'a r -> 'b -> ('f, 'b) action
+    val fold : ('a -> 'b -> 'b) -> 'a r -> 'b -> ('f, 'b) effect
 
-    val foldr : ('a -> 'b -> 'b) -> 'a r -> 'b -> ('f, 'b) action
+    val foldr : ('a -> 'b -> 'b) -> 'a r -> 'b -> ('f, 'b) effect
 
-    val cat : 'a r -> 'a r -> ('f, 'a r) action
+    val cat : 'a r -> 'a r -> ('f, 'a r) effect
 
-    val cat_list : ('a r) list -> ('f, 'a r) action
+    val cat_list : ('a r) list -> ('f, 'a r) effect
 
-    val sort : ('a -> 'a -> torder) -> 'a r -> ('f, unit) action
+    val sort : ('a -> 'a -> torder) -> 'a r -> ('f, unit) effect
 
-    val as_list : 'a r -> ('f, 'a list) action
+    val as_list : 'a r -> ('f, 'a list) effect
 
-    val of_list : 'a list -> ('f, 'a r) action
+    val of_list : 'a list -> ('f, 'a r) effect
 
-    val of_array : 'a array -> ('f, 'a r) action
+    val of_array : 'a array -> ('f, 'a r) effect
 
-    val as_array : 'a r -> ('f, 'a array) action
+    val as_array : 'a r -> ('f, 'a array) effect
 
-    (* val freeze : 'a r -> ('f, 'a array) action *)
+    (* val freeze : 'a r -> ('f, 'a array) effect *)
 end

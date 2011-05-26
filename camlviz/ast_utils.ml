@@ -55,10 +55,10 @@ type pocket =
     | Local_pocket of avar
     | World_pocket
 
-let atyp_action_pocket = function
+let atyp_effect_pocket = function
     | Atyp_ref (Apath ([], Avar (_, Idr "io"))) ->
 	World_pocket
-    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "action"))), pocket) ->
+    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "effect"))), pocket) ->
 	begin match pocket with
 	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world" ->
 	    World_pocket
@@ -68,9 +68,9 @@ let atyp_action_pocket = function
 	    errf_at (atyp_loc pocket) "Invalid pocket type tag."
 	end
     | _ -> No_pocket
-let unwrap_atyp_action = function
+let unwrap_atyp_effect = function
     | Atyp_apply (_, u, v) as t ->
-	begin match atyp_action_pocket u with
+	begin match atyp_effect_pocket u with
 	| No_pocket -> (No_pocket, t)
 	| p -> (p, v)
 	end
@@ -80,7 +80,7 @@ let rec atyp_is_const = function
     | Atyp_A (_, _, t) | Atyp_E (_, _, t) -> atyp_is_const t
     | Atyp_arrow _ -> false
     | Atyp_apply (_, u, v) ->
-	begin match atyp_action_pocket u with
+	begin match atyp_effect_pocket u with
 	| No_pocket -> true
 	| _ -> false
 	end
@@ -95,7 +95,7 @@ let flatten_arrows =
 
 let flatten_arrows_for_c t =
     let rt, ats = flatten_arrows t in
-    let pocket, rt = unwrap_atyp_action rt in
+    let pocket, rt = unwrap_atyp_effect rt in
     if pocket <> No_pocket && ats = [] then
 	let loc = atyp_loc t in
 	(true, rt, [Atyp_ref (Apath ([], Avar (loc, Idr "unit")))])

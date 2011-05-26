@@ -1,4 +1,4 @@
-open action
+open effect
 open foreign.C.memory
 open foreign.C.record
 

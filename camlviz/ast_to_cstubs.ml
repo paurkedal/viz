@@ -232,11 +232,11 @@ let output_cstub och v t cn_opt is_fin state =
 	    begin match tc with
 	    | Atyp_ref (Apath ([], Avar (_, Idr "io")))
 	    | Atyp_apply (_,
-		    Atyp_ref (Apath ([], Avar (_, Idr "action"))), _) ->
+		    Atyp_ref (Apath ([], Avar (_, Idr "effect"))), _) ->
 		()
 	    | _ ->
 		errf_at loc
-		    "Finalizer must return (io unit) or (action φ unit)."
+		    "Finalizer must return (io unit) or (effect φ unit)."
 	    end;
 	    begin try
 		let ftn = avar_name ftv in
@@ -256,7 +256,7 @@ let output_cstub och v t cn_opt is_fin state =
 	    end
 	| _ ->
 	    errf_at (atyp_loc t)
-		"Finalizer must return (io unit) or (action φ unit)."
+		"Finalizer must return (io unit) or (effect φ unit)."
 	end else
     state
 

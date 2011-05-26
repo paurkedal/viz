@@ -21,23 +21,23 @@ external op2_U2227 : bool -> bool -> bool = "%sequand"
 external op2_U2228 : bool -> bool -> bool = "%sequor"
 
 (* Dark spells about the world state. *)
-type ('f, 'a) action = { __unsafe_thunk : unit -> 'a; }
+type ('f, 'a) effect = { __unsafe_thunk : unit -> 'a; }
 type world
-type 'a io = (world, 'a) action
-let __unsafe_action f = { __unsafe_thunk = f; }
-let __unsafe_run_action m = m.__unsafe_thunk ()
+type 'a io = (world, 'a) effect
+let __builtin_effect f = { __unsafe_thunk = f; }
+let __builtin_effect_run m = m.__unsafe_thunk ()
 
-let __builtin_action_return x = { __unsafe_thunk = fun () -> x; }
-let __builtin_action_bind k m =
-    let f () = __unsafe_run_action (k (__unsafe_run_action m)) in
+let __builtin_effect_return x = { __unsafe_thunk = fun () -> x; }
+let __builtin_effect_bind k m =
+    let f () = __builtin_effect_run (k (__builtin_effect_run m)) in
     { __unsafe_thunk = f; }
 
 type exception__ = exn
 
-let __builtin_action_throw e = __unsafe_action (fun () -> raise e)
+let __builtin_effect_throw e = __builtin_effect (fun () -> raise e)
 
 let __builtin_catch k m =
-    let f () = try __unsafe_run_action m with e -> __unsafe_run_action (k e) in
+    let f () = try __builtin_effect_run m with e -> __builtin_effect_run (k e) in
     { __unsafe_thunk = f; }
 
 let __builtin_mask f = f (fun m -> m)  (* No async exceptions. *)
@@ -45,9 +45,9 @@ let __builtin_mask f = f (fun m -> m)  (* No async exceptions. *)
 (* References *)
 module Ref = struct
     type ('f, 'a) r = 'a ref
-    let init x = __unsafe_action (fun () -> ref x)
-    let get r = __unsafe_action (fun () -> !r)
-    let set r x = __unsafe_action (fun () -> r := x)
+    let init x = __builtin_effect (fun () -> ref x)
+    let get r = __builtin_effect (fun () -> !r)
+    let set r x = __builtin_effect (fun () -> r := x)
 end
 
 (* Options *)

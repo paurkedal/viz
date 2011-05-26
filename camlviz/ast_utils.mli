@@ -45,8 +45,8 @@ type pocket =
 
 val atyp_is_const : atyp -> bool
 
-val atyp_action_pocket : atyp -> pocket
-val unwrap_atyp_action : atyp -> pocket * atyp
+val atyp_effect_pocket : atyp -> pocket
+val unwrap_atyp_effect : atyp -> pocket * atyp
 
 val flatten_arrows : atyp -> atyp * atyp list
 val flatten_arrows_for_c : atyp -> bool * atyp * atyp list

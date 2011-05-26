@@ -51,7 +51,7 @@ in array include data.array
 in map.(I : a_total_order) include data.AAmap.make.(I)
 in set.(E : a_total_order) include data.AAset.make.(E)
 
-in action include prereq.action
+in effect include prereq.effect
 val print : string → io unit
 val eprint : string → io unit
 

@@ -1,4 +1,4 @@
-open action
+open effect
 
 # No polymorphic comparison yet...
 
@@ -89,7 +89,7 @@ let main
     assert string.strip "x " = "x"
     assert string.strip "  x  " = "x"
 
-    assert "s-t-e" = __unsafe_run_action what!
+    assert "s-t-e" = __builtin_effect_run what!
 	let buf do string.buf.create
 	do string.buf.put_char buf c"s"
 	do string.buf.put_string buf "-t-"

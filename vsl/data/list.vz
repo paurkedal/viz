@@ -16,7 +16,7 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
-open action
+open effect
 
 #?ffoc type t α := list α
 #?ffoc {#
@@ -49,8 +49,8 @@ val fold : (α → β → β) → t α → β → β
 val foldr : (α → β → β) → t α → β → β
  ## (fold f xs ≡ fold f (rev xs)).
 
-val iter : (α → action φ unit) → t α → action φ unit
- ## (iter f xs ≡ f x1 >> ... >> f xN) forms an action-monad which iterates (f)
+val iter : (α → effect φ unit) → t α → effect φ unit
+ ## (iter f xs ≡ f x1 >> ... >> f xN) forms an effect-monad which iterates (f)
  ## over the elements of (xs)
 
 val for_all : (α → bool) → t α → bool

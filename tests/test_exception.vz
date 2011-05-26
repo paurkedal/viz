@@ -1,5 +1,5 @@
 open prereq
-open action
+open effect
 
 inj test_error : string → exception
 

@@ -21,15 +21,15 @@
 # Note:  This is not properly organized, and is subject to heavy changes.
 
 open prereq
-open action
+open effect
 open memory
 open:c "string.h"
 use cabi.stub_prefix "cviz_"
 
 val malloc_ptrarray_init :
-    int → (int → action φ (ptr φ)) → action φ (ptr φ)
+    int → (int → effect φ (ptr φ)) → effect φ (ptr φ)
 
-val malloc_ptrarray_of_array : array α → action φ (ptr φ)
+val malloc_ptrarray_of_array : array α → effect φ (ptr φ)
 
 let unsafe_ptrarray_load i be unsafe_load_ptr (offset.scale i sizeof_ptr)
 let unsafe_ptrarray_store i be unsafe_store_ptr (offset.scale i sizeof_ptr)
@@ -52,7 +52,7 @@ let! unsafe_ptrarray_free_elements p n
     do unsafe_ptrarray_load (n - 1) p >>= unsafe_free
     do unsafe_ptrarray_free_elements p (n - 1)
 
-val:c strcpy_UTF8string : ptr φ → UTF8string → action φ unit := "strcpy"
+val:c strcpy_UTF8string : ptr φ → UTF8string → effect φ unit := "strcpy"
 
 let! malloc_strcpy_string s
     let us be data.UTF8string.of_string s

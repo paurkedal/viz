@@ -19,7 +19,7 @@
 # Z.  Strings
 
 open prereq
-open action
+open effect
 
 type t := string
 
@@ -31,17 +31,17 @@ in buf
 
     type r φ
 
-    val create : action φ (r φ)
+    val create : effect φ (r φ)
 
-    val clear : r φ → action φ unit
+    val clear : r φ → effect φ unit
 
-    val contents : r φ → action φ string
+    val contents : r φ → effect φ string
 
-    val length : r φ → action φ int
+    val length : r φ → effect φ int
 
-    val put_char : r φ → char → action φ unit
+    val put_char : r φ → char → effect φ unit
 
-    val put_string : r φ → string → action φ unit
+    val put_string : r φ → string → effect φ unit
 
     #?ffoc #}
     #?ffoc include compat.ocaml_unicode.string_buf
@@ -181,14 +181,14 @@ let cat x y
     let n be nx + length y
     be init n (i ↦ (i < nx ⇒ get i x; get (i - nx) y))
 
-let cat_list xs be __unsafe_run_action what!
+let cat_list xs be __builtin_effect_run what!
     let buf do buf.create
     do list.iter (buf.put_string buf) xs
     do buf.contents buf
 
 let join s
     at [] be ""
-    at [x; xs] be __unsafe_run_action what!
+    at [x; xs] be __builtin_effect_run what!
 	let buf do buf.create
 	do buf.put_string buf x
 	do list.iter (x ↦ buf.put_string buf s >> buf.put_string buf x) xs
@@ -196,7 +196,7 @@ let join s
 
 let tile n s
     if n ≤ 0 be ""
-    be __unsafe_run_action what!
+    be __builtin_effect_run what!
 	let buf do buf.create
 	let! loop at 0 be ()
 		  at n do buf.put_string buf s >> loop (n - 1)
@@ -213,7 +213,7 @@ let as_list x
 	else be collect_upto (n - 1) [get (n - 1) x; accu]
     be collect_upto (length x) []
 
-let of_list xs be __unsafe_run_action what!
+let of_list xs be __builtin_effect_run what!
     let buf do buf.create
     do list.iter (buf.put_char buf) xs
     do buf.contents buf

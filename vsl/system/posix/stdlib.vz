@@ -19,7 +19,7 @@
 # Z.  POSIX Functions from "unistd.h"
 
 open prereq
-open action
+open effect
 open:c "unistd.h"
 
 

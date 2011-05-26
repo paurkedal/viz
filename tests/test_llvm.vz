@@ -1,4 +1,4 @@
-open action
+open effect
 
 in ll include llvm.core
 

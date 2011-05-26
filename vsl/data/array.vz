@@ -51,19 +51,19 @@ val cat : t α → t α → t α
 
 val cat_list : list (t α) → t α
 
-val iter : (α → action φ unit) → t α → action φ unit
+val iter : (α → effect φ unit) → t α → effect φ unit
 
-val iterr : (α → action φ unit) → t α → action φ unit
+val iterr : (α → effect φ unit) → t α → effect φ unit
 
-val iteri : (int → α → action φ unit) → t α → action φ unit
+val iteri : (int → α → effect φ unit) → t α → effect φ unit
 
-val afold : (α → β → action φ β) → t α → β → action φ β
+val afold : (α → β → effect φ β) → t α → β → effect φ β
 
-val afoldr : (α → β → action φ β) → t α → β → action φ β
+val afoldr : (α → β → effect φ β) → t α → β → effect φ β
 
 #?ffoc include compat.ocaml_array.array_const
 
-open action
+open effect
 
 let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) @> (_, y) ↦ y
 

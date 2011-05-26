@@ -17,7 +17,7 @@
 
 open:c "llvm-c/Core.h"
 open pervasive
-open action
+open effect
 open foreign.C.memory
 
 
@@ -70,32 +70,32 @@ val:c create_context : io context := "LLVMContextCreate"
 
 val:c global_context : io context := "LLVMGetGlobalContext"
 
-val:cf dispose_context : context → action φ unit := "LLVMContextDispose"
+val:cf dispose_context : context → effect φ unit := "LLVMContextDispose"
 
 
 # Z.Z.  Modules
 
 type:c module := "LLVMModuleRef"
 
-val create_module : context → string → action φ module
+val create_module : context → string → effect φ module
 
-val:cf dispose_module : module → action φ unit := "LLVMDisposeModule"
+val:cf dispose_module : module → effect φ unit := "LLVMDisposeModule"
 
-val:c get_data_layout : module → action φ string := "LLVMGetDataLayout"
+val:c get_data_layout : module → effect φ string := "LLVMGetDataLayout"
 
-val:c set_data_layout : module → string → action φ unit := "LLVMSetDataLayout"
+val:c set_data_layout : module → string → effect φ unit := "LLVMSetDataLayout"
 
-val:c get_target : module → action φ string := "LLVMGetTarget"
+val:c get_target : module → effect φ string := "LLVMGetTarget"
 
-val:c set_target : module → string → action φ unit := "LLVMSetTarget"
+val:c set_target : module → string → effect φ unit := "LLVMSetTarget"
 
-val:c dump_module : module → action φ unit := "LLVMDumpModule"
+val:c dump_module : module → effect φ unit := "LLVMDumpModule"
 
-val:c set_module_inline_asm : module → string → action φ unit
+val:c set_module_inline_asm : module → string → effect φ unit
     := "LLVMSetModuleInlineAsm"
 
 
-val:c _create_module : string → context → action φ module
+val:c _create_module : string → context → effect φ module
     := "LLVMModuleCreateWithNameInContext"
 let create_module ctx name be _create_module name ctx
 
@@ -149,13 +149,13 @@ type:c memorybuffer := "LLVMMemoryBufferRef"
 
 # Z.Z.Z.  Operations on Values
 
-val:c type_of : value → action φ ltype := "LLVMTypeOf"
+val:c type_of : value → effect φ ltype := "LLVMTypeOf"
 
-val:c get_value_name : value → action φ string := "LLVMGetValueName"
+val:c get_value_name : value → effect φ string := "LLVMGetValueName"
 
-val:c set_value_name : value → string → action φ unit := "LLVMSetValueName"
+val:c set_value_name : value → string → effect φ unit := "LLVMSetValueName"
 
-val:c dump_value : value → action φ unit := "LLVMDumpValue"
+val:c dump_value : value → effect φ unit := "LLVMDumpValue"
 
 
 # Z.Z.Z.  Operations on Uses
@@ -172,21 +172,21 @@ val:c dump_value : value → action φ unit := "LLVMDumpValue"
 
 # Z.Z.Z.  Operations on Scalar Constants
 
-val const_int : ltype → int → action φ value
+val const_int : ltype → int → effect φ value
 
-val const_int_of_int64 : ltype → int64 → action φ value
+val const_int_of_int64 : ltype → int64 → effect φ value
 
-val:c const_int_of_string : ltype → string → int → action φ value
+val:c const_int_of_string : ltype → string → int → effect φ value
     := "LLVMConstIntOfString"
 
-val:c const_float : ltype → float → action φ value := "LLVMConstReal"
+val:c const_float : ltype → float → effect φ value := "LLVMConstReal"
 
-val:c const_float_of_string : ltype → string → action φ value
+val:c const_float_of_string : ltype → string → effect φ value
     := "LLVMConstRealOfString"
 
-val:c _const_int : ltype → int → bool → action φ value := "LLVMConstInt"
+val:c _const_int : ltype → int → bool → effect φ value := "LLVMConstInt"
 let const_int t x be _const_int t x true
-val:c _const_int64 : ltype → int64 → bool → action φ value := "LLVMConstInt"
+val:c _const_int64 : ltype → int64 → bool → effect φ value := "LLVMConstInt"
 let const_int_of_int64 t x be _const_int64 t x true
 
 
@@ -215,42 +215,42 @@ val:c callconv_x86_std	: int := "LLVMX86StdcallCallConv"
 val:c callconv_x86_fast	: int := "LLVMX86FastcallCallConv"
 
 
-val:c add_function : module → string → ltype → action φ value
+val:c add_function : module → string → ltype → effect φ value
     := "LLVMAddFunction"
 
-val:c get_named_function : module → string → action φ (option value)
+val:c get_named_function : module → string → effect φ (option value)
     := "LLVMGetNamedFunction"
 
-val:c get_first_function : module → action φ (option value)
+val:c get_first_function : module → effect φ (option value)
     := "LLVMGetFirstFunction"
 
-val:c get_last_function : module → action φ (option value)
+val:c get_last_function : module → effect φ (option value)
     := "LLVMGetLastFunction"
 
-val:c get_next_function : value → action φ (option value)
+val:c get_next_function : value → effect φ (option value)
     := "LLVMGetNextFunction"
 
-val:c get_prev_function : value → action φ (option value)
+val:c get_prev_function : value → effect φ (option value)
     := "LLVMGetPreviousFunction"
 
-val:c delete_function : value → action φ unit
+val:c delete_function : value → effect φ unit
     := "LLVMDeleteFunction"
 
-val:c get_function_callconv : value → action φ int
+val:c get_function_callconv : value → effect φ int
     := "LLVMGetFunctionCallConv"
 
-val:c set_function_callconv : value → int → action φ unit
+val:c set_function_callconv : value → int → effect φ unit
     := "LLVMSetFunctionCallConv"
 
-val:c get_function_gc : value → action φ (option string) := "LLVMGetGC"
+val:c get_function_gc : value → effect φ (option string) := "LLVMGetGC"
 
-val:c set_function_gc : value → string → action φ unit := "LLVMSetGC"
+val:c set_function_gc : value → string → effect φ unit := "LLVMSetGC"
 
 val function_type : ltype → array ltype → ltype
 
 val:c _function_type : ltype → ptr φ → int → bool → ltype
     := "LLVMFunctionType"
-let function_type rt ats be __unsafe_run_action what!
+let function_type rt ats be __builtin_effect_run what!
     let cta do foreign.C.utils.malloc_ptrarray_of_array ats
     let r be _function_type rt cta (array.length ats) false
     do unsafe_free cta
@@ -274,33 +274,33 @@ val:c value_is_block : value → bool := "LLVMValueIsBasicBlock"
 
 val:c value_to_block : value → block := "LLVMValueAsBasicBlock"
 
-val:c get_block_parent : block → action φ value := "LLVMGetBasicBlockParent"
+val:c get_block_parent : block → effect φ value := "LLVMGetBasicBlockParent"
 
-val:c block_count : value → action φ int := "LLVMCountBasicBlocks"
+val:c block_count : value → effect φ int := "LLVMCountBasicBlocks"
 
-val:c first_block : value → action φ block := "LLVMGetFirstBasicBlock"
+val:c first_block : value → effect φ block := "LLVMGetFirstBasicBlock"
 
-val:c last_block : value → action φ block := "LLVMGetLastBasicBlock"
+val:c last_block : value → effect φ block := "LLVMGetLastBasicBlock"
 
-val:c next_block : block → action φ block := "LLVMGetNextBasicBlock"
+val:c next_block : block → effect φ block := "LLVMGetNextBasicBlock"
 
-val:c prev_block : block → action φ block := "LLVMGetPreviousBasicBlock"
+val:c prev_block : block → effect φ block := "LLVMGetPreviousBasicBlock"
 
-val:c entry_block : value → action φ block := "LLVMGetEntryBasicBlock"
+val:c entry_block : value → effect φ block := "LLVMGetEntryBasicBlock"
 
-val:c append_block : context → value → string → action φ block
+val:c append_block : context → value → string → effect φ block
     := "LLVMAppendBasicBlockInContext"
 
-val:c insert_block : context → block → string → action φ block
+val:c insert_block : context → block → string → effect φ block
     := "LLVMInsertBasicBlockInContext"
 
-val:c delete_block : block → action φ unit
+val:c delete_block : block → effect φ unit
     := "LLVMDeleteBasicBlock"
 
-val:c move_block_before : block → block → action φ unit
+val:c move_block_before : block → block → effect φ unit
     := "LLVMMoveBasicBlockBefore"
 
-val:c move_block_after : block → block → action φ unit
+val:c move_block_after : block → block → effect φ unit
     := "LLVMMoveBasicBlockAfter"
 
 
@@ -308,76 +308,76 @@ val:c move_block_after : block → block → action φ unit
 
 type:c builder := "LLVMBuilderRef"
 
-val:c create_builder : context → action φ builder
+val:c create_builder : context → effect φ builder
     := "LLVMCreateBuilderInContext"
 
-val:c position_builder : builder → block → value → action φ unit
+val:c position_builder : builder → block → value → effect φ unit
     := "LLVMPositionBuilder"
 
-val:c position_builder_before : builder → value → action φ unit
+val:c position_builder_before : builder → value → effect φ unit
     := "LLVMPositionBuilderBefore"
 
-val:c position_builder_at_end : builder → block → action φ unit
+val:c position_builder_at_end : builder → block → effect φ unit
     := "LLVMPositionBuilderAtEnd"
 
-val:c get_insert_block : builder → action φ block
+val:c get_insert_block : builder → effect φ block
     := "LLVMGetInsertBlock"
 
-val:c clear_insertion_position : builder → action φ unit
+val:c clear_insertion_position : builder → effect φ unit
     := "LLVMClearInsertionPosition"
 
-val:c insert_into_builder : builder → value → string → action φ unit
+val:c insert_into_builder : builder → value → string → effect φ unit
     := "LLVMInsertIntoBuilderWithName"
 
-val:cf dispose_builder : builder → action φ unit
+val:cf dispose_builder : builder → effect φ unit
     := "LLVMDisposeBuilder"
 
 # Z.Z.Z.  Metadata
 
-val:c set_current_debug_location : builder → value → action φ unit
+val:c set_current_debug_location : builder → value → effect φ unit
     := "LLVMSetCurrentDebugLocation"
 
-val:c get_current_debug_location : builder → action φ value
+val:c get_current_debug_location : builder → effect φ value
     := "LLVMGetCurrentDebugLocation"
 
-val:c set_inst_debug_location : builder → value → action φ unit
+val:c set_inst_debug_location : builder → value → effect φ unit
     := "LLVMSetInstDebugLocation"
 
 
 # Z.Z.Z.  Terminators
 
-val:c build_ret_void : builder → action φ value := "LLVMBuildRetVoid"
+val:c build_ret_void : builder → effect φ value := "LLVMBuildRetVoid"
 
-val:c build_ret : builder → value → action φ value := "LLVMBuildRet"
+val:c build_ret : builder → value → effect φ value := "LLVMBuildRet"
 
-val build_aggregate_ret : builder → array value → action φ value
+val build_aggregate_ret : builder → array value → effect φ value
 
-val:c build_br : builder → block → action φ value := "LLVMBuildBr"
+val:c build_br : builder → block → effect φ value := "LLVMBuildBr"
 
-val:c build_cond_br : builder → value → block → block → action φ value
+val:c build_cond_br : builder → value → block → block → effect φ value
     := "LLVMBuildCondBr"
 
-val:c build_switch : builder → value → block → int → action φ value
+val:c build_switch : builder → value → block → int → effect φ value
     := "LLVMBuildSwitch"
 
-val:c add_case : value → value → block → action φ unit
+val:c add_case : value → value → block → effect φ unit
     := "LLVMAddCase"
 
-val:c build_indirect_br : builder → value → int → action φ value
+val:c build_indirect_br : builder → value → int → effect φ value
     := "LLVMBuildIndirectBr"
 
-val:c add_destination : value → block → action φ unit
+val:c add_destination : value → block → effect φ unit
     := "LLVMAddDestination"
 
 val build_invoke :
-	builder → value → array value → block → block → string → action φ value
+	builder → value → array value → block → block → string → effect φ value
 
-val:c build_unwind : builder → action φ value := "LLVMBuildUnwind"
+val:c build_unwind : builder → effect φ value := "LLVMBuildUnwind"
 
-val:c build_unreachable : builder → action φ value := "LLVMBuildUnreachable"
+val:c build_unreachable : builder → effect φ value := "LLVMBuildUnreachable"
 
 
-val:c _build_aggregate_ret : builder → ptr φ → int → action φ value
+val:c _build_aggregate_ret : builder → ptr φ → int → effect φ value
     := "LLVMBuildAggregateRet"
 let! build_aggregate_ret b xa
     let ca do foreign.C.utils.malloc_ptrarray_of_array xa
@@ -386,7 +386,7 @@ let! build_aggregate_ret b xa
     be r
 
 val:c _build_invoke :
-	builder → value → ptr φ → int → block → block → string → action φ value
+	builder → value → ptr φ → int → block → block → string → effect φ value
     := "LLVMBuildInvoke"
 let! build_invoke b f args bb unwind_bb name
     let cargs do foreign.C.utils.malloc_ptrarray_of_array args
@@ -397,73 +397,73 @@ let! build_invoke b f args bb unwind_bb name
 
 # Z.Z.Z.  Arithmetic
 
-val:c build_add : builder → value → value → string → action φ value
+val:c build_add : builder → value → value → string → effect φ value
     := "LLVMBuildAdd"
-val:c build_nsw_add : builder → value → value → string → action φ value
+val:c build_nsw_add : builder → value → value → string → effect φ value
     := "LLVMBuildNSWAdd"
-val:c build_nuw_add : builder → value → value → string → action φ value
+val:c build_nuw_add : builder → value → value → string → effect φ value
     := "LLVMBuildNUWAdd"
-val:c build_fadd : builder → value → value → string → action φ value
+val:c build_fadd : builder → value → value → string → effect φ value
     := "LLVMBuildFAdd"
 
-val:c build_sub : builder → value → value → string → action φ value
+val:c build_sub : builder → value → value → string → effect φ value
     := "LLVMBuildSub"
-val:c build_nsw_sub : builder → value → value → string → action φ value
+val:c build_nsw_sub : builder → value → value → string → effect φ value
     := "LLVMBuildNSWSub"
-val:c build_nuw_sub : builder → value → value → string → action φ value
+val:c build_nuw_sub : builder → value → value → string → effect φ value
     := "LLVMBuildNUWSub"
-val:c build_fsub : builder → value → value → string → action φ value
+val:c build_fsub : builder → value → value → string → effect φ value
     := "LLVMBuildFSub"
 
-val:c build_mul : builder → value → value → string → action φ value
+val:c build_mul : builder → value → value → string → effect φ value
     := "LLVMBuildMul"
-val:c build_nsw_mul : builder → value → value → string → action φ value
+val:c build_nsw_mul : builder → value → value → string → effect φ value
     := "LLVMBuildNSWMul"
-val:c build_nuw_mul : builder → value → value → string → action φ value
+val:c build_nuw_mul : builder → value → value → string → effect φ value
     := "LLVMBuildNUWMul"
-val:c build_fmul : builder → value → value → string → action φ value
+val:c build_fmul : builder → value → value → string → effect φ value
     := "LLVMBuildFMul"
 
-val:c build_udiv : builder → value → value → string → action φ value
+val:c build_udiv : builder → value → value → string → effect φ value
     := "LLVMBuildUDiv"
-val:c build_sdiv : builder → value → value → string → action φ value
+val:c build_sdiv : builder → value → value → string → effect φ value
     := "LLVMBuildSDiv"
-val:c build_exact_sdiv : builder → value → value → string → action φ value
+val:c build_exact_sdiv : builder → value → value → string → effect φ value
     := "LLVMBuildExactSDiv"
-val:c build_fdiv : builder → value → value → string → action φ value
+val:c build_fdiv : builder → value → value → string → effect φ value
     := "LLVMBuildFDiv"
 
-val:c build_urem : builder → value → value → string → action φ value
+val:c build_urem : builder → value → value → string → effect φ value
     := "LLVMBuildURem"
-val:c build_srem : builder → value → value → string → action φ value
+val:c build_srem : builder → value → value → string → effect φ value
     := "LLVMBuildSRem"
-val:c build_frem : builder → value → value → string → action φ value
+val:c build_frem : builder → value → value → string → effect φ value
     := "LLVMBuildFRem"
 
-val:c build_shl : builder → value → value → string → action φ value
+val:c build_shl : builder → value → value → string → effect φ value
     := "LLVMBuildShl"
-val:c build_lshr : builder → value → value → string → action φ value
+val:c build_lshr : builder → value → value → string → effect φ value
     := "LLVMBuildLShr"
-val:c build_ashr : builder → value → value → string → action φ value
+val:c build_ashr : builder → value → value → string → effect φ value
     := "LLVMBuildAShr"
 
-val:c build_and : builder → value → value → string → action φ value
+val:c build_and : builder → value → value → string → effect φ value
     := "LLVMBuildAnd"
-val:c build_or : builder → value → value → string → action φ value
+val:c build_or : builder → value → value → string → effect φ value
     := "LLVMBuildOr"
-val:c build_xor : builder → value → value → string → action φ value
+val:c build_xor : builder → value → value → string → effect φ value
     := "LLVMBuildXor"
 
-val:c build_neg : builder → value → string → action φ value
+val:c build_neg : builder → value → string → effect φ value
     := "LLVMBuildNeg"
-val:c build_nsw_neg : builder → value → string → action φ value
+val:c build_nsw_neg : builder → value → string → effect φ value
     := "LLVMBuildNSWNeg"
-val:c build_nuw_neg : builder → value → string → action φ value
+val:c build_nuw_neg : builder → value → string → effect φ value
     := "LLVMBuildNUWNeg"
-val:c build_fneg : builder → value → string → action φ value
+val:c build_fneg : builder → value → string → effect φ value
     := "LLVMBuildFNeg"
 
-val:c build_not : builder → value → string → action φ value
+val:c build_not : builder → value → string → effect φ value
     := "LLVMBuildNot"
 
 
@@ -475,26 +475,26 @@ val:c build_not : builder → value → string → action φ value
 
 # Z.Z.Z.  Comparisons
 
-val:c build_icmp : builder → iorder#i → value → value → string → action φ value
+val:c build_icmp : builder → iorder#i → value → value → string → effect φ value
     := "LLVMBuildICmp"
 
-val:c build_fcmp : builder → forder#e → value → value → string → action φ value
+val:c build_fcmp : builder → forder#e → value → value → string → effect φ value
     := "LLVMBuildFCmp"
 
 
 # Z.Z.Z.  Miscellaneous Instructions
 
-val:c build_phi : builder → ltype → string → action φ value := "LLVMBuildPhi"
+val:c build_phi : builder → ltype → string → effect φ value := "LLVMBuildPhi"
 
-val add_incoming : value → array (value × block) → action φ unit
+val add_incoming : value → array (value × block) → effect φ unit
 
-val build_call : builder → value → array value → string → action φ value
+val build_call : builder → value → array value → string → effect φ value
 
-val:c build_select : builder → value → value → value → string → action φ value
+val:c build_select : builder → value → value → value → string → effect φ value
     := "LLVMBuildSelect"
 
 
-val:c _build_call : builder → value → ptr φ → int → string → action φ value
+val:c _build_call : builder → value → ptr φ → int → string → effect φ value
     := "LLVMBuildCall"
 let! build_call b f args name
     let cargs do foreign.C.utils.malloc_ptrarray_of_array args
@@ -502,7 +502,7 @@ let! build_call b f args name
     do unsafe_free cargs
     be r
 
-val:c _add_incoming : value → ptr φ → ptr φ → int → action φ unit
+val:c _add_incoming : value → ptr φ → ptr φ → int → effect φ unit
     := "LLVMAddIncoming"
 let! add_incoming phi incoming
     let n be array.length incoming

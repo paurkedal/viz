@@ -19,7 +19,7 @@
 # Z.  Exceptions
 
 open prereq
-open action
+open effect
 
 
 # Z.1.  Elementary Exceptions

@@ -36,13 +36,13 @@ module Pervasive = struct
     let stdin = Pervasives.stdin
     let stdout = Pervasives.stdout
     let stderr = Pervasives.stderr
-    let flush chan = __unsafe_action (fun () -> Pervasives.flush chan)
-    let flush_all = __unsafe_action (fun () -> Pervasives.flush_all ())
-    let print s = __unsafe_action
+    let flush chan = __builtin_effect (fun () -> Pervasives.flush chan)
+    let flush_all = __builtin_effect (fun () -> Pervasives.flush_all ())
+    let print s = __builtin_effect
 	(fun () -> Pervasives.print_string (UTF8string.of_string s))
-    let eprint s = __unsafe_action
+    let eprint s = __builtin_effect
 	(fun () -> Pervasives.prerr_string (UTF8string.of_string s))
-    let fprint ochan s = __unsafe_action
+    let fprint ochan s = __builtin_effect
 	(fun () -> Pervasives.output_string ochan (UTF8string.of_string s))
 
     let __failure loc msg =

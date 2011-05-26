@@ -16,7 +16,7 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
-open action
+open effect
 
 type t α := option α
 

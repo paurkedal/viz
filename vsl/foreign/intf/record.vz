@@ -217,11 +217,11 @@ sig a_record_architecture
 
 	val unsafe_defocus_field : has_field δ ε → r φ ε → r φ δ
 
-	val load_iptr : r φ (iptr_ph δ) → action φ (r φ δ)
-	val load_xptr : r φ (xptr_ph δ) → action φ (lens.t δ)
+	val load_iptr : r φ (iptr_ph δ) → effect φ (r φ δ)
+	val load_xptr : r φ (xptr_ph δ) → effect φ (lens.t δ)
 
-	val store_iptr : r φ δ → r φ (iptr_ph δ) → action φ unit
-	val store_xptr : lens.t δ → r φ (xptr_ph δ) → action φ unit
+	val store_iptr : r φ δ → r φ (iptr_ph δ) → effect φ unit
+	val store_xptr : lens.t δ → r φ (xptr_ph δ) → effect φ unit
 
 
     # 0.0.0.  Complete Objects
@@ -232,19 +232,19 @@ sig a_record_architecture
     type t δ
       ## A handle to a complete object.
 
-    val alloc_record : is_record δ → action φ (reflens.r φ δ)
+    val alloc_record : is_record δ → effect φ (reflens.r φ δ)
 
-    val init_record : is_record δ → (∀φ. reflens.r φ δ → action φ α) → α × t δ
+    val init_record : is_record δ → (∀φ. reflens.r φ δ → effect φ α) → α × t δ
      ## (init_record ev f) allocates an instance of (ev) and passes a
      ## reference to (f) for initialization.  The value returned by (f) is
      ## paired with the object handle as the result.
 
     val alloc_spill :
-	is_record δ → int → is_record ε → action φ (reflens.r φ (spill_ph δ ε))
+	is_record δ → int → is_record ε → effect φ (reflens.r φ (spill_ph δ ε))
 
     val init_spill :
 	is_record δ → int → is_record ε →
-	(∀φ. reflens.r φ (spill_ph δ ε) → action φ α) → α × t (spill_ph δ ε)
+	(∀φ. reflens.r φ (spill_ph δ ε) → effect φ α) → α × t (spill_ph δ ε)
      ## (init_spill ev n elt_ev f) allocates a spill with an instance of (ev)
      ## and (n) instances of (elt_ev), initialized by (f), which receives a
      ## reference lens to the newly allocated object.  The result of (f)
@@ -274,8 +274,8 @@ sig a_record_architecture
 	type ph
 	type t
 	val get : lens.t ph → t
-	val load : reflens.r φ ph → action φ t
-	val store : t → reflens.r φ ph → action φ unit
+	val load : reflens.r φ ph → effect φ t
+	val store : t → reflens.r φ ph → effect φ unit
 
     in int_as_int	include a_conversion.[ph = int]		.[t = int]
     in int8_as_intT	include a_conversion.[ph = int8_ph]	.[t = int]

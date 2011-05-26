@@ -20,31 +20,31 @@ external op1_U00ac : bool -> bool = "%boolnot"
 external op2_U2227 : bool -> bool -> bool = "%sequand"
 external op2_U2228 : bool -> bool -> bool = "%sequor"
 
-type ('f, 'a) action = { __unsafe_thunk : unit -> 'a; }
+type ('f, 'a) effect = { __unsafe_thunk : unit -> 'a; }
 (** A monad type for sequencing actions.  The first type parameter is the
-    "pocket" in which the action is valid, and the second type parameter is
+    "pocket" in which the effect is valid, and the second type parameter is
     the return type. *)
 
 type world
 (** A type tag for top-level "world" actions. *)
 
-type 'a io = (world, 'a) action
+type 'a io = (world, 'a) effect
 (** The top-level monad. *)
 
-val __unsafe_action : (unit -> 'a) -> ('f, 'a) action
+val __builtin_effect : (unit -> 'a) -> ('f, 'a) effect
 (** Don't use this.  If it has any effect outside internal code, then there is
     a bug in some API. *)
 
-val __unsafe_run_action : ('f, 'a) action -> 'a
+val __builtin_effect_run : ('f, 'a) effect -> 'a
 (** Don't use this.  It is reserved for compiler-generated code. *)
 
-val __builtin_action_return : 'a -> ('f, 'a) action
-val __builtin_action_bind
-    : ('a -> ('f, 'b) action) -> ('f, 'a) action -> ('f, 'b) action
+val __builtin_effect_return : 'a -> ('f, 'a) effect
+val __builtin_effect_bind
+    : ('a -> ('f, 'b) effect) -> ('f, 'a) effect -> ('f, 'b) effect
 
 type exception__ = exn
 
-val __builtin_action_throw : exception__ -> ('f, 'a) action
+val __builtin_effect_throw : exception__ -> ('f, 'a) effect
 
 val __builtin_catch : (exception__ -> 'a io) -> 'a io -> 'a io
 
@@ -54,9 +54,9 @@ val __builtin_mask : (('a io -> 'a io) -> 'b io) -> 'b io
 
 module Ref : sig
     type ('f, 'a) r
-    val init : 'a -> ('f, ('f, 'a) r) action
-    val get : ('f, 'a) r -> ('f, 'a) action
-    val set : ('f, 'a) r -> 'a -> ('f, unit) action
+    val init : 'a -> ('f, ('f, 'a) r) effect
+    val get : ('f, 'a) r -> ('f, 'a) effect
+    val set : ('f, 'a) r -> 'a -> ('f, unit) effect
 end
 
 val none : 'a option

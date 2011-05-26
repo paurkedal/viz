@@ -1,5 +1,5 @@
 open pervasive
-open action
+open effect
 
 let! random n
     let i do system.posix.stdlib.lrand48

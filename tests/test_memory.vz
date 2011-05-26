@@ -1,18 +1,18 @@
 open foreign.C.memory
-open action
+open effect
 open:c "stdio.h"
 open:c "tests/testutils.h"
 
 type:c cstring := "char *"
 
-val:c calloc_cstring : int → int → action φ cstring := "calloc"
-val:c malloc_cstring : int → action φ cstring := "verbose_malloc"
-val:c free_cstring : cstring → action φ unit := "free"
+val:c calloc_cstring : int → int → effect φ cstring := "calloc"
+val:c malloc_cstring : int → effect φ cstring := "verbose_malloc"
+val:c free_cstring : cstring → effect φ unit := "free"
 let alloc_cstring be calloc_cstring 1
 val:c puts_cstring : cstring → io int := "puts"
 let newline be print "\n" >> flush stdout
 
-val:c puts_ptr : ptr φ → action φ int := "puts"
+val:c puts_ptr : ptr φ → effect φ int := "puts"
 
 let! test_cstring
     let s do malloc_cstring 16

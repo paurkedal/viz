@@ -46,12 +46,12 @@ end
 module String_buf : sig
     type 'f r
 
-    val create : ('f, 'f r) action
-    val contents : 'f r -> ('f, string) action
-    val length : 'f r -> ('f, int) action
-    val clear : 'f r -> ('f, unit) action
-    val put_char : 'f r -> char -> ('f, unit) action
-    val put_string : 'f r -> string -> ('f, unit) action
+    val create : ('f, 'f r) effect
+    val contents : 'f r -> ('f, string) effect
+    val length : 'f r -> ('f, int) effect
+    val clear : 'f r -> ('f, unit) effect
+    val put_char : 'f r -> char -> ('f, unit) effect
+    val put_string : 'f r -> string -> ('f, unit) effect
 end
 
 module UTF8string : sig
