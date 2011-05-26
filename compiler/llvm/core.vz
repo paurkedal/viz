@@ -161,7 +161,7 @@ val:c dump_value : value → action φ unit := "LLVMDumpValue"
 # Z.Z.Z.  Operations on Uses
 
 
-# Z.Z.Z.  Operatiors on Users
+# Z.Z.Z.  Operations on Users
 
 
 # Z.Z.Z.  Operations on Constants of any Type
@@ -482,7 +482,7 @@ val:c build_fcmp : builder → forder#e → value → value → string → actio
     := "LLVMBuildFCmp"
 
 
-# Z.Z.Z.  Mischellaneous Instructions
+# Z.Z.Z.  Miscellaneous Instructions
 
 val:c build_phi : builder → ltype → string → action φ value := "LLVMBuildPhi"
 
