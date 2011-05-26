@@ -125,10 +125,12 @@ in effect
     val return : α → effect φ α
     val 2'>>= : effect φ α → (α → effect φ β) → effect φ β
     val 2'>> : effect φ unit → effect φ α → effect φ α
+    val observe : (∀φ. effect φ α) → α
 
     let return be __builtin_effect_return
     let 2'>>= m k be __builtin_effect_bind k m
     let 2'>> m n be __builtin_effect_bind (() +> n) m
+    let observe be __builtin_effect_run
 
 # This is for our own use, as we typically open prereq on the top of each
 # library structure.  The pervasive structure does a similar inclusion for

@@ -481,7 +481,7 @@ val:cs get_obj : t δ → lens.t δ := "cviz_unsafe_custom_address"
 
 let alloc_record (record_sc al sz) be prim_alloc sz >>= get_ref
 
-let init_record (record_sc al sz) f be __builtin_effect_run what!
+let init_record (record_sc al sz) f be observe what!
     let p do prim_alloc sz
     let x do get_ref p >>= f
     be (x, p)
@@ -492,7 +492,7 @@ let! alloc_spill (record_sc al sz) n (record_sc alE szE)
     do get_ref p
 
 let init_spill (record_sc al sz) n (record_sc alE szE) f
-    be __builtin_effect_run what!
+    be observe what!
     let offE be align alE sz
     let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
     let x do get_ref p >>= f
