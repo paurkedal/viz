@@ -17,6 +17,7 @@
  *)
 
 open Leaf_types
+open Leaf_core
 open Cst_core
 open Ast_core
 open Ast_types
@@ -58,7 +59,8 @@ type pocket =
 let atyp_effect_pocket = function
     | Atyp_ref (Apath ([], Avar (_, Idr "io"))) ->
 	World_pocket
-    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "effect"))), pocket) ->
+    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, effect))), pocket)
+	    when idr_is_effect_tycon effect ->
 	begin match pocket with
 	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world" ->
 	    World_pocket

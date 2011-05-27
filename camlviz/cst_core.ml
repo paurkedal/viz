@@ -78,6 +78,10 @@ let cidr_is_1o_asterisk	(Cidr (_, idr)) = idr = idr_1o_asterisk
 let cidr_is_2b_dotbracket (Cidr (_, idr)) = idr = idr_2b_dotbracket
 let cidr_is_2b_dotparen	(Cidr (_, idr)) = idr = idr_2b_dotparen
 
+let idrs_effect_tycon	= [Idr "effect"; idr_2o_c "/~"]
+let idr_is_effect_tycon idr = List.exists ((=) idr) idrs_effect_tycon
+let cidr_is_effect_tycon (Cidr (_, idr)) = idr_is_effect_tycon idr
+
 let cmonad_io = ""
 
 let cpred_loc = function

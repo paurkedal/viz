@@ -86,3 +86,6 @@ val cidr_is_1o_asterisk : cidr -> bool
 val cidr_is_1q_functor : cidr -> bool
 val cidr_is_2b_dotbracket : cidr -> bool
 val cidr_is_2b_dotparen : cidr -> bool
+
+val idr_is_effect_tycon : idr -> bool
+val cidr_is_effect_tycon : cidr -> bool

@@ -136,7 +136,8 @@ let rec nonoption_conversion nparam state = function
 	| "v" -> ("value", None, "", "")
 	| _ -> errf_at tagloc "Invalid conversion tag %s." tagname
 	end
-    | Atyp_apply (loc, x, Atyp_uvar _) ->
+    | Atyp_apply (loc, x, Atyp_uvar _)
+    | Atyp_apply (loc, x, Atyp_ref _) ->
 	nonoption_conversion (nparam + 1) state x
     | t -> errf_at (atyp_loc t) "Unhandled type for the C ABI."
 
@@ -237,10 +238,10 @@ let output_cstub och v t cn_opt is_fin state =
 		errf_at (apath_loc ftc)
 			"Qualified names are not supported here.";
 	    begin match tc with
-	    | Atyp_ref (Apath ([], Avar (_, Idr "io")))
+	    | Atyp_ref (Apath ([], Avar (_, Idr "io"))) -> ()
 	    | Atyp_apply (_,
-		    Atyp_ref (Apath ([], Avar (_, Idr "effect"))), _) ->
-		()
+		    Atyp_ref (Apath ([], Avar (_, effect))), _)
+		    when idr_is_effect_tycon effect -> ()
 	    | _ ->
 		errf_at loc
 		    "Finalizer must return (io unit) or (effect φ unit)."

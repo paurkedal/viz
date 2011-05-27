@@ -122,6 +122,7 @@ in nat64
     #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nat64)
 
 in effect
+    type φ /~ α := effect φ α
     val return : α → effect φ α
     val 2'>>= : effect φ α → (α → effect φ β) → effect φ β
     val 2'>> : effect φ unit → effect φ α → effect φ α
