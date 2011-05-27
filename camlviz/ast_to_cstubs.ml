@@ -94,7 +94,7 @@ type conversion = {
     cv_conv_res : string;
 }
 
-let rec nonoption_conversion state = function
+let rec nonoption_conversion nparam state = function
     | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), _) ->
 	("void *", None, "Voidp_val", "cviz_copy_ptr")
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
@@ -103,7 +103,7 @@ let rec nonoption_conversion state = function
 	    | Cti_custom (ctype, _) ->
 		(ctype, None, sprintf "%s_of_value" tname,
 		 sprintf "%scopy_%s" state.st_stub_prefix tname)
-	    | Cti_alias tname' -> nonoption_conversion state tname'
+	    | Cti_alias tname' -> nonoption_conversion nparam state tname'
 	with Not_found ->
 	match tname with
 	| "unit"   -> ("void", None, "Int_val",   "Val_int")
@@ -136,6 +136,8 @@ let rec nonoption_conversion state = function
 	| "v" -> ("value", None, "", "")
 	| _ -> errf_at tagloc "Invalid conversion tag %s." tagname
 	end
+    | Atyp_apply (loc, x, Atyp_uvar _) ->
+	nonoption_conversion (nparam + 1) state x
     | t -> errf_at (atyp_loc t) "Unhandled type for the C ABI."
 
 let conversion state t =
@@ -144,7 +146,7 @@ let conversion state t =
 	| Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "option"))), t) ->
 	       (true, t)
 	| t -> (false, t) in
-    let (ctype, prep_arg, conv_arg, conv_res) = nonoption_conversion state t in
+    let ctype, prep_arg, conv_arg, conv_res = nonoption_conversion 0 state t in
     {
 	cv_is_opt = is_opt;
 	cv_ctype = ctype;
@@ -226,9 +228,14 @@ let output_cstub och v t cn_opt is_fin state =
     end;
     if is_fin then
 	begin match t with
-	| Atyp_arrow (loc, Atyp_ref (Apath ([], ftv)),
+	| Atyp_arrow (loc, ft,
 		Atyp_apply (_, tc,
 		    Atyp_ref (Apath ([], Avar (_, Idr "unit"))))) ->
+	    let ftc, ftparams = Ast_utils.atyp_unapply ft in
+	    let Apath (ftns, ftv) = ftc in
+	    if ftns <> [] then
+		errf_at (apath_loc ftc)
+			"Qualified names are not supported here.";
 	    begin match tc with
 	    | Atyp_ref (Apath ([], Avar (_, Idr "io")))
 	    | Atyp_apply (_,

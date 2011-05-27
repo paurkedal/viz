@@ -549,11 +549,11 @@ and emit_adef state = function
 		    let args = List.init r mkarg in
 		    let y = List.fold (fun x f -> <:expr< $f$ $lid: x$ >>) args
 				      <:expr< $lid: cname$ >> in
-		    let y = <:expr< __builtin_effect (fun () -> $y$) >> in
+		    let y = <:expr< { __unsafe_thunk = (fun () -> $y$) } >> in
 		    List.fold (fun x y -> <:expr< fun $lid: x$ -> $y$ >>)
 			      (List.rev args) y
 		else
-		    <:expr< __builtin_effect $lid: cname$ >> in
+		    <:expr< { __unsafe_thunk = $lid: cname$ } >> in
 	    let ov = <:str_item< value $lid: name$ : $ot$ = $z$ >> in
 	    <:str_item< $list: [ox; ov]$ >>
 	else
