@@ -78,12 +78,12 @@ let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
     output_string och cparen
 
 type cti =
-    | Cti_custom of string * string option
+    | Cti_custom of string * string * string option
     | Cti_alias of atyp
 
 type state = {
     st_cti_map : cti String_map.t;
-    st_stub_prefix : string;
+    st_cprefix : string;
 }
 
 type conversion = {
@@ -100,9 +100,10 @@ let rec nonoption_conversion nparam state = function
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	begin try
 	    match String_map.find tname state.st_cti_map with
-	    | Cti_custom (ctype, _) ->
-		(ctype, None, sprintf "%s_of_value" tname,
-		 sprintf "%scopy_%s" state.st_stub_prefix tname)
+	    | Cti_custom (prefix, ctype, _) ->
+		(ctype, None,
+		 sprintf "%s%s_of_value" prefix tname,
+		 sprintf "%scopy_%s" prefix tname)
 	    | Cti_alias tname' -> nonoption_conversion nparam state tname'
 	with Not_found ->
 	match tname with
@@ -174,7 +175,7 @@ let output_arg och (v, cv) =
 
 let output_cstub och v t cn_opt is_fin state =
     let cn = match cn_opt with Some cn -> cn | None -> avar_to_lid v in
-    let stub_name = state.st_stub_prefix ^ (avar_name v) in
+    let stub_name = state.st_cprefix ^ (avar_name v) in
     let is_io, rt, ats = Ast_utils.flatten_arrows_for_c t in
     let (r, args) = List.fold
 	begin fun at (i, args) ->
@@ -249,12 +250,12 @@ let output_cstub och v t cn_opt is_fin state =
 	    begin try
 		let ftn = avar_name ftv in
 		match String_map.find ftn state.st_cti_map with
-		| Cti_custom (tname, None) ->
+		| Cti_custom (cprefix, tname, None) ->
 		    let cti_map = String_map.add ftn
-			    (Cti_custom (tname, Some (avar_name v)))
-			    state.st_cti_map in
+			(Cti_custom (cprefix, tname, Some (avar_name v)))
+			state.st_cti_map in
 		    {state with st_cti_map = cti_map}
-		| Cti_custom (tname, Some _) ->
+		| Cti_custom (cprefix, tname, Some _) ->
 		    errf_at (avar_loc v) "This type already has a finalizer."
 		| Cti_alias _ ->
 		    errf_at (avar_loc v)
@@ -276,31 +277,32 @@ let declare_type_alias v origname state =
 let declare_ctype och v ctype state =
     let tname = avar_name v in
     fprintf och "\n\
-	#define %s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
-	static struct custom_operations %s_ops;\n\n\
+	#define %s%s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
+	static struct custom_operations %s%s_ops;\n\n\
 	value\n%scopy_%s(%s x)\n{\n\
-	\tvalue v = caml_alloc_custom(&%s_ops, sizeof(%s), 0, 1);\n\
-	\t%s_of_value(v) = x;\n\
+	\tvalue v = caml_alloc_custom(&%s%s_ops, sizeof(%s), 0, 1);\n\
+	\t%s%s_of_value(v) = x;\n\
 	\treturn v;\n\
 	}\n"
-	tname ctype
-	tname
-	state.st_stub_prefix tname ctype
-	tname ctype
-	tname;
+	state.st_cprefix tname ctype
+	state.st_cprefix tname
+	state.st_cprefix tname ctype
+	state.st_cprefix tname ctype
+	state.st_cprefix tname;
     {state with
-	st_cti_map = String_map.add tname (Cti_custom (ctype, None))
-		     state.st_cti_map
+	st_cti_map = String_map.add tname
+			    (Cti_custom (state.st_cprefix, ctype, None))
+			    state.st_cti_map
     }
 
-let output_ctype och stub_prefix sname tname = function
-    | Cti_custom (cname, vf_opt) ->
+let output_ctype och cprefix sname tname = function
+    | Cti_custom (cprefix, cname, vf_opt) ->
 	let output_default gn = fprintf och "\tcustom_%s_default,\n" gn in
-	fprintf och "\nstatic struct custom_operations %s_ops = {\n\
-			\t\"%s%s\",\n" tname sname tname;
+	fprintf och "\nstatic struct custom_operations %s%s_ops = {\n\
+			\t\"%s%s\",\n" cprefix tname sname tname;
 	begin match vf_opt with
 	| None -> output_default "finalize"
-	| Some vf -> fprintf och "\t(void (*)(value))%s%s,\n" stub_prefix vf
+	| Some vf -> fprintf och "\t(void (*)(value))%s%s,\n" cprefix vf
 	end;
 	output_default "compare";
 	output_default "hash";
@@ -321,7 +323,7 @@ and output_adef_c och = function
     | Adef_use (_, x) ->
 	begin match Ast_utils.interpret_use x with
 	| `Stub_prefix pfx ->
-	    fun state -> {state with st_stub_prefix = pfx}
+	    fun state -> {state with st_cprefix = pfx}
 	end
     | Adef_types defs ->
        List.fold
@@ -335,14 +337,19 @@ and output_adef_c och = function
 	if Ast_utils.atyp_is_const t || List.mem `Is_stub valopts then ident
 	else output_cstub och v t cn (List.mem `Is_finalizer valopts)
     | Adef_include (loc, m) -> output_amod_c och m
-    | Adef_in (loc, v, m) -> output_amod_c och m
+    | Adef_in (loc, v, m) -> fun state ->
+	let saved_cprefix = state.st_cprefix in
+	let cprefix = state.st_cprefix ^ "_" ^ (avar_name v) ^ "_" in
+	let state' =
+	    output_amod_c och m {state with st_cprefix = cprefix} in
+	{state' with st_cprefix = saved_cprefix}
     | _ -> ident
 
 let output_cstubs och sname m =
     output_string och header;
     Ast_utils.fold_amod_cabi_open
 	(fun inc () -> fprintf och "#include <%s>\n" inc) m ();
-    let state = {st_cti_map = String_map.empty; st_stub_prefix = "_stub_"} in
+    let state = {st_cti_map = String_map.empty; st_cprefix = "_cviz_"} in
     let state = output_amod_c och m state in
-    String_map.iter (output_ctype och state.st_stub_prefix sname)
+    String_map.iter (output_ctype och state.st_cprefix sname)
 	state.st_cti_map

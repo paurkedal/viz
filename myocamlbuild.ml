@@ -162,7 +162,7 @@ let camlvizconsts arg out env build =
 
 let compile_fficgen arg out env build =
     let arg = env arg and out = env out in
-    Cmd (S[A"cc"; A"-o"; Px out; A arg])
+    Cmd (S[A"cc"; A"-I"; P".."; A"-o"; Px out; A arg])
 
 let runprog arg out env build =
     let arg = env arg and out = env out in

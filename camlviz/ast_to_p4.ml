@@ -388,7 +388,9 @@ and emit_adec state = function
 	let _loc = p4loc loc in <:sig_item< >>
     | Adec_in (loc, v, s) ->
 	let _loc = p4loc loc in
-	<:sig_item< module $uid: avar_to_uid v$ : $emit_asig state s$ >>
+	let stub_prefix = state.ams_stub_prefix ^ "_" ^ (avar_name v) ^ "_" in
+	let state' = {state with ams_stub_prefix = stub_prefix} in
+	<:sig_item< module $uid: avar_to_uid v$ : $emit_asig state' s$ >>
     | Adec_sig (loc, v, None) ->
 	let _loc = p4loc loc in
 	<:sig_item< module type $uid: avar_to_uid v$ >>
@@ -476,7 +478,9 @@ and emit_adef state = function
 	let _loc = p4loc loc in <:str_item< >>
     | Adef_in (loc, v, m) ->
 	let _loc = p4loc loc in
-	<:str_item< module $uid: avar_to_uid v$ = $emit_amod state m$ >>
+	let stub_prefix = state.ams_stub_prefix ^ "_" ^ (avar_name v) ^ "_" in
+	let state' = {state with ams_stub_prefix = stub_prefix} in
+	<:str_item< module $uid: avar_to_uid v$ = $emit_amod state' m$ >>
     | Adef_sig (loc, v, s) ->
 	let _loc = p4loc loc in
 	<:str_item< module type $uid: avar_to_uid v$ = $emit_asig state s$ >>
@@ -564,7 +568,7 @@ and emit_adef state = function
 let emit_toplevel ~module_name = function
     | Amod_defs (loc, defs) ->
 	let state = {
-	    ams_stub_prefix = "_stub_";
+	    ams_stub_prefix = "_cviz_";
 	    ams_module_name = module_name;
 	} in
 	<:str_item< $list: List.map (emit_adef state) defs$ >>
