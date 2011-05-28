@@ -78,7 +78,7 @@ let rec output_arglist och ?(oparen = "(") ?(cparen = ")") ?(sep = ", ") f xs =
     output_string och cparen
 
 type cti =
-    | Cti_custom of string * string * string option
+    | Cti_custom of string * string * string option * bool
     | Cti_alias of atyp
 
 type state = {
@@ -100,7 +100,7 @@ let rec nonoption_conversion nparam state = function
     | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
 	begin try
 	    match String_map.find tname state.st_cti_map with
-	    | Cti_custom (prefix, ctype, _) ->
+	    | Cti_custom (prefix, ctype, _, _) ->
 		(ctype, None,
 		 sprintf "%s%s_of_value" prefix tname,
 		 sprintf "%scopy_%s" prefix tname)
@@ -250,12 +250,15 @@ let output_cstub och v t cn_opt is_fin state =
 	    begin try
 		let ftn = avar_name ftv in
 		match String_map.find ftn state.st_cti_map with
-		| Cti_custom (cprefix, tname, None) ->
+		| Cti_custom (cprefix, tname, None, true) ->
 		    let cti_map = String_map.add ftn
-			(Cti_custom (cprefix, tname, Some (avar_name v)))
+			(Cti_custom (cprefix, tname, Some (avar_name v), true))
 			state.st_cti_map in
 		    {state with st_cti_map = cti_map}
-		| Cti_custom (cprefix, tname, Some _) ->
+		| Cti_custom (cprefix, tname, None, false) ->
+		    errf_at (avar_loc v)
+			    "Cannot define finalizer for external type."
+		| Cti_custom (cprefix, tname, Some _, _) ->
 		    errf_at (avar_loc v) "This type already has a finalizer."
 		| Cti_alias _ ->
 		    errf_at (avar_loc v)
@@ -274,29 +277,36 @@ let declare_type_alias v origname state =
 	st_cti_map = String_map.add (avar_name v) (Cti_alias origname)
 				    state.st_cti_map}
 
-let declare_ctype och v ctype state =
+let declare_ctype och v ctype is_local state =
     let tname = avar_name v in
-    fprintf och "\n\
-	#define %s%s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
-	static struct custom_operations %s%s_ops;\n\n\
-	value\n%scopy_%s(%s x)\n{\n\
-	\tvalue v = caml_alloc_custom(&%s%s_ops, sizeof(%s), 0, 1);\n\
-	\t%s%s_of_value(v) = x;\n\
-	\treturn v;\n\
-	}\n"
-	state.st_cprefix tname ctype
-	state.st_cprefix tname
-	state.st_cprefix tname ctype
-	state.st_cprefix tname ctype
-	state.st_cprefix tname;
+    if is_local then
+	fprintf och "\n\
+	    #define %s%s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
+	    static struct custom_operations %s%s_ops;\n\n\
+	    value\n%scopy_%s(%s x)\n{\n\
+	    \tvalue v = caml_alloc_custom(&%s%s_ops, sizeof(%s), 0, 1);\n\
+	    \t%s%s_of_value(v) = x;\n\
+	    \treturn v;\n\
+	    }\n"
+	    state.st_cprefix tname ctype
+	    state.st_cprefix tname
+	    state.st_cprefix tname ctype
+	    state.st_cprefix tname ctype
+	    state.st_cprefix tname
+    else
+	fprintf och "\n\
+	    #define %s%s_of_value(v) (*(%s*)Data_custom_val(v))\n\n\
+	    value %scopy_%s(%s x);\n"
+	    state.st_cprefix tname ctype
+	    state.st_cprefix tname ctype;
     {state with
 	st_cti_map = String_map.add tname
-			    (Cti_custom (state.st_cprefix, ctype, None))
-			    state.st_cti_map
+			(Cti_custom (state.st_cprefix, ctype, None, is_local))
+			state.st_cti_map
     }
 
 let output_ctype och cprefix sname tname = function
-    | Cti_custom (cprefix, cname, vf_opt) ->
+    | Cti_custom (cprefix, cname, vf_opt, true) ->
 	let output_default gn = fprintf och "\tcustom_%s_default,\n" gn in
 	fprintf och "\nstatic struct custom_operations %s%s_ops = {\n\
 			\t\"%s%s\",\n" cprefix tname sname tname;
@@ -324,11 +334,12 @@ and output_adef_c och = function
 	begin match Ast_utils.interpret_use x with
 	| `Stub_prefix pfx ->
 	    fun state -> {state with st_cprefix = pfx}
+	| `type_c (v, name) -> declare_ctype och v name false
 	end
     | Adef_types defs ->
        List.fold
 	   begin function
-	   | (loc, v, ts, Atypinfo_cabi name) -> declare_ctype och v name
+	   | (loc, v, ts, Atypinfo_cabi name) -> declare_ctype och v name true
 	   | (loc, v, ts, Atypinfo_alias name) -> declare_type_alias v name
 	   | _ -> ident
 	   end

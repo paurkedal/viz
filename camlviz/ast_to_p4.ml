@@ -384,6 +384,7 @@ and emit_adec state = function
     | Adec_use (loc, use) ->
 	begin match Ast_utils.interpret_use use with
 	| `Stub_prefix pfx -> state.ams_stub_prefix <- pfx
+	| `type_c _ -> ()
 	end;
 	let _loc = p4loc loc in <:sig_item< >>
     | Adec_in (loc, v, s) ->
@@ -474,6 +475,7 @@ and emit_adef state = function
     | Adef_use (loc, use) ->
 	begin match Ast_utils.interpret_use use with
 	| `Stub_prefix pfx -> state.ams_stub_prefix <- pfx
+	| `type_c _ -> ()
 	end;
 	let _loc = p4loc loc in <:str_item< >>
     | Adef_in (loc, v, m) ->

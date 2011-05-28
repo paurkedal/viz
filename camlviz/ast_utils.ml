@@ -293,6 +293,12 @@ let interpret_use use =
 		`Stub_prefix (UString.to_utf8 pfx)
 	    | _ -> errf_at (aval_loc use) "Invalid stub prefix."
 	    end
+	| Avar (_, Idr "type_c") ->
+	    begin match params with
+	    | [Aval_ref (Apath ([], v)); Aval_literal (_, Lit_string ctype)] ->
+		`type_c (v, UString.to_utf8 ctype)
+	    | _ -> errf_at (aval_loc use) "Invalid C type specification."
+	    end
 	| _ -> errf_at (avar_loc subdirective) "Invalid cabi use-directive."
 	end
     | _ ->
