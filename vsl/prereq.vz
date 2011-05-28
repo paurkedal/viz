@@ -128,6 +128,8 @@ in effect
     val 2'>> : effect φ unit → effect φ α → effect φ α
     val observe : (∀φ. effect φ α) → α
 
+    type pocket_tag φ  inj pocket_tag : pocket_tag φ
+
     let return be __builtin_effect_return
     let 2'>>= m k be __builtin_effect_bind k m
     let 2'>> m n be __builtin_effect_bind (() +> n) m

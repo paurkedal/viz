@@ -59,9 +59,15 @@ cviz_ptr_eq(value p, value q)
 }
 
 CAMLprim value
-cviz_is_null(value p)
+cviz_ptr_is_zero(value p)
 {
     return Voidp_val(p)? Val_true : Val_false;
+}
+
+CAMLprim value
+cviz_ptr_get_zero(value p)
+{
+    return cviz_copy_ptr(NULL);
 }
 
 CAMLprim value
@@ -83,7 +89,7 @@ cviz_ptr_diff(value pb, value pa)
 }
 
 CAMLprim value
-cviz_show_ptr(value p)
+cviz_ptr_show(value p)
 {
     char buf[sizeof(void *)*2 + 13];
     sprintf(buf, "%p", Voidp_val(p));

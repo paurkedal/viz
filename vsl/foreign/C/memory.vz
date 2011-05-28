@@ -41,30 +41,42 @@ in offset
 type:c ptr φ := "void *"
  ## The type of a generic pointer.  This is always local to some pocket (φ).
 
-val:cs ptr_cmp : ptr φ → ptr φ → torder
-val:cs ptr_eq : ptr φ → ptr φ → bool
+in ptr
+    use cabi.stub_prefix "cviz_ptr_"
 
-val:cs is_null : ptr φ → bool
- ## (is_null p) is true iff (p) represents the (NULL) pointer.
+    val:cs cmp : ptr φ → ptr φ → torder
+    val:cs eq : ptr φ → ptr φ → bool
 
-val:cs ptr_add : offset → ptr φ → ptr φ
- ## (ptr_add n p) translates (p) across (n) bytes.  If (p) points to garbage
- ## collected memory, this may cause the object to be freed, making subsequent
- ## access unsafe.
+    val:cs is_zero : ptr φ → bool
+     ## (is_zero p) is true iff (p) represents the (NULL) pointer.
 
-val:cs ptr_diff : ptr φ → ptr φ → offset
- ## (ptr_diff p q) is the distance in bytes from (q) to (p).
+    #?ffoc {#
+    val zero : ptr φ
+     ## The null pointer.
+    #?ffoc #}
 
-val:cs show_ptr : ptr φ → string
- ## (show p) is a textual representation of (p), conventionally hexadecimal
- ## including a "0x" prefix.
+    val:cs get_zero : pocket_tag φ → ptr φ
+     ## This is a variant of (zero) to work around the value restriction in
+     ## Camlviz.
+
+    val:cs add : offset → ptr φ → ptr φ
+     ## (ptr_add n p) translates (p) across (n) bytes.  If (p) points to garbage
+     ## collected memory, this may cause the object to be freed, making subsequent
+     ## access unsafe.
+
+    val:cs diff : ptr φ → ptr φ → offset
+     ## (ptr_diff p q) is the distance in bytes from (q) to (p).
+
+    val:cs show : ptr φ → string
+     ## (show p) is a textual representation of (p), conventionally hexadecimal
+     ## including a "0x" prefix.
 
 val:cs unsafe_custom_address : α → effect φ (ptr φ)
  ## Assuming (x) is a custom object, (unsafe_custom_address x) is a pointer to
  ## the start of the custom data.
 
 val:cs unsafe_custom_load_ptr : α → effect φ (ptr φ)
- ## Assumnig (x) is a custom object, (unsafe_custom_load_ptr x) loads a
+ ## Assuming (x) is a custom object, (unsafe_custom_load_ptr x) loads a
  ## pointer from the first slot of the custom data.  This is just a shortcut
  ## for (unsafe_load_ptr ∘ unsafe_custom_address).
 

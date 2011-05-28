@@ -20,12 +20,12 @@ let! test_cstring
     let p do unsafe_load_ptr (offset.of_int 0) slot
     let p' do unsafe_custom_load_ptr s
     let p'' do unsafe_custom_load_ptr p'
-    ##do print "slot = " >> print (show_ptr slot) >> newline
-    ##do print "p = " >> print (show_ptr p) >> newline
-    ##do print "p' = " >> print (show_ptr p') >> newline
-    ##do print "p'' = " >> print (show_ptr p') >> newline
-    assert ptr_eq p p'
-    assert ptr_eq p' p''
+    ##do print "slot = " >> print (ptr.show slot) >> newline
+    ##do print "p = " >> print (ptr.show p) >> newline
+    ##do print "p' = " >> print (ptr.show p') >> newline
+    ##do print "p'' = " >> print (ptr.show p') >> newline
+    assert ptr.eq p p'
+    assert ptr.eq p' p''
     do unsafe_store_8 (offset.of_int 0) p 0x70
     do unsafe_store_8 (offset.of_int 1) p 0x75
     do unsafe_store_8 (offset.of_int 2) p 0x74
@@ -36,7 +36,7 @@ let! test_cstring
 
 let! test_ptr
     let q do unsafe_malloc (offset.of_int 3)
-    do print (show_ptr q) >> print "\n" >> flush stdout
+    do print (ptr.show q) >> print "\n" >> flush stdout
     do unsafe_store_8 (offset.of_int 0) q 0x4f
     do unsafe_store_8 (offset.of_int 1) q 0x4b
     do unsafe_store_8 (offset.of_int 2) q 0
