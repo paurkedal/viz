@@ -16,8 +16,6 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 open:c "llvm-c/Core.h"
-open:c "llvm-c/Transforms/IPO.h"
-open:c "llvm-c/Transforms/Scalar.h"
 open:c "compiler/llvm_suppl.h"
 open pervasive
 open effect
@@ -564,84 +562,3 @@ in function_pass_manager
     val:c finalize : t φ → φ /~ bool := "LLVMFinalizeFunctionPassManager"
 
     val:c dispose : t φ → φ /~ unit := "LLVMDisposePassManager"
-
-in IPO_passes
-    val:c add_argument_promotion_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddArgumentPromotionPass"
-    val:c add_constant_merge_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddConstantMergePass"
-    val:c add_dead_arg_elimination_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddDeadArgEliminationPass"
-    val:c add_dead_type_elimination_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddDeadTypeEliminationPass"
-    val:c add_function_attrs_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddFunctionAttrsPass"
-    val:c add_function_inlining_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddFunctionInliningPass"
-    val:c add_global_DCE_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddGlobalDCEPass"
-    val:c add_global_optimizer_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddGlobalOptimizerPass"
-    val:c add_IP_constant_propagation_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddIPConstantPropagationPass"
-    val:c add_lower_setjmp_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddLowerSetJmpPass"
-    val:c add_prune_EH_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddPruneEHPass"
-    val:c add_IP_SCCP_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddIPSCCPPass"
-    val:c add_internalize_pass : pass_manager μ φ → bool → φ /~ unit
-			:= "LLVMAddInternalizePass"
-    val:c add_strip_dead_prototype_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddStripDeadPrototypesPass"
-    val:c add_strip_symbols_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddStripSymbolsPass"
-
-in scalar_passes
-    val:c add_aggressive_DCE_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddAggressiveDCEPass"
-    val:c add_CFG_simplification_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddCFGSimplificationPass"
-    val:c add_dead_store_elimination_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddDeadStoreEliminationPass"
-    val:c add_GVN_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddGVNPass"
-    val:c add_ind_var_simplify_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddIndVarSimplifyPass"
-    val:c add_instruction_combining_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddInstructionCombiningPass"
-    val:c add_jump_threading_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddJumpThreadingPass"
-    val:c add_LICM_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddLICMPass"
-    val:c add_loop_deletion_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddLoopDeletionPass"
-    val:c add_loop_rotate_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddLoopRotatePass"
-    val:c add_loop_unroll_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddLoopUnrollPass"
-    val:c add_loop_unswitch_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddLoopUnswitchPass"
-    val:c add_memcpy_opt_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddMemCpyOptPass"
-    val:c add_promote_memory_to_register_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddPromoteMemoryToRegisterPass"
-    val:c add_reassociate_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddReassociatePass"
-    val:c add_SCCP_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddSCCPPass"
-    val:c add_scalar_repl_aggregates_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddScalarReplAggregatesPass"
-    val:c add_scalar_repl_aggregates_pass_with_threshold :
-				    pass_manager μ φ → int → φ /~ unit
-			:= "LLVMAddScalarReplAggregatesPassWithThreshold"
-    val:c add_simplify_lib_calls_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddSimplifyLibCallsPass"
-    val:c add_tail_call_elimination_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddTailCallEliminationPass"
-    val:c add_constant_propagation_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddConstantPropagationPass"
-    val:c add_denote_memory_to_register_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddDemoteMemoryToRegisterPass"
-    val:c add_verifier_pass : pass_manager μ φ → φ /~ unit
-			:= "LLVMAddVerifierPass"

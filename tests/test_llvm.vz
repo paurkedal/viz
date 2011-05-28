@@ -1,6 +1,7 @@
 open effect
 
 in ll include llvm.core
+in lltran include llvm.transforms
 
 let newline be print "\n" >> flush_all
 
@@ -60,10 +61,10 @@ let main
 
     let provider do ll.module_provider.create_for mdl
     let pm do ll.module_pass_manager.create
-    do ll.scalar_passes.add_constant_propagation_pass pm
-    do ll.scalar_passes.add_instruction_combining_pass pm
-    do ll.scalar_passes.add_promote_memory_to_register_pass pm
-    do ll.scalar_passes.add_CFG_simplification_pass pm
+    do lltran.scalar.add_constant_propagation_pass pm
+    do lltran.scalar.add_instruction_combining_pass pm
+    do lltran.scalar.add_promote_memory_to_register_pass pm
+    do lltran.scalar.add_CFG_simplification_pass pm
     let _ do ll.module_pass_manager.run pm mdl
 
     do ll.dump_module mdl

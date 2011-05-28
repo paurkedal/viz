@@ -1,0 +1,104 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open effect
+open core
+open:c "llvm-c/Transforms/IPO.h"
+open:c "llvm-c/Transforms/Scalar.h"
+
+use cabi.type_c pass_manager "LLVMPassManagerRef"
+
+in IPO
+    val:c add_argument_promotion_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddArgumentPromotionPass"
+    val:c add_constant_merge_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddConstantMergePass"
+    val:c add_dead_arg_elimination_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddDeadArgEliminationPass"
+    val:c add_dead_type_elimination_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddDeadTypeEliminationPass"
+    val:c add_function_attrs_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddFunctionAttrsPass"
+    val:c add_function_inlining_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddFunctionInliningPass"
+    val:c add_global_DCE_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddGlobalDCEPass"
+    val:c add_global_optimizer_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddGlobalOptimizerPass"
+    val:c add_IP_constant_propagation_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddIPConstantPropagationPass"
+    val:c add_lower_setjmp_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddLowerSetJmpPass"
+    val:c add_prune_EH_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddPruneEHPass"
+    val:c add_IP_SCCP_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddIPSCCPPass"
+    val:c add_internalize_pass : pass_manager μ ψ → bool → ψ /~ unit
+			:= "LLVMAddInternalizePass"
+    val:c add_strip_dead_prototype_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddStripDeadPrototypesPass"
+    val:c add_strip_symbols_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddStripSymbolsPass"
+
+in scalar
+    val:c add_aggressive_DCE_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddAggressiveDCEPass"
+    val:c add_CFG_simplification_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddCFGSimplificationPass"
+    val:c add_dead_store_elimination_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddDeadStoreEliminationPass"
+    val:c add_GVN_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddGVNPass"
+    val:c add_ind_var_simplify_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddIndVarSimplifyPass"
+    val:c add_instruction_combining_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddInstructionCombiningPass"
+    val:c add_jump_threading_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddJumpThreadingPass"
+    val:c add_LICM_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddLICMPass"
+    val:c add_loop_deletion_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddLoopDeletionPass"
+    val:c add_loop_rotate_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddLoopRotatePass"
+    val:c add_loop_unroll_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddLoopUnrollPass"
+    val:c add_loop_unswitch_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddLoopUnswitchPass"
+    val:c add_memcpy_opt_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddMemCpyOptPass"
+    val:c add_promote_memory_to_register_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddPromoteMemoryToRegisterPass"
+    val:c add_reassociate_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddReassociatePass"
+    val:c add_SCCP_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddSCCPPass"
+    val:c add_scalar_repl_aggregates_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddScalarReplAggregatesPass"
+    val:c add_scalar_repl_aggregates_pass_with_threshold :
+				    pass_manager μ ψ → int → ψ /~ unit
+			:= "LLVMAddScalarReplAggregatesPassWithThreshold"
+    val:c add_simplify_lib_calls_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddSimplifyLibCallsPass"
+    val:c add_tail_call_elimination_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddTailCallEliminationPass"
+    val:c add_constant_propagation_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddConstantPropagationPass"
+    val:c add_denote_memory_to_register_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddDemoteMemoryToRegisterPass"
+    val:c add_verifier_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddVerifierPass"
