@@ -134,4 +134,4 @@ val unsafe_lalloc : size → (ptr φ → effect φ α) → effect φ α
 let unsafe_lalloc size f
     be unsafe_malloc size >>= p ↦ f p >>= r ↦ unsafe_free p >> return r
 
-val:c unsafe_copy_cstring : ptr φ → string#v := "cviz_copy_ustring"
+val:c unsafe_copy_cstring : ptr φ → φ /~ string#v := "cviz_copy_ustring"

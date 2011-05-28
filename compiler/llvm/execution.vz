@@ -1,0 +1,202 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open pervasive
+open effect
+open core
+open target
+open foreign.C.memory
+open foreign.C.utils
+open:c "llvm-c/ExecutionEngine.h"
+open:c "compiler/llvm_suppl.h"
+
+# Camlviz work-around.
+use cabi.type_c ltype "LLVMTypeRef"
+use cabi.type_c value "LLVMValueRef"
+use cabi.type_c module "LLVMModuleRef"
+use cabi.type_c target_data "LLVMTargetDataRef"
+
+type:c generic_value := "LLVMGenericValueRef"
+
+val:c link_in_jit : ψ /~ unit		:= "LLVMLinkInJIT"
+val:c link_in_interpreter : ψ /~ unit	:= "LLVMLinkInInterpreter"
+
+in generic_value
+    type t := generic_value
+
+    val of_int : ltype ψ → int → t
+
+    val of_nativeint : ltype ψ → nativeint → t
+
+    val of_int32 : ltype ψ → int32 → t
+
+    val of_int64 : ltype ψ → int64 → t
+
+    val:c of_ptr : ptr ψ → t := "LLVMCreateGenericValueOfPointer"
+
+    val:c of_float : ltype ψ → float → t := "LLVMCreateGenericValueOfFloat"
+
+    val to_int : t → int
+
+    val to_nativeint : t → nativeint
+
+    val to_int32 : t → int32
+
+    val to_int64 : t → int64
+
+    val:c to_float : ltype ψ → t → float := "LLVMGenericValueToFloat"
+
+    val:c to_ptr : t → ptr ψ := "LLVMGenericValueToPointer"
+
+
+    val:c _of_int : ltype ψ → int → bool → t := "LLVMCreateGenericValueOfInt"
+    val:c _of_nativeint : ltype ψ → nativeint → bool → t
+				:= "LLVMCreateGenericValueOfInt"
+    val:c _of_int32 : ltype ψ → int32 → bool → t
+				:= "LLVMCreateGenericValueOfInt"
+    val:c _of_int64 : ltype ψ → int64 → bool → t
+				:= "LLVMCreateGenericValueOfInt"
+    let of_int t i be _of_int t i true
+    let of_nativeint t i be _of_nativeint t i true
+    let of_int32 t i be _of_int32 t i true
+    let of_int64 t i be _of_int64 t i true
+
+    val:c _to_int : t → bool → int := "LLVMGenericValueToInt"
+    val:c _to_int32 : t → bool → int32 := "LLVMGenericValueToInt"
+    val:c _to_int64 : t → bool → int64 := "LLVMGenericValueToInt"
+    val:c _to_nativeint : t → bool → nativeint := "LLVMGenericValueToInt"
+    let to_int gv be _to_int gv true
+    let to_int32 gv be _to_int32 gv true
+    let to_int64 gv be _to_int64 gv true
+    let to_nativeint gv be _to_nativeint gv true
+
+in engine
+    type:c r ψ := "LLVMExecutionEngineRef"
+
+    val create : bool → module ψ → ψ /~ r ψ
+
+    val create_jit : int → module ψ → ψ /~ r ψ
+
+    val:c dispose : r ψ → ψ /~ unit	:= "LLVMDisposeExecutionEngine"
+
+    val:c run_static_constructors : r ψ → ψ /~ unit
+					:= "LLVMRunStaticConstructors"
+
+    val:c run_static_destructors : r ψ → ψ /~ unit
+					:= "LLVMRunStaticDestructors"
+
+    val run_function :
+	r ψ → value ψ → array generic_value.t → ψ /~ generic_value.t
+
+    val run_function_as_main :
+	r world → value world → array string → array (string × string) → io int
+
+    val:c free_machine_code_for_function : r ψ → value ψ → ψ /~ unit
+					:= "LLVMFreeMachineCodeForFunction"
+
+    val:c add_module : r ψ → module ψ → ψ /~ unit := "LLVMAddModule"
+
+    ##val remove_module : r ψ → module ψ → ψ /~ option (module ψ)
+
+    val find_function : r ψ → string → ψ /~ option (value ψ)
+
+    val:c recompile_and_relink_function : r ψ → value ψ → ψ /~ ptr ψ
+					:= "LLVMRecompileAndRelinkFunction"
+
+    val:c get_target_data : r ψ → ψ /~ target_data ψ
+					:= "LLVMGetExecutionEngineTargetData"
+
+    val:c add_global_mapping : r ψ → value ψ → ptr ψ → ψ /~ unit
+					:= "LLVMAddGlobalMapping"
+
+    val:c get_pointer_to_global : r ψ → value ψ → ψ /~ ptr ψ
+					:= "LLVMGetPointerToGlobal"
+
+
+    ### Implementation Details
+
+    val:c _of_ptr : ptr ψ → r ψ := ""
+
+    val:c _create : ptr ψ → module ψ → ptr ψ → ψ /~ bool
+					:= "LLVMCreateExecutionEngineForModule"
+    val:c _create_interpreter : ptr ψ → module ψ → ptr ψ → ψ /~ bool
+					:= "LLVMCreateInterpreterForModule"
+    let! create use_interp m
+	do unsafe_lalloc sizeof_ptr what! at slot
+	let ok do (use_interp ⇒ _create_interpreter; _create) slot m slot
+	let ee_or_err do unsafe_load_ptr offset.zero slot
+	if ok be _of_ptr ee_or_err
+	else let err do unsafe_copy_cstring ee_or_err
+	     fail err
+
+    val:c _create_jit : ptr ψ → module ψ → int → ptr ψ → ψ /~ bool
+					:= "LLVMCreateJITCompilerForModule"
+    let! create_jit optlev m
+	do unsafe_lalloc (offset.scale 2 sizeof_ptr) what! at ee_slot
+	let err_slot be ptr.add sizeof_ptr ee_slot
+	let not_ok do _create_jit ee_slot m optlev err_slot
+	if not_ok
+	    let err_ptr do unsafe_load_ptr offset.zero err_slot
+	    let err do unsafe_copy_cstring err_ptr
+	    fail err
+	let ee_ptr do unsafe_load_ptr offset.zero ee_slot
+	be _of_ptr ee_ptr
+    {#
+    val:c _create_jit : module ψ → int → ψ /~ option (r ψ) := "LLVMCreateJIT"
+    let! create_jit optlev m
+	do _create_jit m optlev >>= what!
+	    at none% fail
+	    at some% ee be ee
+    #}
+
+    val:c _run_function_as_main :
+	r world → value world → int → ptr world → ptr world → io int
+					:= "LLVMRunFunctionAsMain"
+    let! run_function_as_main ee f argv env
+	let n_argv be array.length argv
+	let n_env be array.length env
+	let p_argv do malloc_ptrarray_init n_argv
+			(i ↦ malloc_strcpy_string (array.get i argv))
+	let p_env do malloc_ptrarray_init (n_env + 1) what!
+	    at i if i = n_env be ptr.get_zero pocket_tag
+		 let (k, v) be array.get i env
+		 do malloc_strcpy_string (string.cat_list [k; "="; v;])
+	let r do _run_function_as_main ee f n_argv p_argv p_env
+	do unsafe_ptrarray_free_elements p_argv n_argv
+	do unsafe_ptrarray_free_elements p_env n_env
+	do unsafe_free p_argv
+	do unsafe_free p_env
+	be r
+
+    val:c _run_function : r ψ → value ψ → int → ptr ψ → ψ /~ generic_value
+					:= "LLVMRunFunction"
+    let! run_function ee f args
+	let n_args be array.length args
+	let p_args do malloc_ptrarray_init n_args
+			(i ↦ unsafe_custom_load_ptr (array.get i args))
+	let r do _run_function ee f n_args p_args
+	do unsafe_free p_args
+	be r
+
+    val:c _value_of_ptr : ptr ψ → value ψ := ""
+    val:c _find_function : r ψ → string → ptr ψ → ψ /~ bool
+					:= "LLVMFindFunction"
+    let! find_function ee name
+	do unsafe_lalloc sizeof_ptr what! at p
+	let not_ok do _find_function ee name p
+	if not_ok be none
+	be some (_value_of_ptr p)

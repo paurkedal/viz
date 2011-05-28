@@ -2,8 +2,20 @@ open effect
 
 in ll include llvm.core
 in lltran include llvm.transforms
+in llexec include llvm.execution
 
 let newline be print "\n" >> flush_all
+
+let! build_get42 ctx mdl
+    let int32t be ll.int32_type ctx
+    let ft be ll.function_type int32t #[]
+    let get42 do ll.add_function mdl "get42" ft
+    let entry do ll.append_block ctx get42 "entry"
+    let B do ll.create_builder ctx
+    do ll.position_builder_at_end B entry
+    let res do ll.const_int int32t 42
+    let _ do ll.build_ret B res
+    be get42
 
 let! build_fact ctx mdl
     let int32t be ll.int32_type ctx
@@ -49,26 +61,53 @@ let! build_fact ctx mdl
     do ll.dispose_builder B
     be fact
 
+let! check_ee_function ee name
+    do llexec.engine.find_function ee "_no_such_thing_" >>= what!
+	at none% do print "No function " >> print name
+	at some% f
+	    do print "Found function " >> print name >> print ": "
+	    do ll.dump_value f
+    do print "\n"
+
 let main
     let ctx do ll.create_context
     let mdl do ll.create_module ctx "test_llvm"
     do print "layout: " >> (ll.get_data_layout mdl >>= print) >> newline
     do print "target: " >> (ll.get_target mdl >>= print) >> newline
 
+    let get42 do build_get42 ctx mdl
     let fact do build_fact ctx mdl
 
     do ll.assert_valid_module mdl
 
-    let provider do ll.module_provider.create_for mdl
+    do llexec.link_in_jit
+    do llvm.target.initialize_native_target
+
+    let ee do llexec.engine.create_jit 2 mdl
     let pm do ll.module_pass_manager.create
+    let td do llexec.engine.get_target_data ee
+    do llvm.target.add_target_data td pm
     do lltran.scalar.add_constant_propagation_pass pm
     do lltran.scalar.add_instruction_combining_pass pm
     do lltran.scalar.add_promote_memory_to_register_pass pm
     do lltran.scalar.add_CFG_simplification_pass pm
     let _ do ll.module_pass_manager.run pm mdl
 
+    do check_ee_function ee "get42"
+    do check_ee_function ee "fact"
+    do check_ee_function ee "absent_function"
+
     do ll.dump_module mdl
+
+    let int32t be ll.int32_type ctx
+
+    let gv42 do llexec.engine.run_function ee get42 #[]
+    assert llexec.generic_value.to_int gv42 = 42
+
+    let args be #[llexec.generic_value.of_int int32t 5]
+    let gv120 do llexec.engine.run_function ee fact args
+    assert llexec.generic_value.to_int gv120 = 120
+
     do ll.dispose_module mdl
     do ll.dispose_context ctx
-
     do print "Done.\n"

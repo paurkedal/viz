@@ -112,6 +112,7 @@ syn match VizOperator '\k\@<!:\k\@!'
 syn match VizOperator '\.\S\@=\k\@!'
 syn region VizParen matchgroup=VizOperator start='(' end=')' fold transparent
 syn region VizParen matchgroup=VizOperator start='\[' end='\]' fold transparent
+syn region VizParen matchgroup=VizOperator start='{' end='}' fold transparent
 if !exists('viz_disable_types')
   syn region VizTyping contained containedin=VizParen transparent
     \ matchgroup=VizOperator start='\S\@<!:\S\@!' end=')\@='
