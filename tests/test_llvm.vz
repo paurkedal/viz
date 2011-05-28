@@ -11,7 +11,7 @@ let! build_fact ctx mdl
 
     let fact do ll.add_function mdl "fact" ft
     do print "gc: "
-    do ll.get_function_gc fact >>= (none ↦ print "none"; some% s ↦ print s)
+    do ll.get_function_gc fact >>= (none% ↦ print "none"; some% s ↦ print s)
     do newline
     do ll.set_function_callconv fact ll.callconv_c
 
@@ -55,6 +55,16 @@ let main
     do print "target: " >> (ll.get_target mdl >>= print) >> newline
 
     let fact do build_fact ctx mdl
+
+    do ll.assert_valid_module mdl
+
+    let provider do ll.module_provider.create_for mdl
+    let pm do ll.module_pass_manager.create
+    do ll.scalar_passes.add_constant_propagation_pass pm
+    do ll.scalar_passes.add_instruction_combining_pass pm
+    do ll.scalar_passes.add_promote_memory_to_register_pass pm
+    do ll.scalar_passes.add_CFG_simplification_pass pm
+    let _ do ll.module_pass_manager.run pm mdl
 
     do ll.dump_module mdl
     do ll.dispose_module mdl

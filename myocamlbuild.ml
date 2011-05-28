@@ -258,7 +258,8 @@ let camlvizpp_include path =
 
 let llvm_libs () =
     let sL = run_and_read "llvm-config --ldflags" in
-    let sl = run_and_read "llvm-config --libs jit interpreter native core" in
+    let sl = run_and_read "llvm-config --libs \
+			   jit interpreter native core ipo" in
     S[S(List.map (fun l -> S[A"-ccopt"; A l]) (split_on_space sL));
       S(List.map (fun l -> S[A"-cclib"; A l]) (split_on_space sl));
       A"-cclib"; A"-lstdc++"]

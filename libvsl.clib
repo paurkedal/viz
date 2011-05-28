@@ -5,3 +5,4 @@ vsl/foreign/C/utils_FFIS.o
 vsl/system/posix/stdlib_FFIS.o
 vsl/system/posix/unistd_FFIS.o
 compiler/llvm/core_FFIS.o
+compiler/llvm_suppl.o
