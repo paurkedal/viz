@@ -169,3 +169,52 @@ let aval_internal_error loc msg =
     aval_apply2i loc (Idr "__failure")
 		 (aval_string loc (Location.to_string loc))
 		 (aval_string loc msg)
+
+let aval_map_subaval f = function
+    | Aval_literal _ | Aval_ref _ | Aval_back _ as x -> x
+    | Aval_apply (loc, x, y) -> Aval_apply (loc, f x, f y)
+    | Aval_array (loc, xs) -> Aval_array (loc, List.map f xs)
+    | Aval_at (loc, cases) ->
+	let g (p, xopt, y) = (p, Option.map f xopt, f y) in
+	Aval_at (loc, List.map g cases)
+    | Aval_match (loc, x, cases) ->
+	let g (p, xopt, y) = (p, Option.map f xopt, f y) in
+	Aval_match (loc, f x, List.map g cases)
+    | Aval_let (loc, p, x, y) -> Aval_let (loc, p, f x, f y)
+    | Aval_letrec (loc, cases, x) ->
+	let g (loc, v, topt, x) = (loc, v, topt, f x) in
+	Aval_letrec (loc, List.map g cases, f x)
+    | Aval_if (loc, x, y, z) -> Aval_if (loc, f x, f y, f z)
+    | Aval_assert (loc, x, y) -> Aval_assert (loc, f x, f y)
+    | Aval_trace (loc, x, y) -> Aval_trace (loc, f x, f y)
+    | Aval_raise (loc, x) -> Aval_raise (loc, f x)
+let adef_map_subamod f = function
+    | Adef_include (loc, m) -> Adef_include (loc, f m)
+    | Adef_in (loc, v, m) -> Adef_in (loc, v, f m)
+    | Adef_open _ | Adef_use _ | Adef_sig _
+    | Adef_types _ | Adef_injx _ | Adef_let _ | Adef_letrec _
+    | Adef_cabi_open _ | Adef_cabi_val _
+	as def -> def
+let amod_map_subamod f = function
+    | Amod_ref _ as m -> m
+    | Amod_defs (loc, defs) ->
+	Amod_defs (loc, List.map (adef_map_subamod f) defs)
+    | Amod_apply (loc, m0, m1) -> Amod_apply (loc, f m0, f m1)
+    | Amod_lambda (loc, v, s, m) -> Amod_lambda (loc, v, s, f m)
+    | Amod_suspend (loc, m) -> Amod_suspend (loc, f m)
+    | Amod_generate (loc, m) -> Amod_generate (loc, f m)
+    | Amod_coercion (loc, m, s) -> Amod_coercion (loc, f m, s)
+let adef_map_subaval f = function
+    | Adef_include _ | Adef_open _ | Adef_in _ | Adef_sig _
+    | Adef_types _ | Adef_injx _ | Adef_cabi_open _ | Adef_cabi_val _
+	as def -> def
+    | Adef_use (loc, x) -> Adef_use (loc, f x)
+    | Adef_let (loc, p, x) -> Adef_let (loc, p, f x)
+    | Adef_letrec cases ->
+	let g (loc, v, topt, x) = (loc, v, topt, f x) in
+	Adef_letrec (List.map g cases)
+let amod_map_subaval f = function
+    | Amod_defs (loc, defs) ->
+	Amod_defs (loc, List.map (adef_map_subaval f) defs)
+    | Amod_ref _ | Amod_apply _ | Amod_lambda _
+    | Amod_suspend _ | Amod_generate _ | Amod_coercion _ as m -> m

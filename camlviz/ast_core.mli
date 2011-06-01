@@ -58,3 +58,9 @@ val aval_apply1i : loc -> idr -> aval -> aval
 val aval_apply2i : loc -> idr -> aval -> aval -> aval
 
 val aval_internal_error : loc -> string -> aval
+
+val aval_map_subaval : (aval -> aval) -> aval -> aval
+val amod_map_subaval : (aval -> aval) -> amod -> amod
+val adef_map_subaval : (aval -> aval) -> adef -> adef
+val amod_map_subamod : (amod -> amod) -> amod -> amod
+val adef_map_subamod : (amod -> amod) -> adef -> adef
