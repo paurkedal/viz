@@ -35,6 +35,10 @@ val ( |> ) : 'a -> ('a -> 'b) -> 'b
 
 val int_of_digit : char -> int
 
+module Bool : sig
+    val power : bool -> ('a -> 'a) -> 'a -> 'a
+end
+
 module List : sig
     include module type of List
 

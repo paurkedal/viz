@@ -103,6 +103,7 @@ let _ =
     let do_consts = ref false in
     let add_loc = ref false in
     let open_pervasive = ref true in
+    let rewrite_ast = ref true in
     let nroots = ref [] in
     let roots = ref [] in
     let topdir = ref None in
@@ -134,6 +135,8 @@ let _ =
 	    " Dump the concrete syntax tree.  Mainly for debugging.";
 	"--ast", Arg.Unit (fun () -> do_ast := true),
 	    " Dump the abstract syntax tree.  Mainly for debugging.";
+	"--no-ast-rewrite", Arg.Unit (fun () -> rewrite_ast := false),
+	    " Omit the standard AST rewrite.";
 	"--no-pervasive", Arg.Unit (fun () -> open_pervasive := false),
 	    " Don't open the pervasive structure.";
 	"--add-locations", Arg.Unit (fun () -> add_loc := true),
@@ -154,9 +157,9 @@ let _ =
 		Cst_rewrite.default_rewrite_ctrm
 		    Cst_rewrite.default_rewriter `Structure (term, ()) in
 	    if !do_cst then print_cst term else
-	    let amod = Cst_to_ast.build_amod term in
-	    let amod = if !open_pervasive then add_pervasive_in_amod amod
-		       else amod in
+	    let amod = Cst_to_ast.build_amod term
+		    |> Bool.power !rewrite_ast Ast_rewrite.std_amod_rewrite
+		    |> Bool.power !open_pervasive add_pervasive_in_amod in
 	    if !do_ast then print_ast amod else
 	    if !do_cstubs then begin
 		let serid =

@@ -6,6 +6,7 @@ camlviz/ast_print
 camlviz/ast_to_cstubs
 camlviz/ast_to_consts
 camlviz/ast_to_p4
+camlviz/ast_rewrite
 camlviz/cst_core
 camlviz/cst_types
 camlviz/cst_utils

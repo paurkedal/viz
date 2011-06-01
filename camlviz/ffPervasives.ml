@@ -36,6 +36,9 @@ let int_of_digit ch =
     if 0x30 <= i && i <= 0x39 then i - 0x30 else
     raise (Failure "int_of_digit")
 
+module Bool = struct
+    let power b f x = if b then f x else x
+end
 
 module List = struct
     include List
