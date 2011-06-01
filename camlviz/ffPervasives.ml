@@ -29,7 +29,7 @@ let rec repeat n f x = if n = 0 then x else f (repeat (n - 1) f x)
 
 let ( *< ) f g x = f (g x)
 let ( *> ) f g x = g (f x)
-let ( @< ) f x = f x
+let ( |> ) x f = f x
 
 let int_of_digit ch =
     let i = Char.code ch in

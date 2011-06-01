@@ -31,7 +31,7 @@ val repeat : int -> ('a -> 'a) -> 'a -> 'a
 
 val ( *< ) : ('b -> 'g) -> ('a -> 'b) -> 'a -> 'g
 val ( *> ) : ('a -> 'b) -> ('b -> 'g) -> 'a -> 'g
-val ( @< ) : ('a -> 'b) -> 'a -> 'b
+val ( |> ) : 'a -> ('a -> 'b) -> 'b
 
 val int_of_digit : char -> int
 

@@ -146,12 +146,12 @@ let initial_lookahead = 40
 let initial_keywords =
     let addkw lr (name, token) =
 	UString_trie.add_utf8 name (Ti_keyword (token, lr)) in
-    List.fold (addkw Opkind.Lr_inert)		initial_inerts @<
-    List.fold (addkw Opkind.Lr_declarator)	initial_declarators @<
-    List.fold (addkw Opkind.Lr_verb)		initial_verbs @<
-    List.fold (addkw Opkind.Lr_connective)	initial_connectives @<
-    List.fold (addkw Opkind.Lr_conditional)	initial_conditionals @<
     UString_trie.empty
+     |> List.fold (addkw Opkind.Lr_inert)	initial_inerts
+     |> List.fold (addkw Opkind.Lr_declarator)	initial_declarators
+     |> List.fold (addkw Opkind.Lr_verb)	initial_verbs
+     |> List.fold (addkw Opkind.Lr_connective)	initial_connectives
+     |> List.fold (addkw Opkind.Lr_conditional)	initial_conditionals
 
 let rec skip_line state =
     match LStream.pop state.st_stream with
