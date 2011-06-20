@@ -15,15 +15,20 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
+open prereq
+open effect
+
 #?ffoc {#
 
 type r α
 
 #?ffoc #}
 
+val length : r α → int
+
 val init : int → (int → α) → r α
 
-val uniform : int → α → r α
+val uniform : int → α → φ /~ r α
 
 val get : int → r α → effect φ α
 
@@ -72,8 +77,22 @@ val freeze : r α → effect φ (array.t α)
 
 #?ffoc include compat.ocaml_array.array_act
 
-open prereq
-open effect
+let uniform n x be init n (i ↦ x)
+
+let fold f a
+    let n be length a
+    let! loop i accu
+	if i = n be accu
+	let x do get i a
+	do loop (i + 1) (f x accu)
+    be loop 0
+
+let foldr f a
+    let! loop i accu
+	if i < 0 be accu
+	let x do get i a
+	do loop (i - 1) (f x accu)
+    be loop (length a)
 
 let iter k a be fold (x +> m +> m >> k x) a (return ()) >>= ident
 let iterr k a be foldr (x +> m +> m >> k x) a (return ()) >>= ident

@@ -18,8 +18,6 @@
 
 open Ocaml_prereq
 
-let fold f a accu = Array.fold_left (fun accu x -> f x accu) accu a
-
 module Array_const = struct
     type 'a t = 'a array
 
@@ -27,13 +25,8 @@ module Array_const = struct
     let get i a = Array.get a i
     let slice n i a = Array.sub a i n
     let init n f = Array.init n f
-    let uniform n x = Array.make n x
     let of_list = Array.of_list
     let as_list = Array.to_list
-    let map = Array.map
-    let mapi = Array.mapi
-    let fold = fold
-    let foldr = Array.fold_right
     let cat = Array.append
     let cat_list = Array.concat
 end
@@ -41,8 +34,8 @@ end
 module Array_act = struct
     type 'a r = 'a array
 
+    let length = Array.length
     let init n f = __builtin_effect (fun () -> Array.init n f)
-    let uniform n x = __builtin_effect (fun () -> Array.make n x)
     let get i a = __builtin_effect (fun () -> Array.get a i)
     let slice n i a = __builtin_effect (fun () -> Array.sub a i n)
     let set i x a = __builtin_effect (fun () -> Array.set a i x)
@@ -51,8 +44,6 @@ module Array_act = struct
     let blit n i a j b = __builtin_effect (fun () -> Array.blit a i b j n)
     let map f a = __builtin_effect (fun () -> Array.map f a)
     let mapi f a = __builtin_effect (fun () -> Array.mapi f a)
-    let fold f a accu = __builtin_effect (fun () -> fold f a accu)
-    let foldr f a accu = __builtin_effect (fun () -> Array.fold_right f a accu)
     let cat a b = __builtin_effect (fun () -> Array.append a b)
     let cat_list bs = __builtin_effect (fun () -> Array.concat bs)
     let sort cmp a =

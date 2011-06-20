@@ -19,41 +19,29 @@
 open Ocaml_prereq
 
 module Array_const : sig
-    type 'a t = 'a array
+    val length : 'a array -> int
 
-    val length : 'a t -> int
+    val get : int -> 'a array -> 'a
 
-    val get : int -> 'a t -> 'a
+    val slice : int -> int -> 'a array -> 'a array
 
-    val slice : int -> int -> 'a t -> 'a t
+    val init : int -> (int -> 'a) -> 'a array
 
-    val init : int -> (int -> 'a) -> 'a t
+    val of_list : 'a list -> 'a array
 
-    val uniform : int -> 'a -> 'a t
+    val as_list : 'a array -> 'a list
 
-    val of_list : 'a list -> 'a t
+    val cat : 'a array -> 'a array -> 'a array
 
-    val as_list : 'a t -> 'a list
-
-    val map : ('a -> 'b) -> 'a t -> 'b t
-
-    val mapi : (int -> 'a -> 'b) -> 'a t -> 'b t
-
-    val fold : ('a -> 'b -> 'b) -> 'a t -> 'b -> 'b
-
-    val foldr : ('a -> 'b -> 'b) -> 'a t -> 'b -> 'b
-
-    val cat : 'a t -> 'a t -> 'a t
-
-    val cat_list : 'a t list -> 'a t
+    val cat_list : 'a array list -> 'a array
 end
 
 module Array_act : sig
     type 'a r
 
-    val init : int -> (int -> 'a) -> ('f, 'a r) effect
+    val length : 'a r -> int
 
-    val uniform : int -> 'a -> ('f, 'a r) effect
+    val init : int -> (int -> 'a) -> ('f, 'a r) effect
 
     val get : int -> 'a r -> ('f, 'a) effect
 
@@ -70,10 +58,6 @@ module Array_act : sig
     val map : ('a -> 'b) -> 'a r -> ('f, 'b r) effect
 
     val mapi : (int -> 'a -> 'b) -> 'a r -> ('f, 'b r) effect
-
-    val fold : ('a -> 'b -> 'b) -> 'a r -> 'b -> ('f, 'b) effect
-
-    val foldr : ('a -> 'b -> 'b) -> 'a r -> 'b -> ('f, 'b) effect
 
     val cat : 'a r -> 'a r -> ('f, 'a r) effect
 

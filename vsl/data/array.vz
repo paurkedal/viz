@@ -16,54 +16,123 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 open prereq
+open effect
 
-#?ffoc {#
+sealed with
 
-type t α
+    type t α := array α
 
-#?ffoc #}
+    val length : t α → int
 
-val length : t α → int
+    val get : int → t α → α
 
-val get : int → t α → α
+    val slice : int → int → t α → t α
 
-val slice : int → int → t α → t α
+    val init : int → (int → α) → t α
 
-val init : int → (int → α) → t α
+    val uniform : int → α → t α
 
-val uniform : int → α → t α
+    val of_list : list α → t α
 
-val of_list : list α → t α
+    val as_list : t α → list α
 
-val as_list : t α → list α
+    val fold : (α → β → β) → t α → β → β
 
-val map : (α → β) → t α → t β
+    val foldr : (α → β → β) → t α → β → β
 
-val mapi : (int → α → β) → t α → t β
+    val foldi : (int → α → β → β) → t α → β → β
 
-val fold : (α → β → β) → t α → β → β
+    val for_all : (α → bool) → t α → bool
 
-val foldr : (α → β → β) → t α → β → β
+    val for_some : (α → bool) → t α → bool
 
-val foldi : (int → α → β → β) → t α → β → β
+    val count : (α → bool) → t α → int
 
-val cat : t α → t α → t α
+    val cat : t α → t α → t α
 
-val cat_list : list (t α) → t α
+    val cat_list : list (t α) → t α
 
-val iter : (α → effect φ unit) → t α → effect φ unit
+    val iter : (α → ψ /~ unit) → t α → ψ /~ unit
 
-val iterr : (α → effect φ unit) → t α → effect φ unit
+    val iterr : (α → ψ /~ unit) → t α → ψ /~ unit
 
-val iteri : (int → α → effect φ unit) → t α → effect φ unit
+    val iteri : (int → α → ψ /~ unit) → t α → ψ /~ unit
 
-val afold : (α → β → effect φ β) → t α → β → effect φ β
+    val afold : (α → β → ψ /~ β) → t α → β → ψ /~ β
 
-val afoldr : (α → β → effect φ β) → t α → β → effect φ β
+    val afoldr : (α → β → ψ /~ β) → t α → β → ψ /~ β
+
+    val map : (α → β) → t α → t β
+
+    val mapi : (int → α → β) → t α → t β
+
+    val locate_optimum : (α → α → bool) → t α → int
+
+    val zip : t α → t β → t (α × β)
+
+    val zip_trunc : t α → t β → t (α × β)
+
+    val unzip : t (α × β) → t α × t β
+
+    .in tagged
+	type elt α := int × α
+	type t α := array α
+
+	val fold : (elt α → β → β) → t α → β → β
+
+	val foldr : (elt α → β → β) → t α → β → β
+
+	val for_all : (elt α → bool) → t α → bool
+
+	val for_some : (elt α → bool) → t α → bool
+
+	val count : (elt α → bool) → t α → int
+
+	val iter : (elt α → ψ /~ unit) → t α → ψ /~ unit
+
+	val iterr : (elt α → ψ /~ unit) → t α → ψ /~ unit
+
+
+type t α := array α
 
 #?ffoc include compat.ocaml_array.array_const
 
-open effect
+let uniform n x be init n (i ↦ x)
+
+let fold f a
+    let n be length a
+    let loop i accu
+	if i = n be accu
+	be loop (i + 1) (f (get i a) accu)
+    be loop 0
+
+let foldr f a
+    let loop i accu
+	if i < 0 be accu
+	be loop (i - 1) (f (get i a) accu)
+    be loop (length a - 1)
+
+let for_all f a
+    let n be length a
+    let loop i if i = n be true
+	       if ¬ f (get i a) be false
+	       be loop (i + 1)
+    be loop 0
+
+let for_some f a
+    let n be length a
+    let loop i if i = n be false
+	       if f (get i a) be true
+	       be loop (i + 1)
+    be loop 0
+
+let count f a
+    let n be length a
+    let loop i accu
+	if i = n be accu
+	if f (get i a) be loop (i + 1) (accu + 1)
+	be loop (i + 1) accu
+    be loop 0 0
 
 let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) |> (_, y) ↦ y
 
@@ -78,3 +147,83 @@ let! iteri k a
 let afold k a be fold (x +> m +> m >>= k x) a ∘ return
 
 let afoldr k a be foldr (x +> m +> m >>= k x) a ∘ return
+
+let map f a be init (length a) (i ↦ f (get i a))
+
+let mapi f a be init (length a) (i ↦ f i (get i a))
+
+let locate_optimum leq a
+    let n be length a
+    assert n > 0
+    let loop i (xO, iO)
+	if i = n be iO
+	let x be get i a
+	be loop (i + 1) (leq x xO ⇒ xO, iO; x, i)
+    be loop 1 (get 0 a, 0)
+
+let zip a0 a1
+    let n be length a0
+    assert n = length a1
+    be init n (i ↦ (get i a0, get i a1))
+
+let zip_trunc a0 a1
+    let n be int.min (length a0) (length a1)
+    be init n (i ↦ (get i a0, get i a1))
+
+let unzip a
+    let n be length a
+    be init n (i ↦ fst (get i a)), init n (i ↦ snd (get i a))
+
+.in tagged
+    type elt α := int × α
+    type t α := array α
+
+    let fold f a
+	let n be length a
+	let loop i accu
+	    if i = n be accu
+	    be loop (i + 1) (f (i, get i a) accu)
+	be loop 0
+
+    let foldr f a
+	let loop i accu
+	    if i < 0 be accu
+	    be loop (i - 1) (f (i, get i a) accu)
+	be loop (length a - 1)
+
+    let for_all f a
+	let n be length a
+	let loop i if i = n be true
+		   if ¬ f (i, get i a) be false
+		   be loop (i + 1)
+	be loop 0
+
+    let for_some f a
+	let n be length a
+	let loop i if i = n be false
+		   if f (i, get i a) be true
+		   be loop (i + 1)
+	be loop 0
+
+    let count f a
+	let n be length a
+	let loop i accu
+	    if i = n be accu
+	    if f (i, get i a) be loop (i + 1) (accu + 1)
+	    be loop (i + 1) accu
+	be loop 0 0
+
+    let iter k a
+	let n be length a
+	let! loop i
+	    if i = n be ()
+	    do k (i, get i a)
+	    do loop (i + 1)
+	be loop 0
+
+    let iterr k a
+	let! loop i
+	    if i < 0 be ()
+	    do k (i, get i a)
+	    do loop (i - 1)
+	be loop (length a - 1)
