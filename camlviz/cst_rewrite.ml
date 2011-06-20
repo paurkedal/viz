@@ -208,6 +208,18 @@ let rec rewrite_comma_into_list rw = function
 	let (y, accu) = rw.rw_ctrm rw `Value (x, accu) in
 	(y :: ys, accu)
 
+let rec rewrite_semicolon_into_rlist rw = function
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), x), xs),
+	    ys, accu when op = idr_2o_semicolon ->
+	let (y, accu) = rw.rw_ctrm rw `Value (x, accu) in
+	rewrite_semicolon_into_rlist rw (xs, y :: ys, accu)
+    | Ctrm_apply (loc, Ctrm_ref (Cidr (_, op), _), x),
+	    ys, accu when op = idr_1o_semicolon ->
+	let (y, accu) = rw.rw_ctrm rw `Value (x, accu) in
+	(y :: ys, accu)
+    | x, ys, accu ->
+	errf_at (ctrm_loc x) "Missing terminal semicolon."
+
 let rewrite_mapsto rw (z, accu) =
     let rwcase = function
 	| Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (mapsto, _), x), y)
@@ -248,7 +260,19 @@ let default_rewrite_ctrm_value rw = function
 	rewrite_coll_comprehension (null, push) rw (x, accu)
     | Ctrm_apply (loc, Ctrm_ref (Cidr (op_loc, op), _), x), accu
 	    when op = idr_1b_array ->
-	let (ys, accu) = rewrite_comma_into_list rw (x, [], accu) in
+	let x_is_semi =
+	    match x with
+	    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), _), _)
+		    when op = idr_2o_semicolon -> true
+	    | Ctrm_apply (_, Ctrm_ref (Cidr (_, op), _), _)
+		    when op = idr_1o_semicolon -> true
+	    | _ -> false in
+	let (ys, accu) =
+	    if x_is_semi then
+		let (ys, accu) =
+		    rewrite_semicolon_into_rlist rw (x, [], accu) in
+		(List.rev ys, accu) else
+	    rewrite_comma_into_list rw (x, [], accu) in
 	(Ctrm_array (loc, ys), accu)
     | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (mapsto, _), _), _) as z, accu
 	    when cidr_is_2o_mapsto mapsto ->
