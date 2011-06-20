@@ -27,12 +27,12 @@ val 2'∘ : (β → γ) → (α → β) → α → γ
 val 2'*> : (α → β) → (β → γ) → α → γ
  ## Function composition with arguments reversed.
 
-val 2'<@ : (α → β) → α → β
- ## (f <@ x ≡ f x) is the value of (f) at (x).  I.e. (<@) is a low-precedence
+val 2'<| : (α → β) → α → β
+ ## (f <| x ≡ f x) is the value of (f) at (x).  I.e. (<|) is a low-precedence
  ## variant of the application operator.  It can be pronounced "at" or "of".
 
-val 2'@> : α → (α → β) → β
- ## (x @> f ≡ f x) is the image of (x) under (f).  I.e. (@>) is a reversed
+val 2'|> : α → (α → β) → β
+ ## (x |> f ≡ f x) is the image of (x) under (f).  I.e. (|>) is a reversed
  ## low-precedence application operator.  It can be pronounced "under".
 
 include prereq.basics

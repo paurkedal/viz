@@ -39,8 +39,8 @@ lex alias |- ⊢  -| ⊣  |= ⊧  |== ⊨
 # levels contain suffix and right associative suffix operators.
 
 lex L1	; : := ≡
-lex L2	<+>   <@ <*
-lex L3	↦ ⇒ ⇔ @> *> >>= >>
+lex L2	<+>   <| <*
+lex L3	↦ ⇒ ⇔ |> *> >>= >>
 lex L4	,
 lex L6	∨ ∨* ∨** ⊻
 lex L7

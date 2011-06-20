@@ -22,8 +22,8 @@ in combinators
     let konst x y be x
     let (g <* f) x be g (f x)  # also g ∘ f
     let (f *> g) x be g (f x)
-    let f <@ x be f x  # f "at" x
-    let x @> f be f x  # x "under" f
+    let f <| x be f x  # f "at" x
+    let x |> f be f x  # x "under" f
 
 in basics
     let fst (x, _) be x

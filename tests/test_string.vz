@@ -2,7 +2,7 @@ open effect
 
 # No polymorphic comparison yet...
 
-let sl_eq xs ys be (xs, ys) @> what
+let sl_eq xs ys be (xs, ys) |> what
     at ([], []) be true
     at ([], _) be false
     at (_, []) be false

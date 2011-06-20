@@ -79,14 +79,14 @@ let singleton k d be Y k d 1 O O
 
 let contains k'
     at O% be false
-    at Y k d l tL tR be I.cmp k' k @> what
+    at Y k d l tL tR be I.cmp k' k |> what
 	at tprec% be contains k' tL
 	at tsucc% be contains k' tR
 	at tcoin% be true
 
 let find k'
     at O% be none
-    at Y k d l tL tR be I.cmp k' k @> what
+    at Y k d l tL tR be I.cmp k' k |> what
 	at tprec% be find k' tL
 	at tsucc% be find k' tR
 	at tcoin% be some d
@@ -138,7 +138,7 @@ let _skew_after_remove
 let add k' d'
     at O% be Y k' d' 1 O O
     at Y k d l tL tR
-	be I.cmp k' k @> what
+	be I.cmp k' k |> what
 	at tprec% be _skew (Y k d l (add k' d' tL) tR)
 	at tsucc% be _split (Y k d l tL (add k' d' tR))
 	at tcoin% be Y k' d' l tL tR
@@ -205,20 +205,20 @@ let _stripped_pop_max
 
 let pop k'
     at O% be none
-    at Y k d l tL tR be I.cmp k' k @> what
+    at Y k d l tL tR be I.cmp k' k |> what
 	at tprec% be option.map that (pop k' tL) which
 		  at (dX, tL') be (dX, _postrmL_Y k d l tL' tR)
 	at tsucc% be option.map that (pop k' tR) which
 		  at (dX, tR') be (dX, _postrmR_Y k d l tL tR')
 	at tcoin%
-	    be _tagged_pop_max tL @> what
+	    be _tagged_pop_max tL |> what
 	    at some (kP, dP, tL')
 		be some (d, _postrmL_Y kP dP l tL' tR)
 	    at none%
 		be option.map that (_tagged_pop_min tR) which
 		at (kS, dS, tR') be (d, _postrmR_Y kS dS l tL tR')
 
-let remove k' t be pop k' t @> (none% ↦ t; some (_, t) ↦ t)
+let remove k' t be pop k' t |> (none% ↦ t; some (_, t) ↦ t)
 
 let fold f
     at O% be ident
@@ -274,17 +274,17 @@ let _stripped_filter f t
     be _tagged_fold ((k, v) ↦ (f k ⇒ add k v; ident)) t empty
 
 let _stripped_map f t
-    be _tagged_fold ((k, v) ↦ f k @> k' ↦ add k' v) t empty
+    be _tagged_fold ((k, v) ↦ f k |> k' ↦ add k' v) t empty
 
 let _stripped_filter_map f t
-    be _tagged_fold ((k, v) ↦ f k @> (none% ↦ ident; some k' ↦ add k' v))
+    be _tagged_fold ((k, v) ↦ f k |> (none% ↦ ident; some k' ↦ add k' v))
 		    t empty
 
 let _stripped_subeq
     at O% at _ be true
     at Y kt _ _ tL tR
 	at O% be false
-	at u@(Y ku _ _ uL uR) be I.cmp kt ku @> what
+	at u@(Y ku _ _ uL uR) be I.cmp kt ku |> what
 	    at tcoin% be _stripped_subeq tL uL ∧ _stripped_subeq tR uR
 	    at tprec% be contains kt uL
 		       ∧ _stripped_subeq tL uL ∧ _stripped_subeq tR u
@@ -295,7 +295,7 @@ let subeq_for f
     at O% at _ be true
     at Y kt dt _ tL tR
 	at O% be false
-	at u@(Y ku du _ uL uR) be I.cmp kt ku @> what
+	at u@(Y ku du _ uL uR) be I.cmp kt ku |> what
 	    at tcoin% be f dt du
 		       ∧ subeq_for f tL uL ∧ subeq_for f tR uR
 	    at tprec% be option.for_some (f dt) (find kt uL)

@@ -65,7 +65,7 @@ val afoldr : (α → β → effect φ β) → t α → β → effect φ β
 
 open effect
 
-let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) @> (_, y) ↦ y
+let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) |> (_, y) ↦ y
 
 let iter k a be fold (x +> m +> m >> k x) a (return ())
 
