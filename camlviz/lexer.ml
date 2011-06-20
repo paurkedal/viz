@@ -90,7 +90,9 @@ let initial_declarators = [
     "include!",	Grammar.INCLUDE true;
     "use",	Grammar.USE;
     "in",	Grammar.IN false;
+    ".in",	Grammar.IN false;
     "in!",	Grammar.IN true;
+    ".in!",	Grammar.IN true;
     "sig",	Grammar.SIG;
     "type",	Grammar.TYPE Abi_Viz;
     "type:c",	Grammar.TYPE Abi_C;
