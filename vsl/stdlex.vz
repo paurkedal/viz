@@ -72,7 +72,7 @@ lex alias A` ∀  E` ∃
 
 lex R	= ≠ < > ≤ ≥
 lex R	≺ ≻ ≼ ≽
-lex R	∈ ⊂ ⊃ ⊆ ⊇ ⊏ ⊐ ⊑ ⊒
+lex R	∈ ∉ ⊂ ⊃ ⊆ ⊇ ⊏ ⊐ ⊑ ⊒
 lex alias != ≠  <= ≤  >= ≥
 lex alias -< ≺  >- ≻  -<= ≼  >-= ≽
 lex alias <: ∈
@@ -82,7 +82,7 @@ lex alias <: ∈
 
 lex A1	→ ↔
 lex A2	+ − /~
-lex A4	∪
+lex A4	∪ ∖
 lex A6	× ⋅ ∕ ∘ (12'<*) div mod quo rem
 lex A8	∩
 lex alias -> →  <-> ↔
