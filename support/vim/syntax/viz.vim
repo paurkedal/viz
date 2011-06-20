@@ -9,7 +9,7 @@
 "   viz_disable_types    - Don't try to recognise type names from the context.
 
 let s:verbs =
-  \ ['assert', 'be', 'fail', 'do', 'raise']
+  \ ['assert', 'be', 'is', 'fail', 'do', 'raise']
 let s:nonpattern_conditionals =
   \ ['if', 'then', 'else', 'otherwise', 'when', 'for', 'while']
 let s:pattern_conditionals =
@@ -22,7 +22,7 @@ let s:connectives =
 
 let s:conditionals = s:nonpattern_conditionals + s:pattern_conditionals
 let s:keywords = s:verbs + s:conditionals + s:declarators + s:connectives
-let s:keyword_re = '\<\('.join(s:keywords, '\|').'\)\>\|\.at\>'
+let s:keyword_re = '\<\('.join(s:keywords, '\|').'\)\>\|\.\(at\|in\)\>'
 
 " A variant of the below, accepting a regular expression in place of the list
 " of keywords.
@@ -51,25 +51,12 @@ syn cluster VizCommon contains=@VizKeyword,@VizLiteral,
   \ @VizModuleCommon,@VizOperator
 syn cluster VizValExpr contains=@VizCommon,VizTyping
 
-" Signature and Structure Prefixes
-"
-syn cluster VizModuleCommon
-  \ contains=VizSctPrefix,VizSigPrefix,VizSctPath,VizSigPath
-syn match VizSctPrefix '\K\k*\(\.\(\K\|(\)\)\@='
-syn match VizSigPrefix '\k\k*\(\.\[\)\@='
-syn region VizSctPath matchgroup=VizPathOperator start='\.(' end=')'
-  \ fold transparent contains=VizSctExprStart
-syn region VizSigPath matchgroup=VizPathOperator start='\.\[' end='\]'
-  \ fold transparent contains=@VizTypeExpr
-hi link VizSigPrefix VizSigName
-hi link VizSctPrefix VizSctName
-
 " Structure Expressions
 "
 syn cluster VizSctExpr contains=VizSctExprStart,VizSctTyping
 syn match VizSctExprStart contained '\K\k*'
   \ skipnl skipwhite nextgroup=VizSctExprCont
-syn match VizSctExprCont contained '\.\(at\>\)\@!\K\k*'
+syn match VizSctExprCont contained '\.\(at\|in\>\)\@!\K\k*'
   \ skipnl skipwhite nextgroup=VizSctExprCont
 syn region VizSctExprCont contained fold transparent matchgroup=VizPathOperator
   \ start='\.(' end=')' contains=@VizSctExpr
@@ -96,7 +83,7 @@ syn region VizSigProduct transparent fold keepend extend
 syn cluster VizTypeExpr
     \ contains=VizTypeParam,VizTypeExpr,VizOperator,@VizCommon,VizTypeName
 syn match VizTypeParam '\<\'\K\k*' skipwhite nextgroup=VizTypeParam
-syn match VizTypeParam '[α-ω]\k*' skipwhite nextgroup=VizTypeParam
+"syn match VizTypeParam '[α-ω]\k*' skipwhite nextgroup=VizTypeParam
 syn match VizTypeName contained '\.\?\K\k*\>\(\.\S\)\@!'
 syn region VizTypeExpr transparent fold
     \ matchgroup=VizOperator start='[∀∃]\|\<[AE]`' end='\.\S\@!' keepend extend
@@ -128,15 +115,28 @@ if !exists("viz_disable_patterns")
   exe 'syn match VizInjName contained'
     \ '"\K\k*\(\s\+\((\|\('.s:keyword_re.'\)\@!\K\)\@=\)"'
     \ 'skipwhite nextgroup=@VizPatternCont'
-  syn match VizInjParam contained '\K\k*'
+  syn match VizInjParam contained '\K\k*\>\(\s*\.\)\@!'
     \ skipwhite nextgroup=@VizPatternCont
   syn region VizInjParen contained fold transparent
     \ matchgroup=VizOperator start='(' end=')' contains=@VizPattern
-  syn match VizInjNameT contained '\K\k*%'
+  syn match VizInjNameT contained '\K\k*%\|\.\K\k*\>\(\s*\.\)\@!'
     \ skipwhite nextgroup=@VizPatternCont
   hi link VizInjNameT VizInjName
 endif
 syn keyword VizInjName true false
+
+" Signature and Structure Prefixes
+"
+syn cluster VizModuleCommon
+  \ contains=VizSctPrefix,VizSigPrefix,VizSctPath,VizSigPath
+syn match VizSctPrefix '\.\?\K\k*\(\s*\.\(\K\|(\)\)\@='
+syn match VizSigPrefix '\.\?\K\k*\(\s*\.\[\)\@='
+syn region VizSctPath matchgroup=VizPathOperator start='\.(' end=')'
+  \ fold transparent contains=@VizSctExpr
+syn region VizSigPath matchgroup=VizPathOperator start='\.\[' end='\]'
+  \ fold transparent contains=@VizTypeExpr
+hi link VizSigPrefix VizSigName
+hi link VizSctPrefix VizSctName
 
 " Labels
 "
@@ -170,7 +170,7 @@ syn keyword VizConnective with where
 syn match VizConnective '\<wh\(at\|ich\)\>!\?'
 syn keyword VizDeclarator use
 syn match VizDeclarator '\<include\>!\?'
-syn match VizDeclarator '\<in\>!\?' skipwhite nextgroup=VizSctExprStart
+syn match VizDeclarator '\.\?\<in\>!\?' skipwhite nextgroup=VizSctExprStart
 syn keyword VizDeclarator sig sealed skipwhite nextgroup=@VizSigExpr
 syn keyword VizDeclarator open nextgroup=VizOpenDecor
 exe 'syn keyword VizVerb' join(s:verbs)
