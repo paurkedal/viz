@@ -110,7 +110,8 @@ syn match VizOperatorName '\<[0-2]\'[^ \t()\[\]{}]\+'
 " Patterns and Constructor Names
 "
 if !exists("viz_disable_patterns")
-  syn cluster VizPattern contains=VizInjNameT,VizInjName,VizInjParen,@VizCommon
+  syn cluster VizPattern contains=
+    \ VizInjNameT,VizInjName,VizInjParen,@VizCommon,VizTyping
   syn cluster VizPatternCont contains=@VizPattern,VizInjParam
   exe 'syn match VizInjName contained'
     \ '"\K\k*\(\s\+\((\|\('.s:keyword_re.'\)\@!\K\)\@=\)"'
