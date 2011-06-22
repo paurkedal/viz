@@ -42,7 +42,7 @@ type pending_work =
 	 * the next intro-word.  That is, the next block will be wrapped
 	 * inside the current block.  This is used for "what", "which",
 	 * "where", and "with". *)
-    | Pending_END of Location.t * int
+    | Pending_END of Location.t * int * int
 	(* Emit an end-of-block when reaching an intro-word before the given
 	 * column. *)
 
@@ -583,41 +583,53 @@ let pop_virtual_token state =
     let (loc, tok, lr) = state.st_holding in
     let loc_lb = Location.lbound loc in
     let follows_verb = state.st_last_lexical_role = Opkind.Lr_verb in
-    if not (Opkind.is_introducer lr) then begin
-	if not (Opkind.is_connective ~follows_verb lr) then
-	    pop_manifest_token state else
-	match state.st_pending with
-	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
-	    state.st_pending <- Pending_BEGIN :: pending;
-	    if dlog_en then dlogf ~loc "END[col = %d]" col;
+    let apply_connective () =
+	if Opkind.is_connective ~follows_verb lr then
+	    state.st_pending <- Pending_BEGIN :: state.st_pending in
+    if not (Opkind.is_introducer lr) then
+	begin match state.st_pending with
+	| Pending_BEGIN :: pending ->
+	    pop_manifest_token state
+	| Pending_END (loc_begin, col_lim, col_ind) :: pending
+		when cur_col < col_lim ->
+	    state.st_pending <- pending;
+	    apply_connective ();
+	    if dlog_en then dlogf ~loc "END[col = %d]" col_ind;
 	    (loc, Grammar.END)
 	| _ ->
-	    state.st_pending <- Pending_BEGIN :: state.st_pending;
+	    apply_connective ();
 	    pop_manifest_token state
-    end else
-	match state.st_pending with
+	end
+    else
+	begin match state.st_pending with
 	| Pending_BEGIN :: pending ->
 	    let loc_begin = Location.between loc_lb loc_lb in
-	    state.st_pending <- Pending_END (loc_begin, cur_col)
+	    state.st_pending <- Pending_END (loc_begin, cur_col, cur_col)
 			     :: pending;
 	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
 	    (loc_begin, Grammar.BEGIN)
-	| Pending_END (_, col) :: pending when cur_col = col ->
-	    if dlog_en then dlogf ~loc "ITEM[col = %d]" col;
-	    if Opkind.is_connective ~follows_verb lr then
-		state.st_pending <- Pending_BEGIN :: state.st_pending;
+	| Pending_END (_, col_lim, col_ind) :: pending
+		when cur_col = col_ind ->
+	    if dlog_en then dlogf ~loc "ITEM[col = %d]" col_ind;
+	    apply_connective ();
 	    pop_manifest_token state
-	| Pending_END (loc_begin, col) :: pending when cur_col < col ->
+	| Pending_END (loc_begin, col_lim, col_ind) :: pending
+		when cur_col < col_ind ->
 	    state.st_pending <- pending;
-	    if dlog_en then dlogf ~loc "END[col = %d]" col;
+	    if dlog_en then dlogf ~loc "END[col = %d]" col_ind;
 	    (loc, Grammar.END)
-	| Pending_END _ :: _ | [] as pending ->
+	| Pending_END (_, _, _) :: _ | [] as pending ->
+	    let col_lim =
+		match state.st_pending with
+		| Pending_END (_, col_lim, _) :: _ -> col_lim
+		| [] -> 0 | _ -> assert false in
 	    if tok = Grammar.EOF then (loc, tok) else
 	    let loc_begin = Location.between loc_lb loc_lb in
-	    state.st_pending <- Pending_END (loc_begin, cur_col)
+	    state.st_pending <- Pending_END (loc_begin, col_lim, cur_col)
 			     :: pending;
 	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
 	    (loc_begin, Grammar.BEGIN)
+	end
 
 let default_state_template = {
     st_stream = LStream.null;

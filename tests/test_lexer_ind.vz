@@ -1,0 +1,51 @@
+# Test handing of indentation by the lexer, esp with respect to connectives
+# and indentation-inert tokens appearing far left on continuation lines.
+
+# It shall be possible to use the common C coding style for brackets.
+let σ1 be #[
+    1, 0;
+    0, 1;
+]
+
+# The "what" keyword is used to embed a block in an expression.
+let odd_func x y be
+    what if x < 0 be -1
+	 if x > 0 be  1
+	 be 0
+  + what be   y if y ≥ 0
+	 be - y otherwise
+
+# This looks bad, but should work.  The main thing to notice is that the "+"
+# sign appears to the left left of the block ending with "be 0", thus
+# terminating it.
+let ugly_func x y be what
+    if x < 0 be -1
+    if x > 0 be  1
+    be 0
+  + what
+ be   y if y ≥ 0
+ be - y otherwise
+
+# Splitting a definition involving a what-at sequence across lines at
+# different points.  Each lines starts as far left as allowed.
+let
+ident0 be what at x be x
+let ident1
+ be what at x be x
+let ident2 be
+ what at x be x
+let ident3 be what
+ at x be x
+let ident4 be what at
+x be x
+let ident5 be what at x
+ be x
+let ident6 be what at x be
+			x
+let
+ident7
+ be
+what
+ at x
+ be
+ x
