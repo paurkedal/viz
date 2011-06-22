@@ -338,6 +338,15 @@ let emit_inj_aliases (loc, v, params, ti) =
 	List.map emit_inj injs
     | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
+let emit_inj_alias_decs (loc, v, params, ti) =
+    match ti with
+    | Atypinfo_injs injs ->
+	let emit_inj_dec (loc, v, inj_type, _) =
+	    let _loc = p4loc loc in
+	    <:sig_item< value $lid: avar_to_lid v$ : $emit_atyp inj_type$ >> in
+	List.map emit_inj_dec injs
+    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
+
 let external_names stubname t =
     if Ast_utils.arity t <= 5 then Ast.LCons (stubname, Ast.LNil) else
     Ast.LCons (stubname ^ "_byte", Ast.LCons (stubname, Ast.LNil))
@@ -402,7 +411,11 @@ and emit_adec state = function
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
 	let _loc = p4loc (Location.span [lloc; uloc]) in
-	<:sig_item< type $list: List.map emit_type_binding bindings$ >>
+	let otdec =
+	    <:sig_item< type $list: List.map emit_type_binding bindings$ >> in
+	let alias_bindings =
+	    List.concat (List.map emit_inj_alias_decs bindings) in
+	<:sig_item< $list: otdec :: alias_bindings$ >>
     | Adec_injx (loc, xv, xt) ->
 	let _loc = p4loc loc in
 	let rt, ats = Ast_utils.flatten_arrows xt in
