@@ -313,8 +313,8 @@ let () = dispatch begin function
 	 * mlpack-hierarchy. *)
 	cdep "vsl/foreign/C/record" ["vsl/foreign/field_allocation"];
 	cdep "vsl/control/exception" ["vsl/prereq"];
-	cdep "vsl/data/AAmap" ["vsl/data/option"; "vsl/data/string_"];
-	cdep "vsl/data/AAset" ["vsl/data/AAmap"];
+	cdep "vsl/data/AA_map" ["vsl/data/option"; "vsl/data/string_"];
+	cdep "vsl/data/AA_set" ["vsl/data/AA_map"];
 	cdep "vsl/data/string_" ["vsl/data/char_"; "vsl/data/list_"];
 	cdep "vsl/foreign/C/utils" ["vsl/data"];
 	cdep "vsl/pervasive"

@@ -6,7 +6,7 @@ let! random n
     be (int32.as_int (int32.rem i (int32.of_int n)))
 
 in M
-    include data.AAmap.make.(data.int)
+    include data.AA_map.make.(data.int)
 
     let! dump_s t
 	do dump_tree (k ↦ d ↦ print (int.show k) >> print " ↦ " >> print d) t

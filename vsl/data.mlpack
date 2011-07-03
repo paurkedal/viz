@@ -8,5 +8,5 @@ vsl/data/array_ref
 vsl/data/char_
 vsl/data/string_
 vsl/data/UTF8string
-vsl/data/AAmap
-vsl/data/AAset
+vsl/data/AA_map
+vsl/data/AA_set

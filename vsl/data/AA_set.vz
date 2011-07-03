@@ -23,7 +23,7 @@ sig S
 
 in make.(E : a_total_order) : S.[elt = E.t] include where
 
-in M include AAmap.make.(E)
+in M include AA_map.make.(E)
 
 type elt := E.t
 type t := M.t unit
