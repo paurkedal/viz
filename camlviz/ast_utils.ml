@@ -324,3 +324,7 @@ let extract_backtrack_guard x =
 	    aval_apply2i loc idr_2o_or x y
 	end guards in
     (Some guard, y)
+
+let effect_thunk loc x =
+    Aval_apply (loc, Aval_ref (Apath ([], Avar (loc, idr_effect))),
+	Aval_at (loc, [Apat_literal (loc, Lit_unit), None, x]))

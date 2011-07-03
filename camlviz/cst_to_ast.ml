@@ -237,9 +237,17 @@ and build_aval_monad mm = function
 	| MM_bind af -> Aval_apply (loc, af, ax)
 	end
     | Cpred_assert (loc, cx, cy) ->
-	Aval_assert (loc, build_aval_expr cx, build_aval_monad mm cy)
+	let ax = Ast_utils.effect_thunk loc
+		    (Aval_assert (loc, build_aval_expr cx,
+				  Aval_literal (loc, Lit_unit))) in
+	let cm = "" in (* FIXME *)
+	make_aval_chop loc cm ax (build_aval_monad mm cy)
     | Cpred_trace (loc, cx, cy) ->
-	Aval_trace (loc, build_aval_expr cx, build_aval_monad mm cy)
+	let ax = Ast_utils.effect_thunk loc
+		    (Aval_trace (loc, build_aval_expr cx,
+				 Aval_literal (loc, Lit_unit))) in
+	let cm = "" in (* FIXME *)
+	make_aval_chop loc cm ax (build_aval_monad mm cy)
     | Cpred_do1 (loc, cm, cx) ->
 	let ax = build_aval_expr cx in
 	begin match mm with

@@ -63,6 +63,7 @@ val idr_1b_array : idr
 val idr_2b_dotbracket : idr
 val idr_2b_dotparen : idr
 val idr_2b_as : idr
+val idr_effect : idr
 val idr_effect_run : idr
 val idr_effect_throw : idr
 val idr_catch : idr
