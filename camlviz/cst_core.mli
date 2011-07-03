@@ -66,6 +66,7 @@ val idr_2b_as : idr
 val idr_effect : idr
 val idr_effect_run : idr
 val idr_effect_throw : idr
+val idr_toplevel_run : idr
 val idr_catch : idr
 val idr_list_null : idr
 val idr_list_push : idr

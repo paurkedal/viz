@@ -16,6 +16,8 @@
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
 #?ffoc include compat.ocaml_prereq
+#?ffoc include compat.ocaml_unicode.pervasive
+#?ffoc include compat.ocaml_pervasives.pervasive
 
 in combinators
     let ident x be x
@@ -135,6 +137,21 @@ in effect
     let 2'>> m n be __builtin_effect_bind (() +> n) m
     let observe be __builtin_effect_run
 
+in effect_pervasive
+    open effect
+
+    type line_location := string * int
+
+    inj failure : line_location → string → exception
+
+    let __builtin_toplevel_run m be __builtin_effect_run what!
+	upon failure (p, l) msg
+	    do print p >> print ":" >> print (int.show l)
+	    do print ": failure: " >> print msg >> print "\n"
+	    do flush stdout
+	    do __builtin_exit 69
+	do m
+
 # This is for our own use, as we typically open prereq on the top of each
 # library structure.  The pervasive structure does a similar inclusion for
 # client code.
@@ -142,6 +159,5 @@ include basics
 include combinators
 include bool_ops
 include int.ops
-#?ffoc include compat.ocaml_unicode.pervasive
-#?ffoc include compat.ocaml_pervasives.pervasive
+include effect_pervasive
 #?ffoc include compat.ocaml_miscints.pervasive

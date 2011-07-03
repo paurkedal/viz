@@ -34,6 +34,8 @@ let __builtin_effect_bind k m =
 
 type exception__ = exn
 
+let __builtin_raise e = raise e
+
 let __builtin_effect_throw e = __builtin_effect (fun () -> raise e)
 
 let __builtin_catch k m =
@@ -41,6 +43,8 @@ let __builtin_catch k m =
     { __unsafe_thunk = f; }
 
 let __builtin_mask f = f (fun m -> m)  (* No async exceptions. *)
+
+let __builtin_exit err = { __unsafe_thunk = (fun () -> exit err) }
 
 (* References *)
 module Ref = struct

@@ -44,6 +44,8 @@ val __builtin_effect_bind
 
 type exception__ = exn
 
+val __builtin_raise : exception__ -> 'a
+
 val __builtin_effect_throw : exception__ -> ('f, 'a) effect
 
 val __builtin_catch : (exception__ -> 'a io) -> 'a io -> 'a io
@@ -51,6 +53,8 @@ val __builtin_catch : (exception__ -> 'a io) -> 'a io -> 'a io
 val __builtin_mask : (('a io -> 'a io) -> 'b io) -> 'b io
 (* This type should be (((∀'a. 'a io -> 'a io) -> 'b io) -> 'b io) but we
  * don't rely on that for the standard definitions. *)
+
+val __builtin_exit : int -> 'a io
 
 module Ref : sig
     type ('f, 'a) r

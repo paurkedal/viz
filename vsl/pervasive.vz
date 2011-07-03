@@ -39,6 +39,7 @@ include prereq.basics
 include prereq.combinators
 include prereq.bool_ops
 include prereq.int.ops
+include prereq.effect_pervasive
 
 in bool include data.bool
 in char include data.char

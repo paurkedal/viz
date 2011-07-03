@@ -177,10 +177,11 @@ and build_aval_pure = function
 	Aval_assert (loc, build_aval_expr cx, build_aval_pure cy)
     | Cpred_trace (loc, cx, cy) ->
 	Aval_trace (loc, build_aval_expr cx, build_aval_pure cy)
+    | Cpred_raise (loc, cx) ->
+	Aval_raise (loc, build_aval_expr cx)
     | Cpred_do1 (loc, _, _)
     | Cpred_do2 (loc, _, _, _)
-    | Cpred_upon (loc, _, _, _)
-    | Cpred_raise (loc, _) ->
+    | Cpred_upon (loc, _, _, _) ->
 	errf_at loc "Monadic code is not allowed here."
 and build_aval_monad mm = function
     | Cpred_let (loc, None, cpat, crhs, ccont)
@@ -610,7 +611,7 @@ and build_toplevel_aval loc cm_opt cpred =
 	build_aval_pure cpred
     | None ->
 	let ax = build_aval_monad (MM_quote cmonad_io) cpred in
-	let af = aval_ref_of_idr loc idr_effect_run in
+	let af = aval_ref_of_idr loc idr_toplevel_run in
 	Aval_apply (loc, af, ax)
     end
 and build_adefs adecmap adefs = function

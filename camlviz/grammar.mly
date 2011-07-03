@@ -53,15 +53,20 @@ let apply_fence loc name0 name1 =
     apply loc (Ctrm_ref (Cidr (loc, name0), Ih_none))
 
 let cpred_failure loc msg_opt =
-    let cloc = Ctrm_literal (loc, Lit_string
-		(UString.of_utf8 (Location.to_string loc))) in
+    let loclb = Location.lbound loc in
+    let path_lit = Lit_string (UString.of_utf8 (Location.Bound.path loclb)) in
+    let cloc =
+	Ctrm_apply (loc,
+	    Ctrm_apply (loc, Ctrm_ref (Cidr (loc, idr_2o_comma), Ih_none),
+		Ctrm_literal (loc, path_lit)),
+	    Ctrm_literal (loc, Lit_int (Location.Bound.lineno loclb))) in
     let msg =
 	match msg_opt with
 	| Some msg -> msg
 	| None -> Ctrm_literal (loc, Lit_string
 		(UString.of_utf8 "This point should be unreachable.")) in
-    let failure = Ctrm_ref (Cidr (loc, Idr "__failure"), Ih_none) in
-    Cpred_be (loc, Ctrm_apply (loc, Ctrm_apply (loc, failure, cloc), msg))
+    let failure = Ctrm_ref (Cidr (loc, Idr "failure"), Ih_none) in
+    Cpred_raise (loc, Ctrm_apply (loc, Ctrm_apply (loc, failure, cloc), msg))
 %}
 
 %token EOF
@@ -272,6 +277,11 @@ nonfunction_predicate:
     atomic_predicate { $1 }
   | ASSERT term nonfunction_predicate_with_participle
     { Cpred_assert (mkloc $startpos $endpos, $2, $3) }
+  | ASSERT term
+    {
+	let loc = mkloc $startpos $endpos in
+	Cpred_assert (loc, $2, Cpred_be (loc, Ctrm_literal (loc, Lit_unit)))
+    }
   | TRACE term nonfunction_predicate_with_participle
     { Cpred_trace (mkloc $startpos $endpos, $2, $3) }
   | atomic_predicate WHICH predicate_block

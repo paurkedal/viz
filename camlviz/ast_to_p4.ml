@@ -271,7 +271,7 @@ let rec emit_aval = function
 	>>
     | Aval_raise (loc, x) ->
 	let _loc = p4loc loc in
-	<:expr< raise $emit_aval x$ >>
+	<:expr< __builtin_raise $emit_aval x$ >>
 and emit_match_case (pat, ocond_opt, body) =
     let opat, ocond_opt = emit_apat pat (Option.map emit_aval ocond_opt) in
     let guard_opt, body = Ast_utils.extract_backtrack_guard body in
