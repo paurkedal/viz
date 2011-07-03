@@ -320,6 +320,7 @@ let () = dispatch begin function
 	cdep "vsl/pervasive"
 	     ["vsl/foreign"; "vsl/control"; "vsl/data"; "vsl/system"];
 	cdep "compiler/llvm/core" ["vsl/pervasive"];
+	cdep "compiler/llvm/execution" ["vsl/pervasive"];
 	()
     | _ -> ()
 end

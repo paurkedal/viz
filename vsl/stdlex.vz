@@ -36,7 +36,7 @@ lex alias |- ⊢  -| ⊣  |= ⊧  |== ⊨
 # Z.2.  Logical and other Low-Precedence Operators
 #
 # The even levels contain prefix and left associative infix operators.  The odd
-# levels contain suffix and right associative suffix operators.
+# levels contain suffix and right associative infix operators.
 
 lex L1	; : := ≡
 lex L2	<+>   <| <*

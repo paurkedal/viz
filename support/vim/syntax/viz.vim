@@ -13,7 +13,7 @@ let s:verbs =
 let s:nonpattern_conditionals =
   \ ['if', 'then', 'else', 'otherwise', 'when', 'for', 'while']
 let s:pattern_conditionals =
-  \ ['at']
+  \ ['at', 'upon']
 let s:declarators =
   \ ['in', 'inj', 'include', 'let', 'lex', 'open', 'sig', 'sealed',
   \  'type', 'use', 'val']
@@ -56,7 +56,7 @@ syn cluster VizValExpr contains=@VizCommon,VizTyping
 syn cluster VizSctExpr contains=VizSctExprStart,VizSctTyping
 syn match VizSctExprStart contained '\K\k*'
   \ skipnl skipwhite nextgroup=VizSctExprCont
-syn match VizSctExprCont contained '\.\(at\|in\>\)\@!\K\k*'
+syn match VizSctExprCont contained '\.\(at\>\|in\>\)\@!\K\k*'
   \ skipnl skipwhite nextgroup=VizSctExprCont
 syn region VizSctExprCont contained fold transparent matchgroup=VizPathOperator
   \ start='\.(' end=')' contains=@VizSctExpr
