@@ -7,6 +7,7 @@ vsl/data/array_
 vsl/data/array_ref
 vsl/data/char_
 vsl/data/free_semigroup
+vsl/data/free_monoid
 vsl/data/string_
 vsl/data/UTF8string
 vsl/data/AA_map

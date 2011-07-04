@@ -1,0 +1,40 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+
+type t α := option (free_semigroup.t α)
+
+let length at none% be 0
+	   at some a be free_semigroup.length a
+
+let cat
+    at none% at b be b
+    at a at none% be a
+    at some a at some b be some (free_semigroup.cat a b)
+
+let for_all f be option.for_all (free_semigroup.for_all f)
+let for_some f be option.for_some (free_semigroup.for_some f)
+let fold f be option.fold (free_semigroup.fold f)
+let iter f be option.iter (free_semigroup.iter f)
+let map f be option.map (free_semigroup.map f)
+
+.in tagged
+    let for_all f be option.for_all (free_semigroup.tagged.for_all f)
+    let for_some f be option.for_some (free_semigroup.tagged.for_some f)
+    let fold f be option.fold (free_semigroup.tagged.fold f)
+    let iter f be option.iter (free_semigroup.tagged.iter f)
