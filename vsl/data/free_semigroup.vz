@@ -1,0 +1,115 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open effect
+
+type t α
+ inj singleton : α → t α
+ inj node : int → t α → t α → t α
+
+let length
+    at singleton _ be 1
+    at node n _ _ be n
+
+let r_max be 3
+
+let is_valid
+    at singleton _ be true
+    at node n a b
+	let n_a, n_b be length a, length b
+	be n = n_a + n_b ∧ n_a ≤ r_max * n_b ∧ n_b ≤ r_max * n_a
+	 ∧ is_valid a ∧ is_valid b
+
+let cut_within i_min i_max
+    at singleton _ fail "cut_within: No place to cut."
+    at node n a b
+	let n_a be length a
+	if i_max < n_a
+	    let aL, aR be cut_within i_min i_max a
+	    be aL, cat aR b
+	if i_min > n_a
+	    let bL, bR be cut_within (i_min - n_a) (i_max - n_a) b
+	    be cat a bL, bR
+	be a, b
+
+let cat a b
+    let n_a, n_b be length a, length b
+    let n_ab be n_a + n_b
+    if n_a > r_max * n_b
+	let n_aL_min be int.cdiv n_ab (r_max + 1)
+	let n_aL_max be int.div (r_max * n_ab) (r_max + 1)
+	let aL, aR be cut_within n_aL_min n_aL_max a
+	be node n_ab aL (cat aR b)
+    if n_b > r_max * n_a
+	let n_bL_min be int.cdiv (n_b - n_a * r_max) (r_max + 1)
+	let n_bL_max be int.div  (n_b * r_max - n_a) (r_max + 1)
+	let bL, bR be cut_within n_bL_min n_bL_max b
+	be node n_ab (cat a bL) bR
+    be node n_ab a b
+
+let for_all f
+    at singleton x be f x
+    at node _ a b be for_all f a ∧ for_all f b
+
+let for_some f
+    at singleton x be f x
+    at node _ a b be for_some f a ∨ for_some f b
+
+let fold f
+    at singleton x be f x
+    at node _ a b be fold f b ∘ fold f a
+
+let! iter f
+    at singleton x do f x
+    at node _ a b do iter f a >> iter f b
+
+let map f
+    at singleton x be singleton (f x)
+    at node n a b be node n (map f a) (map f b)
+
+let! dump elt_to_string
+    at singleton x do print (elt_to_string x)
+    at node n a b
+	do print (int.show n) >> print "("
+	do dump elt_to_string a >> print " * "
+	do dump elt_to_string b >> print ")"
+
+.in tagged
+    let fold f
+	let loop i
+	    at singleton x be f (i, x)
+	    at node _ a b be loop (i + length a) b ∘ loop i a
+	be loop 0
+
+    let! iter f
+	let! loop i
+	    at singleton x do f (i, x)
+	    at node _ a b do loop i a >> loop (i + length a) b
+	do loop 0
+
+    let for_all f
+	let loop i
+	    at singleton x be f (i, x)
+	    at node _ a b be loop i a ∧ loop (i + length a) b
+	be loop 0
+
+    let for_some f
+	let loop i
+	    at singleton x be f (i, x)
+	    at node _ a b be loop i a ∨ loop (i + length a) b
+	be loop 0

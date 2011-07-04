@@ -1,0 +1,60 @@
+open prereq
+open effect
+.in fsg include data.free_semigroup
+
+let do_progress be false
+
+let! random_int
+    let x do system.posix.stdlib.lrand48
+    be int32.as_int (int32.shift -1 x)
+
+let! dump_s a
+    do fsg.dump ident a >> print "\n"
+let! dump_i a
+    do fsg.dump int.show a >> print "\n"
+
+let! compose_randomly n i
+    let nR do random_int
+    if n = 1 be fsg.singleton i
+    let n_a be int.mod nR (n - 1) + 1
+    let a do compose_randomly n_a i
+    let b do compose_randomly (n - n_a) (i + n_a)
+    be fsg.cat a b
+
+let expected_content n a
+    be fsg.length a = n ∧ fsg.tagged.for_all ((i, j) ↦ i = j) a
+
+let main
+    let a be fsg.singleton "a"
+    let bc be fsg.cat (fsg.singleton "b") (fsg.singleton "c")
+    let abc be fsg.cat a bc
+    let abcd be fsg.cat abc (fsg.singleton "d")
+    let abcde be fsg.cat abcd (fsg.singleton "e")
+    do dump_s a
+    do dump_s bc
+    do dump_s abc
+    do dump_s abcd
+    do dump_s abcde
+    let! loop i a
+	if i > 10 be ()
+	do dump_i a
+	do loop (i + 1) (fsg.cat a (fsg.singleton i))
+    do loop 1 (fsg.singleton 0)
+
+    let! loopr m count do_print
+	if count = 0 be ()
+	let nR do random_int
+	let n be int.mod (int.div nR m) (int.shift (int.mod nR m) 1) + 1
+	when do_progress ∧ ¬ do_print
+	    do print (int.show count) >> print " to check, current n = "
+	    do print (int.show n) >> print ".       \r" >> flush_all
+	let a do compose_randomly n 0
+	assert expected_content n a
+	when ¬ fsg.is_valid a
+	    do print "INVALID: " >> dump_i a >> flush stdout
+	    assert false
+	do loopr m (count - 1) do_print
+    do loopr 8 10 true
+    do flush_all
+    do loopr 12 200 false
+    when do_progress do print "\n"
