@@ -35,6 +35,14 @@ in basics
 	type t
 	val cmp : t → t → torder
 
+    in total_order_ops.(Ord : a_total_order)
+	let x = y be (tcoin% ↦ true; _ ↦ false) (Ord.cmp x y)
+	let x ≠ y be (tcoin% ↦ false; _ ↦ true) (Ord.cmp x y)
+	let x ≤ y be (tsucc% ↦ false; _ ↦ true) (Ord.cmp x y)
+	let x ≥ y be (tprec% ↦ false; _ ↦ true) (Ord.cmp x y)
+	let x < y be (tprec% ↦ true; _ ↦ false) (Ord.cmp x y)
+	let x > y be (tsucc% ↦ true; _ ↦ false) (Ord.cmp x y)
+
 in bool_ops
     #?ffoc include compat.ocaml_pervasives.bool_ops
     let (¬* f)   x0 be ¬ f x0
@@ -78,6 +86,7 @@ sig a_basic_int
     val abs : t → t
 
 in nat_ops.(Nat : a_basic_nat)
+    let 1'+ (x : Nat.t) be x
     let 2'+ be Nat.add
     let 2'− be Nat.sub
     let 2'× be Nat.mul
@@ -98,10 +107,15 @@ in extend_basic_int_or_nat.(Nat : a_basic_nat)
 in extend_basic_nat.(Nat : a_basic_nat)
     include extend_basic_int_or_nat.(Nat)
     in ops include nat_ops.(Nat)
+    open ops
+    let cdiv x y be (x + y - Nat.one) div y
 
 in extend_basic_int.(Int : a_basic_int)
     include extend_basic_int_or_nat.(Int)
     in ops include int_ops.(Int)
+    open ops
+    let cdiv x y be - x div (- y)
+    let cmod x y be   x mod (- y)
 
 in int
     #?ffoc include compat.ocaml_miscints.int
