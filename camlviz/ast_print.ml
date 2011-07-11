@@ -187,19 +187,16 @@ let rec print_aval fo p = function
 	if p > p_semi then Fo.put fo `Operator ")"
     | Aval_back _ ->
 	Fo.put fo `Keyword "backtrack"
-    | Aval_assert (_, x, y) ->
+    | Aval_seq (_, op, x, y_opt) ->
 	if p > p_let then Fo.put fo `Operator "(";
-	Fo.put fo `Keyword "assert"; Fo.space fo;
+	Fo.put fo `Keyword (idr_to_string op); Fo.space fo;
 	print_aval fo p_min x;
-	Fo.space fo; Fo.put fo `Keyword "in"; Fo.space fo;
-	print_aval fo p_let y;
-	if p > p_let then Fo.put fo `Operator ")"
-    | Aval_trace (_, x, y) ->
-	if p > p_let then Fo.put fo `Operator "(";
-	Fo.put fo `Keyword "trace"; Fo.space fo;
-	print_aval fo p_min x;
-	Fo.space fo; Fo.put fo `Keyword "in"; Fo.space fo;
-	print_aval fo p_let y;
+	begin match y_opt with
+	| None -> ()
+	| Some y ->
+	    Fo.space fo; Fo.put fo `Keyword "then"; Fo.space fo;
+	    print_aval fo p_let y;
+	end;
 	if p > p_let then Fo.put fo `Operator ")"
     | Aval_raise (_, x) ->
 	if p > p_apply then Fo.put fo `Operator "(";

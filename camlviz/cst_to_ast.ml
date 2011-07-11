@@ -173,14 +173,12 @@ and build_aval_pure = function
 	Aval_at (loc, List.map build_case cases)
     | Cpred_be (loc, cx) ->
 	build_aval_expr cx
-    | Cpred_assert (loc, cx, cy) ->
-	Aval_assert (loc, build_aval_expr cx, build_aval_pure cy)
-    | Cpred_trace (loc, cx, cy) ->
-	Aval_trace (loc, build_aval_expr cx, build_aval_pure cy)
+    | Cpred_seq (loc, op, cx, cy) when op = Idr "assert" || op = Idr "trace" ->
+	Aval_seq (loc, op, build_aval_expr cx, Option.map build_aval_pure cy)
     | Cpred_raise (loc, cx) ->
 	Aval_raise (loc, build_aval_expr cx)
-    | Cpred_do1 (loc, _, _)
-    | Cpred_do2 (loc, _, _, _)
+    | Cpred_seq (loc, _, _, _)
+    | Cpred_iterate (loc, _, _, _, _)
     | Cpred_upon (loc, _, _, _) ->
 	errf_at loc "Monadic code is not allowed here."
 and build_aval_monad mm = function
@@ -237,29 +235,35 @@ and build_aval_monad mm = function
 	| MM_quote cm -> make_aval_return loc cm ax
 	| MM_bind af -> Aval_apply (loc, af, ax)
 	end
-    | Cpred_assert (loc, cx, cy) ->
-	let ax = Ast_utils.effect_thunk loc
-		    (Aval_assert (loc, build_aval_expr cx,
-				  Aval_literal (loc, Lit_unit))) in
+    | Cpred_seq (loc, op, cx, cy_opt) ->
+	let ax =
+	    if idr_is_monad_op op then build_aval_expr cx else
+	    let thunk = Aval_seq (loc, op, build_aval_expr cx,
+				  Some (Aval_literal (loc, Lit_unit))) in
+	    Ast_utils.effect_thunk loc thunk in
 	let cm = "" in (* FIXME *)
-	make_aval_chop loc cm ax (build_aval_monad mm cy)
-    | Cpred_trace (loc, cx, cy) ->
-	let ax = Ast_utils.effect_thunk loc
-		    (Aval_trace (loc, build_aval_expr cx,
-				 Aval_literal (loc, Lit_unit))) in
-	let cm = "" in (* FIXME *)
-	make_aval_chop loc cm ax (build_aval_monad mm cy)
-    | Cpred_do1 (loc, cm, cx) ->
-	let ax = build_aval_expr cx in
-	begin match mm with
-	| MM_quote cm' ->
-	    if cm <> cm' then errf_at loc "Mismatched monad indicator." else
-	    ax
-	| MM_bind af ->
-	    make_aval_bind loc cm ax af
+	begin match cy_opt with
+	| None ->
+	    begin match mm with
+	    | MM_quote cm' ->
+		if cm <> cm' then errf_at loc "Mismatched monad indicator." else
+		ax
+	    | MM_bind af ->
+		make_aval_bind loc cm ax af
+	    end
+	| Some cy ->
+	    make_aval_chop loc cm ax (build_aval_monad mm cy)
 	end
-    | Cpred_do2 (loc, cm, cx, cy) ->
-	make_aval_chop loc cm (build_aval_expr cx) (build_aval_monad mm cy)
+    | Cpred_iterate (loc, op, cx, cy, ccont_opt) ->
+	let ax = build_aval_expr cx in
+	let ay = build_aval_monad mm cy in
+	let cm = "" in (* FIXME *)
+	let aI = make_aval_return loc cm (Aval_literal (loc, Lit_unit)) in
+	let ay' = Aval_if (loc, ax, ay, aI) in
+	begin match ccont_opt with
+	| None -> ay'
+	| Some ccont -> make_aval_chop loc cm ay' (build_aval_monad mm ccont)
+	end
     | Cpred_upon (loc, _, _, _) as cupon ->
 	let rec collect cases = function
 	    | Cpred_upon (loc, cp, ch, ccont) ->

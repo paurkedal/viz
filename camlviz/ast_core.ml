@@ -84,8 +84,7 @@ let rec aval_loc = function
     | Aval_if (loc, _, _, _) -> loc
     | Aval_back loc -> loc
     | Aval_match (loc, _, _) -> loc
-    | Aval_assert (loc, _, _) -> loc
-    | Aval_trace (loc, _, _) -> loc
+    | Aval_seq (loc, _, _, _) -> loc
     | Aval_raise (loc, _) -> loc
 
 let rec apat_loc = function
@@ -185,8 +184,7 @@ let aval_map_subaval f = function
 	let g (loc, v, topt, x) = (loc, v, topt, f x) in
 	Aval_letrec (loc, List.map g cases, f x)
     | Aval_if (loc, x, y, z) -> Aval_if (loc, f x, f y, f z)
-    | Aval_assert (loc, x, y) -> Aval_assert (loc, f x, f y)
-    | Aval_trace (loc, x, y) -> Aval_trace (loc, f x, f y)
+    | Aval_seq (loc, op, x, y) -> Aval_seq (loc, op, f x, Option.map f y)
     | Aval_raise (loc, x) -> Aval_raise (loc, f x)
 let adef_map_subamod f = function
     | Adef_include (loc, m) -> Adef_include (loc, f m)

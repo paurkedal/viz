@@ -91,3 +91,4 @@ val cidr_is_2b_dotparen : cidr -> bool
 
 val idr_is_effect_tycon : idr -> bool
 val cidr_is_effect_tycon : cidr -> bool
+val idr_is_monad_op : idr -> bool

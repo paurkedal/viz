@@ -51,24 +51,25 @@ let rec subterm_rewrite_cpred rw stra = function
     | Cpred_be (loc, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cpred_be (loc, x), accu
-    | Cpred_assert (loc, x, y), accu ->
+    | Cpred_seq (loc, op, x, None), accu ->
+	let x, accu = rw.rw_ctrm rw stra (x, accu) in
+	Cpred_seq (loc, op, x, None), accu
+    | Cpred_seq (loc, op, x, Some y), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
-	Cpred_assert (loc, x, y), accu
-    | Cpred_trace (loc, x, y), accu ->
+	Cpred_seq (loc, op, x, Some y), accu
+    | Cpred_iterate (loc, op, x, y, None), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
-	Cpred_trace (loc, x, y), accu
+	Cpred_iterate (loc, op, x, y, None), accu
+    | Cpred_iterate (loc, op, x, y, Some z), accu ->
+	let x, accu = rw.rw_ctrm rw stra (x, accu) in
+	let y, accu = rw.rw_cpred rw stra (y, accu) in
+	let z, accu = rw.rw_cpred rw stra (z, accu) in
+	Cpred_iterate (loc, op, x, y, Some z), accu
     | Cpred_raise (loc, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cpred_raise (loc, x), accu
-    | Cpred_do1 (loc, cm, x), accu ->
-	let x, accu = rw.rw_ctrm rw stra (x, accu) in
-	Cpred_do1 (loc, cm, x), accu
-    | Cpred_do2 (loc, cm, x, y), accu ->
-	let x, accu = rw.rw_ctrm rw stra (x, accu) in
-	let y, accu = rw.rw_cpred rw stra (y, accu) in
-	Cpred_do2 (loc, cm, x, y), accu
     | Cpred_upon (loc, p, x, y), accu ->
 	let p, accu = rw.rw_ctrm rw stra (p, accu) in
 	let x, accu = rw.rw_cpred rw stra (x, accu) in

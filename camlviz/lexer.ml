@@ -107,7 +107,7 @@ let initial_declarators = [
     "val:cf-",	Grammar.VAL (`Local,    Abi_C, [`Is_finalizer]);
     "inj",	Grammar.INJ Abi_Viz;
     "inj:c",	Grammar.INJ Abi_C;
-    "when",	Grammar.WHEN "";
+    "when",	Grammar.ITERATE (Idr "when");
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
     "lex alias",Grammar.LEXALIAS;
@@ -122,12 +122,12 @@ let initial_declarators = [
     "#?ffoc #}", Grammar.ENDSKIP;
 ]
 let initial_verbs = [
-    "assert",	Grammar.ASSERT;
     "be",	Grammar.BE;
-    "do",	Grammar.DO "";
     "fail",	Grammar.FAIL;
     "raise",	Grammar.RAISE;
-    "__trace",	Grammar.TRACE;
+    "assert",	Grammar.SEQ (Idr "assert");
+    "do",	Grammar.SEQ (Idr "do");
+    "__trace",	Grammar.SEQ (Idr "__trace");
 ]
 let initial_connectives = [
     ".at",	Grammar.DOT_AT;

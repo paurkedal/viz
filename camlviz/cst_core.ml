@@ -84,6 +84,10 @@ let idrs_effect_tycon	= [Idr "effect"; idr_2o_c "/~"]
 let idr_is_effect_tycon idr = List.exists ((=) idr) idrs_effect_tycon
 let cidr_is_effect_tycon (Cidr (_, idr)) = idr_is_effect_tycon idr
 
+let idr_is_monad_op = function
+    | Idr "do" -> true
+    | _ -> false
+
 let cmonad_io = ""
 
 let cpred_loc = function
@@ -92,11 +96,9 @@ let cpred_loc = function
     | Cpred_back loc
     | Cpred_at (loc, _)
     | Cpred_be (loc, _)
-    | Cpred_assert (loc, _, _)
-    | Cpred_trace (loc, _, _)
+    | Cpred_seq (loc, _, _, _)
+    | Cpred_iterate (loc, _, _, _, _)
     | Cpred_raise (loc, _)
-    | Cpred_do1 (loc, _, _)
-    | Cpred_do2 (loc, _, _, _)
     | Cpred_upon (loc, _, _, _)
     -> loc
 

@@ -239,7 +239,7 @@ let rec emit_aval = function
 	<:expr< if $emit_aval cond$ then $emit_aval cq$ else $emit_aval ccq$ >>
     | Aval_back loc ->
 	errf_at loc "Backtracking else-branch is not supported here."
-    | Aval_assert (loc, x, y) ->
+    | Aval_seq (loc, op, x, y) when op = Idr "assert" ->
 	let _loc = p4loc loc in
 	let msg = "Assertion failed." in
 	<:expr<
@@ -248,10 +248,10 @@ let rec emit_aval = function
 		    __failure
 			(__string_of_utf8 $str: Location.to_string loc$)
 			(__string_of_utf8 $str: msg$)
-		else $emit_aval y$
+		else $emit_aval_opt loc y$
 	    end
 	>>
-    | Aval_trace (loc, x, y) ->
+    | Aval_seq (loc, op, x, y) when op = Idr "trace" ->
 	let _loc = p4loc loc in
 	let mkarg = function
 	    | Aval_apply (_, Aval_apply (_, Aval_ref colon, x), Aval_ref t)
@@ -266,12 +266,17 @@ let rec emit_aval = function
 	<:expr<
 	    begin
 		__trace (__string_of_utf8 $str: Location.to_string loc$) $os$;
-		$emit_aval y$
+		$emit_aval_opt loc y$
 	    end
 	>>
+    | Aval_seq (loc, op, _, _) ->
+	errf_at loc "Unsupported sequencing verb %s." (idr_to_string op)
     | Aval_raise (loc, x) ->
 	let _loc = p4loc loc in
 	<:expr< __builtin_raise $emit_aval x$ >>
+and emit_aval_opt loc = function
+    | None -> let _loc = p4loc loc in <:expr< () >>
+    | Some cx -> emit_aval cx
 and emit_match_case (pat, ocond_opt, body) =
     let opat, ocond_opt = emit_apat pat (Option.map emit_aval ocond_opt) in
     let guard_opt, body = Ast_utils.extract_backtrack_guard body in

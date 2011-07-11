@@ -59,8 +59,7 @@ type aval =
     | Aval_letrec of loc * (loc * avar * atyp option * aval) list * aval
     | Aval_if of loc * aval * aval * aval
     | Aval_back of loc
-    | Aval_assert of loc * aval * aval
-    | Aval_trace of loc * aval * aval
+    | Aval_seq of loc * idr * aval * aval option
     | Aval_raise of loc * aval
     with sexp
 

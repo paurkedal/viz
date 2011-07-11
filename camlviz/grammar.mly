@@ -84,8 +84,8 @@ let cpred_failure loc msg_opt =
 %token WHERE WITH
 %token SKIP ENDSKIP
 
-%token ASSERT BE FAIL TRACE
-%token <Cst_types.cmonad> DO WHEN
+%token BE FAIL
+%token <Leaf_types.idr> SEQ ITERATE
 %token RAISE
 %token UPON
 
@@ -268,6 +268,11 @@ atomic_predicate:
   | FAIL { cpred_failure (mkloc $startpos $endpos) None }
   | FAIL term { cpred_failure (mkloc $startpos $endpos) (Some $2) }
   | RAISE term { Cpred_raise (mkloc $startpos $endpos, $2) }
+  | SEQ term
+    {
+	let loc = mkloc $startpos $endpos in
+	Cpred_seq (loc, $1, $2, None)
+    }
   ;
 compound_predicate:
     nonfunction_predicate { $1 }
@@ -275,22 +280,26 @@ compound_predicate:
   ;
 nonfunction_predicate:
     atomic_predicate { $1 }
-  | ASSERT term nonfunction_predicate_with_participle
-    { Cpred_assert (mkloc $startpos $endpos, $2, $3) }
-  | ASSERT term
-    {
-	let loc = mkloc $startpos $endpos in
-	Cpred_assert (loc, $2, Cpred_be (loc, Ctrm_literal (loc, Lit_unit)))
-    }
-  | TRACE term nonfunction_predicate_with_participle
-    { Cpred_trace (mkloc $startpos $endpos, $2, $3) }
   | atomic_predicate WHICH predicate_block
     { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
       let that_trm = Ctrm_ref (that, Ih_none) in
       Cpred_let (mkloc $startpos $endpos, $2, that_trm, $3, $1) }
-  | postif_predicate { $1 }
   | if_predicate { $1 }
-  | do_predicate { $1 }
+  | postif_predicate { $1 }
+  | SEQ term nonfunction_predicate_with_participle
+    { Cpred_seq (mkloc $startpos $endpos, $1, $2, Some $3) }
+  | UPON term predicate_block nonfunction_predicate_with_participle
+    { Cpred_upon (mkloc $startpos $endpos, $2, $3, $4) }
+  | ITERATE term predicate_block
+    {
+	let loc = mkloc $startpos $endpos in
+	Cpred_iterate (loc, $1, $2, $3, None)
+    }
+  | ITERATE term predicate_block nonfunction_predicate_with_participle
+    {
+	let loc = mkloc $startpos $endpos in
+	Cpred_iterate (loc, $1, $2, $3, Some $4)
+    }
   ;
 nonfunction_predicate_with_participle:
     nonfunction_predicate { $1 }
@@ -314,26 +323,6 @@ postif_predicate:
     atomic_predicate BEGIN IF term END postif_predicate
     { Cpred_if (mkloc $startpos $endpos, $4, $1, $6) }
   | atomic_predicate BEGIN OTHERWISE END { $1 }
-  ;
-do_predicate:
-    DO expr
-    { Cpred_do1 (mkloc $startpos $endpos, $1, $2) }
-  | DO expr nonfunction_predicate_with_participle
-    { Cpred_do2 (mkloc $startpos $endpos, $1, $2, $3) }
-  | UPON expr predicate_block nonfunction_predicate_with_participle
-    { Cpred_upon (mkloc $startpos $endpos, $2, $3, $4) }
-  | WHEN expr predicate_block
-    {
-	let loc = mkloc $startpos $endpos in
-	Cpred_if (loc, $2, $3, Cpred_be (loc, Ctrm_literal (loc, Lit_unit)))
-    }
-  | WHEN expr predicate_block nonfunction_predicate_with_participle
-    {
-	let loc = mkloc $startpos $endpos in
-	let m = Cpred_if (loc, $2, $3,
-		    Cpred_be (loc, Ctrm_literal (loc, Lit_unit))) in
-	Cpred_do2 (loc, $1, Ctrm_what (loc, Some $1, m), $4)
-    }
   ;
 
 /* Participles */

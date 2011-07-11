@@ -146,25 +146,19 @@ and print_predicate fo = function
 	Fo.newline fo;
 	Fo.put_kw fo "be";
 	print_inline fo Opkind.p_min ctrm
-    | Cpred_assert (_, cx, cy) ->
+    | Cpred_seq (_, Idr op, cx, cy_opt) ->
 	Fo.newline fo;
-	Fo.put_kw fo "assert";
+	Fo.put_kw fo op;
 	print_inline fo Opkind.p_min cx;
-	print_predicate fo cy
-    | Cpred_trace (_, cx, cy) ->
+	Option.iter (print_predicate fo) cy_opt
+    | Cpred_iterate (_, Idr op, cx, cy, cz_opt) ->
 	Fo.newline fo;
-	Fo.put_kw fo "trace";
+	Fo.put_kw fo op;
 	print_inline fo Opkind.p_min cx;
-	print_predicate fo cy
-    | Cpred_do1 (_, cm, cx) ->
-	Fo.newline fo;
-	Fo.put_kw fo "do";
-	print_inline fo Opkind.p_min cx
-    | Cpred_do2 (_, cm, cx, cpred) ->
-	Fo.newline fo;
-	Fo.put_kw fo "do";
-	print_inline fo Opkind.p_min cx;
-	print_predicate fo cpred
+	Fo.enter_indent fo;
+	print_predicate fo cy;
+	Fo.leave_indent fo;
+	Option.iter (print_predicate fo) cz_opt
     | Cpred_upon (_, cx, handler, thunk) ->
 	Fo.newline fo;
 	Fo.put_kw fo "upon";
