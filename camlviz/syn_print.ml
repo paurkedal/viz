@@ -142,10 +142,22 @@ and print_predicate fo = function
 	    print_predicate fo cq;
 	    Fo.leave_indent fo;
 	) cases
-    | Cpred_be (_, ctrm) ->
+    | Cpred_expr0 (_, Idr verb) ->
 	Fo.newline fo;
-	Fo.put_kw fo "be";
+	Fo.put_kw fo verb
+    | Cpred_expr (_, Idr verb, ctrm) ->
+	Fo.newline fo;
+	Fo.put_kw fo verb;
 	print_inline fo Opkind.p_min ctrm
+    | Cpred_expr_which (_, Idr verb, ctrm, (mw_opt, cw)) ->
+	Fo.newline fo;
+	Fo.put_kw fo verb;
+	print_inline fo Opkind.p_min ctrm;
+	Fo.put_kw fo
+	    (match mw_opt with None -> "which" | Some mw -> ("which!" ^ mw));
+	Fo.enter_indent fo;
+	print_predicate fo cw;
+	Fo.leave_indent fo
     | Cpred_seq (_, Idr op, cx, cy_opt) ->
 	Fo.newline fo;
 	Fo.put_kw fo op;
@@ -177,10 +189,6 @@ and print_predicate fo = function
 	print_predicate fo handler;
 	Fo.leave_indent fo;
 	print_predicate fo thunk
-    | Cpred_raise (_, cx) ->
-	Fo.newline fo;
-	Fo.put_kw fo "raise";
-	print_inline fo Opkind.p_min cx
 
 and print_def fo cdef =
     Fo.newline fo;

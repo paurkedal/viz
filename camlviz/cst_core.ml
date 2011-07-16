@@ -28,6 +28,9 @@ let ctrm_eq_ref idr = function
     | Ctrm_ref (Cidr (_, idr'), _) -> idr = idr'
     | _ -> false
 
+let idr_kw_be		= Idr "be"
+let idr_kw_fail		= Idr "fail"
+let idr_kw_raise	= Idr "raise"
 let idr_2o_colon	= idr_2o_c ":"
 let idr_2o_arrow	= idr_2o_c "→"
 let idr_2o_times	= idr_2o_c "×"
@@ -95,11 +98,12 @@ let cpred_loc = function
     | Cpred_if (loc, _, _, _)
     | Cpred_back loc
     | Cpred_at (loc, _)
-    | Cpred_be (loc, _)
+    | Cpred_expr0 (loc, _)
+    | Cpred_expr (loc, _, _)
+    | Cpred_expr_which (loc, _, _, _)
     | Cpred_seq (loc, _, _, _)
     | Cpred_seq_which (loc, _, _, _, _)
     | Cpred_iterate (loc, _, _, _, _)
-    | Cpred_raise (loc, _)
     | Cpred_upon (loc, _, _, _)
     -> loc
 

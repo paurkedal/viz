@@ -36,11 +36,12 @@ type cpred =
     | Cpred_if		of loc * ctrm * cpred * cpred
     | Cpred_back	of loc
     | Cpred_at		of loc * (ctrm * cpred) list
-    | Cpred_be		of loc * ctrm
+    | Cpred_expr0	of loc * idr
+    | Cpred_expr	of loc * idr * ctrm
+    | Cpred_expr_which	of loc * idr * ctrm * cwhich
     | Cpred_seq		of loc * idr * ctrm * cpred option
     | Cpred_seq_which	of loc * idr * ctrm * cwhich * cpred option
     | Cpred_iterate	of loc * idr * ctrm * cpred * cpred option
-    | Cpred_raise	of loc * ctrm
     | Cpred_upon	of loc * ctrm * cpred * cpred
  and ctrm =
     | Ctrm_ref		of cidr * idrhint

@@ -51,22 +51,6 @@ let apply_prefix_script lb ub lbf ubf f =
 let apply_fence loc name0 name1 =
     assert (name0 = name1); (* FIXME *)
     apply loc (Ctrm_ref (Cidr (loc, name0), Ih_none))
-
-let cpred_failure loc msg_opt =
-    let loclb = Location.lbound loc in
-    let path_lit = Lit_string (UString.of_utf8 (Location.Bound.path loclb)) in
-    let cloc =
-	Ctrm_apply (loc,
-	    Ctrm_apply (loc, Ctrm_ref (Cidr (loc, idr_2o_comma), Ih_none),
-		Ctrm_literal (loc, path_lit)),
-	    Ctrm_literal (loc, Lit_int (Location.Bound.lineno loclb))) in
-    let msg =
-	match msg_opt with
-	| Some msg -> msg
-	| None -> Ctrm_literal (loc, Lit_string
-		(UString.of_utf8 "This point should be unreachable.")) in
-    let failure = Ctrm_ref (Cidr (loc, Idr "failure"), Ih_none) in
-    Cpred_raise (loc, Ctrm_apply (loc, Ctrm_apply (loc, failure, cloc), msg))
 %}
 
 %token EOF
@@ -84,9 +68,7 @@ let cpred_failure loc msg_opt =
 %token WHERE WITH
 %token SKIP ENDSKIP
 
-%token BE FAIL
-%token <Leaf_types.idr> SEQ ITERATE
-%token RAISE
+%token <Leaf_types.idr> VERB SEQ ITERATE
 %token UPON
 
 %token LEX
@@ -264,10 +246,8 @@ term: expr {$1};
 
 predicate_block: BEGIN participle_seq compound_predicate END { $2 $3 };
 atomic_predicate:
-    BE term { Cpred_be (mkloc $startpos $endpos, $2) }
-  | FAIL { cpred_failure (mkloc $startpos $endpos) None }
-  | FAIL term { cpred_failure (mkloc $startpos $endpos) (Some $2) }
-  | RAISE term { Cpred_raise (mkloc $startpos $endpos, $2) }
+    VERB term { Cpred_expr (mkloc $startpos $endpos, $1, $2) }
+  | VERB { Cpred_expr0 (mkloc $startpos $endpos, $1) }
   ;
 compound_predicate:
     nonfunction_predicate { $1 }
@@ -275,10 +255,8 @@ compound_predicate:
   ;
 nonfunction_predicate:
     atomic_predicate { $1 }
-  | atomic_predicate WHICH predicate_block
-    { let that = Cidr (mkloc $startpos($2) $endpos($2), Idr "that") in
-      let that_trm = Ctrm_ref (that, Ih_none) in
-      Cpred_let (mkloc $startpos $endpos, $2, that_trm, $3, $1) }
+  | VERB term WHICH predicate_block
+    { Cpred_expr_which (mkloc $startpos $endpos, $1, $2, ($3, $4)); }
   | if_predicate { $1 }
   | postif_predicate { $1 }
   | SEQ term

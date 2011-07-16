@@ -69,3 +69,7 @@ val cpred_is_pure : cpred -> bool
 val ctrm_is_pure : ctrm -> bool
 
 val ctrm_is_exception_type : ctrm -> bool
+
+val cpred_if_ctrm : loc -> ctrm -> ctrm -> ctrm -> cpred
+
+val cpred_failure : loc -> ctrm option -> cpred

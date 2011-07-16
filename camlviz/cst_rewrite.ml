@@ -48,9 +48,14 @@ let rec subterm_rewrite_cpred rw stra = function
 	    ((x, pred), accu) in
 	let cases, accu = List.map_fold recase (cases, accu) in
 	Cpred_at (loc, cases), accu
-    | Cpred_be (loc, x), accu ->
+    | Cpred_expr0 _ as x, accu -> x, accu
+    | Cpred_expr (loc, idr, x), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
-	Cpred_be (loc, x), accu
+	Cpred_expr (loc, idr, x), accu
+    | Cpred_expr_which (loc, idr, x, (ymo, y)), accu ->
+	let x, accu = rw.rw_ctrm rw stra (x, accu) in
+	let y, accu = rw.rw_cpred rw stra (y, accu) in
+	Cpred_expr_which (loc, idr, x, (ymo, y)), accu
     | Cpred_seq (loc, op, x, None), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	Cpred_seq (loc, op, x, None), accu
@@ -76,9 +81,6 @@ let rec subterm_rewrite_cpred rw stra = function
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
 	let z, accu = rw.rw_cpred rw stra (z, accu) in
 	Cpred_iterate (loc, op, x, y, Some z), accu
-    | Cpred_raise (loc, x), accu ->
-	let x, accu = rw.rw_ctrm rw stra (x, accu) in
-	Cpred_raise (loc, x), accu
     | Cpred_upon (loc, p, x, y), accu ->
 	let p, accu = rw.rw_ctrm rw stra (p, accu) in
 	let x, accu = rw.rw_cpred rw stra (x, accu) in
@@ -154,7 +156,17 @@ and subterm_rewrite_cdef rw stra = function
 	Cdef_inj (loc, abi, t), accu
     | Cdef_lex _, _ | Cdef_lexalias _, _ as d -> d
 
-let default_rewrite_cpred = subterm_rewrite_cpred
+let default_rewrite_cpred_value rw = function
+    | Cpred_expr0 (loc, verb), accu when verb = idr_kw_fail ->
+	Cst_utils.cpred_failure loc None, accu
+    | Cpred_expr (loc, verb, x), accu when verb = idr_kw_fail ->
+	let x, accu = rw.rw_ctrm rw `Value (x, accu) in
+	Cst_utils.cpred_failure loc (Some x), accu
+    | d -> subterm_rewrite_cpred rw `Value d
+
+let default_rewrite_cpred rw = function
+    | `Value -> default_rewrite_cpred_value rw
+    | stra -> subterm_rewrite_cpred rw stra
 
 (* Alt 1: [x1, ..., xn] and [x1, ..., xn; xr]. *)
 let rec rewrite_classicext_comma push rw inner = function
@@ -237,7 +249,7 @@ let rewrite_mapsto rw (z, accu) =
 	    fun (cases, accu) ->
 	    let x, accu = rw.rw_ctrm rw `Value (x, accu) in
 	    let y, accu = rw.rw_ctrm rw `Value (y, accu) in
-	    ((x, Cpred_be (loc, y)) :: cases, accu)
+	    ((x, Cpred_expr (loc, idr_kw_be, y)) :: cases, accu)
 	| x -> errf_at (ctrm_loc x) "Expecting a mapping." in
     let cases, accu
 	= Cst_utils.fold_on_semicolon rwcase z ([], accu) in

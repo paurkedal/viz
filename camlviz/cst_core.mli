@@ -38,6 +38,9 @@ val ctrm_eq_ref : idr -> ctrm -> bool
 
 
 (* Specific Symbols *)
+val idr_kw_be : idr
+val idr_kw_fail : idr
+val idr_kw_raise : idr
 val idr_2o_colon : idr
 val idr_2o_comma : idr
 val idr_1o_semicolon : idr

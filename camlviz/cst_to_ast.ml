@@ -109,6 +109,12 @@ let rec build_apat ?(adecmap = Idr_map.empty) ?(fpos = false) = function
 let make_aval_return loc decor ax =
     let af = aval_ref_of_idr loc (Idr ("return" ^ decor)) in
     Aval_apply (loc, af, ax)
+let make_aval_throw loc decor ax =
+    let af = aval_ref_of_idr loc idr_effect_throw in (* FIXME: decor *)
+    Aval_apply (loc, af, ax)
+let make_aval_other loc decor verb ax =
+    let af = aval_ref_of_idr loc verb in (* FIXME *)
+    Aval_apply (loc, af, ax)
 let make_aval_bind loc decor ax ay =
     let af = aval_ref_of_idr loc (Idr ("2'>>=" ^ decor)) in
     Aval_apply (loc, Aval_apply (loc, af, ax), ay)
@@ -171,8 +177,16 @@ and build_aval_pure = function
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_pure cq) in
 	Aval_at (loc, List.map build_case cases)
-    | Cpred_be (loc, cx) ->
-	build_aval_expr cx
+    | Cpred_expr0 (loc, Idr verb) ->
+	errf_at loc "Unimplemented verb %s." verb
+    | Cpred_expr (loc, verb, cx) ->
+	if verb = idr_kw_be then build_aval_expr cx else
+	if verb = idr_kw_raise then Aval_raise (loc, build_aval_expr cx) else
+	Aval_apply (loc, aval_ref_of_idr loc verb, build_aval_expr cx)
+    | Cpred_expr_which (loc, verb, cx, (mw_o, cw)) ->
+	let aw = build_aval mw_o cw in
+	let ax = build_aval_pure (Cpred_expr (loc, verb, cx)) in
+	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw, ax)
     | Cpred_seq (loc, op, cx, cy) when not (idr_is_monad_op op) ->
 	Aval_seq (loc, op, build_aval_expr cx, Option.map build_aval_pure cy)
     | Cpred_seq_which (loc, op, cx, (cm_opt, cw), cy_opt)
@@ -180,8 +194,6 @@ and build_aval_pure = function
 	let aw = build_aval cm_opt cw in
 	let az = build_aval_pure (Cpred_seq (loc, op, cx, cy_opt)) in
 	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw, az)
-    | Cpred_raise (loc, cx) ->
-	Aval_raise (loc, build_aval_expr cx)
     | Cpred_seq (loc, _, _, _)
     | Cpred_seq_which (loc, _, _, _, _)
     | Cpred_iterate (loc, _, _, _, _)
@@ -235,12 +247,21 @@ and build_aval_monad mm = function
 	    errf_at loc "Cannot run monadic action inside an abstraction. \
 			 You may be missing a surrounding monad escape."
 	end
-    | Cpred_be (loc, cx) ->
+    | Cpred_expr0 (loc, Idr verb) ->
+	errf_at loc "Unimplemented verb %s." verb
+    | Cpred_expr (loc, verb, cx) ->
 	let ax = build_aval_expr cx in
 	begin match mm with
-	| MM_quote cm -> make_aval_return loc cm ax
+	| MM_quote cm ->
+	    if verb = idr_kw_be then make_aval_return loc cm ax else
+	    if verb = idr_kw_raise then make_aval_throw loc cm ax else
+	    make_aval_other loc cm verb ax
 	| MM_bind af -> Aval_apply (loc, af, ax)
 	end
+    | Cpred_expr_which (loc, verb, cx, (mw_opt, cw)) ->
+	let aw = build_aval mw_opt cw in
+	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw,
+		  build_aval_monad mm (Cpred_expr (loc, verb, cx)))
     | Cpred_seq (loc, op, cx, cy_opt) ->
 	let ax =
 	    if idr_is_monad_op op then build_aval_expr cx else
@@ -297,9 +318,6 @@ and build_aval_monad mm = function
 		    Aval_apply (loc, aval_ref_of_idr loc idr_catch, ah),
 		    acont) in
 	collect [] cupon
-    | Cpred_raise (loc, cx) ->
-	let ax = build_aval_expr cx in
-	Aval_apply (loc, aval_ref_of_idr loc idr_effect_throw, ax)
 
 and build_aval_expr = function
     | Ctrm_literal (loc, lit) ->
@@ -312,14 +330,12 @@ and build_aval_expr = function
 	Ctrm_apply (_, Ctrm_ref (semi, _),
 	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (impl, _), cx), cy)), cz)
 	    when cidr_is_2o_implies impl && cidr_is_2o_semicolon semi ->
-	build_aval_pure
-	    (Cpred_if (loc, cx, Cpred_be (loc, cy), Cpred_be (loc, cz)))
+	build_aval_pure (Cst_utils.cpred_if_ctrm loc cx cy cz)
     | Ctrm_apply (loc,
 	Ctrm_apply (_, Ctrm_ref (impl, _), cx),
 	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (semi, _), cy), cz))
 	    when cidr_is_2o_implies impl && cidr_is_2o_semicolon semi ->
-	build_aval_pure
-	    (Cpred_if (loc, cx, Cpred_be (loc, cy), Cpred_be (loc, cz)))
+	build_aval_pure (Cst_utils.cpred_if_ctrm loc cx cy cz)
     | Ctrm_apply (loc, cx, cy) ->
 	Aval_apply (loc, build_aval_expr cx, build_aval_expr cy)
     | Ctrm_array (loc, cxs) ->
@@ -598,7 +614,7 @@ let can_letrec cpat cpred =
 let rec build_amod_of_pred = function
     | Cpred_at (loc, [cxvarsig, cymod]) ->
 	wrap_amod_lambda cxvarsig (build_amod_of_pred cymod)
-    | Cpred_be (loc, cmod) ->
+    | Cpred_expr (loc, verb, cmod) when verb = idr_kw_be ->
 	build_amod cmod
     | cpred -> errf_at (cpred_loc cpred) "Invalid module expression."
 and build_amod = function

@@ -122,9 +122,9 @@ let initial_declarators = [
     "#?ffoc #}", Grammar.ENDSKIP;
 ]
 let initial_verbs = [
-    "be",	Grammar.BE;
-    "fail",	Grammar.FAIL;
-    "raise",	Grammar.RAISE;
+    "be",	Grammar.VERB idr_kw_be;
+    "fail",	Grammar.VERB idr_kw_fail;
+    "raise",	Grammar.VERB idr_kw_raise;
     "assert",	Grammar.SEQ (Idr "assert");
     "do",	Grammar.SEQ (Idr "do");
     "__trace",	Grammar.SEQ (Idr "__trace");
