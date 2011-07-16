@@ -120,6 +120,7 @@ if !exists("viz_disable_patterns")
     \ skipwhite nextgroup=@VizPatternCont
   syn region VizInjParen contained fold transparent
     \ matchgroup=VizOperator start='(' end=')' contains=@VizPattern
+    \ skipwhite nextgroup=@VizPatternCont
   syn match VizInjNameT contained '\K\k*%\|\.\K\k*\>\(\s*\.\)\@!'
     \ skipwhite nextgroup=@VizPatternCont
   hi link VizInjNameT VizInjName

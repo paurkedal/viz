@@ -309,6 +309,8 @@ let () = dispatch begin function
 	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compile"];
 	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";
 
+	Pathname.define_context "vsl/foreign/C" ["vsl/foreign"];
+
 	(* Some dependencies are not picked up, maybe due to the nested
 	 * mlpack-hierarchy. *)
 	cdep "vsl/foreign/C/record" ["vsl/foreign/field_allocation"];
@@ -317,6 +319,7 @@ let () = dispatch begin function
 	cdep "vsl/data/AA_set" ["vsl/data/AA_map"];
 	cdep "vsl/data/string_" ["vsl/data/char_"; "vsl/data/list_"];
 	cdep "vsl/foreign/C/utils" ["vsl/data"];
+	cdep "vsl/prereq" ["vsl/compat"];
 	cdep "vsl/pervasive"
 	     ["vsl/foreign"; "vsl/control"; "vsl/data"; "vsl/system"];
 	cdep "compiler/llvm/core" ["vsl/pervasive"];

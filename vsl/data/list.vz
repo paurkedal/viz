@@ -36,6 +36,8 @@ val tail : t α → t α
  ## Given a non-empty list (xs), (tail xs) is the list following the first
  ## element.
 
+val nth : int → t α → option α
+
 val rev : t α → t α
  ## Reverse the order of elements of a list.
 
@@ -128,6 +130,10 @@ let head at [] fail "An empty list was passed to list.head."
 	 at [x; _] be x
 let tail at [] fail "An empty list was passed to list.tail."
 	 at [_; xs] be xs
+
+let nth i
+    at [] be none
+    at [x; xs] be i = 0 ⇒ some x; nth (i - 1) xs
 
 let fold f
     at [] be ident

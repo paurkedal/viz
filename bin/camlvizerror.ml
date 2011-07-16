@@ -79,6 +79,9 @@ let show_error ich och mlpath mlline msg =
 
 let error_re =
     rx "File \"\\([^\"]+\\)\", line \\([0-9]+\\), characters [0-9-]+:"
+let ingore_re =
+    rx "Warning 25: bad style, all clauses in this pattern-matching are \
+	guarded\\."
 let process_errors ich och =
     let err = ref 0 in
     begin try while true do
@@ -88,6 +91,7 @@ let process_errors ich och =
 	    let mlline = int_of_string (Str.matched_group 2 ln) in
 	    let msg = input_line ich in
 	    err := 1;
+	    if Str.string_match ingore_re msg 0 then () else
 	    show_error ich och mlpath mlline msg
 	end else
 	fprintf och "%s\n" ln
