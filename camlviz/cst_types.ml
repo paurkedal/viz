@@ -38,6 +38,7 @@ type cpred =
     | Cpred_at		of loc * (ctrm * cpred) list
     | Cpred_be		of loc * ctrm
     | Cpred_seq		of loc * idr * ctrm * cpred option
+    | Cpred_seq_which	of loc * idr * ctrm * cwhich * cpred option
     | Cpred_iterate	of loc * idr * ctrm * cpred * cpred option
     | Cpred_raise	of loc * ctrm
     | Cpred_upon	of loc * ctrm * cpred * cpred
@@ -66,3 +67,4 @@ type cpred =
     | Cdef_inj		of loc * abi * ctrm
     | Cdef_lex		of loc * string * (cidr * cidr list) list
     | Cdef_lexalias	of loc * (cidr * cidr) list
+ and cwhich = cmonad option * cpred

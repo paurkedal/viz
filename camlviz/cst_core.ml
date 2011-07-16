@@ -97,6 +97,7 @@ let cpred_loc = function
     | Cpred_at (loc, _)
     | Cpred_be (loc, _)
     | Cpred_seq (loc, _, _, _)
+    | Cpred_seq_which (loc, _, _, _, _)
     | Cpred_iterate (loc, _, _, _, _)
     | Cpred_raise (loc, _)
     | Cpred_upon (loc, _, _, _)

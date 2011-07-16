@@ -173,11 +173,17 @@ and build_aval_pure = function
 	Aval_at (loc, List.map build_case cases)
     | Cpred_be (loc, cx) ->
 	build_aval_expr cx
-    | Cpred_seq (loc, op, cx, cy) when op = Idr "assert" || op = Idr "trace" ->
+    | Cpred_seq (loc, op, cx, cy) when not (idr_is_monad_op op) ->
 	Aval_seq (loc, op, build_aval_expr cx, Option.map build_aval_pure cy)
+    | Cpred_seq_which (loc, op, cx, (cm_opt, cw), cy_opt)
+	    when not (idr_is_monad_op op) ->
+	let aw = build_aval cm_opt cw in
+	let az = build_aval_pure (Cpred_seq (loc, op, cx, cy_opt)) in
+	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw, az)
     | Cpred_raise (loc, cx) ->
 	Aval_raise (loc, build_aval_expr cx)
     | Cpred_seq (loc, _, _, _)
+    | Cpred_seq_which (loc, _, _, _, _)
     | Cpred_iterate (loc, _, _, _, _)
     | Cpred_upon (loc, _, _, _) ->
 	errf_at loc "Monadic code is not allowed here."
@@ -254,6 +260,10 @@ and build_aval_monad mm = function
 	| Some cy ->
 	    make_aval_chop loc cm ax (build_aval_monad mm cy)
 	end
+    | Cpred_seq_which (loc, op, cx, (cm_opt, cw), cy_opt) ->
+	let aw = build_aval cm_opt cw in
+	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw,
+		  build_aval_monad mm (Cpred_seq (loc, op, cx, cy_opt)))
     | Cpred_iterate (loc, op, cx, cy, ccont_opt) ->
 	let ax = build_aval_expr cx in
 	let ay = build_aval_monad mm cy in

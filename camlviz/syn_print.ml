@@ -151,6 +151,16 @@ and print_predicate fo = function
 	Fo.put_kw fo op;
 	print_inline fo Opkind.p_min cx;
 	Option.iter (print_predicate fo) cy_opt
+    | Cpred_seq_which (_, Idr op, cx, (cm_opt, cw), cy_opt) ->
+	Fo.newline fo;
+	Fo.put_kw fo op;
+	print_inline fo Opkind.p_min cx;
+	Fo.put_kw fo
+	    (match cm_opt with None -> "which" | Some cm -> ("which!" ^ cm));
+	Fo.enter_indent fo;
+	print_predicate fo cw;
+	Fo.leave_indent fo;
+	Option.iter (print_predicate fo) cy_opt;
     | Cpred_iterate (_, Idr op, cx, cy, cz_opt) ->
 	Fo.newline fo;
 	Fo.put_kw fo op;

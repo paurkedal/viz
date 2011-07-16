@@ -268,11 +268,6 @@ atomic_predicate:
   | FAIL { cpred_failure (mkloc $startpos $endpos) None }
   | FAIL term { cpred_failure (mkloc $startpos $endpos) (Some $2) }
   | RAISE term { Cpred_raise (mkloc $startpos $endpos, $2) }
-  | SEQ term
-    {
-	let loc = mkloc $startpos $endpos in
-	Cpred_seq (loc, $1, $2, None)
-    }
   ;
 compound_predicate:
     nonfunction_predicate { $1 }
@@ -286,8 +281,14 @@ nonfunction_predicate:
       Cpred_let (mkloc $startpos $endpos, $2, that_trm, $3, $1) }
   | if_predicate { $1 }
   | postif_predicate { $1 }
+  | SEQ term
+    { Cpred_seq (mkloc $startpos $endpos, $1, $2, None) }
   | SEQ term nonfunction_predicate_with_participle
     { Cpred_seq (mkloc $startpos $endpos, $1, $2, Some $3) }
+  | SEQ term WHICH predicate_block
+    { Cpred_seq_which (mkloc $startpos $endpos, $1, $2, ($3, $4), None) }
+  | SEQ term WHICH predicate_block nonfunction_predicate_with_participle
+    { Cpred_seq_which (mkloc $startpos $endpos, $1, $2, ($3, $4), Some $5) }
   | UPON term predicate_block nonfunction_predicate_with_participle
     { Cpred_upon (mkloc $startpos $endpos, $2, $3, $4) }
   | ITERATE term predicate_block
