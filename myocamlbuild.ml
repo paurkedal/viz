@@ -248,7 +248,7 @@ let ocaml_pkg lib =
 
 let ocaml_pp lib pa =
     flag ["ocaml"; "pp"; pa]
-	(S [A "-I"; A (ocamlfind_query lib); A (pa ^ ".cmo")])
+	(S [A "-I"; A (ocamlfind_query lib); A (pa ^ ".cma")])
 
 let camlvizpp_include path =
     flag ["ocaml"; "camlvizpp"; "compile"]	& S[A"-I"; P path];

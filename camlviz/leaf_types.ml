@@ -17,7 +17,7 @@
  *)
 
 TYPE_CONV_PATH "Camlviz.Cst_types"
-open Sexplib
+open Sexplib.Conv
 open Unicode
 
 type loc = Location.t

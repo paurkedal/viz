@@ -19,7 +19,7 @@
 (** Type Definitions of the Abstract Syntax Tree *)
 
 TYPE_CONV_PATH "Camlviz.Ast_types"
-open Sexplib
+open Sexplib.Conv
 open Leaf_types
 open Cst_types
 
