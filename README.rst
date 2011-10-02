@@ -12,7 +12,10 @@ the implementation is under development.  At the moment, a subset of the
 language is implemented as an O'Caml preprocessor.  This will later be used to
 bootstrap a full stand-alone implementation.
 
-See the `Wiki pages`_ for a summary of the planned features.
+See also:
+
+* `The Viz Language Site <http://www.vizlang.org/>`_
+* `The GitHub Wiki <https://github.com/paurkedal/viz/wiki.html>`_
 
 
 Quick Start
@@ -68,4 +71,3 @@ Directories
 
 
 .. _Godi: http://godi.camlcity.org/godi/index.html
-.. _Wiki pages: https://github.com/paurkedal/viz/wiki.html
