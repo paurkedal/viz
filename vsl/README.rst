@@ -10,4 +10,4 @@ using the `camlviz` preprocessor, we use the `mlpack` associated to each
 directory.  Also note that the `#?ffoc`-comments are interpreted by `camlviz`
 and ignored by the final compiler.
 
-See also `the highlighted sources <http://www.vizlang.org/hlsrc/>`_
+See also `the highlighted VSL sources <http://www.vizlang.org/hlsrc/>`_.
