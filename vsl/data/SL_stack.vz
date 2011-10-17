@@ -1,0 +1,133 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+# 0.  Pure Stack
+#
+# This provides a pure stack datatype with logarithmic time access to
+# arbitrary frames and logarithmic space and time overhead for push.  It is
+# implemented as a skip-list with deterministic back-links.
+
+open prereq
+
+sealed with
+    type t α
+
+    val is_empty : t α → bool
+    val depth : t α → int
+
+    val empty : t α
+    val push : α → t α → t α
+    val pop : t α → option (α × t α)
+    val pop_e : t α → α × t α
+
+    val top : t α → option α
+    val top_e : t α → α
+    val drop : t α → t α
+    val drop_n : int → t α → t α
+
+    val get : int → t α → option α
+    val get_e : int → t α → α
+
+    val dump : (α → string) → t α → io unit
+
+type t α
+ inj empty
+ inj node : α → int → array (t α) → t α
+
+let is_empty at empty% be true
+	     at node _ _ _ be false
+
+let depth at empty% be 0
+	  at node _ n _ be n
+
+let getlink i
+    at empty% fail "getlink on empty stack"
+    at node _ _ links be array.get i links
+
+let top
+    at empty% be none
+    at node x _ _ be some x
+
+let top_e
+    at empty% fail "top_e called on empty stack."
+    at node x _ _ be x
+
+let drop
+    at empty% be empty
+    at node _ _ links be array.get 0 links
+
+let drop_n dn
+    at empty% be empty
+    at s@(node x n links)
+	if dn = 0 be s
+	if dn ≥ n be empty
+	let n_dst be n - dn
+	let ascend (bitno, n, s)
+	    let bit be int.shift bitno 1
+	    if int.bitand bit n = 0 be ascend (bitno + 1, n, s)
+	    let n' be int.bitand n (int.bitnot bit)
+	    if n' < n_dst be (bitno, n - n_dst, s)
+	    be ascend (bitno + 1, n', getlink bitno s)
+	let descend (bitno, dn, s)
+	    if dn = 0 be s
+	    let bitno' be bitno - 1
+	    let bit' be int.shift bitno' 1
+	    if int.bitand bit' dn = 0 be descend (bitno', dn, s)
+	    let dn' be int.bitand (int.bitnot bit') dn
+	    be descend (bitno', dn', getlink bitno' s)
+	be descend (ascend (0, n, s))
+
+let push x
+    at empty%
+	be node x 1 (array.init 1 (_ ↦ empty))
+    at s'@(node _ n' _)
+	let n be n' + 1
+	let n_links be int.floor_log2 (int.bitxor n n' + 1)
+	let links, _
+	    be array.init_fold n_links
+		what at (bit, sC, nC)
+		    let sC' be drop_n (bit + nC - n) sC
+		    let nC' be n - bit
+		    let bit' be int.shift 1 bit
+		    be (sC', (bit', sC', nC'))
+		(1, s', n')
+	be node x n links
+
+let pop
+    at empty% be none
+    at node x _ links be some (x, array.get 0 links)
+
+let pop_e
+    at empty% fail "pop_e called on empty stack"
+    at node x _ links be (x, array.get 0 links)
+
+let get   dn be top   ∘ drop_n dn
+let get_e dn be top_e ∘ drop_n dn
+
+open effect
+
+let! dump show_elt
+    at empty% do print "  empty\n"
+    at node x n links
+	do print "  value = " >> print (show_elt x)
+	do print ";\tdepth = " >> print (int.show n)
+	do print "; links ="
+	do array.iter that links which!
+	    at empty% do print " ∅"
+	    at node _ n _ do print " " >> print (int.show n)
+	do print "\n"
+	do dump show_elt (array.get 0 links)

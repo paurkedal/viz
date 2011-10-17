@@ -12,3 +12,4 @@ vsl/data/string_
 vsl/data/UTF8string
 vsl/data/AA_map
 vsl/data/AA_set
+vsl/data/SL_stack
