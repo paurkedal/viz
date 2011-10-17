@@ -27,6 +27,8 @@ module Array_const : sig
 
     val init : int -> (int -> 'a) -> 'a array
 
+    val init_fold : int -> ('b -> 'a * 'b) -> 'b -> 'a array * 'b
+
     val of_list : 'a list -> 'a array
 
     val as_list : 'a array -> 'a list

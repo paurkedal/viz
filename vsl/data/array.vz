@@ -30,6 +30,8 @@ sealed with
 
     val init : int → (int → α) → t α
 
+    val init_fold : int → (β → α × β) → β → t α × β
+
     val uniform : int → α → t α
 
     val of_list : list α → t α
@@ -74,7 +76,7 @@ sealed with
 
     val unzip : t (α × β) → t α × t β
 
-    .in tagged
+    in tagged
 	type elt α := int × α
 	type t α := array α
 
@@ -174,7 +176,7 @@ let unzip a
     let n be length a
     be init n (i ↦ fst (get i a)), init n (i ↦ snd (get i a))
 
-.in tagged
+in tagged
     type elt α := int × α
     type t α := array α
 

@@ -25,6 +25,14 @@ module Array_const = struct
     let get i a = Array.get a i
     let slice n i a = Array.sub a i n
     let init n f = Array.init n f
+    let init_fold n f accu =
+	let accu_r = ref accu in
+	let f' i =
+	    let x, accu = f !accu_r in
+	    accu_r := accu;
+	    x in
+	let a = init n f' in
+	(a, !accu_r)
     let of_list = Array.of_list
     let as_list = Array.to_list
     let cat = Array.append
@@ -36,6 +44,8 @@ module Array_act = struct
 
     let length = Array.length
     let init n f = __builtin_effect (fun () -> Array.init n f)
+    let init_fold n f accu =
+	__builtin_effect (fun () -> Array_const.init_fold n f accu)
     let get i a = __builtin_effect (fun () -> Array.get a i)
     let slice n i a = __builtin_effect (fun () -> Array.sub a i n)
     let set i x a = __builtin_effect (fun () -> Array.set a i x)

@@ -28,6 +28,8 @@ val length : r α → int
 
 val init : int → (int → α) → r α
 
+val init_fold : int → (β → α × β) → β → r α × β
+
 val uniform : int → α → φ /~ r α
 
 val get : int → r α → effect φ α
