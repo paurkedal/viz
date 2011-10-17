@@ -251,7 +251,7 @@ let rec emit_aval = function
 		else $emit_aval_opt loc y$
 	    end
 	>>
-    | Aval_seq (loc, op, x, y) when op = Idr "trace" ->
+    | Aval_seq (loc, op, x, y) when op = Idr "__trace" ->
 	let _loc = p4loc loc in
 	let mkarg = function
 	    | Aval_apply (_, Aval_apply (_, Aval_ref colon, x), Aval_ref t)
