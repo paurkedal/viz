@@ -89,7 +89,7 @@ let! dump elt_to_string
 	do dump elt_to_string a >> print " * "
 	do dump elt_to_string b >> print ")"
 
-.in tagged
+in tagged
     let fold f
 	let loop i
 	    at singleton x be f (i, x)

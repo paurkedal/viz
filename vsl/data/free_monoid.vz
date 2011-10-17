@@ -37,7 +37,7 @@ let fold f be option.fold (free_semigroup.fold f)
 let iter f be option.iter (free_semigroup.iter f)
 let map f be option.map (free_semigroup.map f)
 
-.in tagged
+in tagged
     let for_all f be option.for_all (free_semigroup.tagged.for_all f)
     let for_some f be option.for_some (free_semigroup.tagged.for_some f)
     let fold f be option.fold (free_semigroup.tagged.fold f)
