@@ -23,8 +23,11 @@ module type A_basic_nat = sig
     type t
 
     val eq : t -> t -> bool
-    val leq : t -> t -> bool
     val cmp : t -> t -> torder
+    val op2_U2264 (* ≤ *) : t -> t -> bool
+    val op2_U2265 (* ≥ *) : t -> t -> bool
+    val op2_U003c (* < *) : t -> t -> bool
+    val op2_U003e (* > *) : t -> t -> bool
 
     val width : int
     val zero : t

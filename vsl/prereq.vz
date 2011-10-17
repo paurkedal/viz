@@ -28,6 +28,9 @@ in combinators
     let x |> f be f x  # x "under" f
 
 in basics
+    type line_location := string * int
+    inj failure : line_location → string → exception
+
     let fst (x, _) be x
     let snd (_, y) be y
 
@@ -42,6 +45,7 @@ in basics
 	let x ≥ y be (tprec% ↦ false; _ ↦ true) (Ord.cmp x y)
 	let x < y be (tprec% ↦ true; _ ↦ false) (Ord.cmp x y)
 	let x > y be (tsucc% ↦ true; _ ↦ false) (Ord.cmp x y)
+open basics
 
 in bool_ops
     #?ffoc include compat.ocaml_pervasives.bool_ops
@@ -56,8 +60,11 @@ sig a_basic_nat
     type t
 
     val eq : t → t → bool
-    val leq : t → t → bool
     val cmp : t → t → torder
+    val 2'≤ : t → t → bool
+    val 2'≥ : t → t → bool
+    val 2'< : t → t → bool
+    val 2'> : t → t → bool
 
     val width : int
     val zero : t
@@ -100,9 +107,21 @@ in int_ops.(Int : a_basic_int)
     let 1'− be Int.neg
 
 in extend_basic_int_or_nat.(Nat : a_basic_nat)
+    open compat.ocaml_miscints
     open Nat
-    let min x y be leq x y ⇒ x; y
-    let max x y be leq x y ⇒ y; x
+
+    let min x y be x ≤ y ⇒ x; y
+    let max x y be x ≤ y ⇒ y; x
+
+    let floor_log2 x
+	let f iL width
+	    if int.eq width 1 be iL
+	    let halfwidth be int.shift -1 width
+	    let iM be int.add iL halfwidth
+	    be f iL halfwidth if eq zero (shift (int.neg iM) x)
+	    be f iM (int.sub width halfwidth) otherwise
+	if x <= zero fail "Non-positive value passed to floor_log2."
+	be f 0 width
 
 in extend_basic_nat.(Nat : a_basic_nat)
     include extend_basic_int_or_nat.(Nat)
@@ -153,10 +172,6 @@ in effect
 
 in effect_pervasive
     open effect
-
-    type line_location := string * int
-
-    inj failure : line_location → string → exception
 
     let __builtin_toplevel_run m be __builtin_effect_run what!
 	upon failure (p, l) msg

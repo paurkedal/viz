@@ -23,8 +23,11 @@ module type A_basic_nat = sig
     type t
 
     val eq : t -> t -> bool
-    val leq : t -> t -> bool
     val cmp : t -> t -> torder
+    val op2_U2264 (* ≤ *) : t -> t -> bool
+    val op2_U2265 (* ≥ *) : t -> t -> bool
+    val op2_U003c (* < *) : t -> t -> bool
+    val op2_U003e (* > *) : t -> t -> bool
 
     val width : int
     val zero : t
@@ -81,8 +84,11 @@ module Adapt (M : Ocaml_int) = struct
     include M
 
     let eq x y = x = y
-    let leq x y = x <= y
     let cmp = __generic_cmp
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = x <= y
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = x >= y
+    let op2_U003c (* < *) (x : t) (y : t) = x < y
+    let op2_U003e (* > *) (x : t) (y : t) = x > y
 
     let width =
 	let rec loop n x =
@@ -125,8 +131,11 @@ module Int = struct
     let one = 1
 
     let eq x y = x = y
-    let leq x y = x <= y
     let cmp = __generic_cmp
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = x <= y
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = x >= y
+    let op2_U003c (* < *) (x : t) (y : t) = x < y
+    let op2_U003e (* > *) (x : t) (y : t) = x > y
 
     let width =
 	let rec loop n x =
@@ -167,8 +176,11 @@ module Nat32 = struct
     type t = int32
 
     let eq x y = x = y
-    let leq x y = x <= y
     let cmp = __generic_cmp
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = x <= y
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = x >= y
+    let op2_U003c (* < *) (x : t) (y : t) = x < y
+    let op2_U003e (* > *) (x : t) (y : t) = x > y
 
     let width = 32
     let zero = Int32.zero
@@ -198,8 +210,11 @@ module Nat64 = struct
     type t = int64
 
     let eq x y = x = y
-    let leq x y = x <= y
     let cmp = __generic_cmp
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = x <= y
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = x >= y
+    let op2_U003c (* < *) (x : t) (y : t) = x < y
+    let op2_U003e (* > *) (x : t) (y : t) = x > y
 
     let width = 64
     let zero = Int64.zero
