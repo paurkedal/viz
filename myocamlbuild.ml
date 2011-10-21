@@ -313,15 +313,30 @@ let () = dispatch begin function
 
 	(* Some dependencies are not picked up, maybe due to the nested
 	 * mlpack-hierarchy. *)
-	cdep "vsl/foreign/C/record" ["vsl/foreign/field_allocation"];
 	cdep "vsl/control/exception" ["vsl/prereq"];
 	cdep "vsl/data/AA_map" ["vsl/data/option"; "vsl/data/string_"];
 	cdep "vsl/data/AA_set" ["vsl/data/AA_map"];
+	cdep "vsl/data/array_" ["vsl/prereq"];
+	cdep "vsl/data/array_ref" ["vsl/prereq"];
+	cdep "vsl/data/bool" ["vsl/prereq"];
+	cdep "vsl/data/char_" ["vsl/prereq"];
+	cdep "vsl/data/free_monoid" ["vsl/prereq"];
+	cdep "vsl/data/free_semigroup" ["vsl/prereq"];
+	cdep "vsl/data/int" ["vsl/prereq"];
+	cdep "vsl/data/list_" ["vsl/prereq"];
+	cdep "vsl/data/option" ["vsl/prereq"];
 	cdep "vsl/data/string_" ["vsl/data/char_"; "vsl/data/list_"];
-	cdep "vsl/foreign/C/utils" ["vsl/data"];
+	cdep "vsl/data/UTF8string" ["vsl/compat"];
+	cdep "vsl/foreign/C/memory" ["vsl/data"];
+	cdep "vsl/foreign/C/record"
+	    ["vsl/foreign/C/memory"; "vsl/foreign/field_allocation"];
+	cdep "vsl/foreign/C/utils" ["vsl/foreign/C/memory"];
+	cdep "vsl/foreign/field_allocation" ["vsl/data"];
 	cdep "vsl/prereq" ["vsl/compat"];
 	cdep "vsl/pervasive"
 	     ["vsl/foreign"; "vsl/control"; "vsl/data"; "vsl/system"];
+	cdep "vsl/system/posix/unistd" ["vsl/foreign"];
+	cdep "vsl/system/posix/stdlib" ["vsl/foreign"];
 	cdep "compiler/llvm/core" ["vsl/pervasive"];
 	cdep "compiler/llvm/execution" ["vsl/pervasive"];
 	()
