@@ -37,6 +37,9 @@ module Bound = struct
 
     let init p = {pos_fname = p; pos_lnum = 0; pos_cnum = 0; pos_bol = 0}, 0
 
+    let init_lc p l c =
+	{pos_fname = p; pos_lnum = l; pos_cnum = c; pos_bol = 0}, c
+
     let dummy = (dummy_pos, -1)
 
     let path (b, _) = b.pos_fname

@@ -201,6 +201,12 @@ let rec print_aval fo p = function
 	Fo.put fo `Keyword "raise"; Fo.space fo;
 	print_aval fo (p_apply + 1) x;
 	if p > p_apply then Fo.put fo `Operator ")"
+    | Aval_intype (_, t, x) ->
+	Fo.put fo `Operator "(";
+	print_atyp fo (p_colon + 1) t;
+	Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
+	print_aval fo (p_colon + 1) x;
+	Fo.put fo `Operator ")"
 
 let atyp_to_string atyp =
     let fo = Fo.create () in

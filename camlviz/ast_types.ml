@@ -61,6 +61,7 @@ type aval =
     | Aval_back of loc
     | Aval_seq of loc * idr * aval * aval option
     | Aval_raise of loc * aval
+    | Aval_intype of loc * atyp * aval
     with sexp
 
 type ause = [`Stub_prefix of string | `type_c of avar * string]
@@ -72,6 +73,7 @@ type atypinfo =
     | Atypinfo_alias of atyp
     | Atypinfo_injs of (loc * avar * atyp * ainjnum) list
     | Atypinfo_cabi of string
+    | Atypinfo_quant of atyp
     with sexp
 
 type asig =

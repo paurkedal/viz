@@ -39,9 +39,13 @@ let cut_last = function
     | x :: xs -> Some (x, xs)
     | [] -> None
 
-let last_e = List.hd
+let last_e = function
+    | x :: xs -> x
+    | [] -> failwith "Modpath.last_e"
 
-let strip_last_e = List.tl
+let strip_last_e = function
+    | x :: xs -> xs
+    | [] -> failwith "Modpath.strip_last_e"
 
 let length = List.length
 
@@ -73,6 +77,12 @@ let strip_prefix zs xs =
 
 let strip_suffix_e zs xs = Option.get (strip_suffix zs xs)
 let strip_prefix_e zs xs = Option.get (strip_prefix zs xs)
+
+let rec strip_common_prefix zs xs =
+    match zs, xs with
+    | [], _ -> xs
+    | _ :: _, [] -> []
+    | z :: zs', x :: xs' -> if z = x then strip_common_prefix zs' xs' else xs
 
 let fold = List.fold_right
 

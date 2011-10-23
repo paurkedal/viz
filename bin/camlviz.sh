@@ -83,7 +83,6 @@ shift
 # Scan through the Subcommand Parameters
 #
 builddir=$VIZ_SRCDIR/_build
-grab_arg=false
 pp_opts=
 oc_args=
 have_c_flag=false
@@ -91,18 +90,18 @@ seen_source=false
 extra_includes="-I $builddir/vsl -I $builddir"
 extra_packages="-package camomile"
 camlviz_error_pipe=
-for arg in "$@"; do
-    if [ x"$grab_arg" = xtrue ]; then
-	pp_opts="$pp_opts $arg"
-	oc_args="$oc_args $arg"
-	grab_arg=false
-	continue
-    fi
+while [ $# -gt 0 ]; do
+    arg="$1"
+    shift
     case "$arg" in
 	-I)
-	    grab_arg=true
-	    pp_opts="$pp_opts -I"
-	    oc_args="$oc_args -I"
+	    pp_opts="$pp_opts -I $1"
+	    oc_args="$oc_args -I $1"
+	    shift
+	    ;;
+	-R)
+	    pp_opts="$pp_opts -R $1"
+	    shift
 	    ;;
 	*.vz|*.viz|*.ff)
 	    seen_source=true

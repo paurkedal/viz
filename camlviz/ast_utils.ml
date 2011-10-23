@@ -191,12 +191,15 @@ let rec fold_aval_paths f =
     | Aval_seq (_, _, x, y) ->
 	fold_aval_paths f x *> Option.fold (fold_aval_paths f) y
     | Aval_raise (_, x) -> fold_aval_paths f x
+    | Aval_intype (_, t, x) ->
+	fold_atyp_paths (f `Type) t *> fold_aval_paths f x
 
 let fold_atypinfo_paths f = function
     | Atypinfo_abstract | Atypinfo_cabi _ -> ident
     | Atypinfo_alias u -> fold_atyp_paths f u
     | Atypinfo_injs injs ->
 	List.fold (fun (_, _, u, _) -> fold_atyp_paths f u) injs
+    | Atypinfo_quant u -> fold_atyp_paths f u
 
 let fold_atypbind_paths f (_, _, us, ti) =
     List.fold (fold_atyp_paths (f `Type)) us *>
@@ -275,6 +278,9 @@ and fold_adef_cabi_open f = function
 	ident
     | Adef_cabi_val _ -> ident
     | Adef_cabi_open (_, inc) -> f inc
+
+
+(* Use Directives *)
 
 let cabi_path = Modpath.atom (Idr "cabi")
 

@@ -254,6 +254,9 @@ and ctrm_is_pure = function
     | Ctrm_array (_, xs) -> List.for_all ctrm_is_pure xs
     | Ctrm_rel (_, x, rels) ->
 	ctrm_is_pure x && List.for_all (fun (_, op, y) -> ctrm_is_pure y) rels
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (colon, _), x), t)
+	    when cidr_is_2o_colon colon ->
+	ctrm_is_pure x
     | Ctrm_apply (_, x, y) -> ctrm_is_pure x && ctrm_is_pure y
     | Ctrm_what (_, Some _, _) -> true
     | Ctrm_what (_, None, x) -> cpred_is_pure x

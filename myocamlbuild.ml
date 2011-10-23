@@ -35,7 +35,8 @@ let split_on_space s =
 let camlviz_path = "../bin/camlviz"
 let camlvizpp_path = "bin/camlvizpp.native"
 let camlvizerror_path = "bin/camlvizerror.native"
-let camlvizpp_deps = [camlvizpp_path; camlvizerror_path; "vsl/stdlex.vz"]
+let camlvizpp_deps =
+    [camlvizpp_path; camlvizerror_path; "vsl/stdlex.vz"; "vsl/compat/quant.map"]
 let use_camlviz_wrapper = true
 let static = true
 
@@ -306,8 +307,9 @@ let () = dispatch begin function
 	let vsl_includes = S[A"-I"; P"vsl"; A"-I"; P"compiler"] in
 	flag ["ocaml"; "camlvizpp"] vsl_includes;
 	flag ["cstubs"; "camlvizpp"] vsl_includes;
-	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compile"];
+	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compiler"];
 	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";
+	flag ["camlvizpp"; "compile"] & S[A"-R"; P"vsl"; A"-R"; P"compiler"];
 
 	Pathname.define_context "vsl/foreign/C" ["vsl/foreign"];
 
@@ -327,7 +329,7 @@ let () = dispatch begin function
 	cdep "vsl/data/option" ["vsl/prereq"];
 	cdep "vsl/data/string_" ["vsl/data/char_"; "vsl/data/list_"];
 	cdep "vsl/data/UTF8string" ["vsl/compat"];
-	cdep "vsl/foreign/C/memory" ["vsl/data"];
+	cdep "vsl/foreign/C/memory" ["vsl/data"; "vsl/foreign/C/memory_FFIC"];
 	cdep "vsl/foreign/C/record"
 	    ["vsl/foreign/C/memory"; "vsl/foreign/field_allocation"];
 	cdep "vsl/foreign/C/utils" ["vsl/foreign/C/memory"];

@@ -31,6 +31,8 @@ module Bound : sig
 
     val init : string -> t
 
+    val init_lc : string -> int -> int -> t
+
     val dummy : t
 
     val path : t -> string

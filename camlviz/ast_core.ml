@@ -83,6 +83,7 @@ let rec aval_loc = function
     | Aval_match (loc, _, _) -> loc
     | Aval_seq (loc, _, _, _) -> loc
     | Aval_raise (loc, _) -> loc
+    | Aval_intype (loc, _, _) -> loc
 
 let rec apat_loc = function
     | Apat_literal (loc, _) -> loc
@@ -165,6 +166,19 @@ let aval_internal_error loc msg =
 		 (aval_string loc (Location.to_string loc))
 		 (aval_string loc msg)
 
+let rec atyp_map ?(on_apath = ident) ?(on_avar = ident) ?on_atyp t =
+    let on_atyp' =
+	match on_atyp with
+	| None -> atyp_map ~on_apath ~on_avar ?on_atyp
+	| Some f -> f in
+    match t with
+    | Atyp_ref p -> Atyp_ref (on_apath p)
+    | Atyp_uvar v -> Atyp_uvar (on_avar v)
+    | Atyp_A (loc, v, t0) -> Atyp_A (loc, v, on_atyp' t0)
+    | Atyp_E (loc, v, t0) -> Atyp_E (loc, v, on_atyp' t0)
+    | Atyp_apply (loc, t0, t1) -> Atyp_apply (loc, on_atyp' t0, on_atyp' t1)
+    | Atyp_arrow (loc, t0, t1) -> Atyp_arrow (loc, on_atyp' t0, on_atyp' t1)
+
 let aval_map_subaval f = function
     | Aval_literal _ | Aval_ref _ | Aval_back _ as x -> x
     | Aval_apply (loc, x, y) -> Aval_apply (loc, f x, f y)
@@ -182,6 +196,7 @@ let aval_map_subaval f = function
     | Aval_if (loc, x, y, z) -> Aval_if (loc, f x, f y, f z)
     | Aval_seq (loc, op, x, y) -> Aval_seq (loc, op, f x, Option.map f y)
     | Aval_raise (loc, x) -> Aval_raise (loc, f x)
+    | Aval_intype (loc, t, x) -> Aval_intype (loc, t, f x)
 let adef_map_subamod f = function
     | Adef_include (loc, m) -> Adef_include (loc, f m)
     | Adef_in (loc, v, m) -> Adef_in (loc, v, f m)
@@ -212,3 +227,47 @@ let amod_map_subaval f = function
 	Amod_defs (loc, List.map (adef_map_subaval f) defs)
     | Amod_ref _ | Amod_apply _ | Amod_lambda _
     | Amod_suspend _ | Amod_generate _ | Amod_coercion _ as m -> m
+
+let avar_compare (Avar (_, Idr idr)) (Avar (_, Idr idr')) =
+    compare idr idr'
+
+let apath_compare (Apath (_, p)) (Apath (_, q)) = Modpath.compare p q
+
+let rec atyp_subst x x' = function
+    | Atyp_ref p -> Atyp_ref p
+    | Atyp_uvar y -> Atyp_uvar (if x = y then x' else y)
+    | Atyp_A (loc, y, t) ->
+	Atyp_A (loc, x, (if x = y then t else atyp_subst x x' t))
+    | Atyp_E (loc, y, t) ->
+	Atyp_E (loc, x, (if x = y then t else atyp_subst x x' t))
+    | Atyp_apply (loc, t, u) ->
+	Atyp_apply (loc, atyp_subst x x' t, atyp_subst x x' u)
+    | Atyp_arrow (loc, t, u) ->
+	Atyp_arrow (loc, atyp_subst x x' t, atyp_subst x x' u)
+
+let fresh_type_avar_next = ref 0
+let fresh_type_avar () =
+    let i = !fresh_type_avar_next in
+    fresh_type_avar_next := i + 1;
+    Avar (Location.dummy, Idr (Printf.sprintf "__fv%d" i))
+
+let rec atyp_compare ta tb =
+    match ta, tb with
+    | Atyp_ref pa, Atyp_ref pb -> apath_compare pa pb
+    | Atyp_uvar xa, Atyp_uvar xb -> avar_compare xa xb
+    | Atyp_A (_, xa, ua), Atyp_A (_, xb, ub)
+    | Atyp_E (_, xa, ua), Atyp_E (_, xb, ub) ->
+	let x = fresh_type_avar () in
+	let ua' = atyp_subst xa x ua in
+	let ub' = atyp_subst xb x ub in
+	atyp_compare ua' ub'
+    | Atyp_apply (_, fa, ua), Atyp_apply (_, fb, ub)
+    | Atyp_arrow (_, fa, ua), Atyp_arrow (_, fb, ub) ->
+	let c = atyp_compare fa fb in
+	if c <> 0 then c else
+	atyp_compare ua ub
+    | Atyp_ref _, _   -> -1 | _, Atyp_ref _   -> 1
+    | Atyp_uvar _, _  -> -1 | _, Atyp_uvar _  -> 1
+    | Atyp_A _, _     -> -1 | _, Atyp_A _     -> 1
+    | Atyp_E _, _     -> -1 | _, Atyp_E _     -> 1
+    | Atyp_apply _, _ -> -1 | _, Atyp_apply _ -> 1

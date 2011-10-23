@@ -43,6 +43,7 @@ val strip_suffix : t -> t -> t option
 val strip_suffix_e : t -> t -> t
 val strip_prefix : t -> t -> t option
 val strip_prefix_e : t -> t -> t
+val strip_common_prefix : t -> t -> t
 
 val fold : (idr -> 'a -> 'a) -> t -> 'a -> 'a
 val rfold : (idr -> 'a -> 'a) -> t -> 'a -> 'a

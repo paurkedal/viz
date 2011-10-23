@@ -16,10 +16,24 @@
  * with the Viz Compiler.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-(** O'Caml Code Generation Based on Camlp4 *)
-
 open Ast_types
-open Camlp4.PreCast
 
-val emit_toplevel :
-    modpath: Modpath.t -> quantmap: Quantmap.t -> amod -> Ast.str_item
+type t
+
+val empty : t
+
+val card : t -> int
+
+val load : roots: string list -> string -> t -> t
+
+val load_all : roots: string list -> t -> t
+
+val add : atyp -> Modpath.t -> t -> t
+
+val find : atyp -> t -> Modpath.t option
+
+val open_module : Modpath.t -> t -> t
+
+val filter_by_path : Modpath.t -> t -> t
+
+val fold : (atyp -> Modpath.t -> 'a -> 'a) -> t -> 'a -> 'a

@@ -333,6 +333,9 @@ and build_aval_expr = function
 	    Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (semi, _), cy), cz))
 	    when cidr_is_2o_implies impl && cidr_is_2o_semicolon semi ->
 	build_aval_pure (Cst_utils.cpred_if_ctrm loc cx cy cz)
+    | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (colon, _), cx), ct)
+	    when cidr_is_2o_colon colon ->
+	Aval_intype (loc, build_atyp ct, build_aval_expr cx)
     | Ctrm_apply (loc, cx, cy) ->
 	Aval_apply (loc, build_aval_expr cx, build_aval_expr cy)
     | Ctrm_array (loc, cxs) ->

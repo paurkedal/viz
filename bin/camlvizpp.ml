@@ -103,6 +103,7 @@ let _ =
     let rewrite_ast = ref true in
     let nroots = ref [] in
     let roots = ref [] in
+    let strip_roots = ref [] in
     let topdir = ref None in
     let raw_deps = ref false in
     let serid = ref None in
@@ -114,6 +115,9 @@ let _ =
 	     --depend, don't create dependencies for it.";
 	"-I", Arg.String (fun p -> roots := p :: !roots),
 	    "PATH Prepend PATH to the root paths to search for structures.";
+	"-R", Arg.String (fun p -> strip_roots := p :: !strip_roots),
+	    "PATH Strip PATH from the input file path when determining \
+	     the module path.";
 	"-T", Arg.String (fun p -> topdir := Some p),
 	    "PATH Add PATH prefix to all roots when scanning for dependencies \
 	     but don't include it in the result.";
@@ -146,8 +150,21 @@ let _ =
 	    exit 64 (* EX_USAGE *)
 	| Some x -> x in
     let in_path = require "An input path" !in_path_opt in
+    let modpath = Modpath.of_string_list
+	    (String.split_on_char '/' (Filename.chop_extension in_path)) in
+    let modpath =
+	List.fold
+	    begin fun rootdir modpath' ->
+		let rootpath = Modpath.of_string_list
+				    (String.split_on_char '/' rootdir) in
+		match Modpath.strip_prefix rootpath modpath with
+		| None -> modpath'
+		| Some p -> p
+	    end
+	    !strip_roots modpath in
     let module_name = Filename.chop_extension (Filename.basename in_path) in
     try
+	let quantmap = Quantmap.load_all !roots Quantmap.empty in
 	let term = Parser.parse_file ~roots: (!roots @ !nroots) in_path in
 	let term, () =
 	    Cst_rewrite.default_rewrite_ctrm
@@ -168,7 +185,7 @@ let _ =
 	if !do_depend then
 	    print_depend ~module_name !raw_deps !topdir !roots
 			 in_path amod else
-	let omod = Ast_to_p4.emit_toplevel ~module_name amod in
+	let omod = Ast_to_p4.emit_toplevel ~modpath ~quantmap amod in
 	if !add_loc then
 	    Ocaml_printer.print !out_path_opt
 		(fun o -> o#set_loc_and_comments#implem)

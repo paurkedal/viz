@@ -145,6 +145,9 @@ end
 module String = struct
     include String
 
+    let rec skip_while f s i =
+	if i < length s && f s.[i] then skip_while f s (i + 1) else i
+
     let map_of_list f xs =
 	let buf = Buffer.create 8 in
 	List.iter (Buffer.add_char buf *< f) xs;
