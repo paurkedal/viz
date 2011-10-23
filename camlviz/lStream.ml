@@ -27,6 +27,11 @@ type t = {
 
 let null = {stream = Stream.of_list []; locb = Location.Bound.dummy}
 
+let of_string ?(locb = Location.Bound.dummy) s =
+    let utf8_stream = Stream.of_string s in
+    let stm = CharEncoding.ustream_of CharEncoding.utf8 utf8_stream in
+    {stream = stm; locb = locb}
+
 let open_in path =
     let utf8_stream = Stream.of_channel (open_in path) in
     let stm = CharEncoding.ustream_of CharEncoding.utf8 utf8_stream in

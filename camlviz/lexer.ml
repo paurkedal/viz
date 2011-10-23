@@ -634,7 +634,7 @@ let pop_virtual_token state =
 let default_state_template = {
     st_stream = LStream.null;
     st_indent = -1;
-    st_holding = (Location.dummy, Grammar.EOF, Opkind.Lr_declarator);
+    st_holding = (Location.dummy, Grammar.DEFAULT_START, Opkind.Lr_inert);
     st_pending = [];
     st_last_lexical_role = Opkind.Lr_inert;
     st_keywords = initial_keywords;
@@ -645,8 +645,10 @@ let default_state_template = {
 }
 
 let create_from_lstream st_stream =
-    let state = {default_state_template with st_stream = st_stream} in
-    let _ = pop_manifest_token state in state
+    {default_state_template with st_stream = st_stream}
+
+let create_from_string ?locb expr =
+    create_from_lstream (LStream.of_string ?locb expr)
 
 let create_from_file path =
     create_from_lstream (LStream.open_in path)

@@ -147,39 +147,34 @@ let _ =
 	| Some x -> x in
     let in_path = require "An input path" !in_path_opt in
     let module_name = Filename.chop_extension (Filename.basename in_path) in
-    match Parser.parse_file ~exts: [""] ~roots: (!roots @ !nroots) in_path with
-    | Some term ->
-	begin try
-	    let term, () =
-		Cst_rewrite.default_rewrite_ctrm
-		    Cst_rewrite.default_rewriter `Structure (term, ()) in
-	    if !do_cst then print_cst term else
-	    let amod = Cst_to_ast.build_amod term
-		    |> Bool.power !rewrite_ast Ast_rewrite.std_amod_rewrite
-		    |> Bool.power !open_pervasive add_pervasive_in_amod in
-	    if !do_ast then print_ast amod else
-	    if !do_cstubs then begin
-		let serid =
-		    match !serid with
-		    | Some serid -> serid
-		    | None -> sprintf "org.vizlang.camlviz.%s." module_name in
-		Ast_to_cstubs.output_cstubs stdout serid amod
-	    end else
-	    if !do_consts then Ast_to_consts.output_consts stdout amod else
-	    if !do_depend then
-		print_depend ~module_name !raw_deps !topdir !roots
-			     in_path amod else
-	    let omod = Ast_to_p4.emit_toplevel ~module_name amod in
-	    if !add_loc then
-		Ocaml_printer.print !out_path_opt
-		    (fun o -> o#set_loc_and_comments#implem)
-		    omod
-	    else
-		Printers.OCaml.print_implem ?output_file:!out_path_opt omod
-	with Error_at (loc, msg) ->
-	    eprintf "%s: %s\n" (Location.to_string loc) msg;
-	    exit 65 (* EX_DATAERR *)
-	end
-    | None ->
-	fprintf stderr "No result\n";
+    try
+	let term = Parser.parse_file ~roots: (!roots @ !nroots) in_path in
+	let term, () =
+	    Cst_rewrite.default_rewrite_ctrm
+		Cst_rewrite.default_rewriter `Structure (term, ()) in
+	if !do_cst then print_cst term else
+	let amod = Cst_to_ast.build_amod term
+		|> Bool.power !rewrite_ast Ast_rewrite.std_amod_rewrite
+		|> Bool.power !open_pervasive add_pervasive_in_amod in
+	if !do_ast then print_ast amod else
+	if !do_cstubs then begin
+	    let serid =
+		match !serid with
+		| Some serid -> serid
+		| None -> sprintf "org.vizlang.camlviz.%s." module_name in
+	    Ast_to_cstubs.output_cstubs stdout serid amod
+	end else
+	if !do_consts then Ast_to_consts.output_consts stdout amod else
+	if !do_depend then
+	    print_depend ~module_name !raw_deps !topdir !roots
+			 in_path amod else
+	let omod = Ast_to_p4.emit_toplevel ~module_name amod in
+	if !add_loc then
+	    Ocaml_printer.print !out_path_opt
+		(fun o -> o#set_loc_and_comments#implem)
+		omod
+	else
+	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod
+    with Error_at (loc, msg) ->
+	eprintf "%s: %s\n" (Location.to_string loc) msg;
 	exit 65 (* EX_DATAERR *)

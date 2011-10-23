@@ -130,6 +130,8 @@ let apply_fence loc name0 name1 =
 %token <Leaf_types.idr * Cst_types.idrhint> HINTED_IDENTIFIER
 %token <Cst_types.cdef> PREPARED_DEF
 
+%token DEFAULT_START
+
 %type <Cst_types.ctrm> main
 %type <Cst_types.ctrm> expr
 %type <Cst_types.cpred> predicate_block
@@ -137,12 +139,16 @@ let apply_fence loc name0 name1 =
 %%
 
 main:
-    EOF { Ctrm_where (mkloc $startpos $endpos, []) }
-  | structure_block EOF { $1 }
-  | expr EOF { $1 }
+    DEFAULT_START default_start { $2 };
   /* The following tokens are only used internally by the lexer.  We add them
      only to silence Menhir. */
   | LEX | LEXALIAS | LEXOPEN { assert false }
+  ;
+
+default_start:
+    EOF { Ctrm_where (mkloc $startpos $endpos, []) }
+  | structure_block EOF { $1 }
+  | expr EOF { $1 }
   ;
 
 signature_block:

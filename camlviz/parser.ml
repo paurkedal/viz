@@ -18,6 +18,7 @@
 
 open Printf
 open FfPervasives
+open Diag
 
 let rtok_token (token, loc) = token
 let rtok_bpos  (token, loc) =
@@ -65,25 +66,26 @@ let load_stdlex root_paths =
 	let lexer = Lexer.lexer state in
 	grammar_main lexer
     with Not_found ->
-	print_error Location.dummy "Cannot find the stdlex structure.";
-	raise Not_found
+	errf_at Location.dummy "Cannot find the stdlex structure."
 
-let parse_file ?exts ~roots path =
-    let state = Lexer.create_from_file path in
+let parse_state ~roots state =
     Lexer.lexopen state (load_stdlex roots);
     let lexer = Lexer.lexer state in
-    try Some (grammar_main lexer) with
-    | Diag.Error_at (loc, msg) ->
-	print_error loc msg;
-	None
-    | Grammar.Error ->
-	print_error (Lexer.last_location state) "Syntax error.";
-	None
+    try grammar_main lexer
+    with Grammar.Error ->
+	errf_at (Lexer.last_location state) "Syntax error."
+
+let parse_string ?locb ~roots expr =
+    let state = Lexer.create_from_string ?locb expr in
+    parse_state ~roots state
+
+let parse_file ~roots path =
+    let state = Lexer.create_from_file path in
+    parse_state ~roots state
 
 let find_and_parse_file ?exts ~roots path =
     try
 	let path = locate_source ?exts ~roots path in
-	parse_file ?exts ~roots path
+	parse_file ~roots path
     with Not_found ->
-	print_error Location.dummy (sprintf "Could not find %s." path);
-	None
+	errf_at Location.dummy "Could not find %s." path

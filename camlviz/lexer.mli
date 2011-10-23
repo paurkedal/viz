@@ -27,6 +27,8 @@ val last_location : state -> Location.t
 
 val create_from_lstream : LStream.t -> state
 
+val create_from_string : ?locb : Location.Bound.t -> string -> state
+
 val create_from_file : string -> state
 
 val lexer : state -> unit -> Grammar.token * Location.t

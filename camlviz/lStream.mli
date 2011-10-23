@@ -25,6 +25,8 @@ type elt = UChar.t
 
 val null : t
 
+val of_string : ?locb: Location.Bound.t -> string -> t
+
 val open_in : string -> t
 
 val locbound : t -> Location.Bound.t

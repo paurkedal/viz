@@ -25,8 +25,10 @@ val locate_source :
     ?topdir: string -> roots: string list ->
     string -> string
 
-val parse_file :
-    ?exts: string list -> roots: string list -> string -> ctrm option
+val parse_string :
+    ?locb : Location.Bound.t -> roots: string list -> string -> ctrm
+
+val parse_file : roots: string list -> string -> ctrm
 
 val find_and_parse_file :
-    ?exts: string list -> roots: string list -> string -> ctrm option
+    ?exts: string list -> roots: string list -> string -> ctrm
