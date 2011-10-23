@@ -28,31 +28,28 @@ open FfPervasives
 open Unicode
 
 let cidr_to_avar (Cidr (loc, idr)) = Avar (loc, idr)
+let cidr_to_apath (Cidr (loc, idr)) = Apath (loc, Modpath.atom idr)
 
-let apath_to_avar = function
-    | Apath ([], av) -> av
-    | ap -> errf_at (apath_loc ap) "Expecting an unqualified name."
+let apath_to_avar (Apath (loc, p)) =
+    if Modpath.is_atom p then Avar (loc, Modpath.last_e p) else
+    errf_at loc "Expecting an unqualified name."
 
 let build_avar ?(error_message = "Expecting an identifer") = function
     | Ctrm_ref (cidr, idrhint) -> cidr_to_avar cidr
     | ctrm -> errf_at (ctrm_loc ctrm) "%s" error_message
 
 let build_apath ctrm =
-    let rec loop avs = function
-	| Ctrm_project (loc, cidr, ctrm) ->
-	    loop (cidr_to_avar cidr :: avs) ctrm
-	| Ctrm_ref (cidr, hint) ->
-	    List.rev (cidr_to_avar cidr :: avs)
+    let rec loop idrs = function
+	| Ctrm_project (loc, Cidr (_, idr), ctrm) -> loop (idr :: idrs) ctrm
+	| Ctrm_ref (Cidr (_, idr), hint) -> idr :: idrs
 	| ct -> errf_at (ctrm_loc ct) "Expecting a variable or path." in
-    match loop [] ctrm with
-    | av :: avs -> Apath (avs, av)
-    | _ -> assert false (* unreachable *)
+    Apath (ctrm_loc ctrm, Modpath.of_idr_list (loop [] ctrm))
 
 let rec build_atyp ?(strip_indices = false) = function
     | Ctrm_ref (cidr, Ih_univ) ->
 	Atyp_uvar (cidr_to_avar cidr)
-    | Ctrm_ref (cidr, _) ->
-	Atyp_ref (Apath ([], cidr_to_avar cidr))
+    | Ctrm_ref (Cidr (loc, idr), _) ->
+	Atyp_ref (Apath (loc, Modpath.atom idr))
     | Ctrm_project _ as ctrm ->
 	Atyp_ref (build_apath ctrm)
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), ct), cu)
@@ -83,13 +80,13 @@ let build_atyp_con_args =
 let rec build_apat ?(adecmap = Idr_map.empty) ?(fpos = false) = function
     | Ctrm_literal (loc, lit) ->
 	Apat_literal (loc, lit)
-    | Ctrm_ref (cidr, Ih_inj) ->
-	Apat_ref (Apath ([], cidr_to_avar cidr))
-    | Ctrm_ref (cidr, _) ->
-	if fpos then Apat_ref (Apath ([], cidr_to_avar cidr)) else
-	let apat = Apat_uvar (cidr_to_avar cidr) in
+    | Ctrm_ref (Cidr (loc, idr), Ih_inj) ->
+	Apat_ref (Apath (loc, Modpath.atom idr))
+    | Ctrm_ref (Cidr (loc, idr), _) ->
+	if fpos then Apat_ref (Apath (loc, Modpath.atom idr)) else
+	let apat = Apat_uvar (Avar (loc, idr)) in
 	begin try
-	    let (loc, t) = Idr_map.find (cidr_to_idr cidr) adecmap in
+	    let (loc, t) = Idr_map.find idr adecmap in
 	    Apat_intype (loc, t, apat)
 	with Not_found -> apat end
     | Ctrm_project _ as ctrm ->
@@ -210,7 +207,7 @@ and build_aval_monad mm = function
 	let vf = avar_for_line loc in
 	let acont = build_aval_monad mm ccont in
 	let acont = Aval_at (loc, [(build_apat cpat, None, acont)]) in
-	let afref = Aval_ref (Apath ([], vf)) in
+	let afref = Aval_ref (apath_of_avar vf) in
 	let arhs = build_aval_monad (MM_bind afref) crhs in
 	Aval_let (loc, Apat_uvar vf, acont, arhs)
     | Cpred_let (loc, cm_opt, cpat, cpred, ccont)	(* Pattern Case *)
@@ -322,8 +319,8 @@ and build_aval_monad mm = function
 and build_aval_expr = function
     | Ctrm_literal (loc, lit) ->
 	Aval_literal (loc, lit)
-    | Ctrm_ref (cidr, _) ->
-	Aval_ref (Apath ([], cidr_to_avar cidr))
+    | Ctrm_ref (Cidr (loc, idr), _) ->
+	Aval_ref (Apath (loc, Modpath.atom idr))
     | Ctrm_project _ as ctrm ->
 	Aval_ref (build_apath ctrm)
     | Ctrm_apply (loc,
@@ -343,14 +340,14 @@ and build_aval_expr = function
     | Ctrm_rel (loc, cx, (_, cf, cy) :: rest) ->
 	let build_aval_rel cf cx cy =
 	    let loc = Location.span [ctrm_loc cx; ctrm_loc cy] in
-	    let af = Aval_ref (Apath ([], cidr_to_avar cf)) in
+	    let af = Aval_ref (cidr_to_apath cf) in
 	    let ax = build_aval_expr cx in
 	    let ay = build_aval_expr cy in
 	    Aval_apply (loc, Aval_apply (loc, af, ax), ay) in
 	let rec build_conj aconj cx = function
 	    | (_, cf, cy) :: rest ->
-		let avar_2o_and = Avar (Location.dummy, idr_2o_and) in
-		let and_op = Aval_ref (Apath ([], avar_2o_and)) in
+		let and_op = Aval_ref (Apath (Location.dummy,
+					      Modpath.atom idr_2o_and)) in
 		let arel = build_aval_rel cf cx cy in
 		build_conj
 		    (Aval_apply (loc, Aval_apply (loc, and_op, aconj), arel))
@@ -461,13 +458,13 @@ let rec build_atcases is_sig atcases algtb = function
     | Cdef_type (loc, Abi_C, p, cinjs) :: xs ->
 	let av, ats = build_atyp_con_args p in
 	let atcase = (loc, av, ats, Atypinfo_cabi (avar_name av)) in
-	let at = Ast_utils.atyp_apply (Apath ([], av)) ats in
+	let at = Ast_utils.atyp_apply (apath_of_avar av) ats in
 	let _, _, algtb = build_atinjs (Some at) algtb (cinjs, false) in
 	build_atcases is_sig (atcase :: atcases) algtb xs
     | Cdef_type (loc, Abi_Viz, p, cinjs) :: xs ->
 	let atcase, algtb = Algt_builder.add_type loc p algtb in
 	let _, av, ats, _ = atcase in
-	let at = Ast_utils.atyp_apply (Apath ([], av)) ats in
+	let at = Ast_utils.atyp_apply (apath_of_avar av) ats in
 	let _, _, algtb = build_atinjs (Some at) algtb (cinjs, false) in
 	build_atcases is_sig (atcase :: atcases) algtb xs
     | xs ->
@@ -506,7 +503,7 @@ let build_constraints loc eqns =
 
 let rec build_asig = function
     | Ctrm_ref (cidr, _) ->
-	Asig_ref (Apath ([], cidr_to_avar cidr))
+	Asig_ref (cidr_to_apath cidr)
     | Ctrm_project _ as ctrm ->
 	Asig_ref (build_apath ctrm)
     | Ctrm_with (loc, None, cdecs) ->
@@ -619,7 +616,7 @@ let rec build_amod_of_pred = function
     | cpred -> errf_at (cpred_loc cpred) "Invalid module expression."
 and build_amod = function
     | Ctrm_ref (cidr, _) ->
-	Amod_ref (Apath ([], cidr_to_avar cidr))
+	Amod_ref (cidr_to_apath cidr)
     | Ctrm_project _ as ctrm ->
 	Amod_ref (build_apath ctrm)
     | Ctrm_where (loc, cdefs) ->

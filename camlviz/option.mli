@@ -18,6 +18,7 @@
 
 (** A Structure for the [option] Type *)
 
+val get : 'a option -> 'a
 val default : 'a -> 'a option -> 'a
 val default_opt : 'a option -> 'a option -> 'a option
 val fold : ('a -> 'b -> 'b) -> 'a option -> 'b -> 'b

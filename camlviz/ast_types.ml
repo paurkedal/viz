@@ -28,7 +28,7 @@ let sexp_of_loc loc = sexp_of_unit ()
 
 type avar = Avar of loc * idr with sexp
 
-type apath = Apath of avar list * avar with sexp
+type apath = Apath of loc * Modpath.t with sexp
 
 type atyp =
     | Atyp_ref of apath

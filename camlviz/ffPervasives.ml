@@ -179,4 +179,16 @@ module String = struct
 	if m <= n && String.sub s (n - m) m = sfx
 	then String.sub s 0 (n - m)
 	else s
+
+    let join sep = function
+	| [] -> ""
+	| x :: xs ->
+	    let buf = Buffer.create 32 in
+	    Buffer.add_string buf x;
+	    List.iter
+		begin fun x ->
+		    Buffer.add_string buf sep;
+		    Buffer.add_string buf x
+		end xs;
+	    Buffer.contents buf
 end

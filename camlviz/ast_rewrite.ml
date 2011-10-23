@@ -24,14 +24,14 @@ open Cst_core
 let apat_pair loc x y =
     Apat_apply (loc,
 	Apat_apply (loc,
-	    Apat_ref (Apath ([], Avar (loc, idr_2o_comma))),
+	    Apat_ref (Apath (loc, Modpath.atom idr_2o_comma)),
 	    x),
 	y)
 
 let aval_pair loc x y =
     Aval_apply (loc,
 	Aval_apply (loc,
-	    Aval_ref (Apath ([], Avar (loc, idr_2o_comma))),
+	    Aval_ref (Apath (loc, Modpath.atom idr_2o_comma)),
 	    x),
 	y)
 
@@ -52,8 +52,8 @@ let rec std_aval_rewrite = function
 		| _ -> assert false
 	    end casesA
 	    |> List.flatten in
-	let argA = Aval_ref (Apath ([], varA)) in
-	let argB = Aval_ref (Apath ([], varB)) in
+	let argA = Aval_ref (apath_of_avar varA) in
+	let argB = Aval_ref (apath_of_avar varB) in
 	let inner = std_aval_rewrite (Aval_at (locA, paired_cases)) in
 	Aval_at (locA, [Apat_uvar varA, None,
 	    Aval_at (locA, [Apat_uvar varB, None,

@@ -31,16 +31,13 @@ module String_set = Set.Make (String)
 module Ocaml_printer = Camlp4.Printers.OCaml.Make(Camlp4.PreCast.Syntax)
 
 let print_depend ~module_name just_modules topdir roots input_path m =
-    let rec extract comps = function
-	| [] -> comps
-	| Avar (_, Idr comp) :: vs -> extract (comp :: comps) vs in
-    let add_dep stra th =
+    let add_dep stra (Apath (_, p)) =
 	let comps =
 	    match stra with
 	    | `Type | `Value | `Signature ->
-		let Apath (vs, _) = th in extract [] vs
+		Modpath.to_string_list (Modpath.strip_last_e p)
 	    | `Structure ->
-		let Apath (vs, v) = th in extract [] (v :: vs) in
+		Modpath.to_string_list p in
 	match comps with
 	| [] -> ident
 	| x :: xs -> String_set.add x in
@@ -78,7 +75,7 @@ let print_cst term =
 let print_ast amod =
     printf "%s\n" (Ast_utils.amod_to_string amod)
 
-let pervasive_apath = Apath ([], Avar (Location.dummy, Idr "pervasive"))
+let pervasive_apath = Apath (Location.dummy, Modpath.atom (Idr "pervasive"))
 let add_pervasive_in_asig = function
     | Asig_decs (loc, decs) ->
 	Asig_decs (loc, Adec_open (Location.dummy, pervasive_apath) :: decs)

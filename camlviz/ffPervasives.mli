@@ -93,4 +93,6 @@ module String : sig
     val ends_with : string -> string -> bool
 
     val strip_suffix : string -> string -> string
+
+    val join : string -> string list -> string
 end

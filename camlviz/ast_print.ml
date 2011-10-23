@@ -36,9 +36,7 @@ let p_qbody = p_logic 0
 
 let print_avar fo v = Fo.put fo `Name (avar_name v)
 
-let print_apath fo (Apath (pfx, v)) =
-    List.iter (fun v -> print_avar fo v; Fo.put fo `Operator ".") pfx;
-    print_avar fo v
+let print_apath fo (Apath (_, p)) = Fo.put fo `Name (Modpath.to_string p)
 
 let rec print_atyp fo p = function
     | Atyp_ref qn -> print_apath fo qn

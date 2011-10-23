@@ -16,6 +16,7 @@
  * with the Viz Compiler.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
+let get = function Some x -> x | None -> raise (Failure "Option.get")
 let default x0 = function None -> x0 | Some x -> x
 let default_opt x0 = function None -> x0 | x -> x
 let fold f = function None -> fun x -> x | Some x -> f x

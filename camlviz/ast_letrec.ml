@@ -45,7 +45,7 @@ module Bindings_algo = Graphalgo.ST_algo (Bindings_graph)
 let fold_aval_deps f aval =
     let f' stratum path =
 	match (stratum, path) with
-	| `Value, Apath ([], Avar (_, idr)) -> f idr
+	| `Value, Apath (_, p) when Modpath.is_atom p -> f (Modpath.last_e p)
 	| _ -> ident in
     Ast_utils.fold_aval_paths f' aval
 

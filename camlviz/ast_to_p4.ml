@@ -28,10 +28,6 @@ open Diag
 open FfPervasives
 open Unicode
 
-let apath_is idr = function
-    | Apath ([], Avar (_, idr')) -> idr = idr'
-    | _ -> false
-
 let p4loc loc =
     let lb = Location.lbound loc in
     let ub = Location.ubound loc in
@@ -45,22 +41,17 @@ let p4loc loc =
          Location.Bound.charno ub,
          true)
 
-let rec emit_apath_helper inner_loc final = function
-    | [] -> final
-    | av :: avs ->
-	let loc = Location.span [avar_loc av; inner_loc] in
-	let _loc = p4loc loc in
-	let ov = <:ident< $uid: avar_to_uid av$ >> in
-	<:ident< $emit_apath_helper inner_loc ov avs$ . $final$ >>
-
-let emit_apath_lid (Apath (vs, v)) =
-    let _loc = p4loc (avar_loc v) in
-    emit_apath_helper (avar_loc (List.last (v :: vs)))
-		      <:ident< $lid: avar_to_lid v$ >> vs
-let emit_apath_uid (Apath (vs, v)) =
-    let _loc = p4loc (avar_loc v) in
-    emit_apath_helper (avar_loc (List.last (v :: vs)))
-		      <:ident< $uid: avar_to_uid v$ >> vs
+let emit_apath_lid (Apath (loc, p)) =
+    let _loc = p4loc loc in
+    let ci = <:ident< $lid: idr_to_lid (Modpath.last_e p)$ >> in
+    let cns = Modpath.to_idr_list (Modpath.strip_last_e p) in
+    let cis = List.map (fun cn -> <:ident< $uid: idr_to_uid cn$ >>) cns in
+    <:ident< $list: cis @ [ci]$ >>
+let emit_apath_uid (Apath (loc, p)) =
+    let _loc = p4loc loc in
+    let cns = Modpath.to_idr_list p in
+    let cis = List.map (fun cn -> <:ident< $uid: idr_to_uid cn$ >>) cns in
+    <:ident< $list: cis$ >>
 
 type typefor = Typefor_viz | Typefor_cabi | Typefor_cabi_io
 
@@ -74,13 +65,13 @@ let rec emit_atyp ?(typefor = Typefor_viz) = function
     | Atyp_A (loc, v, t) | Atyp_E (loc, v, t) ->
 	warnf_at loc "Ignoring quantification of %s." (avar_name v);
 	emit_atyp ~typefor t
-    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t), u)
-	    when avar_idr op = Cst_core.idr_2o_times ->
+    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref p_times, t), u)
+	    when apath_eq_idr Cst_core.idr_2o_times p_times ->
 	let _loc = p4loc loc in
 	<:ctyp< ($emit_atyp t$ * $emit_atyp u$) >>
-    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t), u)
+    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref p_index, t), u)
 	    when (typefor = Typefor_cabi || typefor = Typefor_cabi_io)
-	      && avar_idr op = Cst_core.idr_2o_index ->
+	      && apath_eq_idr Cst_core.idr_2o_index p_index ->
 	emit_atyp ~typefor t
     | Atyp_apply (loc, at, au) ->
 	if typefor = Typefor_cabi_io
@@ -149,20 +140,21 @@ let rec emit_apat = function
 	let _loc = p4loc (apath_loc p) in
 	let default () = <:patt< $id: emit_apath_uid p$ >> in
 	begin match p with
-	| Apath ([], Avar (_, Idr s)) -> emit_apat_fixed _loc default s
+	| Apath (_, p) when Modpath.is_atom p ->
+	    emit_apat_fixed _loc default (idr_to_string (Modpath.last_e p))
 	| _ -> default ()
 	end, ocond_opt
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	fun ocond_opt -> <:patt< $lid: avar_to_lid v$ >>, ocond_opt
     | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
-	    when apath_is Cst_core.idr_list_push op -> fun ocond_opt ->
+	    when apath_eq_idr Cst_core.idr_list_push op -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat x ocond_opt in
 	let oy, ocond_opt = emit_apat y ocond_opt in
 	<:patt< [$ox$ :: $oy$] >>, ocond_opt
     | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
-	    when apath_is Cst_core.idr_2o_comma op -> fun ocond_opt ->
+	    when apath_eq_idr Cst_core.idr_2o_comma op -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat x ocond_opt in
 	let oy, ocond_opt = emit_apat y ocond_opt in
@@ -194,15 +186,16 @@ let rec emit_aval = function
 	let _loc = p4loc (apath_loc p) in
 	let default () = <:expr< $id: emit_apath_lid p$ >> in
 	begin match p with
-	| Apath ([], Avar (_, Idr s)) -> emit_aval_fixed _loc default s
+	| Apath (_, p) when Modpath.is_atom p ->
+	    emit_aval_fixed _loc default (idr_to_string (Modpath.last_e p))
 	| _ -> default ()
 	end
     | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
-	    when apath_is Cst_core.idr_list_push op ->
+	    when apath_eq_idr Cst_core.idr_list_push op ->
 	let _loc = p4loc loc in
 	<:expr< [$emit_aval x$ :: $emit_aval y$] >>
     | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
-	    when apath_is Cst_core.idr_2o_comma op ->
+	    when apath_eq_idr Cst_core.idr_2o_comma op ->
 	let _loc = p4loc loc in
 	<:expr< ($emit_aval x$, $emit_aval y$) >>
     | Aval_apply (loc, x, y) ->

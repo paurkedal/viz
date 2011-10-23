@@ -60,10 +60,7 @@ let fresh_avar_at ?(prefix = "_x") loc =
     let chno = Location.Bound.charno (Location.lbound loc) in
     Avar (loc, Idr (prefix ^ (string_of_int chno)))
 
-let apath_loc = function
-    | Apath ([], v) -> avar_loc v
-    | Apath (avs, v) ->
-	Location.span [avar_loc (List.last avs); avar_loc v]
+let apath_loc (Apath (loc, _)) = loc
 
 let atyp_loc = function
     | Atyp_ref p -> apath_loc p
@@ -143,24 +140,23 @@ and adef_loc = function
     | Adef_cabi_val (loc, _, _, _, _) -> loc
     | Adef_cabi_open (loc, _) -> loc
 
-let apath_to_idr = function
-    | Apath ([], Avar (_, idr)) -> idr
-    | _ -> assert false
-let apath_to_string p = idr_to_string (apath_to_idr p)
-let apath_eq_idr idr = function
-    | Apath ([], Avar (_, idr')) -> idr = idr'
-    | _ -> false
+let apath_to_idr (Apath (loc, p)) =
+    assert (Modpath.is_atom p); Modpath.last_e p
+let apath_eq_idr idr (Apath (loc, p)) =
+    Modpath.is_atom p && Modpath.last_e p = idr
+let apath_eq_string s (Apath (loc, p)) =
+    Modpath.is_atom p && Modpath.last_e p = Idr s
+let apath_of_avar (Avar (loc, v)) = Apath (loc, Modpath.atom v)
 
 let apat_uvar_any loc = Apat_uvar (Avar (loc, Idr "_"))
 let apat_uvar_of_idr loc idr = Apat_uvar (Avar (loc, idr))
-let aval_ref_of_idr loc idr =
-    Aval_ref (Apath ([], Avar (loc, idr)))
+let aval_ref_of_idr loc idr = Aval_ref (Apath (loc, Modpath.atom idr))
 
 let aval_string loc s =
     Aval_literal (loc, Lit_string (UString.of_utf8 s))
 
 let aval_apply1i loc idr x =
-    Aval_apply (loc, Aval_ref (Apath ([], Avar (loc, idr))), x)
+    Aval_apply (loc, Aval_ref (Apath (loc, Modpath.atom idr)), x)
 let aval_apply2i loc idr x y =
     Aval_apply (loc, aval_apply1i loc idr x, y)
 

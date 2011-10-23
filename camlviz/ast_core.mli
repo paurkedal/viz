@@ -43,8 +43,9 @@ val amod_loc : amod -> loc
 val adef_loc : adef -> loc
 
 val apath_to_idr : apath -> idr
-val apath_to_string : apath -> string
 val apath_eq_idr : idr -> apath -> bool
+val apath_eq_string : string -> apath -> bool
+val apath_of_avar : avar -> apath
 
 val apat_uvar_any : loc -> apat
 val apat_uvar_of_idr : loc -> idr -> apat

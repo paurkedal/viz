@@ -22,6 +22,7 @@ camlviz/leaf_core
 camlviz/lexer
 camlviz/lStream
 camlviz/location
+camlviz/modpath
 camlviz/opkind
 camlviz/option
 camlviz/parser

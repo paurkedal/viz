@@ -30,7 +30,8 @@ type state = {
 
 let rec output_const och state v t cx =
     match t with
-    | Atyp_ref (Apath ([], Avar (loc, Idr tn))) ->
+    | Atyp_ref (Apath (loc, tpath)) when Modpath.is_atom tpath ->
+	let tn = idr_to_string (Modpath.last_e tpath) in
 	begin try
 	    let t' = String_map.find tn state.st_aliases in
 	    output_const och state v t' cx

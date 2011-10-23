@@ -94,10 +94,18 @@ type conversion = {
     cv_conv_res : string;
 }
 
+let is_ptr_path p =
+    (* Recognising ptr unqualified is invasive, but this is only used for
+     * modules defining C bindings, which and they should include C.memory. *)
+    match Modpath.to_string_list p with
+    | ["ptr"] | ["memory"; "ptr"] | ["C"; "memory"; "ptr"] -> true
+    | _ -> false
+
 let rec nonoption_conversion nparam state = function
-    | Atyp_apply (_, Atyp_ref (Apath (_, Avar (_, Idr "ptr"))), _) ->
+    | Atyp_apply (_, Atyp_ref (Apath (_, p)), _) when is_ptr_path p ->
 	("void *", None, "Voidp_val", "cviz_copy_ptr")
-    | Atyp_ref (Apath ([], Avar (loc, Idr tname))) ->
+    | Atyp_ref (Apath (loc, tpath)) when Modpath.is_atom tpath ->
+	let tname = idr_to_string (Modpath.last_e tpath) in
 	begin try
 	    match String_map.find tname state.st_cti_map with
 	    | Cti_custom (prefix, ctype, _, _) ->
@@ -126,16 +134,17 @@ let rec nonoption_conversion nparam state = function
 	    errf_at loc "Don't know how to pass values of type %s to \
 			 C functions." tname
 	end
-    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath ([], op)), t),
-		       Atyp_ref (Apath ([], Avar (tagloc, Idr tagname))))
-	    when avar_idr op = idr_2o_index ->
-	begin match tagname with
-	| "b" -> ("int", None, "Bool_val", "Val_bool")
-	| "i" -> ("int", None, "Int_val",  "Val_int")
-	| "e" -> ("int", None, "Int_val",  "Val_int") (* enum *)
-	| "l" -> ("long", None, "Long_val", "Val_long")
-	| "v" -> ("value", None, "", "")
-	| _ -> errf_at tagloc "Invalid conversion tag %s." tagname
+    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref op_path, t),
+		       Atyp_ref (Apath (tag_loc, tag_path)))
+	    when apath_eq_idr idr_2o_index op_path ->
+	begin match Modpath.to_string_list tag_path with
+	| ["b"] -> ("int", None, "Bool_val", "Val_bool")
+	| ["i"] -> ("int", None, "Int_val",  "Val_int")
+	| ["e"] -> ("int", None, "Int_val",  "Val_int") (* enum *)
+	| ["l"] -> ("long", None, "Long_val", "Val_long")
+	| ["v"] -> ("value", None, "", "")
+	| _ -> errf_at tag_loc "Invalid conversion tag %s."
+		       (Modpath.to_string tag_path)
 	end
     | Atyp_apply (loc, x, Atyp_uvar _)
     | Atyp_apply (loc, x, Atyp_ref _) ->
@@ -145,8 +154,9 @@ let rec nonoption_conversion nparam state = function
 let conversion state t =
     let (is_opt, t) =
 	match t with
-	| Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, Idr "option"))), t) ->
-	       (true, t)
+	| Atyp_apply (_, Atyp_ref p_option, t)
+		when apath_eq_string "option" p_option ->
+	   (true, t)
 	| t -> (false, t) in
     let ctype, prep_arg, conv_arg, conv_res = nonoption_conversion 0 state t in
     {
@@ -192,7 +202,7 @@ let output_cstub och v t cn_opt is_fin state =
     List.iter (output_arg_prep och) args;
     let is_unit =
        match rt with
-       | Atyp_ref (Apath ([], Avar (loc, Idr "unit"))) -> true
+       | Atyp_ref p_unit when apath_eq_string "unit" p_unit -> true
        | _ -> false in
     let output_call () =
 	output_string och cn;
@@ -230,25 +240,23 @@ let output_cstub och v t cn_opt is_fin state =
     end;
     if is_fin then
 	begin match t with
-	| Atyp_arrow (loc, ft,
-		Atyp_apply (_, tc,
-		    Atyp_ref (Apath ([], Avar (_, Idr "unit"))))) ->
-	    let ftc, ftparams = Ast_utils.atyp_unapply ft in
-	    let Apath (ftns, ftv) = ftc in
-	    if ftns <> [] then
-		errf_at (apath_loc ftc)
-			"Qualified names are not supported here.";
+	| Atyp_arrow (loc, ft, Atyp_apply (_, tc, Atyp_ref p_unit))
+		when apath_eq_string "unit" p_unit ->
+	    let Apath (ftc_loc, ftc_p), ftparams = Ast_utils.atyp_unapply ft in
+	    if not (Modpath.is_atom ftc_p) then
+		errf_at ftc_loc "Qualified names are not supported here.";
+	    let ftv = Modpath.last_e ftc_p in
 	    begin match tc with
-	    | Atyp_ref (Apath ([], Avar (_, Idr "io"))) -> ()
-	    | Atyp_apply (_,
-		    Atyp_ref (Apath ([], Avar (_, effect))), _)
-		    when idr_is_effect_tycon effect -> ()
+	    | Atyp_ref p_io when apath_eq_string "io" p_io -> ()
+	    | Atyp_apply (_, Atyp_ref (Apath (_, p_effect)), _)
+		    when Modpath.is_atom p_effect
+		      && idr_is_effect_tycon (Modpath.last_e p_effect) -> ()
 	    | _ ->
 		errf_at loc
 		    "Finalizer must return (io unit) or (effect φ unit)."
 	    end;
 	    begin try
-		let ftn = avar_name ftv in
+		let ftn = idr_to_string ftv in
 		match String_map.find ftn state.st_cti_map with
 		| Cti_custom (cprefix, tname, None, true) ->
 		    let cti_map = String_map.add ftn

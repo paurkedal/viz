@@ -37,7 +37,7 @@ let asig_to_string x = sexp_to_string (sexp_of_asig x)
 let amod_to_string x = sexp_to_string (sexp_of_amod x)
 
 let apath_to_avar = function
-    | Apath ([], v) -> v
+    | Apath (loc, p) when Modpath.is_atom p -> Avar (loc, Modpath.last_e p)
     | p -> errf_at (apath_loc p) "Expecting an unqualified identifier."
 
 let rec result_type = function
@@ -57,17 +57,14 @@ type pocket =
     | World_pocket
 
 let atyp_effect_pocket = function
-    | Atyp_ref (Apath ([], Avar (_, Idr "io"))) ->
-	World_pocket
-    | Atyp_apply (_, Atyp_ref (Apath ([], Avar (_, effect))), pocket)
-	    when idr_is_effect_tycon effect ->
+    | Atyp_ref p when apath_eq_idr (Idr "io") p -> World_pocket
+    | Atyp_apply (_, Atyp_ref (Apath (_, p)), pocket)
+	    when Modpath.is_atom p
+	      && idr_is_effect_tycon (Modpath.last_e p) ->
 	begin match pocket with
-	| Atyp_ref (Apath ([], Avar (_, Idr phi))) when phi = "world" ->
-	    World_pocket
-	| Atyp_uvar v ->
-	    Local_pocket v
-	| _ ->
-	    errf_at (atyp_loc pocket) "Invalid pocket type tag."
+	| Atyp_ref p when apath_eq_idr (Idr "world") p -> World_pocket
+	| Atyp_uvar v -> Local_pocket v
+	| _ -> errf_at (atyp_loc pocket) "Invalid pocket type tag."
 	end
     | _ -> No_pocket
 let unwrap_atyp_effect = function
@@ -100,7 +97,7 @@ let flatten_arrows_for_c t =
     let pocket, rt = unwrap_atyp_effect rt in
     if pocket <> No_pocket && ats = [] then
 	let loc = atyp_loc t in
-	(true, rt, [Atyp_ref (Apath ([], Avar (loc, Idr "unit")))])
+	(true, rt, [Atyp_ref (Apath (loc, Modpath.atom (Idr "unit")))])
     else
 	(false, rt, ats)
 
@@ -251,12 +248,13 @@ and fold_adef_paths ?module_name f = function
 		Option.fold (fold_atyp_paths (f `Type)) t *>
 		fold_aval_paths f x)
 	    bindings
-    | Adef_cabi_val (_, v, t, _, _) ->
+    | Adef_cabi_val (_, Avar (_, dfm), t, _, _) ->
 	(if atyp_is_const t then
 	    match module_name with
 	    | Some mname ->
-		f `Value
-		  (Apath ([Avar (Location.dummy, Idr (mname ^ "_FFIC"))], v))
+		let pM = Modpath.atom (Idr (mname ^ "_FFIC")) in
+		let p = Modpath.cat_last dfm pM in
+		f `Value (Apath (Location.dummy, p))
 	    | None -> ident else
 	ident) *> fold_atyp_paths (f `Type) t
     | Adef_cabi_open _ -> ident
@@ -278,27 +276,32 @@ and fold_adef_cabi_open f = function
     | Adef_cabi_val _ -> ident
     | Adef_cabi_open (_, inc) -> f inc
 
+let cabi_path = Modpath.atom (Idr "cabi")
+
 let interpret_use use =
     let rec flatten params = function
 	| Aval_apply (_, inner, param) -> flatten (param :: params) inner
 	| directive -> directive, params in
     let directive, params = flatten [] use in
     match directive with
-    | Aval_ref (Apath ([Avar (_, Idr "cabi")], subdirective)) ->
-	begin match subdirective with
-	| Avar (_, Idr "stub_prefix") ->
+    | Aval_ref (Apath (directive_loc, p))
+	    when Modpath.has_prefix cabi_path p ->
+	let subdirective = Modpath.strip_prefix_e cabi_path p in
+	begin match Modpath.to_string_list subdirective with
+	| ["stub_prefix"] ->
 	    begin match params with
 	    | [Aval_literal (_, Lit_string pfx)] ->
 		`Stub_prefix (UString.to_utf8 pfx)
 	    | _ -> errf_at (aval_loc use) "Invalid stub prefix."
 	    end
-	| Avar (_, Idr "type_c") ->
+	| ["type_c"] ->
 	    begin match params with
-	    | [Aval_ref (Apath ([], v)); Aval_literal (_, Lit_string ctype)] ->
-		`type_c (v, UString.to_utf8 ctype)
+	    | [Aval_ref (Apath (loc, p)); Aval_literal (_, Lit_string ctype)]
+		    when Modpath.is_atom p ->
+		`type_c (Avar (loc, Modpath.last_e p), UString.to_utf8 ctype)
 	    | _ -> errf_at (aval_loc use) "Invalid C type specification."
 	    end
-	| _ -> errf_at (avar_loc subdirective) "Invalid cabi use-directive."
+	| _ -> errf_at directive_loc "Invalid cabi use-directive."
 	end
     | _ ->
 	errf_at (aval_loc directive) "Invalid use-directive."
@@ -325,5 +328,6 @@ let extract_backtrack_guard x =
     (Some guard, y)
 
 let effect_thunk loc x =
-    Aval_apply (loc, Aval_ref (Apath ([], Avar (loc, idr_effect))),
+    let effect_path = Apath (loc, Modpath.atom idr_effect) in
+    Aval_apply (loc, Aval_ref effect_path,
 	Aval_at (loc, [Apat_literal (loc, Lit_unit), None, x]))
