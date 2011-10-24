@@ -35,3 +35,5 @@ val default_rewrite_ctrm : 'a rewriter -> stratum -> ctrm * 'a -> ctrm * 'a
 val default_rewrite_cdef : 'a rewriter -> stratum -> cdef * 'a -> cdef * 'a
 
 val default_rewriter : 'a rewriter
+
+val rewrite_ctrm : stratum -> ctrm -> ctrm

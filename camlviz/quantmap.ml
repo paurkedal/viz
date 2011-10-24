@@ -38,7 +38,10 @@ module Atyp = struct
 	atyp_compare t u
 end
 
-module Type_map = Map.Make(Atyp)
+module Type_map = struct
+    include Map.Make(Atyp)
+    let weak_add k v m = if mem k m then m else add k v m
+end
 
 type t = Modpath.t Type_map.t
 
@@ -55,7 +58,7 @@ let open_module qn m =
     let f (alphas, t) e =
 	let t' = atyp_map ~on_apath:(strip_prefix qn) t in
 	if atyp_compare t t' = 0 then ident else
-	Type_map.add (alphas, t') e in
+	Type_map.weak_add (alphas, t') e in
     Type_map.fold f m m
 
 let load ~roots fpath =
@@ -74,6 +77,7 @@ let load ~roots fpath =
 	    let s_dfs = String.after i2 ln in
 	    let locb = Location.Bound.init_lc fpath !lnno i2 in
 	    let e_dfs = Parser.parse_string ~roots ~locb s_dfs in
+	    let e_dfs = Cst_rewrite.rewrite_ctrm `Type e_dfs in
 	    let t_dfs = Cst_to_ast.build_atyp e_dfs in
 	    collect (add (atyp_to_ascm t_dfs) p_dfm m)
 	with

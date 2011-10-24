@@ -150,6 +150,8 @@ let rec is_formal = function
     | Ctrm_quantify _ -> assert false
     | Ctrm_rel (_, _, [_]) -> true
     | Ctrm_rel _ -> false
+    | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (colon, _), x), _)
+	    when cidr_is_2o_colon colon -> is_formal x
     | Ctrm_apply (_, x, _) -> is_formal x
     | _ -> false
 

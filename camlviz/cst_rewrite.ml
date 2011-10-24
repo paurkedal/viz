@@ -343,3 +343,6 @@ let default_rewriter = {
     rw_ctrm = default_rewrite_ctrm;
     rw_cdef = default_rewrite_cdef;
 }
+
+let rewrite_ctrm stratum ctrm =
+    fst (default_rewrite_ctrm default_rewriter stratum (ctrm, ()))

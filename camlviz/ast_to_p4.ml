@@ -88,16 +88,22 @@ let rec emit_atyp ec ?(typefor = Typefor_viz) = function
 	<:ctyp< $id: emit_apath_lid p$ >>
     | Atyp_A (loc, v, t) when typefor = Typefor_quant ->
 	let _loc = p4loc loc in
+	let strip_current_prefix (Apath (loc, p)) =
+	    Apath (loc, Modpath.strip_common_prefix ec.ec_modpath p) in
+	let t = atyp_map ~on_apath:strip_current_prefix t in
 	<:ctyp< ! '$lid: avar_to_lid v$ . $emit_atyp ec ~typefor t$ >>
     | Atyp_A (loc, v', t') as t ->
 	let _loc = p4loc loc in
-	begin match quantmap_lookup ec (atyp_to_ascm t) with
+	let avs, at = atyp_to_ascm t in
+	begin match quantmap_lookup ec (avs, at) with
 	| None ->
 	    warnf_at loc
 		"camlviz can only handle quantifiers which are listed \
 		 in compat/quant.map.";
 	    emit_atyp ec ~typefor t'
-	| Some p -> <:ctyp< $id: emit_apath_lid p$ >>
+	| Some p ->
+	    List.fold (fun av ot -> <:ctyp< $ot$ '$lid: avar_to_lid av$ >>)
+		avs <:ctyp< $id: emit_apath_lid p$ >>
 	end
     | Atyp_E (loc, v, t) ->
 	warnf_at loc "Ignoring quantification of %s." (avar_name v);
