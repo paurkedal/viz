@@ -5,7 +5,7 @@ open system.posix.unistd
 
 let show_str h s be print h >> print " --> " >> print s >> print "\n"
 let show_int h be show_str h ∘ int.show
-let show_int32 h be show_str h ∘ int32.show
+let show_int32 h be show_str h ∘ int.show ∘ int32.as_int
 let show_bool h be show_str h ∘ bool.show
 let show_err be show_int
 

@@ -2,11 +2,13 @@
 
 err_count=0
 target=native
+failed_tests=
 
 fail()
 {
     echo "$1 $src"
     err_count=`expr 1 + $err_count`
+    failed_tests="$failed_tests $src"
 }
 
 for src in "$@"; do
@@ -18,7 +20,7 @@ for src in "$@"; do
 done
 
 if [ $err_count -ne 0 ]; then
-    echo "$err_count of $# tests failed."
+    echo "$err_count of $# tests failed:$failed_tests"
     exit 69
 else
     echo "All $# tests succeeded."
