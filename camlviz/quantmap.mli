@@ -28,12 +28,16 @@ val load : roots: string list -> string -> t -> t
 
 val load_all : roots: string list -> t -> t
 
-val add : atyp -> Modpath.t -> t -> t
+val add : avar list * atyp -> Modpath.t -> t -> t
 
-val find : atyp -> t -> Modpath.t option
+val find : avar list * atyp -> t -> Modpath.t option
 
 val open_module : Modpath.t -> t -> t
 
-val filter_by_path : Modpath.t -> t -> t
+val filter : (avar list * atyp -> Modpath.t -> bool) -> t -> t
 
-val fold : (atyp -> Modpath.t -> 'a -> 'a) -> t -> 'a -> 'a
+val filter_onelevel : Modpath.t -> t -> t
+
+val filter_subhier : Modpath.t -> t -> t
+
+val fold : (avar list * atyp -> Modpath.t -> 'a -> 'a) -> t -> 'a -> 'a

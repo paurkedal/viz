@@ -72,4 +72,10 @@ val adef_map_subaval : (aval -> aval) -> adef -> adef
 val amod_map_subamod : (amod -> amod) -> amod -> amod
 val adef_map_subamod : (amod -> amod) -> adef -> adef
 
+val atyp_free_vars : atyp -> avar list
+val atyp_to_ascm : atyp -> avar list * atyp
+
+val fresh_type_avar : unit -> avar
+val atyp_subst : avar -> avar -> atyp -> atyp
+
 val atyp_compare : atyp -> atyp -> int

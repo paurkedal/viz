@@ -52,6 +52,8 @@ module List : sig
 
     val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
+    val fold2 : ('a * 'b -> 'g -> 'g) -> 'a list * 'b list -> 'g -> 'g
+
     val map_fold : ('a * 'c -> 'b * 'c) -> 'a list * 'c -> 'b list * 'c
 
     val combine : ('a -> 'a -> 'a) -> 'a list -> 'a

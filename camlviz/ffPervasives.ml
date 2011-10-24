@@ -69,6 +69,14 @@ module List = struct
 	| [] -> fun accu -> accu
 	| x :: xs -> fun accu -> fold f xs (f x accu)
 
+    let rec fold2 f = function
+	| [], [] ->
+	    fun accu -> accu
+	| x :: xs', y :: ys' ->
+	    fun accu -> fold2 f (xs', ys') (f (x, y) accu)
+	| _ ->
+	    fun accu -> invalid_arg "fold2 of different length lists"
+
     let map_fold f (xs, accu) =
 	let rec loop ys accu = function
 	    | [] -> (List.rev ys, accu)

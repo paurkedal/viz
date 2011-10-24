@@ -31,22 +31,25 @@ open Unicode
 type emit_context = {
     ec_module_name : string;
     ec_modpath : Modpath.t;
+    ec_quantdefs : Quantmap.t;
     mutable ec_quantmap : Quantmap.t;
     mutable ec_stub_prefix : string;
 }
 
-let quantmap_lookup ec t =
-    match Quantmap.find t ec.ec_quantmap with
+let quantmap_lookup ec (alphas, t as tscm) =
+    match Quantmap.find tscm ec.ec_quantmap with
     | Some p ->
 	let p' = Modpath.strip_common_prefix ec.ec_modpath p in
 	Some (Apath (atyp_loc t, p'))
     | None -> None
 
-let quants mk qm =
+let quants mk ec =
+    let qm = Quantmap.filter_onelevel ec.ec_modpath ec.ec_quantdefs in
     let loc = Location.dummy in
-    let mk1 t p specs =
+    let mk1 (alphas, t) p specs =
 	let v = Avar (loc, Modpath.last_e p) in
-	(loc, v, [], Atypinfo_quant t) :: specs in
+	let alphas' = List.map (fun v -> Atyp_uvar v) alphas in
+	(loc, v, alphas', Atypinfo_quant t) :: specs in
     match Quantmap.fold mk1 qm [] with [] -> [] | specs -> [mk specs]
 
 let p4loc loc =
@@ -88,7 +91,7 @@ let rec emit_atyp ec ?(typefor = Typefor_viz) = function
 	<:ctyp< ! '$lid: avar_to_lid v$ . $emit_atyp ec ~typefor t$ >>
     | Atyp_A (loc, v', t') as t ->
 	let _loc = p4loc loc in
-	begin match quantmap_lookup ec t with
+	begin match quantmap_lookup ec (atyp_to_ascm t) with
 	| None ->
 	    warnf_at loc
 		"camlviz can only handle quantifiers which are listed \
@@ -205,7 +208,7 @@ let rec emit_apat ec = function
     | Apat_intype (loc, t, x) -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat ec x ocond_opt in
-	begin match quantmap_lookup ec t with
+	begin match quantmap_lookup ec (atyp_to_ascm t) with
 	| Some p -> <:patt< {$id: emit_apath_lid p$ = $ox$} >>
 	| None -> <:patt< ($ox$ : $emit_atyp ec t$) >>
 	end, ocond_opt
@@ -308,7 +311,7 @@ let rec emit_aval ec = function
     | Aval_intype (loc, t, x) ->
 	let _loc = p4loc loc in
 	let ox = emit_aval ec x in
-	begin match quantmap_lookup ec t with
+	begin match quantmap_lookup ec (atyp_to_ascm t) with
 	| Some p -> <:expr< {$id: emit_apath_lid p$ = $ox$} >>
 	| None -> <:expr< ($ox$ : $emit_atyp ec t$) >>
 	end
@@ -407,8 +410,7 @@ let rec emit_asig ec = function
 	<:module_type< $id: emit_apath_uid p$ >>
     | Asig_decs (loc, decs) ->
 	let _loc = p4loc loc in
-	let qm = Quantmap.filter_by_path ec.ec_modpath ec.ec_quantmap in
-	let decs_q = quants (fun tspec -> Adec_types tspec) qm in
+	let decs_q = quants (fun tspec -> Adec_types tspec) ec in
 	let decs = decs @ decs_q in
 	<:module_type< sig $list: List.map (emit_adec ec) decs$ end >>
     | Asig_product (loc, xv, xsig, ysig) ->
@@ -510,8 +512,7 @@ let rec emit_amod ec = function
 	<:module_expr< $id: emit_apath_uid p$ >>
     | Amod_defs (loc, defs) ->
 	let _loc = p4loc loc in
-	let qm = Quantmap.filter_by_path ec.ec_modpath ec.ec_quantmap in
-	let defs_q = quants (fun tspec -> Adef_types tspec) qm in
+	let defs_q = quants (fun tspec -> Adef_types tspec) ec in
 	let defs = defs @ defs_q in
 	<:module_expr< struct $list: List.map (emit_adef ec) defs$ end >>
     | Amod_apply (loc, x, y) ->
@@ -644,14 +645,17 @@ and emit_adef ec = function
 
 let emit_toplevel ~modpath ~quantmap = function
     | Amod_defs (loc, defs) ->
+	let quantdefs = Quantmap.filter_subhier modpath  quantmap in
+	let quantmap = Modpath.fold (Quantmap.open_module *< Modpath.atom)
+				    modpath quantmap in
 	let ec = {
 	    ec_stub_prefix = "_cviz_";
 	    ec_module_name = idr_to_string (Modpath.last_e modpath);
 	    ec_modpath = modpath;
+	    ec_quantdefs = quantdefs;
 	    ec_quantmap = quantmap;
 	} in
-	let qm = Quantmap.filter_by_path ec.ec_modpath ec.ec_quantmap in
-	let defs_q = quants (fun tspec -> Adef_types tspec) qm in
+	let defs_q = quants (fun tspec -> Adef_types tspec) ec in
 	let defs = defs @ defs_q in
 	<:str_item< $list: List.map (emit_adef ec) defs$ >>
     | amod ->

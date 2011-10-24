@@ -233,6 +233,22 @@ let avar_compare (Avar (_, Idr idr)) (Avar (_, Idr idr')) =
 
 let apath_compare (Apath (_, p)) (Apath (_, q)) = Modpath.compare p q
 
+let atyp_free_vars t =
+    let rec collect = function
+	| Atyp_ref p -> ident
+	| Atyp_uvar (Avar (_, v) as av) -> fun (skip, avs) ->
+	    if Idr_set.mem v skip then (skip, avs) else
+	    (Idr_set.add v skip, av :: avs)
+	| Atyp_A (_, Avar (_, x), t0) | Atyp_E (_, Avar (_, x), t0) ->
+	    fun (skip, avs) ->
+	    let skip', avs' = collect t0 (Idr_set.add x skip, avs) in
+	    (Idr_set.remove x skip', avs')
+	| Atyp_apply (_, t0, t1) | Atyp_arrow (_, t0, t1) ->
+	    collect t0 *> collect t1 in
+    List.rev (snd (collect t (Idr_set.empty, [])))
+
+let atyp_to_ascm t = let alphas = atyp_free_vars t in (alphas, t)
+
 let rec atyp_subst x x' = function
     | Atyp_ref p -> Atyp_ref p
     | Atyp_uvar y -> Atyp_uvar (if x = y then x' else y)

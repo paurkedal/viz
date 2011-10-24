@@ -22,8 +22,20 @@ open Ast_core
 open Leaf_types
 
 module Atyp = struct
-    type t = atyp
-    let compare = atyp_compare
+    type t = avar list * atyp
+    let compare (alphas, t) (betas, u) =
+	let nalphas, nbetas = List.length alphas, List.length betas in
+	if nalphas < nbetas then -1 else
+	if nalphas > nbetas then 1 else
+	let t, u =
+	    List.fold2
+		begin fun (alpha, beta) (t, u) ->
+		    let gamma = fresh_type_avar () in
+		    (atyp_subst alpha gamma t, atyp_subst beta gamma u)
+		end
+		(alphas, betas)
+		(t, u) in
+	atyp_compare t u
 end
 
 module Type_map = Map.Make(Atyp)
@@ -40,10 +52,10 @@ let open_module qn m =
 	match Modpath.strip_prefix p q with
 	| None -> ap
 	| Some q' -> Apath (loc, q') in
-    let f t e =
+    let f (alphas, t) e =
 	let t' = atyp_map ~on_apath:(strip_prefix qn) t in
 	if atyp_compare t t' = 0 then ident else
-	Type_map.add t' e in
+	Type_map.add (alphas, t') e in
     Type_map.fold f m m
 
 let load ~roots fpath =
@@ -63,7 +75,7 @@ let load ~roots fpath =
 	    let locb = Location.Bound.init_lc fpath !lnno i2 in
 	    let e_dfs = Parser.parse_string ~roots ~locb s_dfs in
 	    let t_dfs = Cst_to_ast.build_atyp e_dfs in
-	    collect (add t_dfs p_dfm m)
+	    collect (add (atyp_to_ascm t_dfs) p_dfm m)
 	with
 	| End_of_file -> close_in ich; m
 	| xc ->          close_in ich; raise xc in
@@ -77,8 +89,11 @@ let load_all ~roots =
 	end
 	roots
 
-let filter_by_path mp =
-    Type_map.filter
-	(fun _ mp' -> Modpath.compare mp (Modpath.strip_last_e mp') = 0)
+let filter = Type_map.filter
+
+let filter_onelevel mp =
+    filter (fun _ mp' -> Modpath.compare mp (Modpath.strip_last_e mp') = 0)
+
+let filter_subhier mp = filter (fun _ -> Modpath.has_prefix mp)
 
 let fold = Type_map.fold
