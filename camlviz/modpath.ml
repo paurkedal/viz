@@ -23,7 +23,9 @@ open Sexplib
 
 type t = idr list
 
-let valid_idr (Idr s) = not (String.contains s '.')
+let valid_idr (Idr s) =
+    not (String.contains s '.')
+    || Char.is_digit s.[0] && s.[1] = '\''
 
 let empty = []
 
@@ -78,11 +80,13 @@ let strip_prefix zs xs =
 let strip_suffix_e zs xs = Option.get (strip_suffix zs xs)
 let strip_prefix_e zs xs = Option.get (strip_prefix zs xs)
 
-let rec strip_common_prefix zs xs =
+let rec strip_common_suffix zs xs =
     match zs, xs with
     | [], _ -> xs
     | _ :: _, [] -> []
-    | z :: zs', x :: xs' -> if z = x then strip_common_prefix zs' xs' else xs
+    | z :: zs', x :: xs' -> if z = x then strip_common_suffix zs' xs' else xs
+let strip_common_prefix zs xs =
+    List.rev (strip_common_suffix (List.rev zs) (List.rev xs))
 
 let fold = List.fold_right
 
