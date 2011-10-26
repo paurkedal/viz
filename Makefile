@@ -1,4 +1,8 @@
-OCAMLBUILD = ocamlbuild -no-links
+OCAMLBUILD = ocamlbuild $(OCAMLBUILD_STDFLAGS) $(OCAMLBUILD_FLAGS)
+OCAMLBUILD_STDFLAGS = -no-links
+OCAMLBUILD_FLAGS =
+
+-include Makefile.local
 
 all: camlviz-all
 
