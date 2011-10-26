@@ -417,7 +417,7 @@ let rec emit_asig ec = function
     | Asig_decs (loc, decs) ->
 	let _loc = p4loc loc in
 	let decs_q = quants (fun tspec -> Adec_types tspec) ec in
-	let decs = decs @ decs_q in
+	let decs = List.fold Ast_utils.place_adec decs_q decs in
 	<:module_type< sig $list: List.map (emit_adec ec) decs$ end >>
     | Asig_product (loc, xv, xsig, ysig) ->
 	let _loc = p4loc loc in
@@ -519,7 +519,7 @@ let rec emit_amod ec = function
     | Amod_defs (loc, defs) ->
 	let _loc = p4loc loc in
 	let defs_q = quants (fun tspec -> Adef_types tspec) ec in
-	let defs = defs @ defs_q in
+	let defs = List.fold Ast_utils.place_adef defs_q defs in
 	<:module_expr< struct $list: List.map (emit_adef ec) defs$ end >>
     | Amod_apply (loc, x, y) ->
 	let _loc = p4loc loc in
@@ -662,7 +662,7 @@ let emit_toplevel ~modpath ~quantmap = function
 	    ec_quantmap = quantmap;
 	} in
 	let defs_q = quants (fun tspec -> Adef_types tspec) ec in
-	let defs = defs @ defs_q in
+	let defs = List.fold Ast_utils.place_adef defs_q defs in
 	<:str_item< $list: List.map (emit_adef ec) defs$ >>
     | amod ->
 	errf_at (amod_loc amod) "Module expression not allowed at top-level."

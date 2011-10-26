@@ -337,3 +337,93 @@ let effect_thunk loc x =
     let effect_path = Apath (loc, Modpath.atom idr_effect) in
     Aval_apply (loc, Aval_ref effect_path,
 	Aval_at (loc, [Apat_literal (loc, Lit_unit), None, x]))
+
+type adeps = {
+    adeps_t : Modpath.Set.t;
+    adeps_v : Modpath.Set.t;
+    adeps_s : Modpath.Set.t;
+}
+let adeps_empty = {
+    adeps_t = Modpath.Set.empty;
+    adeps_v = Modpath.Set.empty;
+    adeps_s = Modpath.Set.empty;
+}
+let adeps_is_empty deps =
+       Modpath.Set.is_empty deps.adeps_t
+    && Modpath.Set.is_empty deps.adeps_v
+    && Modpath.Set.is_empty deps.adeps_s
+
+let adeps_add = function
+    | `Type -> fun p deps ->
+	{deps with adeps_t = Modpath.Set.add p deps.adeps_t}
+    | `Value -> fun p deps ->
+	{deps with adeps_v = Modpath.Set.add p deps.adeps_v}
+    | `Signature | `Structure -> fun p deps ->
+	{deps with adeps_s = Modpath.Set.add p deps.adeps_s}
+let adeps_remove = function
+    | `Type -> fun p deps ->
+	{deps with adeps_t = Modpath.Set.remove p deps.adeps_t}
+    | `Value -> fun p deps ->
+	{deps with adeps_v = Modpath.Set.remove p deps.adeps_v}
+    | `Signature | `Structure -> fun p deps ->
+	{deps with adeps_s = Modpath.Set.remove p deps.adeps_s}
+
+let adeps_add_apath stratum (Apath (_, p)) = adeps_add stratum p
+let adeps_remove_apath stratum (Apath (_, p)) = adeps_remove stratum p
+
+let collect_adec_deps = fold_adec_paths adeps_add_apath
+let collect_adef_deps = fold_adef_paths adeps_add_apath
+
+let remove_type_deps tspecs deps =
+    let remove_one (loc, Avar (_, v), ats, ati) =
+	adeps_remove `Type (Modpath.atom v) in
+    List.fold remove_one tspecs deps
+
+let remove_adec_dep dec =
+    match dec with
+    | Adec_include _ | Adec_open _ | Adec_use _ -> ident
+    | Adec_in (_, Avar (_, v), _) -> adeps_remove `Structure (Modpath.atom v)
+    | Adec_sig (_, Avar (_, v), _) -> adeps_remove `Signature (Modpath.atom v)
+    | Adec_types tspecs -> remove_type_deps tspecs
+    | Adec_injx (_, Avar (_, v), _)
+    | Adec_val (_, Avar (_, v), _)
+    | Adec_cabi_val (_, Avar (_, v), _, _, _) ->
+	adeps_remove `Value (Modpath.atom v)
+let remove_adef_dep def =
+    match def with
+    | Adef_include _ | Adef_open _ | Adef_use _ | Adef_cabi_open _ -> ident
+    | Adef_in (_, Avar (_, v), _) -> adeps_remove `Structure (Modpath.atom v)
+    | Adef_sig (_, Avar (_, v), _) -> adeps_remove `Signature (Modpath.atom v)
+    | Adef_types tspecs -> remove_type_deps tspecs
+    | Adef_let (_, pat, _) -> fold_apat_paths adeps_remove_apath pat
+    | Adef_letrec specs ->
+	let rm (_, Avar (_, v), _, _) = adeps_remove `Value (Modpath.atom v) in
+	List.fold rm specs
+    | Adef_injx (_, Avar (_, v), _)
+    | Adef_cabi_val (_, Avar (_, v), _, _, _) ->
+	adeps_remove `Value (Modpath.atom v)
+
+let rec place_dependent_adec deps dec stashed decs =
+    match decs with
+    | [] -> List.rev_append stashed [dec]
+    | (Adec_include _ | Adec_open _ | Adec_use _ as dec') :: decs' ->
+	place_dependent_adec deps dec (dec' :: stashed) decs'
+    | dec' :: decs' ->
+	if adeps_is_empty deps then List.rev_append stashed (dec :: decs) else
+	let deps = remove_adec_dep dec' deps in
+	place_dependent_adec deps dec (dec' :: stashed) decs'
+
+let rec place_dependent_adef deps def stashed defs =
+    match defs with
+    | [] -> List.rev_append stashed [def]
+    | (Adef_include _ | Adef_open _ | Adef_use _ as def') :: defs' ->
+	place_dependent_adef deps def (def' :: stashed) defs'
+    | def' :: defs' ->
+	if adeps_is_empty deps then List.rev_append stashed (def :: defs) else
+	let deps = remove_adef_dep def' deps in
+	place_dependent_adef deps def (def' :: stashed) defs'
+
+let place_adec dec =
+    place_dependent_adec (collect_adec_deps dec adeps_empty) dec []
+let place_adef def =
+    place_dependent_adef (collect_adef_deps def adeps_empty) def []

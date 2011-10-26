@@ -62,3 +62,5 @@ val to_string_list : t -> string list
 
 val t_of_sexp : Sexp.t -> t
 val sexp_of_t : t -> Sexp.t
+
+module Set : Set.S with type elt = t

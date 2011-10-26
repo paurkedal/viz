@@ -71,3 +71,6 @@ val interpret_use : aval -> ause
 val extract_backtrack_guard : aval -> aval option * aval
 
 val effect_thunk : loc -> aval -> aval
+
+val place_adec : adec -> adec list -> adec list
+val place_adef : adef -> adef list -> adef list
