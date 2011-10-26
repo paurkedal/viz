@@ -25,7 +25,7 @@ type ('f, 'a) effect = { __unsafe_thunk : unit -> 'a; }
     "pocket" in which the effect is valid, and the second type parameter is
     the return type. *)
 
-type 'a __any_effect = { __any_effect : 'f. ('f, 'a) effect; }
+type 'a _any_effect = { _any_effect : 'f. ('f, 'a) effect; }
 
 type world
 (** A type tag for top-level "world" actions. *)

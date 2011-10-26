@@ -22,7 +22,7 @@ external op2_U2228 : bool -> bool -> bool = "%sequor"
 
 (* Dark spells about the world state. *)
 type ('f, 'a) effect = { __unsafe_thunk : unit -> 'a; }
-type 'a __any_effect = { __any_effect : 'f. ('f, 'a) effect; }
+type 'a _any_effect = { _any_effect : 'f. ('f, 'a) effect; }
 type world
 type 'a io = (world, 'a) effect
 let __builtin_effect f = { __unsafe_thunk = f; }
