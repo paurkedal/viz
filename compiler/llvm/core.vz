@@ -253,7 +253,7 @@ val function_type : ltype φ → array (ltype φ) → ltype φ
 
 val:c _function_type : ltype φ → ptr φ → int → bool → ltype φ
     := "LLVMFunctionType"
-let function_type rt ats be observe what!
+let function_type rt ats be unsafe_observe what!
     let cta do foreign.C.utils.malloc_ptrarray_of_array ats
     let r be _function_type rt cta (array.length ats) false
     do unsafe_free cta

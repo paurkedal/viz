@@ -25,6 +25,8 @@ type ('f, 'a) effect = { __unsafe_thunk : unit -> 'a; }
     "pocket" in which the effect is valid, and the second type parameter is
     the return type. *)
 
+type 'a __any_effect = { __any_effect : 'f. ('f, 'a) effect; }
+
 type world
 (** A type tag for top-level "world" actions. *)
 
@@ -50,7 +52,9 @@ val __builtin_effect_throw : exception__ -> ('f, 'a) effect
 
 val __builtin_catch : (exception__ -> 'a io) -> 'a io -> 'a io
 
-val __builtin_mask : (('a io -> 'a io) -> 'b io) -> 'b io
+type _A_ioio = { _A_ioio : 'a. 'a io -> 'a io }
+
+val __builtin_mask : (_A_ioio -> 'b io) -> 'b io
 (* This type should be (((∀'a. 'a io -> 'a io) -> 'b io) -> 'b io) but we
  * don't rely on that for the standard definitions. *)
 

@@ -181,14 +181,14 @@ let cat x y
     let n be nx + length y
     be init n (i ↦ (i < nx ⇒ get i x; get (i - nx) y))
 
-let cat_list xs be observe what!
+let cat_list xs be observe (that : ∀ψ. effect ψ α) which!
     let buf do buf.create
     do list.iter (buf.put_string buf) xs
     do buf.contents buf
 
 let join s
     at [] be ""
-    at [x; xs] be observe what!
+    at [x; xs] be observe (that : ∀ψ. effect ψ α) which!
 	let buf do buf.create
 	do buf.put_string buf x
 	do list.iter (x ↦ buf.put_string buf s >> buf.put_string buf x) xs
@@ -196,7 +196,7 @@ let join s
 
 let tile n s
     if n ≤ 0 be ""
-    be observe what!
+    be observe (that : ∀ψ. effect ψ α) which!
 	let buf do buf.create
 	let! loop at 0 be ()
 		  at n do buf.put_string buf s >> loop (n - 1)
@@ -213,7 +213,7 @@ let as_list x
 	else be collect_upto (n - 1) [get (n - 1) x; accu]
     be collect_upto (length x) []
 
-let of_list xs be observe what!
+let of_list xs be observe (that : ∀ψ. effect ψ α) which!
     let buf do buf.create
     do list.iter (buf.put_char buf) xs
     do buf.contents buf

@@ -1,0 +1,10 @@
+compat.ocaml_prereq._A_ioio	∀α. io α → io α
+compat.ocaml_prereq._any_effect	∀ψ. effect ψ α
+foreign.intf.record.reflens._q0	∀φ. foreign.intf.record.reflens.r φ δ → effect φ α
+foreign.intf.record.reflens._q1	∀φ. foreign.intf.record.reflens.r φ (foreign.intf.record.phantoms.spill_ph δ ε) → effect φ α
+foreign.C.record.reflens._q0	∀φ. foreign.C.record.reflens.r φ δ → effect φ α
+foreign.C.record.reflens._q1	∀φ. foreign.C.record.reflens.r φ (foreign.C.record.phantoms.spill_ph δ ε) → effect φ α
+LTG._q0		∀ν. unit → LTG.typ ν
+LTG._q1		∀ν. unit → LTG.term ν
+LTG._q2		∀ν. ν → LTG.term ν
+LTG._q3		∀ν. LTG.term ν
