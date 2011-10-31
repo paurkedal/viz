@@ -78,13 +78,42 @@ let custom_byte_compile_ocaml_implem ?tag vz cmo env build =
     Ocaml_compiler.prepare_compile build vz;
     custom_ocamlc_c (tags_of_pathname vz ++ "implem" +++ tag) vz cmo
 
+(** A modified version of [Ocaml_compiler.prepare_link] for the .vz
+    extension. *)
+let camlviz_cache_prepare_link = Hashtbl.create 107
+let rec camlviz_prepare_link tag cmx extensions build =
+    let key = (tag, cmx, extensions) in
+    let dir = Pathname.dirname cmx in
+    let include_dirs = Pathname.include_dirs_of dir in
+    let vz = Pathname.update_extensions "vz" cmx in
+    let modules =
+	if Pathname.exists (vz-.-"depends")
+	then Ocaml_utils.path_dependencies_of vz
+	else [] in
+    if modules <> [] && not (Hashtbl.mem camlviz_cache_prepare_link key) then
+	let () = Hashtbl.add camlviz_cache_prepare_link key true in
+	let modules' =
+	    List.map (fun (_, x) -> expand_module include_dirs x extensions)
+		     modules in
+	List.iter2
+	    begin fun (mandatory, _) result ->
+		match mandatory, result with
+		| _, Outcome.Good p ->
+		    camlviz_prepare_link tag p extensions build
+		| `mandatory, Outcome.Bad exn ->
+		    if not !Options.ignore_auto then raise exn
+		| `just_try, Outcome.Bad _ -> ()
+	    end
+	    modules
+	    (build modules')
+
 (** A modified version of [Ocaml_compiler.native_compile_ocaml_implem] which
     uses [custom_ocamlopt_c]. *)
 let custom_native_compile_ocaml_implem ?tag ?(cmx_ext = "cmx") ml env build =
     let ml = env ml in
     let cmi = Pathname.update_extensions "cmi" ml in
     let cmx = Pathname.update_extensions cmx_ext ml in
-    Ocaml_compiler.prepare_link cmx cmi [cmx_ext; "cmi"] build;
+    camlviz_prepare_link cmx cmi [cmx_ext; "cmi"] build;
     custom_ocamlopt_c (Tags.union (tags_of_pathname ml) (tags_of_pathname cmx)
 		       ++ "implem" +++ tag) ml cmx
 
@@ -134,7 +163,7 @@ let native_compile_camlviz_implem ?tag vz env build =
     let vz = env vz in
     let cmi = Pathname.update_extensions "cmi" vz in
     let cmx = Pathname.update_extensions "cmx" vz in
-    Ocaml_compiler.prepare_link cmx cmi ["cmx"; "cmi"] build;
+    camlviz_prepare_link cmx cmi ["cmx"; "cmi"] build;
     camlviz_ocamlopt_c
 	(Tags.union (tags_of_pathname vz) (tags_of_pathname cmx) ++
 	 "implem" +++ tag) vz cmx
@@ -273,12 +302,6 @@ let ocaml_cstubs name =
 	 (S[A"-ccopt"; A"-L."; A"-cclib"; A("-l" ^ name)]);
     dep ["ocaml"; "link"; "use_lib" ^ name] ["lib" ^ name ^ ".a"]
 
-let cdep target deps =
-    dep ["ocaml"; "compile"; "native"; "file:" ^ target ^ ".cmx"]
-	(List.map (fun p -> p ^ ".cmx") deps);
-    dep ["ocaml"; "compile"; "byte"; "file:" ^ target ^ ".cmo"]
-	(List.map (fun p -> p ^ ".cmo") deps)
-
 let () = dispatch begin function
     | Before_options ->
 	Options.use_ocamlfind := true;
@@ -313,34 +336,6 @@ let () = dispatch begin function
 
 	Pathname.define_context "vsl/foreign/C" ["vsl/foreign"];
 
-	(* Some dependencies are not picked up, maybe due to the nested
-	 * mlpack-hierarchy. *)
-	cdep "vsl/control/exception" ["vsl/prereq"];
-	cdep "vsl/data/AA_map" ["vsl/data/option"; "vsl/data/string_"];
-	cdep "vsl/data/AA_set" ["vsl/data/AA_map"];
-	cdep "vsl/data/array_" ["vsl/prereq"];
-	cdep "vsl/data/array_ref" ["vsl/prereq"];
-	cdep "vsl/data/bool" ["vsl/prereq"];
-	cdep "vsl/data/char_" ["vsl/prereq"];
-	cdep "vsl/data/free_monoid" ["vsl/prereq"];
-	cdep "vsl/data/free_semigroup" ["vsl/prereq"];
-	cdep "vsl/data/int" ["vsl/prereq"];
-	cdep "vsl/data/list_" ["vsl/prereq"];
-	cdep "vsl/data/option" ["vsl/prereq"];
-	cdep "vsl/data/string_" ["vsl/data/char_"; "vsl/data/list_"];
-	cdep "vsl/data/UTF8string" ["vsl/compat"];
-	cdep "vsl/foreign/C/memory" ["vsl/data"; "vsl/foreign/C/memory_FFIC"];
-	cdep "vsl/foreign/C/record"
-	    ["vsl/foreign/C/memory"; "vsl/foreign/field_allocation"];
-	cdep "vsl/foreign/C/utils" ["vsl/foreign/C/memory"];
-	cdep "vsl/foreign/field_allocation" ["vsl/data"];
-	cdep "vsl/prereq" ["vsl/compat"];
-	cdep "vsl/pervasive"
-	     ["vsl/foreign"; "vsl/control"; "vsl/data"; "vsl/system"];
-	cdep "vsl/system/posix/unistd" ["vsl/foreign"];
-	cdep "vsl/system/posix/stdlib" ["vsl/foreign"];
-	cdep "compiler/llvm/core" ["vsl/pervasive"];
-	cdep "compiler/llvm/execution" ["vsl/pervasive"];
 	()
     | _ -> ()
 end
