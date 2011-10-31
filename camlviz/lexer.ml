@@ -58,8 +58,8 @@ type state = {
     (* Things to take into account before reading any further. *)
     mutable st_pending : pending_work list;
 
-    (* The lexical role of the last seen introducer. *)
-    mutable st_last_lexical_role : Opkind.lexical_role;
+    (* The location and lexical role of the last seen introducer. *)
+    mutable st_last_lexical_role : Location.t * Opkind.lexical_role;
 
     (* The currently active keywords and operators. *)
     mutable st_keywords : tokeninfo UString_trie.t;
@@ -574,7 +574,7 @@ let pop_manifest_token state =
     end;
     begin match lr' with
     | Opkind.Lr_inert -> ()
-    | _ -> state.st_last_lexical_role <- lr'
+    | _ -> state.st_last_lexical_role <- (loc', lr')
     end;
     (loc', tok')
 
@@ -582,10 +582,16 @@ let pop_virtual_token state =
     let cur_col = holding_column state in
     let (loc, tok, lr) = state.st_holding in
     let loc_lb = Location.lbound loc in
-    let follows_verb = state.st_last_lexical_role = Opkind.Lr_verb in
+    let follows_verb =
+	let loc', lr' = state.st_last_lexical_role in
+	let col = Location.Bound.column (Location.lbound loc) in
+	let col' = Location.Bound.column (Location.lbound loc') in
+	col' <= col && lr' = Opkind.Lr_verb in
     let apply_connective () =
-	if Opkind.is_connective ~follows_verb lr then
-	    state.st_pending <- Pending_BEGIN :: state.st_pending in
+	if Opkind.is_connective ~follows_verb lr then begin
+	    if dlog_en then dlogf ~loc "Stacked pending BEGIN.";
+	    state.st_pending <- Pending_BEGIN :: state.st_pending
+	end in
     if not (Opkind.is_introducer lr) then
 	begin match state.st_pending with
 	| Pending_BEGIN :: pending ->
@@ -636,7 +642,7 @@ let default_state_template = {
     st_indent = -1;
     st_holding = (Location.dummy, Grammar.DEFAULT_START, Opkind.Lr_inert);
     st_pending = [];
-    st_last_lexical_role = Opkind.Lr_inert;
+    st_last_lexical_role = (Location.dummy, Opkind.Lr_inert);
     st_keywords = initial_keywords;
     st_renames = Idr_map.empty;
     st_lookahead = initial_lookahead;
