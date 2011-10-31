@@ -11,7 +11,7 @@
 let s:verbs =
   \ ['assert', 'be', 'is', 'fail', 'do', 'raise']
 let s:nonpattern_conditionals =
-  \ ['if', 'then', 'else', 'otherwise', 'when', 'for', 'while']
+  \ ['if', 'then', 'else', 'otherwise', 'when', 'for', 'while', 'taken']
 let s:pattern_conditionals =
   \ ['at', 'upon']
 let s:declarators =
