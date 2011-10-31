@@ -233,6 +233,8 @@ let avar_compare (Avar (_, Idr idr)) (Avar (_, Idr idr')) =
 
 let apath_compare (Apath (_, p)) (Apath (_, q)) = Modpath.compare p q
 
+let avar_eq (Avar (_, Idr name)) (Avar (_, Idr name')) = name = name'
+
 let atyp_free_vars t =
     let rec collect = function
 	| Atyp_ref p -> ident
@@ -251,11 +253,11 @@ let atyp_to_ascm t = let alphas = atyp_free_vars t in (alphas, t)
 
 let rec atyp_subst x x' = function
     | Atyp_ref p -> Atyp_ref p
-    | Atyp_uvar y -> Atyp_uvar (if x = y then x' else y)
+    | Atyp_uvar y -> Atyp_uvar (if avar_eq x y then x' else y)
     | Atyp_A (loc, y, t) ->
-	Atyp_A (loc, x, (if x = y then t else atyp_subst x x' t))
+	Atyp_A (loc, y, (if avar_eq x y then t else atyp_subst x x' t))
     | Atyp_E (loc, y, t) ->
-	Atyp_E (loc, x, (if x = y then t else atyp_subst x x' t))
+	Atyp_E (loc, y, (if avar_eq x y then t else atyp_subst x x' t))
     | Atyp_apply (loc, t, u) ->
 	Atyp_apply (loc, atyp_subst x x' t, atyp_subst x x' u)
     | Atyp_arrow (loc, t, u) ->
@@ -273,6 +275,7 @@ let rec atyp_compare ta tb =
     | Atyp_uvar xa, Atyp_uvar xb -> avar_compare xa xb
     | Atyp_A (_, xa, ua), Atyp_A (_, xb, ub)
     | Atyp_E (_, xa, ua), Atyp_E (_, xb, ub) ->
+	if avar_eq xa xb then atyp_compare ua ub else
 	let x = fresh_type_avar () in
 	let ua' = atyp_subst xa x ua in
 	let ub' = atyp_subst xb x ub in

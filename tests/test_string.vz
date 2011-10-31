@@ -89,7 +89,7 @@ let main
     assert string.strip "x " = "x"
     assert string.strip "  x  " = "x"
 
-    assert "s-t-e" = observe what!
+    assert "s-t-e" = observe (that : ∀ψ. effect ψ α) which!
 	let buf do string.buf.create
 	do string.buf.put_char buf c"s"
 	do string.buf.put_string buf "-t-"

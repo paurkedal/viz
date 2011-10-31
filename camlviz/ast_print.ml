@@ -20,7 +20,6 @@ open Unicode
 open Leaf_types
 open Leaf_core
 open Ast_types
-open Ast_core
 open Opkind (* to borrow precedence levels. *)
 module Fo = Formatter
 
@@ -34,7 +33,7 @@ let p_implies = p_logic 3
 let p_colon = p_logic 1
 let p_qbody = p_logic 0
 
-let print_avar fo v = Fo.put fo `Name (avar_name v)
+let print_avar fo (Avar (_, v)) = Fo.put fo `Name (idr_to_string v)
 
 let print_apath fo (Apath (_, p)) = Fo.put fo `Name (Modpath.to_string p)
 

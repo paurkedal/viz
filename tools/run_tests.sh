@@ -11,6 +11,8 @@ fail()
     failed_tests="$failed_tests $src"
 }
 
+trap 'exit 130' INT
+
 for src in "$@"; do
     p="${src%.*}.$target"
     echo ${OCAMLBUILD-ocamlbuild} -no-links -quiet $p
