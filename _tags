@@ -7,6 +7,7 @@
 
 <camlviz-tests/*.{ml,mli,native,byte,d.byte}>: use_oUnit
 
+".": include
 "vsl": include
 
 <vsl/**/*>: no_pervasive, no_vsl
@@ -27,4 +28,5 @@
 <{examples,tests,tools}{,_local}/**/*.{vz,byte,native}>: use_vsl
 <tests/test_memory.{byte,native}>: use_libtests, use_libvsl
 
-<compiler/llvm/*.cmx>: for-pack(Llvm)
+<compiler/*.cmx>: for-pack(Compiler)
+<compiler/llvm/*.cmx>: for-pack(Compiler.Llvm)

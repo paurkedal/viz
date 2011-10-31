@@ -1,4 +1,5 @@
 open effect
+open compiler
 
 in ll include llvm.core
 in lltran include llvm.transforms

@@ -5,4 +5,4 @@ vsl/foreign
 vsl/data
 vsl/system
 vsl/pervasive
-compiler/llvm
+compiler
