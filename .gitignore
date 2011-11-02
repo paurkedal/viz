@@ -3,3 +3,4 @@
 *.docdir
 /_build
 /fform/grammar.automaton
+/Makefile.local

@@ -22,6 +22,8 @@ open effect
 sig S
     include an_ordered_map'.[elt α = α]
 
+    val mapfold : (α × γ → β × γ) → t α × γ → t β × γ
+
     # FIXME:  These aliases are added as camlviz can't handle the signature
     # extensions used in an_ordered_map'.
     val _tagged_min : t α → option (index × elt α)
@@ -412,6 +414,14 @@ let map f
 let mapi f
     at O% be O
     at Y k d l tL tR be Y k (f k d) l (mapi f tL) (mapi f tR)
+
+let mapfold f
+    at O%, accu be O, accu
+    at Y k d l tL tR, accu0
+	let tL', accu1 be mapfold f (tL, accu0)
+	let d',  accu2 be f (d, accu1)
+	let tR', accu3 be mapfold f (tR, accu2)
+	be Y k d' l tL' tR', accu3
 
 let! dump_tree' dump_elt ind
     at O% do print (string.tile ind "  ") >> print "0 {}\n"

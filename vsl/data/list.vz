@@ -51,6 +51,8 @@ val fold : (α → β → β) → t α → β → β
 val foldr : (α → β → β) → t α → β → β
  ## (fold f xs ≡ fold f (rev xs)).
 
+val fold2 : (α0 × α1 → β → β) → t α0 × t α1 → β → β
+
 val iter : (α → effect φ unit) → t α → effect φ unit
  ## (iter f xs ≡ f x1 >> ... >> f xN) forms an effect-monad which iterates (f)
  ## over the elements of (xs)
@@ -106,11 +108,11 @@ val flatten : t (t α) → t α
  ## (flatten xss ≡ fold cat xss []) is the result of concatenating the
  ## elements of a list of lists.
 
-val zip : t α → t β → t (α × β)
+val zip : t α × t β → t (α × β)
  ## Given two lists (xs) and (ys) of the same length, (zip xs ys) is the list
  ## of pairs taken from (xs) and (ys) in order.
 
-val zip_trunc : t α → t β → t (α × β)
+val zip_trunc : t α × t β → t (α × β)
  ## (zip_trunc xs ys) is the list of pairs taken from (xs) and (ys) in order,
  ## truncating to the length of the shortest list.
 
@@ -140,6 +142,12 @@ let fold f
     at [x; xs] be fold f xs ∘ f x
 
 let foldr f xs be fold f (rev xs)
+
+let fold2 f
+    at [], [] be ident
+    at [], _ fail "fold2: left list is smaller."
+    at _, [] fail "fold2: right list is smaller."
+    at [x; xs], [y; ys] be fold2 f (xs, ys) ∘ f (x, y)
 
 let iter f
     at [] be return ()
@@ -224,7 +232,7 @@ let flatten
     at [xs] be xs
     at [xs; xss] be cat xs (flatten xss)
 
-let zip xs ys
+let zip (xs, ys)
     let loop zs
 	at [x; xs]
 	    at [y; ys] be loop [(x, y); zs] xs ys
@@ -234,7 +242,7 @@ let zip xs ys
 	    at _ fail "list.zip: The second list is longer than the first."
     be loop [] xs ys
 
-let zip_trunc xs ys
+let zip_trunc (xs, ys)
     let loop zs
 	at [x; xs] at [y; ys] be loop [(x, y); zs] xs ys
 		   at [] be rev zs

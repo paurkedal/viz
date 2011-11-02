@@ -33,6 +33,7 @@ in basics
 
     let fst (x, _) be x
     let snd (_, y) be y
+    let swp (x, y) be (y, x)
 
     sig a_total_order
 	type t

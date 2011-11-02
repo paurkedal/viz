@@ -94,7 +94,7 @@ hi link VizTypeParam vizTypeName
 "
 syn cluster VizOperator contains=VizOperator,VizParen,VizOperatorName
 syn match VizOperator
-  \ '[-!#&*+,/;<=>@|~¬×\u2190-\u21ff∁∂\u2206-\u22ff\u2a00-\u2aff]\+\'*'
+  \ '[-!#&*+,/;<=>@|~¬×\u2190-\u2196\u2198-\u21ff∁∂\u2206-\u22a3\u22a6-\u22ff\u2a00-\u2aff]\+\'*'
 syn match VizOperator '\k\@<!:\k\@!'
 syn match VizOperator '\.\S\@=\k\@!'
 syn region VizParen matchgroup=VizOperator start='(' end=')' fold transparent

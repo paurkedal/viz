@@ -70,9 +70,9 @@ sealed with
 
     val locate_optimum : (α → α → bool) → t α → int
 
-    val zip : t α → t β → t (α × β)
+    val zip : t α × t β → t (α × β)
 
-    val zip_trunc : t α → t β → t (α × β)
+    val zip_trunc : t α × t β → t (α × β)
 
     val unzip : t (α × β) → t α × t β
 
@@ -163,12 +163,12 @@ let locate_optimum leq a
 	be loop (i + 1) (leq x xO ⇒ xO, iO; x, i)
     be loop 1 (get 0 a, 0)
 
-let zip a0 a1
+let zip (a0, a1)
     let n be length a0
     assert n = length a1
     be init n (i ↦ (get i a0, get i a1))
 
-let zip_trunc a0 a1
+let zip_trunc (a0, a1)
     let n be int.min (length a0) (length a1)
     be init n (i ↦ (get i a0, get i a1))
 
