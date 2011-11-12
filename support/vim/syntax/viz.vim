@@ -94,12 +94,21 @@ hi link VizTypeParam vizTypeName
 "
 syn cluster VizOperator contains=VizOperator,VizParen,VizOperatorName
 syn match VizOperator
-  \ '[-!#&*+,/;<=>@|~¬×\u2190-\u2196\u2198-\u21ff∁∂\u2206-\u22a3\u22a6-\u22ff\u2a00-\u2aff]\+\'*'
+  \ '[-!#&*+,/;<=>?@^|~¬·×⁺⁻⁼₊₋₌\u2190-\u2196\u2198-\u21ff∁∂\u2206-\u221d\u221f-\u22a3\u22a6-\u22ff⌃⌄\u2a00-\u2aff]\+\'*'
 syn match VizOperator '\k\@<!:\k\@!'
 syn match VizOperator '\.\S\@=\k\@!'
 syn region VizParen matchgroup=VizOperator start='(' end=')' fold transparent
 syn region VizParen matchgroup=VizOperator start='\[' end='\]' fold transparent
 syn region VizParen matchgroup=VizOperator start='{' end='}' fold transparent
+syn region VizParen matchgroup=VizOperator start='⁽' end='⁾' fold transparent
+syn region VizParen matchgroup=VizOperator start='₍' end='₎' fold transparent
+syn region VizParen matchgroup=VizOperator start='⌈' end='⌉' fold transparent
+syn region VizParen matchgroup=VizOperator start='⌊' end='⌋' fold transparent
+syn region VizParen matchgroup=VizOperator start='⟦' end='⟧' fold transparent
+syn region VizParen matchgroup=VizOperator start='⟨' end='⟩' fold transparent
+syn region VizParen matchgroup=VizOperator start='⟪' end='⟫' fold transparent
+syn region VizParen matchgroup=VizOperator start='⟬' end='⟭' fold transparent
+syn region VizParen matchgroup=VizOperator start='⟮' end='⟯' fold transparent
 if !exists('viz_disable_types')
   syn region VizTyping contained containedin=VizParen transparent
     \ matchgroup=VizOperator start='\S\@<!:\S\@!' end=')\@='
@@ -200,6 +209,7 @@ syn match VizNumber '-\?\<\d\+\(\.\d\+\)\?\>'
 syn match VizNumber '-\?\<0b[01]\+\>' contains=ffBasePrefix
 syn match VizNumber '-\?\<0o[0-7]\+\>' contains=ffBasePrefix
 syn match VizNumber '-\?\<0x\x\+\>' contains=ffBasePrefix
+syn match VizNumber '[⁰¹²³⁴-⁹₀-₉]\+'
 syn match VizNumberBase contained '\<0[bvx]'
 
 syn region VizString start='"' end='"' skip='\\.' extend contains=@VizString

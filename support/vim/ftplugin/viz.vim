@@ -11,7 +11,7 @@ let b:did_ftplugin = 1
 setlocal fo-=t fo+=crql
 
 setlocal comments=b:#,b:##,s:{#,mb:#,e:#}
-let b:match_words = '⟦:⟧,⟨:⟩,⌈:⌉,⌊:⌋'
+let b:match_words = '(:),{:},[:],⁽:⁾,₍:₎,⟦:⟧,⟨:⟩,⟪:⟫,⌈:⌉,⌊:⌋'
 
 setlocal include=\\<\\(include\\\|open\\)\\>
 setlocal includeexpr=substitute(v:fname,'\\.','/','g')
