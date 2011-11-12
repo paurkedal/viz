@@ -30,20 +30,26 @@ type avar = Avar of loc * idr with sexp
 
 type apath = Apath of loc * Modpath.t with sexp
 
+type alabel =
+    | Alabel_none
+    | Alabel_labelled of idr
+    | Alabel_optional of idr
+    with sexp
+
 type atyp =
     | Atyp_ref of apath
     | Atyp_uvar of avar
     | Atyp_A of loc * avar * atyp
     | Atyp_E of loc * avar * atyp
     | Atyp_apply of loc * atyp * atyp
-    | Atyp_arrow of loc * atyp * atyp
+    | Atyp_arrow of loc * alabel * atyp * atyp
     with sexp
 
 type apat =
     | Apat_literal of loc * lit
     | Apat_ref of apath
     | Apat_uvar of avar
-    | Apat_apply of loc * apat * apat
+    | Apat_apply of loc * alabel * apat * apat
     | Apat_as of loc * avar * apat
     | Apat_intype of loc * atyp * apat
     with sexp
@@ -51,9 +57,9 @@ type apat =
 type aval =
     | Aval_literal of loc * lit
     | Aval_ref of apath
-    | Aval_apply of loc * aval * aval
+    | Aval_apply of loc * alabel * aval * aval
     | Aval_array of loc * aval list
-    | Aval_at of loc * (apat * aval option * aval) list
+    | Aval_at of loc * idr option * (apat * aval option * aval) list
     | Aval_match of loc * aval * (apat * aval option * aval) list
     | Aval_let of loc * apat * aval * aval
     | Aval_letrec of loc * (loc * avar * atyp option * aval) list * aval

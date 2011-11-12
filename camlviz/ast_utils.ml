@@ -41,12 +41,14 @@ let apath_to_avar = function
     | p -> errf_at (apath_loc p) "Expecting an unqualified identifier."
 
 let rec result_type = function
-    | Atyp_arrow (_, _, rt) -> result_type rt
-    | Atyp_A (_, _, rt) | Atyp_E (_, _, rt) -> result_type rt
+    | Atyp_arrow (_, _, _, rt)
+    | Atyp_A (_, _, rt) | Atyp_E (_, _, rt)
+	 -> result_type rt
     | rt -> rt
 
 let rec fold_arg_types f = function
-    | Atyp_arrow (_, at, rt) -> f at *> fold_arg_types f rt
+    | Atyp_arrow (_, _, at, rt)
+	 -> f at *> fold_arg_types f rt
     | rt -> ident
 
 let arity t = fold_arg_types (fun _ accu -> accu + 1) t 0
@@ -88,7 +90,8 @@ let rec atyp_is_const = function
 let flatten_arrows =
     let rec loop ats = function
 	| Atyp_A (_, _, t) | Atyp_E (_, _, t) -> loop ats t
-	| Atyp_arrow (_, at, rt) -> loop (at :: ats) rt
+	| Atyp_arrow (_, _, at, rt) ->
+	    loop (at :: ats) rt
 	| rt -> (rt, List.rev ats) in
     loop []
 
@@ -119,14 +122,14 @@ let atyp_apply p tas =
 let rec fold_apat_vars f = function
     | Apat_literal _ | Apat_ref _ -> ident
     | Apat_uvar v -> f v
-    | Apat_apply (_, p, q) -> fold_apat_vars f p *> fold_apat_vars f q
+    | Apat_apply (_, _, p, q) -> fold_apat_vars f p *> fold_apat_vars f q
     | Apat_as (_, v, p) -> f v *> fold_apat_vars f p
     | Apat_intype (_, t, p) -> fold_apat_vars f p
 
 let rec fold_apat_typed_vars f = function
     | Apat_literal _ | Apat_ref _ -> ident
     | Apat_uvar v -> ident
-    | Apat_apply (_, p, q) ->
+    | Apat_apply (_, _, p, q) ->
 	fold_apat_typed_vars f p *> fold_apat_typed_vars f q
     | Apat_as (_, v, p) -> fold_apat_typed_vars f p
     | Apat_intype (_, t, Apat_uvar v) -> f (t, v)
@@ -136,7 +139,8 @@ let rec fold_apat_typed_vars f = function
 
 let rec extract_aval_o2left_idr idr =
     let rec loop accu = function
-	| Aval_apply (_, Aval_apply (_, Aval_ref op, x), y)
+	| Aval_apply (_, Alabel_none,
+	    Aval_apply (_, Alabel_none, Aval_ref op, x), y)
 		when apath_eq_idr idr op ->
 	    loop (y :: accu) x
 	| x -> (x :: accu) in
@@ -148,14 +152,14 @@ let rec fold_atyp_paths f = function
     | Atyp_ref p -> f p
     | Atyp_A (_, _, t) | Atyp_E (_, _, t) -> fold_atyp_paths f t
     | Atyp_uvar _ -> ident
-    | Atyp_apply (_, u, v) | Atyp_arrow (_, u, v) ->
+    | Atyp_apply (_, u, v) | Atyp_arrow (_, _, u, v) ->
 	fold_atyp_paths f u *> fold_atyp_paths f v
 
 let rec fold_apat_paths f = function
     | Apat_literal _ -> ident
     | Apat_ref p -> f `Value p
     | Apat_uvar _ -> ident
-    | Apat_apply (_, p, q) ->
+    | Apat_apply (_, _, p, q) ->
 	fold_apat_paths f p *> fold_apat_paths f q
     | Apat_as (_, v, p) -> fold_apat_paths f p
     | Apat_intype (_, t, p) ->
@@ -172,9 +176,9 @@ let rec fold_aval_paths f =
     function
     | Aval_literal _ -> ident
     | Aval_ref p -> f `Value p
-    | Aval_apply (_, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
+    | Aval_apply (_, _, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
     | Aval_array (_, xs) -> List.fold (fold_aval_paths f) xs
-    | Aval_at (_, cases) -> fold_cases cases
+    | Aval_at (_, _, cases) -> fold_cases cases
     | Aval_match (_, x, cases) -> fold_aval_paths f x *> fold_cases cases
     | Aval_let (_, p, rhs, body) ->
 	fold_apat_paths f p *> fold_aval_paths f rhs *> fold_aval_paths f body
@@ -286,7 +290,8 @@ let cabi_path = Modpath.atom (Idr "cabi")
 
 let interpret_use use =
     let rec flatten params = function
-	| Aval_apply (_, inner, param) -> flatten (param :: params) inner
+	| Aval_apply (_, Alabel_none, inner, param) ->
+	    flatten (param :: params) inner
 	| directive -> directive, params in
     let directive, params = flatten [] use in
     match directive with
@@ -335,8 +340,8 @@ let extract_backtrack_guard x =
 
 let effect_thunk loc x =
     let effect_path = Apath (loc, Modpath.atom idr_effect) in
-    Aval_apply (loc, Aval_ref effect_path,
-	Aval_at (loc, [Apat_literal (loc, Lit_unit), None, x]))
+    Aval_apply (loc, Alabel_none, Aval_ref effect_path,
+	Aval_at (loc, None, [Apat_literal (loc, Lit_unit), None, x]))
 
 type adeps = {
     adeps_t : Modpath.Set.t;

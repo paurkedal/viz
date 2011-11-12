@@ -80,12 +80,12 @@ lex alias <: ∈
 
 # Z.5.  Arithmetic and other Mid-Precedence Operators
 
-lex A1	→ ↔
+lex A1	→ →? ↔
 lex A2	+ − /~
 lex A4	∪ ∖
 lex A6	× ⋅ ∕ ∘ (12'<*) div mod quo rem
 lex A8	∩
-lex alias -> →  <-> ↔
+lex alias -> →  ->? →?  <-> ↔
 lex alias - −
 lex alias * ×  / ∕  o` ∘
 
@@ -93,7 +93,7 @@ lex alias * ×  / ∕  o` ∘
 # Z.6.  Sub-, Superscripts, and other High-Precedence Operators
 
 lex S0	^ ↑ ↓
-lex S2S	!
+lex S2S	! ?
 lex S2	# @
 
 
@@ -101,7 +101,7 @@ lex S2	# @
 
 lex BL	( [ { ⌈ ⌊ ⟦ #[
 lex BR	) ] } ⌉ ⌋ ⟧
-lex S2L	@( .( .[
+lex S2L	@( .( .[ ?(
 
 
 # Z.8.  Identifiers

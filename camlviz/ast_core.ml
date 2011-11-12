@@ -28,6 +28,7 @@ let avar_name (Avar (_, Idr s)) = s
 let avar_loc (Avar (loc, _)) = loc
 
 let ascii_encode s =
+    assert (s <> "*");  (* Asserts that "l:*" is replaced by "l:l", etc. *)
     let buf = UString.Buf.create 16 in
     let s' =
 	if String.length s >= 2 then
@@ -68,14 +69,14 @@ let atyp_loc = function
     | Atyp_A (loc, _, _) -> loc
     | Atyp_E (loc, _, _) -> loc
     | Atyp_apply (loc, _, _) -> loc
-    | Atyp_arrow (loc, _, _) -> loc
+    | Atyp_arrow (loc, _, _, _) -> loc
 
 let rec aval_loc = function
     | Aval_literal (loc, _) -> loc
     | Aval_ref p -> apath_loc p
-    | Aval_apply (loc, _, _) -> loc
+    | Aval_apply (loc, _, _, _) -> loc
     | Aval_array (loc, _) -> loc
-    | Aval_at (loc, _) -> loc
+    | Aval_at (loc, _, _) -> loc
     | Aval_let (loc, _, _, _) -> loc
     | Aval_letrec (loc, _, _) -> loc
     | Aval_if (loc, _, _, _) -> loc
@@ -89,7 +90,7 @@ let rec apat_loc = function
     | Apat_literal (loc, _) -> loc
     | Apat_ref p -> apath_loc p
     | Apat_uvar x -> avar_loc x
-    | Apat_apply (loc, _, _) -> loc
+    | Apat_apply (loc, _, _, _) -> loc
     | Apat_as (loc, _, _) -> loc
     | Apat_intype (loc, _, _) -> loc
 
@@ -157,9 +158,9 @@ let aval_string loc s =
     Aval_literal (loc, Lit_string (UString.of_utf8 s))
 
 let aval_apply1i loc idr x =
-    Aval_apply (loc, Aval_ref (Apath (loc, Modpath.atom idr)), x)
+    Aval_apply (loc, Alabel_none, Aval_ref (Apath (loc, Modpath.atom idr)), x)
 let aval_apply2i loc idr x y =
-    Aval_apply (loc, aval_apply1i loc idr x, y)
+    Aval_apply (loc, Alabel_none, aval_apply1i loc idr x, y)
 
 let aval_internal_error loc msg =
     aval_apply2i loc (Idr "__failure")
@@ -177,15 +178,16 @@ let rec atyp_map ?(on_apath = ident) ?(on_avar = ident) ?on_atyp t =
     | Atyp_A (loc, v, t0) -> Atyp_A (loc, v, on_atyp' t0)
     | Atyp_E (loc, v, t0) -> Atyp_E (loc, v, on_atyp' t0)
     | Atyp_apply (loc, t0, t1) -> Atyp_apply (loc, on_atyp' t0, on_atyp' t1)
-    | Atyp_arrow (loc, t0, t1) -> Atyp_arrow (loc, on_atyp' t0, on_atyp' t1)
+    | Atyp_arrow (loc, alab, t0, t1) ->
+	Atyp_arrow (loc, alab, on_atyp' t0, on_atyp' t1)
 
 let aval_map_subaval f = function
     | Aval_literal _ | Aval_ref _ | Aval_back _ as x -> x
-    | Aval_apply (loc, x, y) -> Aval_apply (loc, f x, f y)
+    | Aval_apply (loc, l, x, y) -> Aval_apply (loc, l, f x, f y)
     | Aval_array (loc, xs) -> Aval_array (loc, List.map f xs)
-    | Aval_at (loc, cases) ->
+    | Aval_at (loc, alab, cases) ->
 	let g (p, xopt, y) = (p, Option.map f xopt, f y) in
-	Aval_at (loc, List.map g cases)
+	Aval_at (loc, alab, List.map g cases)
     | Aval_match (loc, x, cases) ->
 	let g (p, xopt, y) = (p, Option.map f xopt, f y) in
 	Aval_match (loc, f x, List.map g cases)
@@ -245,7 +247,7 @@ let atyp_free_vars t =
 	    fun (skip, avs) ->
 	    let skip', avs' = collect t0 (Idr_set.add x skip, avs) in
 	    (Idr_set.remove x skip', avs')
-	| Atyp_apply (_, t0, t1) | Atyp_arrow (_, t0, t1) ->
+	| Atyp_apply (_, t0, t1) | Atyp_arrow (_, _, t0, t1) ->
 	    collect t0 *> collect t1 in
     List.rev (snd (collect t (Idr_set.empty, [])))
 
@@ -260,14 +262,24 @@ let rec atyp_subst x x' = function
 	Atyp_E (loc, y, (if avar_eq x y then t else atyp_subst x x' t))
     | Atyp_apply (loc, t, u) ->
 	Atyp_apply (loc, atyp_subst x x' t, atyp_subst x x' u)
-    | Atyp_arrow (loc, t, u) ->
-	Atyp_arrow (loc, atyp_subst x x' t, atyp_subst x x' u)
+    | Atyp_arrow (loc, alab, t, u) ->
+	Atyp_arrow (loc, alab, atyp_subst x x' t, atyp_subst x x' u)
 
 let fresh_type_avar_next = ref 0
 let fresh_type_avar () =
     let i = !fresh_type_avar_next in
     fresh_type_avar_next := i + 1;
     Avar (Location.dummy, Idr (Printf.sprintf "__fv%d" i))
+
+let alabel_compare alaba alabb =
+    match alaba, alabb with
+    | Alabel_none, Alabel_none -> 0
+    | Alabel_none, _ -> -1
+    | _, Alabel_none -> 1
+    | Alabel_labelled la, Alabel_labelled lb
+    | Alabel_optional la, Alabel_optional lb -> compare la lb
+    | Alabel_labelled _, Alabel_optional _ -> -1
+    | Alabel_optional _, Alabel_labelled _ -> 1
 
 let rec atyp_compare ta tb =
     match ta, tb with
@@ -280,10 +292,12 @@ let rec atyp_compare ta tb =
 	let ua' = atyp_subst xa x ua in
 	let ub' = atyp_subst xb x ub in
 	atyp_compare ua' ub'
-    | Atyp_apply (_, fa, ua), Atyp_apply (_, fb, ub)
-    | Atyp_arrow (_, fa, ua), Atyp_arrow (_, fb, ub) ->
-	let c = atyp_compare fa fb in
-	if c <> 0 then c else
+    | Atyp_apply (_, fa, ua), Atyp_apply (_, fb, ub) ->
+	let c = atyp_compare fa fb in if c <> 0 then c else
+	atyp_compare ua ub
+    | Atyp_arrow (_, alab, fa, ua), Atyp_arrow (_, ab, fb, ub) ->
+	let c = alabel_compare alab ab in if c <> 0 then c else
+	let c = atyp_compare fa fb in if c <> 0 then c else
 	atyp_compare ua ub
     | Atyp_ref _, _   -> -1 | _, Atyp_ref _   -> 1
     | Atyp_uvar _, _  -> -1 | _, Atyp_uvar _  -> 1

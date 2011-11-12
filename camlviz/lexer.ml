@@ -444,13 +444,19 @@ let scan_identifier state =
 	Some (Grammar.HINTED_IDENTIFIER (idr, Ih_univ))
     | ch0 :: _ when UChar.is_idrchr ch0 ->
 	let idr = scan_regular_identifier state in
-	if LStream.peek_code state.st_stream = 0x25 then begin
+	begin match LStream.peek_code state.st_stream with
+	| 0x25 (* '%' *) ->
 	    LStream.skip state.st_stream;
 	    Some (Grammar.HINTED_IDENTIFIER (idr, Ih_inj))
-	end else if UChar.is_greek_alpha ch0 then
-	    Some (Grammar.HINTED_IDENTIFIER (idr, Ih_univ))
-	else
-	    Some (Grammar.IDENTIFIER idr)
+	| 0x3a (* ':' *) ->
+	    LStream.skip state.st_stream;
+	    Some (Grammar.LABEL idr)
+	| _ ->
+	    if UChar.is_greek_alpha ch0 then
+		Some (Grammar.HINTED_IDENTIFIER (idr, Ih_univ))
+	    else
+		Some (Grammar.IDENTIFIER idr)
+	end
     | _ -> None
 
 let escape_map =
@@ -539,14 +545,24 @@ let scan_literal state =
 	found_int 1 true 10
     | _ -> None
 
-let scan_eof state =
-    if LStream.peek state.st_stream = None then
+let scan_special state =
+    let expecting_special_identifier () =
+	match state.st_holding with
+	| (_, Grammar.LABEL _, _) -> true
+	| _ -> false in
+    match LStream.peek_code state.st_stream with
+    | 0 (* EOF *) ->
 	let loc = Location.at (LStream.locbound state.st_stream) in
 	Some (loc, Grammar.EOF, Opkind.Lr_declarator)
-    else
-	None
+    | 0x2a (* "*" *) when expecting_special_identifier () ->
+	let lb = LStream.locbound state.st_stream in
+	LStream.skip state.st_stream;
+	let ub = LStream.locbound state.st_stream in
+	Some (Location.between lb ub,
+	      Grammar.IDENTIFIER (Idr "*"), Opkind.Lr_inert)
+    | _ -> None
 
-let fixed_scanners = [scan_eof; scan_custom; scan_keyword]
+let fixed_scanners = [scan_special; scan_custom; scan_keyword]
 let default_scanners = [scan_literal; scan_identifier]
 
 let pop_manifest_token state =

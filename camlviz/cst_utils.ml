@@ -116,6 +116,7 @@ let is_injname cidr = cidr_is_2o_comma cidr
 let count_formal_args ctrm =
     let rec loop n = function
 	| Ctrm_apply (loc, f, _) -> loop (n + 1) f
+	| Ctrm_rel (loc, cx, [_, cf, cy]) -> 2
 	| Ctrm_ref (cidr, Ih_inj) -> 0
 	| Ctrm_ref (cidr, Ih_univ) -> n
 	| Ctrm_ref (cidr, Ih_none) when not (is_injname cidr) -> n
@@ -127,7 +128,7 @@ let rec fold_ctrm_args f (trm, accu) =
     | Ctrm_apply (loc, trm', arg) ->
 	fold_ctrm_args f (trm', f arg accu)
     | Ctrm_rel (loc, cx, [_, cf, cy]) ->
-	fold_ctrm_args f (Ctrm_ref (cf, Ih_none), f cy (f cx accu))
+	fold_ctrm_args f (Ctrm_ref (cf, Ih_none), f cx (f cy accu))
     | _ -> (trm, accu)
 
 let fold_formal_args f (trm, accu) =

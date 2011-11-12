@@ -58,7 +58,7 @@ let rec output_inj_check och i = function
     | [] -> ()
     | (loc, v, t, Ainjnum_cabi cn) :: injs ->
 	begin match t with
-	| Atyp_arrow (loc, _, _) ->
+	| Atyp_arrow (loc, _, _, _) ->
 	    errf_at loc "A constant type is required for C enum."
 	| _ -> ()
 	end;

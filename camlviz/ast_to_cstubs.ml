@@ -207,8 +207,10 @@ let output_cstub och v t cn_opt is_fin state =
     let output_call () =
 	output_string och cn;
 	match t with
-	| Atyp_arrow _ -> output_arglist och (output_arg och) args;
-	| _ -> output_string och "()" in
+	| Atyp_arrow _ ->
+	    output_arglist och (output_arg och) args;
+	| _ ->
+	    output_string och "()" in
     if is_unit then begin
 	if is_fin then output_string och "\tif (Voidp_val(x0)) {\n\t";
 	output_char och '\t';
@@ -240,7 +242,7 @@ let output_cstub och v t cn_opt is_fin state =
     end;
     if is_fin then
 	begin match t with
-	| Atyp_arrow (loc, ft, Atyp_apply (_, tc, Atyp_ref p_unit))
+	| Atyp_arrow (loc, alab, ft, Atyp_apply (_, tc, Atyp_ref p_unit))
 		when apath_eq_string "unit" p_unit ->
 	    let Apath (ftc_loc, ftc_p), ftparams = Ast_utils.atyp_unapply ft in
 	    if not (Modpath.is_atom ftc_p) then

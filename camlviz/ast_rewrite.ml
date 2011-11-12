@@ -22,21 +22,21 @@ open Ast_core
 open Cst_core
 
 let apat_pair loc x y =
-    Apat_apply (loc,
-	Apat_apply (loc,
+    Apat_apply (loc, Alabel_none,
+	Apat_apply (loc, Alabel_none,
 	    Apat_ref (Apath (loc, Modpath.atom idr_2o_comma)),
 	    x),
 	y)
 
 let aval_pair loc x y =
-    Aval_apply (loc,
-	Aval_apply (loc,
+    Aval_apply (loc, Alabel_none,
+	Aval_apply (loc, Alabel_none,
 	    Aval_ref (Apath (loc, Modpath.atom idr_2o_comma)),
 	    x),
 	y)
 
 let rec std_aval_rewrite = function
-    | Aval_at (locA, casesA) as self ->
+    | Aval_at (locA, None, casesA) as self ->
 	let case_is_atexpr = function
 	    | (_, None, Aval_at _) -> true
 	    | _ -> false in
@@ -45,7 +45,7 @@ let rec std_aval_rewrite = function
 	let varB = fresh_avar_at ~prefix:"_b" locA in
 	let paired_cases =
 	    List.map begin function
-		| (patA, None, Aval_at (locB, casesB)) ->
+		| (patA, None, Aval_at (locB, None, casesB)) ->
 		    List.map begin fun (patB, condB, retB) ->
 			(apat_pair locB patA patB, condB, retB)
 		    end casesB
@@ -54,10 +54,11 @@ let rec std_aval_rewrite = function
 	    |> List.flatten in
 	let argA = Aval_ref (apath_of_avar varA) in
 	let argB = Aval_ref (apath_of_avar varB) in
-	let inner = std_aval_rewrite (Aval_at (locA, paired_cases)) in
-	Aval_at (locA, [Apat_uvar varA, None,
-	    Aval_at (locA, [Apat_uvar varB, None,
-		Aval_apply (locA, inner, aval_pair locA argA argB)])])
+	let inner = std_aval_rewrite (Aval_at (locA, None, paired_cases)) in
+	Aval_at (locA, None, [Apat_uvar varA, None,
+	    Aval_at (locA, None, [Apat_uvar varB, None,
+		Aval_apply (locA, Alabel_none,
+			    inner, aval_pair locA argA argB)])])
     | self -> self
 
 let rec std_amod_rewrite m =

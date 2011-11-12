@@ -53,10 +53,19 @@ let rec build_atyp ?(strip_indices = false) = function
     | Ctrm_project _ as ctrm ->
 	Atyp_ref (build_apath ctrm)
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), ct), cu)
-	    when cidr_is_2o_arrow op ->
+	    when cidr_is_2o_arrow op || cidr_is_2o_arrowopt op ->
+	let alab, ct =
+	    match ct with
+	    | Ctrm_label (_, Cidr (_, l), ct) ->
+		if cidr_is_2o_arrow op
+		then Alabel_labelled l, ct
+		else Alabel_optional l, ct
+	    | ct ->
+		if cidr_is_2o_arrowopt op then errf_at loc "Label required."
+		else Alabel_none, ct in
 	let at = build_atyp ~strip_indices ct in
 	let au = build_atyp ~strip_indices cu in
-	Atyp_arrow (loc, at, au)
+	Atyp_arrow (loc, alab, at, au)
     | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), ct), cu)
 	    when strip_indices && cidr_is_2o_index op ->
 	build_atyp ~strip_indices ct
@@ -76,6 +85,13 @@ let build_atyp_con_args =
 	| Ctrm_apply (loc, ct, arg) -> loop (build_atyp arg :: args) ct
 	| ct -> errf_at (ctrm_loc ct) "Expecting a type constructor." in
     loop []
+
+let rec replace_star l = function
+    | Ctrm_ref (Cidr (loc, Idr l'), _) when l' = "*" ->
+	Ctrm_ref (Cidr (loc, l), Ih_none)
+    | Ctrm_apply (loc, cx, cy) ->
+	Ctrm_apply (loc, replace_star l cx, replace_star l cy)
+    | cy -> cy
 
 let rec build_apat ?(adecmap = Idr_map.empty) ?(fpos = false) = function
     | Ctrm_literal (loc, lit) ->
@@ -98,39 +114,45 @@ let rec build_apat ?(adecmap = Idr_map.empty) ?(fpos = false) = function
 	    when ctrm_eq_ref idr_2o_colon op ->
 	Apat_intype (loc, build_atyp ct, build_apat cx)
     | Ctrm_apply (loc, cx, cy) ->
+	let alab, cy =
+	    match cy with
+	    | Ctrm_label (lloc, Cidr (_, l), cy) ->
+		begin match cy with
+		| Ctrm_apply (_, Ctrm_ref (qmark, _), cy)
+			when cidr_is_1o_qmark qmark ->
+		    Alabel_optional l, replace_star l cy
+		| _ ->
+		    Alabel_labelled l, replace_star l cy
+		end
+	    | _ -> Alabel_none, cy in
 	let ax = build_apat ~adecmap ~fpos:true cx in
 	let ay = build_apat ~adecmap cy in
-	Apat_apply (loc, ax, ay)
-    | cx -> errf_at (ctrm_loc cx) "Invalid pattern."
+	Apat_apply (loc, alab, ax, ay)
+    | cx ->
+	errf_at (ctrm_loc cx) "Invalid pattern %s."
+		(Syn_print.ctrm_to_string cx)
 
 let make_aval_return loc decor ax =
     let af = aval_ref_of_idr loc (Idr ("return" ^ decor)) in
-    Aval_apply (loc, af, ax)
+    Aval_apply (loc, Alabel_none, af, ax)
 let make_aval_throw loc decor ax =
     let af = aval_ref_of_idr loc idr_effect_throw in (* FIXME: decor *)
-    Aval_apply (loc, af, ax)
+    Aval_apply (loc, Alabel_none, af, ax)
 let make_aval_other loc decor verb ax =
     let af = aval_ref_of_idr loc verb in (* FIXME *)
-    Aval_apply (loc, af, ax)
+    Aval_apply (loc, Alabel_none, af, ax)
 let make_aval_bind loc decor ax ay =
     let af = aval_ref_of_idr loc (Idr ("2'>>=" ^ decor)) in
-    Aval_apply (loc, Aval_apply (loc, af, ax), ay)
+    Aval_apply (loc, Alabel_none, Aval_apply (loc, Alabel_none, af, ax), ay)
 let make_aval_chop loc decor ax ay =
     let af = aval_ref_of_idr loc (Idr ("2'>>" ^ decor)) in
-    Aval_apply (loc, Aval_apply (loc, af, ax), ay)
+    Aval_apply (loc, Alabel_none, Aval_apply (loc, Alabel_none, af, ax), ay)
 let idr_for_line loc =
     let lineno = Location.Bound.lineno (Location.lbound loc) in
     Idr (Printf.sprintf "_m%d" lineno)
 let avar_for_line loc = Avar (loc, idr_for_line loc)
 
 type monad_mode = MM_quote of cmonad | MM_bind of aval
-
-let wrap_abstractions cpat arhs =
-    let wrap carg arhs =
-	let aarg = build_apat carg in
-	Aval_at (ctrm_loc carg, [(aarg, None, arhs)]) in
-    let cpat, arhs = Cst_utils.fold_formal_args wrap (cpat, arhs) in
-    (build_avar cpat, arhs)
 
 let wrap_let = function
     | Adef_let (loc, apat, arhs) -> fun acont ->
@@ -142,10 +164,57 @@ let wrap_let = function
 	Aval_letrec (loc, bindings, acont)
     | _ -> assert false
 
-let rec build_aval cm_opt cpred =
+let strip_label l = function
+    | Ctrm_label (loc, Cidr (_, l'), cpat), ctrm ->
+	let cpat = replace_star l cpat in
+	if l = l' then cpat, ctrm else
+	errf_at loc "Different labels %s and %s for cases."
+		(idr_to_string l') (idr_to_string l)
+    | cpat, _ ->
+	errf_at (ctrm_loc cpat) "Missing label %s." (idr_to_string l)
+
+let strip_labels = function
+    | (Ctrm_label (_, Cidr (_, l), _), _) :: _ as cases ->
+	Some l, List.map (strip_label l) cases
+    | cases -> None, cases
+
+let apat_none loc = Apat_ref (Apath (loc, Modpath.atom (Idr "none")))
+let apat_some loc apat =
+    Apat_apply (loc, Alabel_none,
+		Apat_ref (Apath (loc, Modpath.atom (Idr "some"))), apat)
+
+let rec wrap_abstractions cpat arhs =
+    let wrap carg arhs =
+	match carg with
+	| Ctrm_label (_, Cidr (_, l), carg) ->
+	    let carg = replace_star l carg in
+	    let aarg, arhs =
+		match carg with
+		| Ctrm_apply (loc,
+		      Ctrm_apply (_, Ctrm_ref (qmark, _), carg), cdfl)
+			  when cidr_is_2b_qmark qmark ->
+		    let afarg = build_apat carg in
+		    let aarg = build_aval_expr carg in
+		    let arhs =
+			Aval_let (loc, afarg,
+			    Aval_match (loc, aarg,
+				[apat_some loc afarg, None, aarg;
+				 apat_none loc, None, build_aval_expr cdfl]),
+			    arhs) in
+		    afarg, arhs
+		| _ -> build_apat carg, arhs in
+	    Aval_at (ctrm_loc carg, Some l, [(aarg, None, arhs)])
+	| _ ->
+	    let afarg = build_apat carg in
+	    Aval_at (ctrm_loc carg, None, [(afarg, None, arhs)]) in
+    let cpat, arhs = Cst_utils.fold_formal_args wrap (cpat, arhs) in
+    (build_avar cpat, arhs)
+
+and build_aval cm_opt cpred =
     match cm_opt with
     | Some cm -> build_aval_monad (MM_quote cm) cpred
     | None ->    build_aval_pure cpred
+
 and build_aval_pure = function
     | Cpred_let (loc, cm_opt, cpat, cpred, ccont)	(* Pattern Case *)
 	    when not (Cst_utils.is_formal cpat) ->
@@ -171,15 +240,17 @@ and build_aval_pure = function
     | Cpred_back loc ->
 	Aval_back loc
     | Cpred_at (loc, cases) ->
+	let lopt, cases = strip_labels cases in
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_pure cq) in
-	Aval_at (loc, List.map build_case cases)
+	Aval_at (loc, lopt, List.map build_case cases)
     | Cpred_expr0 (loc, Idr verb) ->
 	errf_at loc "Unimplemented verb %s." verb
     | Cpred_expr (loc, verb, cx) ->
 	if verb = idr_kw_be then build_aval_expr cx else
 	if verb = idr_kw_raise then Aval_raise (loc, build_aval_expr cx) else
-	Aval_apply (loc, aval_ref_of_idr loc verb, build_aval_expr cx)
+	Aval_apply (loc, Alabel_none,
+		    aval_ref_of_idr loc verb, build_aval_expr cx)
     | Cpred_expr_which (loc, verb, cx, (mw_o, cw)) ->
 	let aw = build_aval mw_o cw in
 	let ax = build_aval_pure (Cpred_expr (loc, verb, cx)) in
@@ -206,7 +277,7 @@ and build_aval_monad mm = function
 			 Maybe you meant to use 'let!'?";
 	let vf = avar_for_line loc in
 	let acont = build_aval_monad mm ccont in
-	let acont = Aval_at (loc, [(build_apat cpat, None, acont)]) in
+	let acont = Aval_at (loc, None, [(build_apat cpat, None, acont)]) in
 	let afref = Aval_ref (apath_of_avar vf) in
 	let arhs = build_aval_monad (MM_bind afref) crhs in
 	Aval_let (loc, Apat_uvar vf, acont, arhs)
@@ -236,10 +307,11 @@ and build_aval_monad mm = function
     | Cpred_back loc ->
 	Aval_back loc
     | Cpred_at (loc, cases) ->
+	let lopt, cases = strip_labels cases in
 	let build_case (cpat, cq) =
 	    (build_apat cpat, None, build_aval_monad mm cq) in
 	begin match mm with
-	| MM_quote _ -> Aval_at (loc, List.map build_case cases)
+	| MM_quote _ -> Aval_at (loc, lopt, List.map build_case cases)
 	| MM_bind _ ->
 	    errf_at loc "Cannot run monadic action inside an abstraction. \
 			 You may be missing a surrounding monad escape."
@@ -253,7 +325,7 @@ and build_aval_monad mm = function
 	    if verb = idr_kw_be then make_aval_return loc cm ax else
 	    if verb = idr_kw_raise then make_aval_throw loc cm ax else
 	    make_aval_other loc cm verb ax
-	| MM_bind af -> Aval_apply (loc, af, ax)
+	| MM_bind af -> Aval_apply (loc, Alabel_none, af, ax)
 	end
     | Cpred_expr_which (loc, verb, cx, (mw_opt, cw)) ->
 	let aw = build_aval mw_opt cw in
@@ -306,13 +378,14 @@ and build_aval_monad mm = function
 		    | (Apat_uvar _, None, _) :: _ -> cases
 		    | _ ->
 			let default = (Apat_uvar (Avar (loc, e_idr)), None,
-			    Aval_apply (loc, athrow,
+			    Aval_apply (loc, Alabel_none, athrow,
 				aval_ref_of_idr loc e_idr)) in
 			default :: cases in
-		let ah = Aval_at (loc, List.rev cases) in
+		let ah = Aval_at (loc, None, List.rev cases) in
 		let acont = build_aval_monad mm ccont in
-		Aval_apply (loc,
-		    Aval_apply (loc, aval_ref_of_idr loc idr_catch, ah),
+		Aval_apply (loc, Alabel_none,
+		    Aval_apply (loc, Alabel_none,
+			aval_ref_of_idr loc idr_catch, ah),
 		    acont) in
 	collect [] cupon
 
@@ -337,7 +410,7 @@ and build_aval_expr = function
 	    when cidr_is_2o_colon colon ->
 	Aval_intype (loc, build_atyp ct, build_aval_expr cx)
     | Ctrm_apply (loc, cx, cy) ->
-	Aval_apply (loc, build_aval_expr cx, build_aval_expr cy)
+	Aval_apply (loc, Alabel_none, build_aval_expr cx, build_aval_expr cy)
     | Ctrm_array (loc, cxs) ->
 	Aval_array (loc, List.map build_aval_expr cxs)
     | Ctrm_rel (loc, cx, (_, cf, cy) :: rest) ->
@@ -346,14 +419,16 @@ and build_aval_expr = function
 	    let af = Aval_ref (cidr_to_apath cf) in
 	    let ax = build_aval_expr cx in
 	    let ay = build_aval_expr cy in
-	    Aval_apply (loc, Aval_apply (loc, af, ax), ay) in
+	    Aval_apply (loc, Alabel_none,
+		Aval_apply (loc, Alabel_none, af, ax), ay) in
 	let rec build_conj aconj cx = function
 	    | (_, cf, cy) :: rest ->
 		let and_op = Aval_ref (Apath (Location.dummy,
 					      Modpath.atom idr_2o_and)) in
 		let arel = build_aval_rel cf cx cy in
 		build_conj
-		    (Aval_apply (loc, Aval_apply (loc, and_op, aconj), arel))
+		    (Aval_apply (loc, Alabel_none,
+			Aval_apply (loc, Alabel_none, and_op, aconj), arel))
 		    cy rest
 	    | [] -> aconj in
 	build_conj (build_aval_rel cf cx cy) cy rest
@@ -642,7 +717,7 @@ and build_toplevel_aval loc cm_opt cpred =
     | None ->
 	let ax = build_aval_monad (MM_quote cmonad_io) cpred in
 	let af = aval_ref_of_idr loc idr_toplevel_run in
-	Aval_apply (loc, af, ax)
+	Aval_apply (loc, Alabel_none, af, ax)
     end
 and build_adefs adecmap adefs = function
     | Cdef_include (loc, gen, m) :: xs ->
@@ -706,17 +781,13 @@ and build_adefs adecmap adefs = function
     | (Cdef_let _ :: _) as xs ->
 	let build_avcase = function
 	    | Cdef_let (loc, cm_opt, cpat, cpred) when can_letrec cpat cpred ->
-		let cvar, cpred = Cst_utils.move_applications (cpat, cpred) in
 		let at_opt =
-		    begin match cvar with
-		    | Ctrm_ref (Cidr (_, idr), _) ->
-			(try Some (snd (Idr_map.find idr adecmap))
-			 with Not_found -> None)
-		    | _ -> assert false (* unreachable *)
-		    end in
-		let avar = build_avar cvar in
-		let aval = build_toplevel_aval loc cm_opt cpred in
-		Some (loc, avar, at_opt, aval)
+		    let idr = Cst_utils.formal_idr cpat in
+		    try Some (snd (Idr_map.find idr adecmap))
+		    with Not_found -> None in
+		let arhs = build_toplevel_aval loc cm_opt cpred in
+		let avar, arhs = wrap_abstractions cpat arhs in
+		Some (loc, avar, at_opt, arhs)
 	    | _ -> None in
 	let xs', avcases = List.map_while build_avcase xs in
 	assert (avcases <> []);

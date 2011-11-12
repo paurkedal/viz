@@ -45,8 +45,11 @@ val idr_2o_colon : idr
 val idr_2o_comma : idr
 val idr_1o_semicolon : idr
 val idr_2o_semicolon : idr
+val idr_1o_qmark : idr
+val idr_2b_qmark : idr
 val idr_2o_vertical_bar : idr
 val idr_2o_arrow : idr
+val idr_2o_arrowopt : idr
 val idr_2o_times : idr
 val idr_2o_implies : idr
 val idr_2o_mapsto : idr
@@ -81,7 +84,10 @@ val cidr_is_2o_colon : cidr -> bool
 val cidr_is_2o_comma : cidr -> bool
 val cidr_is_1o_semicolon : cidr -> bool
 val cidr_is_2o_semicolon : cidr -> bool
+val cidr_is_1o_qmark : cidr -> bool
+val cidr_is_2b_qmark : cidr -> bool
 val cidr_is_2o_arrow : cidr -> bool
+val cidr_is_2o_arrowopt : cidr -> bool
 val cidr_is_2o_implies : cidr -> bool
 val cidr_is_2o_mapsto : cidr -> bool
 val cidr_is_2o_index : cidr -> bool

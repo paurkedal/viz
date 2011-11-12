@@ -151,7 +151,8 @@ hi link VizSctPrefix VizSctName
 
 " Labels
 "
-syn match VizLabel '\K\k*:'
+syn match VizLabel '\K\k*:' nextgroup=VizSameIdentifier
+syn match VizSameIdentifier '\*'
 
 " Keywords
 "

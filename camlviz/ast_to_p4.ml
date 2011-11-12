@@ -123,9 +123,17 @@ let rec emit_atyp ec ?(typefor = Typefor_viz) = function
 	else
 	    let _loc = p4loc loc in
 	    <:ctyp< $emit_atyp ec ~typefor at$ $emit_atyp ec ~typefor au$ >>
-    | Atyp_arrow (loc, at, au) ->
+    | Atyp_arrow (loc, Alabel_none, at, au) ->
 	let _loc = p4loc loc in
 	<:ctyp< $emit_atyp ec ~typefor at$ -> $emit_atyp ec ~typefor au$ >>
+    | Atyp_arrow (loc, Alabel_labelled label, at, au) ->
+	let _loc = p4loc loc in
+	<:ctyp< $lid: idr_to_lid label$: $emit_atyp ec ~typefor at$ ->
+	    $emit_atyp ec ~typefor au$ >>
+    | Atyp_arrow (loc, Alabel_optional label, at, au) ->
+	let _loc = p4loc loc in
+	<:ctyp< ? $lid: idr_to_lid label$: $emit_atyp ec ~typefor at$ ->
+	    $emit_atyp ec ~typefor au$ >>
 
 let emit_atyp_cabi_io ec = function
     | Atyp_arrow _ as t ->
@@ -190,23 +198,27 @@ let rec emit_apat ec = function
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
 	fun ocond_opt -> <:patt< $lid: avar_to_lid v$ >>, ocond_opt
-    | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
+    | Apat_apply (loc, Alabel_none,
+	Apat_apply (_, Alabel_none, Apat_ref op, x), y)
 	    when apath_eq_idr Cst_core.idr_list_push op -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat ec x ocond_opt in
 	let oy, ocond_opt = emit_apat ec y ocond_opt in
 	<:patt< [$ox$ :: $oy$] >>, ocond_opt
-    | Apat_apply (loc, Apat_apply (_, Apat_ref op, x), y)
+    | Apat_apply (loc, Alabel_none,
+	Apat_apply (_, Alabel_none, Apat_ref op, x), y)
 	    when apath_eq_idr Cst_core.idr_2o_comma op -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat ec x ocond_opt in
 	let oy, ocond_opt = emit_apat ec y ocond_opt in
 	<:patt< ($ox$, $oy$) >>, ocond_opt
-    | Apat_apply (loc, x, y) -> fun ocond_opt ->
+    | Apat_apply (loc, Alabel_none, x, y) -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat ec x ocond_opt in
 	let oy, ocond_opt = emit_apat ec y ocond_opt in
 	<:patt< $ox$ $oy$ >>, ocond_opt
+    | Apat_apply (loc, _, _, _) -> fun ocond_opt ->
+	errf_at loc "Label not allowed here."
     | Apat_as (loc, v, x) -> fun ocond_opt ->
 	let _loc = p4loc loc in
 	let ox, ocond_opt = emit_apat ec x ocond_opt in
@@ -226,6 +238,11 @@ let emit_aval_fixed _loc default = function
     | "[;]" -> <:expr< Data.List.push >>
     | _ -> default ()
 
+let apat_matches_vacuous = function
+    | Apat_apply (_, Alabel_none, Apat_ref qmark, _) ->
+	apath_eq_idr idr_1o_qmark qmark
+    | _ -> false
+
 let rec emit_aval ec = function
     | Aval_literal (loc, lit) -> emit_aval_literal loc lit
     | Aval_ref p ->
@@ -236,23 +253,43 @@ let rec emit_aval ec = function
 	    emit_aval_fixed _loc default (idr_to_string (Modpath.last_e p))
 	| _ -> default ()
 	end
-    | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
+    | Aval_apply (loc, Alabel_none,
+	Aval_apply (_, Alabel_none, Aval_ref op, x), y)
 	    when apath_eq_idr Cst_core.idr_list_push op ->
 	let _loc = p4loc loc in
 	<:expr< [$emit_aval ec x$ :: $emit_aval ec y$] >>
-    | Aval_apply (loc, Aval_apply (_, Aval_ref op, x), y)
+    | Aval_apply (loc, Alabel_none,
+	Aval_apply (_, Alabel_none, Aval_ref op, x), y)
 	    when apath_eq_idr Cst_core.idr_2o_comma op ->
 	let _loc = p4loc loc in
 	<:expr< ($emit_aval ec x$, $emit_aval ec y$) >>
-    | Aval_apply (loc, x, y) ->
+    | Aval_apply (loc, Alabel_none, x, y) ->
 	let _loc = p4loc loc in
 	<:expr< $emit_aval ec x$ $emit_aval ec y$ >>
+    | Aval_apply (loc, Alabel_labelled l, x, y) ->
+	let _loc = p4loc loc in
+	<:expr< ~ $lid: idr_to_lid l$: $emit_aval ec x$ $emit_aval ec y$ >>
+    | Aval_apply (loc, Alabel_optional l, x, y) ->
+	let _loc = p4loc loc in
+	<:expr< ? $lid: idr_to_lid l$: $emit_aval ec x$ $emit_aval ec y$ >>
     | Aval_array (loc, xs) ->
 	let _loc = p4loc loc in
 	<:expr< [| $list: List.map (emit_aval ec) xs$ |] >>
-    | Aval_at (loc, cases) ->
+    | Aval_at (loc, None, cases) ->
 	let _loc = p4loc loc in
 	<:expr< fun [ $list: List.map (emit_match_case ec) cases$ ] >>
+    | Aval_at (loc, Some l, cases) ->
+	let _loc = p4loc loc in
+	let ol = idr_to_lid l in
+	let have_vacuous =
+	    List.exists (fun (apat, _, _) -> apat_matches_vacuous apat) cases in
+	let ocases = List.map (emit_match_case ~have_vacuous ec) cases in
+	if have_vacuous then
+	    <:expr< fun ? $lid: ol$ ->
+		    match $lid: ol$ with [ $list: ocases$ ] >>
+	else
+	    <:expr< fun ~ $lid: ol$ ->
+		    match $lid: ol$ with [ $list: ocases$ ] >>
     | Aval_match (loc, x, cases) ->
 	let _loc = p4loc loc in
 	<:expr< match $emit_aval ec x$
@@ -294,7 +331,8 @@ let rec emit_aval ec = function
     | Aval_seq (loc, op, x, y) when op = Idr "__trace" ->
 	let _loc = p4loc loc in
 	let mkarg = function
-	    | Aval_apply (_, Aval_apply (_, Aval_ref colon, x), Aval_ref t)
+	    | Aval_apply (_, Alabel_none,
+		Aval_apply (_, Alabel_none, Aval_ref colon, x), Aval_ref t)
 		    when apath_eq_idr idr_2o_colon colon ->
 		<:expr< (__string_of_utf8 $str: Ast_print.aval_to_string x$,
 			 $id: emit_apath_uid t$.show $emit_aval ec x$)
@@ -324,11 +362,28 @@ let rec emit_aval ec = function
 and emit_aval_opt ec loc = function
     | None -> let _loc = p4loc loc in <:expr< () >>
     | Some cx -> emit_aval ec cx
-and emit_match_case ec (pat, ocond_opt, body) =
+and emit_match_case ?(have_vacuous = false) ec (pat, ocond_opt, body) =
+    let _loc = p4loc (Location.span [apat_loc pat; aval_loc body]) in
+    if apat_matches_vacuous pat then begin
+	Option.iter
+	    (fun cond ->
+		errf_at (aval_loc cond)
+			"Condition not allowed on default pattern.") ocond_opt;
+	match pat with
+	| Apat_apply (_, Alabel_none, Apat_ref qmark, pat)
+		when apath_eq_idr idr_1o_qmark qmark ->
+	    begin match emit_apat ec pat None with
+	    | opat, None ->
+		let obody = emit_aval ec body in
+		<:match_case< $pat: opat$ -> $obody$ >>
+	    | _ -> errf_at (apat_loc pat) "A variable is expected before '?'."
+	    end
+	| _ -> errf_at (apat_loc pat) "Invalid pattern."
+    end else
     let opat, ocond_opt =
 	emit_apat ec pat (Option.map (emit_aval ec) ocond_opt) in
+    let opat = if have_vacuous then <:patt< Some $opat$ >> else opat in
     let guard_opt, body = Ast_utils.extract_backtrack_guard body in
-    let _loc = p4loc (Location.span [apat_loc pat; aval_loc body]) in
     let ocond_opt =
 	match guard_opt with
 	| None -> ocond_opt

@@ -50,8 +50,8 @@ and print_inline fo p = function
     | Ctrm_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
     | Ctrm_label (_, Cidr (_, Idr label), body) ->
 	Fo.put fo `Label (label ^ ":");
-	Fo.space fo;
-	print_inline fo Opkind.p_apply body
+	if p < Opkind.p_apply then Fo.space fo;
+	print_inline fo (Opkind.p_script 0) body
     | Ctrm_quantify (_, Cidr (_, Idr op), var, body) ->
 	if p >= Opkind.p_rel then Fo.put fo `Operator "(";
 	Fo.put fo `Operator op;
