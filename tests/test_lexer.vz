@@ -1,3 +1,14 @@
+# 0.0. Comments
+
+{# Comments are {#nested#}.  {{##} #}
+
+let documented_function
+ ## Documentation.
+    be 0
+
+
+# 0.0. Indentation
+
 # Test handing of indentation by the lexer, esp with respect to connectives
 # and indentation-inert tokens appearing far left on continuation lines.
 
@@ -49,6 +60,9 @@ what
  at x
  be
  x
+
+
+# 0.0. The "end" Keyword
 
 # The "end" keyword is used to terminate the content of a block.  If present,
 # it must therefore align with the content of the block, rather than the

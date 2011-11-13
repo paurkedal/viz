@@ -1,0 +1,37 @@
+in stack include data.SL_stack
+open effect
+
+let make_stack
+    at 0 be stack.empty
+    at n be stack.push (n - 1) (make_stack (n - 1))
+
+let! check_stack n sk
+    let! loop i
+	if i ≥ n be ()
+	assert (stack.get_e i sk) = n - i - 1
+	do loop (i + 1)
+    do loop 0
+    assert ¬ stack.is_empty (stack.drop_n (n - 1) sk)
+    assert stack.is_empty (stack.drop_n n sk)
+
+let! real_test n n_max
+    let sk be make_stack n
+    do check_stack n sk
+    when n < n_max do real_test (n + 1) n_max
+
+let! small_test
+    let n be 5
+    let sk be make_stack n
+    do stack.dump int.show sk
+    assert stack.get_e 0 sk = n - 1
+    assert stack.get_e 1 sk = n - 2
+    assert stack.get_e 2 sk = n - 3
+    assert stack.get_e 3 sk = n - 4
+    assert stack.depth (stack.drop_n 2 sk) = n - 2
+    assert stack.depth (stack.drop_n 3 sk) = n - 3
+    assert stack.is_empty (stack.drop_n n sk)
+
+let main
+    do small_test
+    do real_test 1 100
+    do real_test 10000 10003

@@ -1,0 +1,43 @@
+let f0 at 0 be true
+       at _ be false
+
+let f1 x if x = 0 be true
+	 if x = 2 be true
+	 else be false
+
+let f2 x
+    if x = 0 be true
+    if x = 2 be true
+    be false
+
+let f3 x be true if x = 0
+	 be true if x = 2
+	 be false otherwise
+
+let f4 x
+    let a be x
+    taken a
+    at 0 be true
+    at _ be false
+
+let f5 x
+    let a be x
+    taken a
+	at 0 be true
+	at _ be false
+
+val lt0 : a: α → α
+val lt1 : a: α →? option α
+
+let lt0 a:x be x
+let lt1 a:x? be x
+let lt2 a:x?(0) be x
+let lt3 a:* be a
+let lt4 a:*? be a
+let lt5 a:*?(0) be a
+let lp0
+    at a:false be "false"
+    at a:_     be "true"
+let lp1
+    at a:* be a
+    at a:none%? be 0
