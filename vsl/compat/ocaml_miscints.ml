@@ -176,11 +176,11 @@ module Nat32 = struct
     type t = int32
 
     let eq x y = x = y
-    let cmp = __generic_cmp
-    let op2_U2264 (* ≤ *) (x : t) (y : t) = x <= y
-    let op2_U2265 (* ≥ *) (x : t) (y : t) = x >= y
-    let op2_U003c (* < *) (x : t) (y : t) = x < y
-    let op2_U003e (* > *) (x : t) (y : t) = x > y
+    external cmp : t -> t -> torder = "cviz_nat32_cmp"
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = cmp x y <> Tsucc
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = cmp x y <> Tprec
+    let op2_U003c (* < *) (x : t) (y : t) = cmp x y = Tprec
+    let op2_U003e (* > *) (x : t) (y : t) = cmp x y = Tsucc
 
     let width = 32
     let zero = Int32.zero
@@ -210,11 +210,11 @@ module Nat64 = struct
     type t = int64
 
     let eq x y = x = y
-    let cmp = __generic_cmp
-    let op2_U2264 (* ≤ *) (x : t) (y : t) = x <= y
-    let op2_U2265 (* ≥ *) (x : t) (y : t) = x >= y
-    let op2_U003c (* < *) (x : t) (y : t) = x < y
-    let op2_U003e (* > *) (x : t) (y : t) = x > y
+    external cmp : t -> t -> torder = "cviz_nat64_cmp"
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = cmp x y <> Tsucc
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = cmp x y <> Tprec
+    let op2_U003c (* < *) (x : t) (y : t) = cmp x y = Tprec
+    let op2_U003e (* > *) (x : t) (y : t) = cmp x y = Tsucc
 
     let width = 64
     let zero = Int64.zero

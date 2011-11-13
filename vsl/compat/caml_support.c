@@ -102,3 +102,20 @@ value cviz_nat32_of_int(value x)
 
 value cviz_nat64_of_int(value x)
 { return caml_copy_int64((uint64_t)Int_val(x)); }
+
+value cviz_nat32_cmp(value x_, value y_)
+{
+    uint32_t x = Int32_val(x_);
+    uint32_t y = Int32_val(y_);
+    if (x < y) return Val_int(0); /* tprec */
+    if (x > y) return Val_int(2); /* tsucc */
+    return Val_int(1);            /* tcoin */
+}
+value cviz_nat64_cmp(value x_, value y_)
+{
+    uint64_t x = Int64_val(x_);
+    uint64_t y = Int64_val(y_);
+    if (x < y) return Val_int(0); /* tprec */
+    if (x > y) return Val_int(2); /* tsucc */
+    return Val_int(1);            /* tcoin */
+}
