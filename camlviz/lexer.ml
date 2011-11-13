@@ -103,7 +103,6 @@ let initial_declarators = [
     "val:cf-",	Grammar.VAL (`Local,    Abi_C, [`Is_finalizer]);
     "inj",	Grammar.INJ Abi_Viz;
     "inj:c",	Grammar.INJ Abi_C;
-    "when",	Grammar.ITERATE (Idr "when");
     "upon",	Grammar.UPON;
     "lex",	Grammar.LEX;
     "lex alias",Grammar.LEXALIAS;
@@ -144,6 +143,7 @@ let initial_conditionals = [
     "if",	Grammar.IF;
     "else",	Grammar.ELSE;
     "taken",	Grammar.TAKEN;
+    "when",	Grammar.ITERATE (Idr "when");
 ]
 let initial_lookahead = 40
 

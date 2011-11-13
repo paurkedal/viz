@@ -327,9 +327,6 @@ let () = dispatch begin function
 	dep ["ocaml"; "compile"; "native"; "use_vsl"] ["vsl.cmxa"];
 	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
-	let vsl_includes = S[A"-I"; P"vsl"; A"-I"; P"compiler"] in
-	flag ["ocaml"; "camlvizpp"] vsl_includes;
-	flag ["cstubs"; "camlvizpp"] vsl_includes;
 	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compiler"];
 	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";
 	flag ["camlvizpp"; "compile"] & S[A"-R"; P"vsl"; A"-R"; P"compiler"];

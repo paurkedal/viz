@@ -16,7 +16,7 @@ let s:pattern_conditionals =
   \ ['at', 'upon']
 let s:declarators =
   \ ['in', 'inj', 'include', 'let', 'lex', 'open', 'sig', 'sealed',
-  \  'type', 'use', 'val']
+  \  'type', 'use', 'val', 'end']
 let s:connectives =
   \ ['with', 'where', 'what', 'which']
 
@@ -180,7 +180,7 @@ else
 endif
 syn keyword VizConnective with where
 syn match VizConnective '\<wh\(at\|ich\)\>!\?'
-syn keyword VizDeclarator use
+syn keyword VizDeclarator use end
 syn match VizDeclarator '\<include\>!\?'
 syn match VizDeclarator '\.\?\<in\>!\?' skipwhite nextgroup=VizSctExprStart
 syn keyword VizDeclarator sig sealed skipwhite nextgroup=@VizSigExpr
