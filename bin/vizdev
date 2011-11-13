@@ -86,7 +86,13 @@ esac
 for ext in .ml .vz .viz .ff; do
     src="$VIZ_SRCDIR/bin/$prog$ext"
     if [ -e "$src" ]; then
-	VIZDEV_TARGET=${VIZDEV_TARGET-${OCAML_TARGET-byte}}
+	if [ -z "${VIZDEV_TARGET}" ]; then
+	    if [ -x $VIZ_SRCDIR/_build/bin/$prog.native ]; then
+		VIZDEV_TARGET=native
+	    else
+		VIZDEV_TARGET=byte
+	    fi
+	fi
 	progpath="$VIZ_SRCDIR/_build/bin/$prog.${VIZDEV_TARGET}"
 	if [ ! -e "$progpath" -o x"$VIZDEV_REBUILD" != x ]; then
 	    make 1>&2 -C "$VIZ_SRCDIR" $VIZDEV_TARGET
