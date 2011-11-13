@@ -1,0 +1,74 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open:c "math.h"
+
+type t := float
+
+#?ffoc include compat.ocaml_pervasives.float_misc
+#      Provides: neg, add, sub, mul, div, itrunc
+
+val:c is_inf : float → float := "isinf"
+val:c is_nan : float → float := "isnan"
+
+val:c acos : float → float
+val:c acosh : float → float
+val:c asin : float → float
+val:c asinh : float → float
+val:c atan : float → float
+val:c atan2 : float → float → float
+val:c atanh : float → float
+val:c cbrt : float → float
+val:c ceil : float → float
+val:c copysign : float → float → float
+val:c cos : float → float
+val:c cosh : float → float
+val:c erf : float → float
+val:c erfc : float → float
+val:c exp : float → float
+val:c exp2 : float → float
+val:c expm1 : float → float
+val:c abs : float → float := "fabs"
+val:c floor : float → float
+val:c madd : float → float → float → float := "fma"
+val:c max : float → float → float := "fmax"
+val:c min : float → float → float := "fmin"
+val:c 0'mod : float → float → float := "fmod"
+val:c hypot : float → float → float
+val:c ilogb : float → int
+val:c ldexp : float → int → float
+val:c lgamma : float → float
+val:c log : float → float
+val:c log10 : float → float
+val:c log1p : float → float
+val:c log2 : float → float
+val:c logb : float → float
+val:c specific_NaN : string → float := "nan"
+val:c nearbyint : float → float
+val:c nextafter : float → float → float
+val:c pow : float → float → float
+val:c remainder : float → float → float
+val:c rint : float → float
+val:c round : float → float
+val:c scalbn : float → int → float
+val:c sin : float → float
+val:c sinh : float → float
+val:c sqrt : float → float
+val:c tan : float → float
+val:c tanh : float → float
+val:c tgamma : float → float
+val:c trunc : float → float

@@ -1,4 +1,3 @@
-open prereq
 open effect
 in fsg include data.free_semigroup
 

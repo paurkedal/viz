@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
-open prereq
+open prelude.ubiquitous
 
 type t := bool
 
-in ops include bool_ops
+in ops include prelude.prereq.bool_ops
 
 val show : bool → string
  ## (show b) converts (true) to ("true") and (false) to ("false").

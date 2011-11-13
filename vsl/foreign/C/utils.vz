@@ -20,7 +20,7 @@
 #
 # Note:  This is not properly organized, and is subject to heavy changes.
 
-open prereq
+open prelude.ubiquitous
 open effect
 open memory
 open:c "string.h"

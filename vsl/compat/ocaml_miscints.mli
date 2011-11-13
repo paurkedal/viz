@@ -32,6 +32,8 @@ module type A_basic_nat = sig
     val width : int
     val zero : t
     val one : t
+    val minimum : t
+    val maximum : t
 
     val add : t -> t -> t
     val sub : t -> t -> t
@@ -40,6 +42,7 @@ module type A_basic_nat = sig
     val (mod) : t -> t -> t (* if signed, from floored division *)
     val quo : t -> t -> t   (* if signed, truncated division *)
     val rem : t -> t -> t   (* if signed, from truncated division *)
+    val abs : t -> t
 
     val bitnot : t -> t
     val bitand : t -> t -> t
@@ -55,7 +58,6 @@ module type A_basic_int = sig
     include A_basic_nat
 
     val neg : t -> t
-    val abs : t -> t
 end
 
 module Int : A_basic_int with type t = int

@@ -18,8 +18,9 @@
 
 # Z.  Strings
 
-open prereq
-open effect
+open prelude.ubiquitous
+
+sealed with
 
 type t := string
 
@@ -27,8 +28,6 @@ type t := string
 # Z.Z.  String Primitives
 
 in buf
-    #?ffoc {#
-
     type r φ
 
     val create : effect φ (r φ)
@@ -42,10 +41,6 @@ in buf
     val put_char : r φ → char → effect φ unit
 
     val put_string : r φ → string → effect φ unit
-
-    #?ffoc #}
-    #?ffoc include compat.ocaml_unicode.string_buf
-
 
 val length : t → int
  ## (length x) is the number of characters used to represent (x), including
@@ -66,11 +61,8 @@ val cmp : t → t → torder
  ## (cmp x y) provides lexicographic order of Unicode code points between (x)
  ## and (y).  This is a fast non-collating and non-normalizing comparison.
 
-val as_utf8 : t → utf8
-val of_utf8 : utf8 → t
-
-# The above are primitives.
-#?ffoc include compat.ocaml_unicode.string
+val as_utf8 : t → UTF8string
+val of_utf8 : UTF8string → t
 
 
 # Z.Z.  Concatenation
@@ -173,190 +165,6 @@ val csplit_on_space : t → list t
  ## (csplit_on_space s ≡ csplit_where char.is_space s) is the list of
  ## space-separated substrings of (s).
 
+end
 
-### Implementation
-
-let cat x y
-    let nx be length x
-    let n be nx + length y
-    be init n (i ↦ (i < nx ⇒ get i x; get (i - nx) y))
-
-let cat_list xs be observe (that : ∀ψ. effect ψ α) which!
-    let buf do buf.create
-    do list.iter (buf.put_string buf) xs
-    do buf.contents buf
-
-let join s
-    at [] be ""
-    at [x; xs] be observe (that : ∀ψ. effect ψ α) which!
-	let buf do buf.create
-	do buf.put_string buf x
-	do list.iter (x ↦ buf.put_string buf s >> buf.put_string buf x) xs
-	do buf.contents buf
-
-let tile n s
-    if n ≤ 0 be ""
-    be observe (that : ∀ψ. effect ψ α) which!
-	let buf do buf.create
-	let! loop at 0 be ()
-		  at n do buf.put_string buf s >> loop (n - 1)
-	do loop n
-	do buf.contents buf
-
-let slice i j x
-    assert 0 ≤ i ≤ j ≤ length x
-    be init (j - i) (k ↦ get (i + k) x)
-
-let as_list x
-    let collect_upto n accu
-	if n = 0 be accu
-	else be collect_upto (n - 1) [get (n - 1) x; accu]
-    be collect_upto (length x) []
-
-let of_list xs be observe (that : ∀ψ. effect ψ α) which!
-    let buf do buf.create
-    do list.iter (buf.put_char buf) xs
-    do buf.contents buf
-
-
-let fold f x
-    let n be length x
-    let fold_from i accu
-	if i ≥ n be accu
-	be fold_from (i + 1) (f (get i x) accu)
-    be fold_from 0
-
-let foldr f x
-    let foldr_from i accu
-	if i < 0 be accu
-	be foldr_from (i - 1) (f (get i x) accu)
-    be foldr_from (length x - 1)
-
-let map f x be init (length x) (i ↦ f (get i x))
-
-let mapi f x be init (length x) (i ↦ f i (get i x))
-
-let for_all f x
-    let n be length x
-    let true_above i be i ≥ n ∨ f (get i x) ∧ true_above (i + 1)
-    be true_above 0
-
-let for_some f x
-    let n be length x
-    let true_above i be i < n ∧ (f (get i x) ∨ true_above (i + 1))
-    be true_above 0
-
-let starts_with x y
-    let n be length x
-    if n > length y be false
-    let loop i be i = n ∨ get i x = get i y ∧ loop (i + 1)
-    be loop 0
-
-let ends_with x y
-    let n be length x
-    let j be length y - n
-    if j < 0 be false
-    let loop i be i = n ∨ get i x = get (i + j) y ∧ loop (i + 1)
-    be loop 0
-
-let contains_char c x
-    let n be length x
-    let loop i be i < n ∧ (get i x = c ∨ loop (i + 1))
-    be loop 0
-
-let contains_sub x y
-    let n be length x
-    let j_max be length y - n
-    let try_from j
-	if j > j_max be false
-	let ok_from i be i ≥ n ∨ get i x = get (j + i) y ∧ ok_from (i + 1)
-	be ok_from 0 ∨ try_from (j + 1)
-    be try_from 0
-
-let count_char ch s
-    let loop i accu
-	if i < 0 be accu
-	be loop (i - 1) (get i s = ch ⇒ accu + 1; accu)
-    be loop (length s - 1) 0
-
-let count_for f s
-    let loop i accu
-	if i < 0 be accu
-	be loop (i - 1) (f (get i s) ⇒ accu + 1; accu)
-    be loop (length s - 1) 0
-
-
-let skip_while f s i
-    assert 0 ≤ i ≤ length s
-    be i < length s ∧ f (get i s) ⇒ skip_while f s (i + 1); i
-
-let rskip_while f s i
-    assert 0 ≤ i ≤ length s
-    be i > 0 ∧ f (get (i - 1) s) ⇒ rskip_while f s (i - 1); i
-
-let skip_to_char ch s i
-    assert 0 ≤ i ≤ length s
-    be i < length s ∧ ¬ char.eq ch (get i s) ⇒ skip_to_char ch s (i + 1); i
-
-let rskip_to_char ch s i
-    assert 0 ≤ i ≤ length s
-    be i > 0 ∧ ¬ char.eq ch (get (i - 1) s) ⇒ rskip_to_char ch s (i - 1); i
-
-let skip_space be skip_while char.is_space
-
-let rskip_space be rskip_while char.is_space
-
-let skip_to_sub s r j
-    let n be length s
-    let j_max be length r - n
-    let try_from j
-	if j > j_max be length r
-	let ok_from i be i ≥ n ∨ get i s = get (j + i) r ∧ ok_from (i + 1)
-	if ok_from 0 be j
-	be try_from (j + 1)
-    be try_from j
-
-
-let scan_while f s i
-    let j be skip_while f s i
-    be (slice i j s, j)
-
-let rscan_while f s i
-    let j be rskip_while f s i
-    be (slice j i s, j)
-
-let scan_to_char ch s i
-    let j be skip_to_char ch s i
-    be (slice i j s, j)
-
-let rscan_to_char ch s i
-    let j be rskip_to_char ch s i
-    be (slice j i s, j)
-
-let scan_to_sub su s i
-    let j be skip_to_sub su s i
-    be (slice i j s, j)
-
-
-let strip s
-    let i be skip_space s 0
-    let j be rskip_space s (length s)
-    be i < j ⇒ slice i j s; ""
-
-let strip_left s
-    let i be skip_space s 0
-    be slice i (length s) s
-
-let strip_right s
-    let j be rskip_space s (length s)
-    be slice 0 j s
-
-
-let csplit_where f s
-    let loop j accu
-	if j = 0 be accu
-	let i be rskip_while (¬* f) s j
-	be loop (rskip_while f s i) [slice i j s; accu]
-    be loop (rskip_while f s (length s)) []
-
-let csplit_on_space be csplit_where char.is_space
+include prelude.string

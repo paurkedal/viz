@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
-open prereq
-open effect
+open prelude.ubiquitous
 
 type t α := option α
 
@@ -30,43 +29,4 @@ val for_some : (α → bool) → option α → bool
 val filter : (α → bool) → option α → option α
 val flatten : option (option α) → option α
 
-let is_empty
-    at none% be true
-    at some _ be false
-
-let get
-    at none% fail "option.get none%"
-    at some x be x
-
-let default x
-    at none% be x
-    at some y be y
-
-let map f
-    at none% be none
-    at some x be some (f x)
-
-let fold f
-    at none% be x ↦ x
-    at some x be f x
-
-let for_all f
-    at none% be true
-    at some x be f x
-
-let for_some f
-    at none% be false
-    at some x be f x
-
-let iter f
-    at none% be return ()
-    at some x be f x
-
-let filter f
-    at none% be none
-    at some x if f x be some x
-	      else   be none
-
-let flatten
-    at some (some x) be some x
-    at _ be none
+include prelude.option

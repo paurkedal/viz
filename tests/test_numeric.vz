@@ -1,0 +1,78 @@
+open effect
+open data
+
+sig a_numeric
+    type t
+    val of_int : int → t
+    val 0'div : t → t → t
+    val ipow : t → int → t
+    val iloga : t → t → int
+    val show : base: t →? t → string
+
+in floatck
+    open float
+
+    let! show_ipowlog anumer adenom x
+	let a be 0'div (of_int anumer) (of_int adenom)
+	let y be (ipow a x)
+	let corr be x > 0 ⇒ sqrt a; 0'div one (sqrt a)
+	let x' be iloga a (mul y corr)
+	do list.iter print
+	    ["ipow "; show a; " "; int.show x; " = "; show y; "; ";
+	     "iloga a y = "; int.show x'; "\n";]
+	assert x = x'
+
+    let! check_all
+	do show_ipowlog   2   1 10
+	do show_ipowlog  11  10 10
+	do show_ipowlog 145 100 17
+	do show_ipowlog  82 100 17
+	do show_ipowlog  82 100 -17
+	do show_ipowlog  44  10 -17
+
+in ck.(N : a_numeric)
+    open N
+
+    let! show_ipowlog a' x
+	let a be of_int a'
+	let y be (ipow a x)
+	let x' be iloga a y
+	do list.iter print
+	    ["ipow "; show a; " "; int.show x; " = "; show y; "; ";
+	     "iloga a y = "; int.show x'; "\n";]
+
+    let! check_show i' s
+	let i be of_int i'
+	let s' be show i
+	when s ≠ s'
+	    do print s >> print " ≠ " >> print s' >> print "\n"
+	    fail
+
+    let! check_all
+	do show_ipowlog   2 10
+	do show_ipowlog  10  4
+	do show_ipowlog 101  2
+
+	do check_show 0 "0"
+	do check_show 1 "1"
+	do check_show 9 "9"
+	do check_show 10 "10"
+	do check_show 99 "99"
+	do check_show 1234567890 "1234567890"
+	do check_show 2147483647 "2147483647"
+
+in int32ck include ck.(int32)
+in nat32ck include ck.(nat32)
+
+let main
+    do nat32ck.check_all
+    assert (nat32.show nat32.maximum) = "4294967295"
+    do int32ck.check_all
+    assert (int32.show int32.minimum) = "-2147483648"
+    do floatck.check_all
+
+#    do print (int.show 12345678) >> print "\n"
+#    do print (int.show -12345678) >> print "\n"
+#    do print (int32.show (int32.of_int 12345678)) >> print "\n"
+#    do print (int32.show (int32.of_int -12345678)) >> print "\n"
+

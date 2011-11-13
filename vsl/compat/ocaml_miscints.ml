@@ -32,6 +32,8 @@ module type A_basic_nat = sig
     val width : int
     val zero : t
     val one : t
+    val minimum : t
+    val maximum : t
 
     val add : t -> t -> t
     val sub : t -> t -> t
@@ -40,6 +42,7 @@ module type A_basic_nat = sig
     val (mod) : t -> t -> t
     val quo : t -> t -> t
     val rem : t -> t -> t
+    val abs : t -> t
 
     val bitnot : t -> t
     val bitand : t -> t -> t
@@ -55,13 +58,14 @@ module type A_basic_int = sig
     include A_basic_nat
 
     val neg : t -> t
-    val abs : t -> t
 end
 
 module type Ocaml_int = sig
     type t
     val zero : t
     val one : t
+    val min_int : t
+    val max_int : t
     val neg : t -> t
     val add : t -> t -> t
     val sub : t -> t -> t
@@ -78,6 +82,7 @@ module type Ocaml_int = sig
     val abs : t -> t
     val of_int : int -> t
     val to_int : t -> int
+    val to_string : t -> uTF8string
 end
 
 module Adapt (M : Ocaml_int) = struct
@@ -95,6 +100,9 @@ module Adapt (M : Ocaml_int) = struct
 	    if x = zero then n else
 	    loop (n + 1) (shift_left x 1) in
 	loop 0 one
+
+    let minimum = min_int
+    let maximum = max_int
 
     let quo = M.div
     let rem = M.rem
@@ -129,6 +137,8 @@ module Int = struct
 
     let zero = 0
     let one = 1
+    let minimum = min_int
+    let maximum = max_int
 
     let eq x y = x = y
     let cmp = __generic_cmp
@@ -185,6 +195,8 @@ module Nat32 = struct
     let width = 32
     let zero = Int32.zero
     let one = Int32.one
+    let minimum = Int32.of_int 0
+    let maximum = Int32.of_int (-1)
 
     let add = Int32.add
     let sub = Int32.sub
@@ -193,6 +205,7 @@ module Nat32 = struct
     external (mod) : t -> t -> t = "cviz_nat32_mod"
     let quo = div
     let rem = (mod)
+    let abs x = x
 
     let bitnot = Int32.lognot
     let bitand = Int32.logand
@@ -219,6 +232,8 @@ module Nat64 = struct
     let width = 64
     let zero = Int64.zero
     let one = Int64.one
+    let minimum = Int64.of_int 0
+    let maximum = Int64.of_int (-1)
 
     let add = Int64.add
     let sub = Int64.sub
@@ -227,6 +242,7 @@ module Nat64 = struct
     external (mod) : t -> t -> t = "cviz_nat64_mod"
     let quo = div
     let rem = (mod)
+    let abs x = x
 
     let bitnot = Int64.lognot
     let bitand = Int64.logand

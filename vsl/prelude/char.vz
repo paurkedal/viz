@@ -15,17 +15,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
 
+open prereq
 
-# Z.  POSIX Functions from "unistd.h"
+#?ffoc include compat.ocaml_unicode.char
 
-open prelude.ubiquitous
-open effect
-open:c "unistd.h"
+let eq x y be __generic_eq x y
+let cmp x y be __generic_cmp x y
 
-
-# Z.Z.  Random Number Generator
-
-val:c drand48 : io float
-val:c lrand48 : io int32
-val:c mrand48 : io int32
-val:c srand48 : int32 → io unit
+# FIXME
+let is_space be c" " ↦ true; c"\n" ↦ true; c"\t" ↦ true; _ ↦ false

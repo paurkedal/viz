@@ -18,7 +18,7 @@
 
 # Z.  UTF-8 Encoded Strings
 
-open prereq
+open prelude.ubiquitous
 
 type t := UTF8string
 

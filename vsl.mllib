@@ -1,6 +1,6 @@
 vsl/compat
 vsl/control
-vsl/prereq
+vsl/prelude
 vsl/foreign
 vsl/data
 vsl/system

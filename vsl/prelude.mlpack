@@ -1,0 +1,9 @@
+vsl/prelude/char_
+vsl/prelude/float
+vsl/prelude/list_
+vsl/prelude/numeric
+vsl/prelude/option
+vsl/prelude/prereq
+vsl/prelude/signatures
+vsl/prelude/string_
+vsl/prelude/ubiquitous

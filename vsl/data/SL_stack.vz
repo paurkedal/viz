@@ -21,7 +21,7 @@
 # arbitrary frames and logarithmic space and time overhead for push.  It is
 # implemented as a skip-list with deterministic back-links.
 
-open prereq
+open prelude.ubiquitous
 
 sealed with
     type t α

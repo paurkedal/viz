@@ -35,15 +35,25 @@ val 2'|> : α → (α → β) → β
  ## (x |> f ≡ f x) is the image of (x) under (f).  I.e. (|>) is a reversed
  ## low-precedence application operator.  It can be pronounced "under".
 
-include prereq.basics
-include prereq.combinators
-include prereq.bool_ops
-include prereq.int.ops
-include prereq.effect_pervasive
+# This is the analog of prelude.ubiquitous for client code.
+#?ffoc include compat.ocaml_prereq
+#?ffoc include compat.ocaml_unicode.pervasive
+#?ffoc include compat.ocaml_miscints.pervasive
+#?ffoc include compat.ocaml_pervasives.pervasive
+include prelude.prereq.basics
+include prelude.prereq.combinators
+include prelude.prereq.bool_ops
+include prelude.numeric.pervasive
+include prelude.numeric.pervasive.int.ops
+
+in effect include prelude.prereq.effect
+
+val print : string → io unit
+val eprint : string → io unit
+let __builtin_toplevel_run be prelude.ubiquitous.__builtin_toplevel_run
 
 in bool include data.bool
 in char include data.char
-in int include data.int
 in string include data.string
 
 in option include data.option
@@ -51,17 +61,3 @@ in list include data.list
 in array include data.array
 in map.(I : a_total_order) include data.AA_map.make.(I)
 in set.(E : a_total_order) include data.AA_set.make.(E)
-
-in effect include prereq.effect
-val print : string → io unit
-val eprint : string → io unit
-
-#?ffoc include compat.ocaml_prereq
-#?ffoc include compat.ocaml_pervasives.pervasive
-#?ffoc include compat.ocaml_unicode.pervasive
-#?ffoc include compat.ocaml_miscints.pervasive
-in nint include prereq.nint
-in int32 include prereq.int32
-in int64 include prereq.int64
-in nat32 include prereq.nat32
-in nat64 include prereq.nat64

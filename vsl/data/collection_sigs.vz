@@ -18,7 +18,7 @@
 
 # Z.  Collection Signatures
 
-open prereq
+open prelude.ubiquitous
 
 
 # Z.Z.  A Collection

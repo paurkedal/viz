@@ -20,6 +20,7 @@
 <vsl/foreign/intf/*.cmx>: for-pack(Foreign.Intf)
 <vsl/foreign/C/*.cmx>: for-pack(Foreign.C)
 <vsl/data/*.cmx>: for-pack(Data)
+<vsl/prelude/*.cmx>: for-pack(Prelude)
 <vsl/system/*.cmx>: for-pack(System)
 <vsl/system/posix/*.cmx>: for-pack(System.Posix)
 

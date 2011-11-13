@@ -1,0 +1,68 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+#?ffoc open compat.ocaml_prereq
+
+sig a_basic_numeric
+    type t
+
+    val eq : t → t → bool
+    val cmp : t → t → torder
+    val 2'≤ : t → t → bool
+    val 2'≥ : t → t → bool
+    val 2'< : t → t → bool
+    val 2'> : t → t → bool
+
+    val zero : t
+    val one : t
+    val minimum : t
+    val maximum : t
+
+    val add : t → t → t
+    val sub : t → t → t
+    val mul : t → t → t
+    val 0'div : t → t → t
+    val 0'mod : t → t → t
+
+    val of_int : int → t
+
+sig a_basic_nat
+    include a_basic_numeric
+
+    val width : int
+
+    val 0'quo : t → t → t
+    val 0'rem : t → t → t
+
+    val bitnot : t → t
+    val bitand : t → t → t
+    val bitor : t → t → t
+    val bitxor : t → t → t
+    val shift : int → t → t
+    val as_int : t → int
+
+    val abs : t → t
+
+sig a_basic_int
+    include a_basic_nat
+
+    val neg : t → t
+
+sig a_basic_float
+    include a_basic_numeric
+
+    val neg : t → t

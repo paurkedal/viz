@@ -18,7 +18,7 @@
 
 # Z.  POSIX Functions from "unistd.h"
 
-open prereq
+open prelude.ubiquitous
 open data
 open effect
 open:c "unistd.h"

@@ -18,7 +18,7 @@
 
 # Z.  Exceptions
 
-open prereq
+open prelude.ubiquitous
 open effect
 
 

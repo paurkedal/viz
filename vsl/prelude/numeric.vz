@@ -1,0 +1,154 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open effect
+
+in extend_basic_numeric.(Num : a_basic_numeric)
+    open Num
+
+    let two be add one one
+
+    let _ipow a n
+	let mul_pow a n accu
+	    if n = 0 be accu
+	    let accu' be int.bitand 1 n = 0 ⇒ accu; mul accu a
+	    be mul_pow (mul a a) (int.shift -1 n) accu'
+	if a = one be one
+	if int.2'≥ n 0 be mul_pow a n one
+	if a = zero fail "ipow: division by zero"
+	be zero
+
+    let _iloga a x
+	let iloga' a
+	    if x < a be (x, 0)
+	    let sqr_a be mul a a
+	    if sqr_a ≤ a be (x, 0)
+	    let (x', y) be iloga' sqr_a
+	    if x' < a be (x', int.mul y 2)
+	    be (0'div x' a, int.add (int.mul y 2) 1)
+	be snd (iloga' a)
+
+in extend_basic_nat_or_int.(Nat : a_basic_nat)
+    open compat.ocaml_miscints
+    open Nat
+    include extend_basic_numeric.(Nat)
+
+    let ipow be _ipow
+
+    let iloga a x
+	if a ≤ one fail "iloga requires a base greater than one."
+	be _iloga a x
+
+    let min x y be x ≤ y ⇒ x; y
+    let max x y be x ≤ y ⇒ y; x
+
+    let floor_log2 x
+	let f iL width
+	    if int.eq width 1 be iL
+	    let halfwidth be int.shift -1 width
+	    let iM be int.add iL halfwidth
+	    be f iL halfwidth if eq zero (shift (int.neg iM) x)
+	    be f iM (int.sub width halfwidth) otherwise
+	if x <= zero fail "Non-positive value passed to floor_log2."
+	be f 0 width
+
+    let _digits be "0123456789abcdefghijklmnopqrstuvwxyz"
+
+    let _show pfx a x
+	if x = zero be "0"
+	be observe (that : ∀ψ. effect ψ α) which!
+	    let buf do string.buf.create
+	    do string.buf.put_string buf pfx
+	    let! loop z when z ≠ zero
+		let y be as_int (0'rem (0'quo x z) a)
+		do string.buf.put_char buf (string.get y _digits)
+		do loop (0'quo z a)
+	    do loop (ipow a (iloga a x))
+	    do string.buf.contents buf
+
+in extend_basic_nat.(Nat : a_basic_nat)
+    open Nat
+    include extend_basic_nat_or_int.(Nat)
+
+    in ops include nat_ops.(Nat)
+    open ops
+
+    let cdiv x y be (x + y - Nat.one) div y
+
+    let show base:*?(of_int 10) x be _show "" base x
+
+in extend_basic_int.(Int : a_basic_int)
+    open Int
+    include extend_basic_nat_or_int.(Int)
+
+    in ops include int_ops.(Int)
+    open ops
+
+    let cdiv x y be - x div (- y)
+    let cmod x y be   x mod (- y)
+
+    let show base:*?(of_int 10) x
+	if x ≥ zero be _show "" base x
+	if x > minimum be _show "-" base (abs x)
+	let s be _show "-" base (abs (0'quo x base))
+	be _show s base (abs (0'rem x base))
+
+in extend_basic_float.(Float : a_basic_float)
+    open Float
+    include extend_basic_numeric.(Float)
+
+    let one_half be 0'div one two
+
+    let ipow a n
+	if int.2'≥ n 0 be _ipow a n
+	be _ipow (0'div one a) (int.neg n)
+
+    let iloga a x
+	if a ≤ zero fail "The fist argument of iloga must be positive."
+	if x ≤ zero fail "The second argument of iloga must be positive."
+	if a > one
+	    if x > one be _iloga a x
+	    be int.neg (_iloga a (0'div one x))
+	if a < one
+	    if x < one be _iloga (0'div one a) (0'div one x)
+	    be int.neg (_iloga (0'div one a) x)
+	fail "iloga requires a base in (0, 1) ∪ (1, ∞)."
+
+in pervasive
+    #?ffoc open compat.ocaml_miscints
+    in int
+	include int
+	include extend_basic_int.(int)
+    in nint
+	include nint
+	include extend_basic_int.(nint)
+    in int32
+	include int32
+	include extend_basic_int.(int32)
+    in int64
+	include int64
+	include extend_basic_int.(int64)
+    in nat32
+	include nat32
+	include extend_basic_nat.(nat32)
+    in nat64
+	include nat64
+	include extend_basic_nat.(nat64)
+    in float
+	include float
+	include extend_basic_float.(float)

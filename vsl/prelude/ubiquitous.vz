@@ -1,0 +1,48 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+# 0.  Pervasive Structure for use in Library Code
+#
+# This is for our own use, an extended pervasive for client code is located
+# one level up.
+
+#?ffoc include compat.ocaml_prereq
+#?ffoc include compat.ocaml_unicode.pervasive
+#?ffoc include compat.ocaml_miscints.pervasive
+#?ffoc include compat.ocaml_pervasives.pervasive
+
+include signatures
+include prereq.basics
+include prereq.combinators
+include prereq.bool_ops
+include numeric.pervasive
+include numeric.pervasive.int.ops
+
+in effect include prereq.effect
+
+open effect
+
+let __builtin_toplevel_run m be __builtin_effect_run what!
+    upon failure (p, l) msg
+	do eprint p >> print ":" >> print (int.show l)
+	do eprint ": failure: " >> print msg >> print "\n"
+	do flush stderr
+	do __builtin_exit 69
+    upon xc
+	do eprint "Uncaught exception at top-level.\n"
+	raise xc
+    do m

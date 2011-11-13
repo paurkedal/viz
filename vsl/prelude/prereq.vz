@@ -19,6 +19,8 @@
 #?ffoc include compat.ocaml_unicode.pervasive
 #?ffoc include compat.ocaml_pervasives.pervasive
 
+include signatures
+
 in combinators
     let ident x be x
     let konst x y be x
@@ -26,6 +28,8 @@ in combinators
     let (f *> g) x be g (f x)
     let f <| x be f x  # f "at" x
     let x |> f be f x  # x "under" f
+
+include combinators
 
 in basics
     type line_location := string * int
@@ -46,7 +50,8 @@ in basics
 	let x ≥ y be (tprec% ↦ false; _ ↦ true) (Ord.cmp x y)
 	let x < y be (tprec% ↦ true; _ ↦ false) (Ord.cmp x y)
 	let x > y be (tsucc% ↦ true; _ ↦ false) (Ord.cmp x y)
-open basics
+
+include basics
 
 in bool_ops
     #?ffoc include compat.ocaml_pervasives.bool_ops
@@ -57,41 +62,7 @@ in bool_ops
     let (f ∧** g) x0 x1 be f x0 x1 ∧ g x0 x1
     let (f ∨** g) x0 x1 be f x0 x1 ∨ g x0 x1
 
-sig a_basic_nat
-    type t
-
-    val eq : t → t → bool
-    val cmp : t → t → torder
-    val 2'≤ : t → t → bool
-    val 2'≥ : t → t → bool
-    val 2'< : t → t → bool
-    val 2'> : t → t → bool
-
-    val width : int
-    val zero : t
-    val one : t
-
-    val add : t → t → t
-    val sub : t → t → t
-    val mul : t → t → t
-    val 0'div : t → t → t
-    val 0'mod : t → t → t
-    val 0'quo : t → t → t
-    val 0'rem : t → t → t
-
-    val bitnot : t → t
-    val bitand : t → t → t
-    val bitor : t → t → t
-    val bitxor : t → t → t
-    val shift : int → t → t
-    val of_int : int → t
-    val as_int : t → int
-
-sig a_basic_int
-    include a_basic_nat
-
-    val neg : t → t
-    val abs : t → t
+include bool_ops
 
 in nat_ops.(Nat : a_basic_nat)
     let 1'+ (x : Nat.t) be x
@@ -106,56 +77,6 @@ in nat_ops.(Nat : a_basic_nat)
 in int_ops.(Int : a_basic_int)
     include nat_ops.(Int)
     let 1'− be Int.neg
-
-in extend_basic_int_or_nat.(Nat : a_basic_nat)
-    open compat.ocaml_miscints
-    open Nat
-
-    let min x y be x ≤ y ⇒ x; y
-    let max x y be x ≤ y ⇒ y; x
-
-    let floor_log2 x
-	let f iL width
-	    if int.eq width 1 be iL
-	    let halfwidth be int.shift -1 width
-	    let iM be int.add iL halfwidth
-	    be f iL halfwidth if eq zero (shift (int.neg iM) x)
-	    be f iM (int.sub width halfwidth) otherwise
-	if x <= zero fail "Non-positive value passed to floor_log2."
-	be f 0 width
-
-in extend_basic_nat.(Nat : a_basic_nat)
-    include extend_basic_int_or_nat.(Nat)
-    in ops include nat_ops.(Nat)
-    open ops
-    let cdiv x y be (x + y - Nat.one) div y
-
-in extend_basic_int.(Int : a_basic_int)
-    include extend_basic_int_or_nat.(Int)
-    in ops include int_ops.(Int)
-    open ops
-    let cdiv x y be - x div (- y)
-    let cmod x y be   x mod (- y)
-
-in int
-    #?ffoc include compat.ocaml_miscints.int
-    #?ffoc include extend_basic_int.(compat.ocaml_miscints.int)
-    #?ffoc include compat.ocaml_pervasives.int_misc
-in nint
-    #?ffoc include compat.ocaml_miscints.nint
-    #?ffoc include extend_basic_int.(compat.ocaml_miscints.nint)
-in int32
-    #?ffoc include compat.ocaml_miscints.int32
-    #?ffoc include extend_basic_int.(compat.ocaml_miscints.int32)
-in int64
-    #?ffoc include compat.ocaml_miscints.int64
-    #?ffoc include extend_basic_int.(compat.ocaml_miscints.int64)
-in nat32
-    #?ffoc include compat.ocaml_miscints.nat32
-    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nat32)
-in nat64
-    #?ffoc include compat.ocaml_miscints.nat64
-    #?ffoc include extend_basic_nat.(compat.ocaml_miscints.nat64)
 
 in effect
     type φ /~ α := effect φ α
@@ -173,23 +94,6 @@ in effect
     let observe (m : ∀ψ. effect ψ α) be __builtin_effect_run m
     let unsafe_observe be __builtin_effect_run
 
-in effect_pervasive
-    open effect
-
-    let __builtin_toplevel_run m be __builtin_effect_run what!
-	upon failure (p, l) msg
-	    do print p >> print ":" >> print (int.show l)
-	    do print ": failure: " >> print msg >> print "\n"
-	    do flush stdout
-	    do __builtin_exit 69
-	do m
-
-# This is for our own use, as we typically open prereq on the top of each
-# library structure.  The pervasive structure does a similar inclusion for
-# client code.
-include basics
-include combinators
-include bool_ops
+in int include compat.ocaml_miscints.int
+       in ops include int_ops.(compat.ocaml_miscints.int)
 include int.ops
-include effect_pervasive
-#?ffoc include compat.ocaml_miscints.pervasive

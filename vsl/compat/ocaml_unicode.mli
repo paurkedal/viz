@@ -41,6 +41,9 @@ module String_ : sig
 
     val eq : string -> string -> bool
     val cmp : string -> string -> torder
+
+    val of_utf8 : uTF8string -> string
+    val as_utf8 : string -> uTF8string
 end
 
 module String_buf : sig

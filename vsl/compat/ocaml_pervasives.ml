@@ -28,8 +28,29 @@ module Bool_ops = struct
     let op2_U2265 = Pervasives.(>=)
 end
 
-module Int_misc = struct
-    let show i = UTF8string.as_string (Pervasives.string_of_int i)
+module Float_misc = struct
+    let op2_U003c = Pervasives.(<)
+    let op2_U003e = Pervasives.(>)
+    let op2_U2264 = Pervasives.(<=)
+    let op2_U2265 = Pervasives.(>=)
+    let cmp = __generic_cmp
+    let eq = __generic_eq
+
+    let zero = 0.0
+    let one = 1.0
+    let minimum = min_float
+    let maximum = max_float
+
+    let neg = Pervasives.(~-.)
+    let add = Pervasives.(+.)
+    let sub = Pervasives.(-.)
+    let mul = Pervasives.( *. )
+    let div = Pervasives.(/.)
+
+    let itrunc = Pervasives.truncate
+    let of_int = Pervasives.float_of_int
+
+    let show x = UTF8string.as_string (Pervasives.string_of_float x)
 end
 
 module Pervasive = struct
