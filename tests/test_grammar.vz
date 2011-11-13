@@ -27,17 +27,17 @@ let f5 x
 	at _ be false
 
 val lt0 : a: α → α
-val lt1 : a: α →? option α
+val lt1 : a: α →? unit → option α
 
 let lt0 a:x be x
-let lt1 a:x? be x
-let lt2 a:x?(0) be x
+let lt1 a:x? () be x
+let lt2 a:x?(0) () be x
 let lt3 a:* be a
-let lt4 a:*? be a
-let lt5 a:*?(0) be a
+let lt4 a:*? () be a
+let lt5 a:*?(0) () be a
 let lp0
     at a:false be "false"
     at a:_     be "true"
 let lp1
-    at a:* be a
-    at a:none%? be 0
+    at a:* be () ↦ a
+    at a:none%? be () ↦ 0

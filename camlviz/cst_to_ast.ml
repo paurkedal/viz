@@ -182,6 +182,9 @@ let apat_none loc = Apat_ref (Apath (loc, Modpath.atom (Idr "none")))
 let apat_some loc apat =
     Apat_apply (loc, Alabel_none,
 		Apat_ref (Apath (loc, Modpath.atom (Idr "some"))), apat)
+let apat_optional loc apat =
+    Apat_apply (loc, Alabel_none,
+		Apat_ref (Apath (loc, Modpath.atom idr_1o_qmark)), apat)
 
 let rec wrap_abstractions cpat arhs =
     let wrap carg arhs =
@@ -201,7 +204,7 @@ let rec wrap_abstractions cpat arhs =
 				[apat_some loc afarg, None, aarg;
 				 apat_none loc, None, build_aval_expr cdfl]),
 			    arhs) in
-		    afarg, arhs
+		    apat_optional loc afarg, arhs
 		| _ -> build_apat carg, arhs in
 	    Aval_at (ctrm_loc carg, Some l, [(aarg, None, arhs)])
 	| _ ->

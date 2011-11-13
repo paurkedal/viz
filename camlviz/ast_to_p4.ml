@@ -319,11 +319,12 @@ let rec emit_aval ec = function
     | Aval_seq (loc, op, x, y) when op = Idr "assert" ->
 	let _loc = p4loc loc in
 	let msg = "Assertion failed." in
+	let xloc = aval_loc x in
 	<:expr<
 	    begin
 		if $lid: idr_to_lid idr_1o_not$ ($emit_aval ec x$) then
 		    __failure
-			(__string_of_utf8 $str: Location.to_string loc$)
+			(__string_of_utf8 $str: Location.to_string xloc$)
 			(__string_of_utf8 $str: msg$)
 		else $emit_aval_opt ec loc y$
 	    end
