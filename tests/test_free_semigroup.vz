@@ -1,6 +1,6 @@
 open prereq
 open effect
-.in fsg include data.free_semigroup
+in fsg include data.free_semigroup
 
 let do_progress be false
 

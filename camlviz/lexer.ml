@@ -81,6 +81,7 @@ let last_location state = state.st_last_location
 let initial_inerts = [
     "true",	Grammar.LITERAL (Lit_bool true);
     "false",	Grammar.LITERAL (Lit_bool false);
+    "end",	Grammar.END;
 ]
 let initial_declarators = [
     "open",	Grammar.OPEN Abi_Viz;
@@ -89,11 +90,6 @@ let initial_declarators = [
     "include",	Grammar.INCLUDE false;
     "include!",	Grammar.INCLUDE true;
     "use",	Grammar.USE;
-    "in",	Grammar.IN false;
-    ".in",	Grammar.IN false;
-    "in!",	Grammar.IN true;
-    ".in!",	Grammar.IN true;
-    "sig",	Grammar.SIG;
     "type",	Grammar.TYPE Abi_Viz;
     "type:c",	Grammar.TYPE Abi_C;
     "let",	Grammar.LET None;
@@ -120,6 +116,11 @@ let initial_declarators = [
     "#?ffoc let!", Grammar.LET (Some "");
     "#?ffoc {#", Grammar.SKIP;
     "#?ffoc #}", Grammar.ENDSKIP;
+]
+let initial_connective_declarators = [
+    "in",	Grammar.IN false;
+    "in!",	Grammar.IN true;
+    "sig",	Grammar.SIG;
 ]
 let initial_verbs = [
     "be",	Grammar.VERB idr_kw_be;
@@ -152,6 +153,7 @@ let initial_keywords =
     UString_trie.empty
      |> List.fold (addkw Opkind.Lr_inert)	initial_inerts
      |> List.fold (addkw Opkind.Lr_declarator)	initial_declarators
+     |> List.fold (addkw Opkind.Lr_conditional)	initial_connective_declarators
      |> List.fold (addkw Opkind.Lr_verb)	initial_verbs
      |> List.fold (addkw Opkind.Lr_connective)	initial_connectives
      |> List.fold (addkw Opkind.Lr_conditional)	initial_conditionals
@@ -609,7 +611,21 @@ let pop_virtual_token state =
 	    if dlog_en then dlogf ~loc "Stacked pending BEGIN.";
 	    state.st_pending <- Pending_BEGIN :: state.st_pending
 	end in
-    if not (Opkind.is_introducer lr) then
+    if tok = Grammar.END then
+	begin match state.st_pending with
+	| [] | [_] -> errf_at loc "No block to close."
+	| Pending_END (_, _, col_ind) :: pending ->
+	    state.st_pending <- pending;
+	    if dlog_en then dlogf ~loc "END[col = %d], explicit" col_ind;
+	    if col_ind > cur_col then (loc, Grammar.END) else
+	    pop_manifest_token state
+	| Pending_BEGIN :: pending ->
+	    let loc_begin = Location.at loc_lb in
+	    state.st_pending <- Pending_END (loc_begin, cur_col, cur_col)
+			     :: pending;
+	    (loc_begin, Grammar.BEGIN)
+	end
+    else if not (Opkind.is_introducer lr) then
 	begin match state.st_pending with
 	| Pending_BEGIN :: pending ->
 	    pop_manifest_token state
@@ -617,7 +633,7 @@ let pop_virtual_token state =
 		when cur_col < col_lim ->
 	    state.st_pending <- pending;
 	    apply_connective ();
-	    if dlog_en then dlogf ~loc "END[col = %d]" col_ind;
+	    if dlog_en then dlogf ~loc "END[col = %d], unindent" col_ind;
 	    (loc, Grammar.END)
 	| _ ->
 	    apply_connective ();
@@ -639,7 +655,7 @@ let pop_virtual_token state =
 	| Pending_END (loc_begin, col_lim, col_ind) :: pending
 		when cur_col < col_ind ->
 	    state.st_pending <- pending;
-	    if dlog_en then dlogf ~loc "END[col = %d]" col_ind;
+	    if dlog_en then dlogf ~loc "END[col = %d], unindent intro" col_ind;
 	    (loc, Grammar.END)
 	| Pending_END (_, _, _) :: _ | [] as pending ->
 	    let col_lim =

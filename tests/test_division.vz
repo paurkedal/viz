@@ -1,6 +1,6 @@
 open effect
 
-.in check_int32
+in check_int32
     open int32
     open int32.ops
 

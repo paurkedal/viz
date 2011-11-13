@@ -49,3 +49,21 @@ what
  at x
  be
  x
+
+# The "end" keyword is used to terminate the content of a block.  If present,
+# it must therefore align with the content of the block, rather than the
+# introducing clause.  However, the "end" keyword is only useful when the to
+# coincide, or to express an empty block.
+in mod0
+in mod1
+in mod2
+    in mod3
+	in mod3a type t := int
+		 end
+	in mod3b in empty end end
+	in mod3b' in empty end
+	in mod3c type t := int
+# The indented block of mod2 is automatically terminated.
+end # mod1
+end # mod0
+in empty_module end
