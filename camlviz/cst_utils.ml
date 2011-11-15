@@ -248,6 +248,7 @@ let rec cpred_is_pure = function
     | Cpred_seq_which (_, op, x, (cm_opt, y), z) ->
 	not (idr_is_monad_op op) && (cm_opt <> None || cpred_is_pure y)
 	    && Option.for_all cpred_is_pure z
+    | Cpred_iterate (_, Idr "taken", _, y, None) -> cpred_is_pure y
     | Cpred_iterate (_, _, _, _, _) -> false
 and ctrm_is_pure = function
     | Ctrm_literal _ -> true

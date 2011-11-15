@@ -142,7 +142,7 @@ let initial_conditionals = [
     "at",	Grammar.AT;
     "if",	Grammar.IF;
     "else",	Grammar.ELSE;
-    "taken",	Grammar.TAKEN;
+    "taken",	Grammar.ITERATE (Idr "taken");
     "when",	Grammar.ITERATE (Idr "when");
 ]
 let initial_lookahead = 40

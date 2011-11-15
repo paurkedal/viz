@@ -77,7 +77,7 @@ let apply_fence loc name0 name1 =
 
 %token <Leaf_types.idr> LBRACKET RBRACKET
 %token IF ELSE OTHERWISE
-%token AT TAKEN
+%token AT
 %token DOT
 
 /* Logic Operators */
@@ -263,13 +263,6 @@ nonfunction_predicate:
     atomic_predicate { $1 }
   | VERB term WHICH predicate_block
     { Cpred_expr_which (mkloc $startpos $endpos, $1, $2, ($3, $4)); }
-  | TAKEN term predicate_block
-    {
-	let loc = mkloc $startpos $endpos in
-	let loc_f = mkloc $startpos($3) $endpos($3) in
-	let f = Ctrm_what (loc_f, None, $3) in
-	Cpred_expr (loc, idr_kw_be, Ctrm_apply (loc, f, $2))
-    }
   | if_predicate { $1 }
   | postif_predicate { $1 }
   | SEQ term
