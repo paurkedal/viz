@@ -265,13 +265,13 @@ and build_aval_pure = function
 	let aw = build_aval cm_opt cw in
 	let az = build_aval_pure (Cpred_seq (loc, op, cx, cy_opt)) in
 	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw, az)
-    | Cpred_iterate (loc, Idr taken, cx, cf, None) when taken = "taken" ->
+    | Cpred_cond (loc, Idr taken, cx, cf, None) when taken = "taken" ->
 	let ax = build_aval_expr cx in
 	let af = build_aval_pure cf in
 	Aval_apply (loc, Alabel_none, af, ax)
     | Cpred_seq (loc, _, _, _)
     | Cpred_seq_which (loc, _, _, _, _)
-    | Cpred_iterate (loc, _, _, _, _)
+    | Cpred_cond (loc, _, _, _, _)
     | Cpred_upon (loc, _, _, _) ->
 	errf_at loc "Monadic code is not allowed here."
 and build_aval_monad mm = function
@@ -361,7 +361,7 @@ and build_aval_monad mm = function
 	let aw = build_aval cm_opt cw in
 	Aval_let (loc, Apat_uvar (Avar (loc, Idr "that")), aw,
 		  build_aval_monad mm (Cpred_seq (loc, op, cx, cy_opt)))
-    | Cpred_iterate (loc, Idr op, cx, cy, ccont_opt) when op = "taken" ->
+    | Cpred_cond (loc, Idr op, cx, cy, ccont_opt) when op = "taken" ->
 	let ax = build_aval_expr cx in
 	let af = build_aval_monad mm cy in
 	let cm = "" in (* FIXME *)
@@ -370,7 +370,7 @@ and build_aval_monad mm = function
 	| None -> ay
 	| Some ccont -> make_aval_chop loc cm ay (build_aval_monad mm ccont)
 	end
-    | Cpred_iterate (loc, Idr op, cx, cy, ccont_opt) when op = "when" ->
+    | Cpred_cond (loc, Idr op, cx, cy, ccont_opt) when op = "when" ->
 	let ax = build_aval_expr cx in
 	let ay = build_aval_monad mm cy in
 	let cm = "" in (* FIXME *)
@@ -380,7 +380,7 @@ and build_aval_monad mm = function
 	| None -> ay'
 	| Some ccont -> make_aval_chop loc cm ay' (build_aval_monad mm ccont)
 	end
-    | Cpred_iterate (loc, Idr op, _, _, _) ->
+    | Cpred_cond (loc, Idr op, _, _, _) ->
 	errf_at loc "Unknown keyword %s." op
     | Cpred_upon (loc, _, _, _) as cupon ->
 	let rec collect cases = function

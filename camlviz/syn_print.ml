@@ -173,7 +173,7 @@ and print_predicate fo = function
 	print_predicate fo cw;
 	Fo.leave_indent fo;
 	Option.iter (print_predicate fo) cy_opt;
-    | Cpred_iterate (_, Idr op, cx, cy, cz_opt) ->
+    | Cpred_cond (_, Idr op, cx, cy, cz_opt) ->
 	Fo.newline fo;
 	Fo.put_kw fo op;
 	print_inline fo Opkind.p_min cx;

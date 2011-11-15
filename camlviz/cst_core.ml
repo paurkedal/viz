@@ -109,7 +109,7 @@ let cpred_loc = function
     | Cpred_expr_which (loc, _, _, _)
     | Cpred_seq (loc, _, _, _)
     | Cpred_seq_which (loc, _, _, _, _)
-    | Cpred_iterate (loc, _, _, _, _)
+    | Cpred_cond (loc, _, _, _, _)
     | Cpred_upon (loc, _, _, _)
     -> loc
 

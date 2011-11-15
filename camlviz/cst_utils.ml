@@ -33,7 +33,7 @@ let fold_cpred_sub fp ft fd = function
     | Cpred_expr_which (_, _, x, (_, p)) -> ft x *> fp p
     | Cpred_seq (_, _, x, p) -> ft x *> Option.fold fp p
     | Cpred_seq_which (_, _, x, (_, p), q) -> ft x *> fp p *> Option.fold fp q
-    | Cpred_iterate (_, _, x, p, q) -> ft x *> fp p *> Option.fold fp q
+    | Cpred_cond (_, _, x, p, q) -> ft x *> fp p *> Option.fold fp q
     | Cpred_upon (_, x, p, q) -> ft x *> fp p *> fp q
 let fold_ctrm_sub fp ft fd = function
     | Ctrm_ref _ | Ctrm_literal _ -> ident
@@ -58,7 +58,7 @@ let for_all_cpred_sub fp ft fd = function
     | Cpred_seq (_, _, x, p) -> ft x && Option.for_all fp p
     | Cpred_seq_which (_, _, x, (_, p), q) ->
 	ft x && fp p && Option.for_all fp q
-    | Cpred_iterate (_, _, x, p, q) -> ft x && fp p && Option.for_all fp q
+    | Cpred_cond (_, _, x, p, q) -> ft x && fp p && Option.for_all fp q
     | Cpred_upon (_, x, p, q) -> ft x && fp p && fp q
 let for_all_ctrm_sub fp ft fd = function
     | Ctrm_ref _ | Ctrm_literal _ -> true
@@ -248,8 +248,8 @@ let rec cpred_is_pure = function
     | Cpred_seq_which (_, op, x, (cm_opt, y), z) ->
 	not (idr_is_monad_op op) && (cm_opt <> None || cpred_is_pure y)
 	    && Option.for_all cpred_is_pure z
-    | Cpred_iterate (_, Idr "taken", _, y, None) -> cpred_is_pure y
-    | Cpred_iterate (_, _, _, _, _) -> false
+    | Cpred_cond (_, Idr "taken", _, y, None) -> cpred_is_pure y
+    | Cpred_cond (_, _, _, _, _) -> false
 and ctrm_is_pure = function
     | Ctrm_literal _ -> true
     | Ctrm_ref _ -> true

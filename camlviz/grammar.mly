@@ -68,7 +68,7 @@ let apply_fence loc name0 name1 =
 %token WHERE WITH
 %token SKIP ENDSKIP
 
-%token <Leaf_types.idr> VERB SEQ ITERATE
+%token <Leaf_types.idr> VERB SEQ COND
 %token UPON
 
 %token LEX
@@ -275,15 +275,15 @@ nonfunction_predicate:
     { Cpred_seq_which (mkloc $startpos $endpos, $1, $2, ($3, $4), Some $5) }
   | UPON term predicate_block nonfunction_predicate_with_participle
     { Cpred_upon (mkloc $startpos $endpos, $2, $3, $4) }
-  | ITERATE term predicate_block
+  | COND term predicate_block
     {
 	let loc = mkloc $startpos $endpos in
-	Cpred_iterate (loc, $1, $2, $3, None)
+	Cpred_cond (loc, $1, $2, $3, None)
     }
-  | ITERATE term predicate_block nonfunction_predicate_with_participle
+  | COND term predicate_block nonfunction_predicate_with_participle
     {
 	let loc = mkloc $startpos $endpos in
-	Cpred_iterate (loc, $1, $2, $3, Some $4)
+	Cpred_cond (loc, $1, $2, $3, Some $4)
     }
   ;
 nonfunction_predicate_with_participle:

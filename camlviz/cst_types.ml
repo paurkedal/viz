@@ -41,7 +41,7 @@ type cpred =
     | Cpred_expr_which	of loc * idr * ctrm * cwhich
     | Cpred_seq		of loc * idr * ctrm * cpred option
     | Cpred_seq_which	of loc * idr * ctrm * cwhich * cpred option
-    | Cpred_iterate	of loc * idr * ctrm * cpred * cpred option
+    | Cpred_cond	of loc * idr * ctrm * cpred * cpred option
     | Cpred_upon	of loc * ctrm * cpred * cpred
  and ctrm =
     | Ctrm_ref		of cidr * idrhint

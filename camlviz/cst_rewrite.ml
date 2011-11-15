@@ -72,15 +72,15 @@ let rec subterm_rewrite_cpred rw stra = function
 	let p, accu = rw.rw_cpred rw stra (p, accu) in
 	let q, accu = rw.rw_cpred rw stra (q, accu) in
 	Cpred_seq_which (loc, op, x, (cm_opt, p), Some q), accu
-    | Cpred_iterate (loc, op, x, y, None), accu ->
+    | Cpred_cond (loc, op, x, y, None), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
-	Cpred_iterate (loc, op, x, y, None), accu
-    | Cpred_iterate (loc, op, x, y, Some z), accu ->
+	Cpred_cond (loc, op, x, y, None), accu
+    | Cpred_cond (loc, op, x, y, Some z), accu ->
 	let x, accu = rw.rw_ctrm rw stra (x, accu) in
 	let y, accu = rw.rw_cpred rw stra (y, accu) in
 	let z, accu = rw.rw_cpred rw stra (z, accu) in
-	Cpred_iterate (loc, op, x, y, Some z), accu
+	Cpred_cond (loc, op, x, y, Some z), accu
     | Cpred_upon (loc, p, x, y), accu ->
 	let p, accu = rw.rw_ctrm rw stra (p, accu) in
 	let x, accu = rw.rw_cpred rw stra (x, accu) in
