@@ -23,29 +23,35 @@ sig S
     include an_ordered_map'.[elt α = α]
 
     val mapfold : (α × γ → β × γ) → t α × γ → t β × γ
-
-    # FIXME:  These aliases are added as camlviz can't handle the signature
-    # extensions used in an_ordered_map'.
-    val _tagged_min : t α → option (index × elt α)
-    val _tagged_max : t α → option (index × elt α)
-    val _tagged_pop_min : t α → option (index × elt α × t α)
-    val _tagged_pop_max : t α → option (index × elt α × t α)
-    val _tagged_filter : (index × elt α → bool) → t α → t α
-    val _tagged_map : (index × elt α → index × elt β) → t α → t β
-    val _tagged_filter_map : (index × elt α → option (index × elt β)) →
-			     t α → t β
-    val _scheme_eq : t α → t β → bool
-    val _scheme_subeq : t α → t β → bool
-    val _scheme_min : t α → option index
-    val _scheme_max : t α → option index
-    val _scheme_pop_min : t α → option (index × t α)
-    val _scheme_pop_max : t α → option (index × t α)
-    val _scheme_filter : (index → bool) → t α → t α
-    val _scheme_map : (index → index) → t α → t α
-    val _scheme_filter_map : (index → option index) → t α → t α
-
     val is_valid : t α → bool
     val dump_tree : (index → α → io unit) → t α → io unit
+
+    in tagged
+	include a_collection'.[t α = t α, elt α = index × elt α]
+	val map : (elt α → elt β) → t α → t β
+	val filter : (elt α → bool) → t α → t α
+	val filter_map : (elt α → option (elt β)) → t α → t β
+	val min : t α → option (elt α)
+	val max : t α → option (elt α)
+	val pop_min : t α → option (elt α × t α)
+	val pop_max : t α → option (elt α × t α)
+
+    in scheme
+	include a_collection'.[t α = t α, elt α = index]
+	val eq : t α → t β → bool
+	val subeq : t α → t β → bool
+	val map : (index → index) → t α → t α
+	val filter : (index → bool) → t α → t α
+	val filter_map : (index → option index) → t α → t α
+	val eq : t α → t β → bool
+	val subeq : t α → t β → bool
+	val min : t α → option index
+	val max : t α → option index
+	val pop_min : t α → option (index × t α)
+	val pop_max : t α → option (index × t α)
+	val filter : (index → bool) → t α → t α
+	val map : (index → index) → t α → t α
+	val filter_map : (index → option index) → t α → t α
 
 in make.(I : a_total_order) : S.[index = I.t] include where
 
@@ -394,8 +400,8 @@ in scheme
 	at O% be return ()
 	at Y k _ _ tL tR be iterr f tR >> f k >> iterr f tL
 
-    let min t be _scheme_min
-    let max t be _scheme_max
+    let min be _scheme_min
+    let max be _scheme_max
 
     let pop_min be _scheme_pop_min
     let pop_max be _scheme_pop_max

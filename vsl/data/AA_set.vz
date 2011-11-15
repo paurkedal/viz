@@ -37,10 +37,10 @@ let card be M.scheme.card
 let iter be M.scheme.iter
 let iterr be M.scheme.iterr
 
-let min be M._scheme_min
-let max be M._scheme_max
-let pop_min be M._scheme_pop_min
-let pop_max be M._scheme_pop_max
+let min be M.scheme.min
+let max be M.scheme.max
+let pop_min be M.scheme.pop_min
+let pop_max be M.scheme.pop_max
 
 let empty be M.empty
 let is_empty be M.is_empty
@@ -50,12 +50,12 @@ let add k be M.add k ()
 let remove be M.remove
 let pop k s be M.pop k s |> (none% ↦ none; some ((), s) ↦ some s)
 
-let map be M._scheme_map
-let filter be M._scheme_filter
-let filter_map be M._scheme_filter_map
+let map be M.scheme.map
+let filter be M.scheme.filter
+let filter_map be M.scheme.filter_map
 
-let subeq be M._scheme_subeq
-let eq be M._scheme_eq
+let subeq be M.scheme.subeq
+let eq be M.scheme.eq
 let union be M.left_union
 let isecn be M.left_isecn
 let complement be M.complement
