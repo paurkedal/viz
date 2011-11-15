@@ -28,19 +28,19 @@ in M include AA_map.make.(E)
 type elt := E.t
 type t := M.t unit
 
-let fold be M.stripped.fold
-let foldr be M.stripped.foldr
-let for_all be M.stripped.for_all
-let for_some be M.stripped.for_some
-let count be M.stripped.count
-let card be M.stripped.card
-let iter be M.stripped.iter
-let iterr be M.stripped.iterr
+let fold be M.scheme.fold
+let foldr be M.scheme.foldr
+let for_all be M.scheme.for_all
+let for_some be M.scheme.for_some
+let count be M.scheme.count
+let card be M.scheme.card
+let iter be M.scheme.iter
+let iterr be M.scheme.iterr
 
-let min be M._stripped_min
-let max be M._stripped_max
-let pop_min be M._stripped_pop_min
-let pop_max be M._stripped_pop_max
+let min be M._scheme_min
+let max be M._scheme_max
+let pop_min be M._scheme_pop_min
+let pop_max be M._scheme_pop_max
 
 let empty be M.empty
 let is_empty be M.is_empty
@@ -50,12 +50,12 @@ let add k be M.add k ()
 let remove be M.remove
 let pop k s be M.pop k s |> (none% ↦ none; some ((), s) ↦ some s)
 
-let map be M._stripped_map
-let filter be M._stripped_filter
-let filter_map be M._stripped_filter_map
+let map be M._scheme_map
+let filter be M._scheme_filter
+let filter_map be M._scheme_filter_map
 
-let subeq be M._stripped_subeq
-let eq be M._stripped_eq
+let subeq be M._scheme_subeq
+let eq be M._scheme_eq
 let union be M.left_union
 let isecn be M.left_isecn
 let complement be M.complement

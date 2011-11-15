@@ -33,8 +33,8 @@ lex A4 ∖
 
 let x ⊆ y be M.subeq x y
 let x =* y be M.eq x y
-let x ⊆~ y be M._stripped_subeq x y
-let x =~ y be M._stripped_eq x y
+let x ⊆~ y be M._scheme_subeq x y
+let x =~ y be M._scheme_eq x y
 let x ∪ y be M.left_union x y
 let x ∩ y be M.left_isecn x y
 let x ∖ y be M.complement x y

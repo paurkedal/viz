@@ -78,7 +78,7 @@ sig an_indexed_family'
 
     type index
     in tagged include a_collection'.[t α = t α, elt α = index × elt α]
-    in stripped include a_collection'.[t α = t α, elt α = index]
+    in scheme include a_collection'.[t α = t α, elt α = index]
 
 
 # Z.Z.  A Set
@@ -189,7 +189,7 @@ sig a_map'
 
 	val filter_map : (index × elt α → option (index × elt β)) → t α → t β
 
-    in stripped
+    in scheme
 	val eq : t α → t β → bool
 
 	val subeq : t α → t β → bool
@@ -219,7 +219,7 @@ sig an_ordered_map'
 
 	val pop_max : t α → option (index × elt α × t α)
 
-    in stripped
+    in scheme
 	val min : t α → option index
 
 	val max : t α → option index
