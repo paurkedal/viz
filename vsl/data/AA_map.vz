@@ -25,6 +25,8 @@ sig S
     val mapfold : (α × γ → β × γ) → t α × γ → t β × γ
     val is_valid : t α → bool
     val dump_tree : (index → α → io unit) → t α → io unit
+    val find_ge : index → t α → option (index × elt α)
+    val find_le : index → t α → option (index × elt α)
 
     in tagged
 	include a_collection'.[t α = t α, elt α = index × elt α]
@@ -47,6 +49,8 @@ sig S
 	val subeq : t α → t β → bool
 	val min : t α → option index
 	val max : t α → option index
+	val min_ge : index → t α → option index
+	val max_le : index → t α → option index
 	val pop_min : t α → option (index × t α)
 	val pop_max : t α → option (index × t α)
 	val filter : (index → bool) → t α → t α
@@ -186,6 +190,22 @@ let _tagged_pop_max
     at Y k d l tL tR
 	be option.map that (_tagged_pop_max tR) which
 	at (kX, dX, tR') be (kX, dX, _postrmR_Y k d l tL tR')
+
+let find_ge k'
+    at O% be none
+    at Y k d l tL tR
+	taken I.cmp k' k
+	at tprec% be some (option.default (k, d) (find_ge k' tL))
+	at tsucc% be find_ge k' tR
+	at tcoin% be some (k, d)
+
+let find_le k'
+    at O% be none
+    at Y k d l tL tR
+	taken I.cmp k' k
+	at tprec% be find_le k' tL
+	at tsucc% be some (option.default (k, d) (find_le k' tR))
+	at tcoin% be some (k, d)
 
 let _scheme_min
     at O% be none
@@ -402,6 +422,9 @@ in scheme
 
     let min be _scheme_min
     let max be _scheme_max
+
+    let min_ge k t be option.map fst (find_ge k t)
+    let max_le k t be option.map fst (find_le k t)
 
     let pop_min be _scheme_pop_min
     let pop_max be _scheme_pop_max

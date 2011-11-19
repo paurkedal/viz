@@ -78,6 +78,10 @@ in int_ops.(Int : a_basic_int)
     include nat_ops.(Int)
     let 1'− be Int.neg
 
+in int include compat.ocaml_miscints.int
+       in ops include int_ops.(compat.ocaml_miscints.int)
+include int.ops
+
 in effect
     type φ /~ α := effect φ α
     val return : α → effect φ α
@@ -85,6 +89,7 @@ in effect
     val 2'>> : effect φ unit → effect φ α → effect φ α
     val observe : (∀ψ. effect ψ α) → α
     val unsafe_observe : effect ψ α → α
+    val repeat : int → effect ψ unit → effect ψ unit
 
     type pocket_tag φ  inj pocket_tag : pocket_tag φ
 
@@ -93,7 +98,4 @@ in effect
     let 2'>> m n be __builtin_effect_bind (() +> n) m
     let observe (m : ∀ψ. effect ψ α) be __builtin_effect_run m
     let unsafe_observe be __builtin_effect_run
-
-in int include compat.ocaml_miscints.int
-       in ops include int_ops.(compat.ocaml_miscints.int)
-include int.ops
+    let! repeat n m when n > 0 do m >> repeat (n - 1) m

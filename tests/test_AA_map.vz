@@ -69,6 +69,22 @@ let main
 	    let t' do M.remove_random (n + 1) (m + 1) t
 	    assert M.is_valid t'
 	    be ()
+
+	let x0 do random (n + 1)
+	taken M.scheme.max_le x0 t, M.scheme.min_ge x0 t
+	    at some xl, some xh
+		assert xl ≤ x0 ≤ xh
+		if xl = xh assert xl = x0
+		else assert option.get (M.scheme.min_ge (xl + 1) t) = xh
+		     assert option.get (M.scheme.max_le (xh - 1) t) = xl
+	    at none%, some xh
+		assert xh = option.get (M.scheme.min t)
+		assert x0 ≤ xh
+	    at some xl, none%
+		assert xl = option.get (M.scheme.max t)
+		assert xl ≤ x0
+	    at none%, none% be ()
+
 	do test_unary (nR - 1)
     do test_unary 2000
 
@@ -77,7 +93,7 @@ let main
 	let! mkset i0
 	    let n do random 20
 	    let m do random 20
-	    do M.add_random n (n + 1) (i ↦ i + i0) M.empty
+	    do M.add_random n (m + 1) (i ↦ i + i0) M.empty
 	let A do mkset 100
 	let B do mkset 200
 	let C do mkset 300
