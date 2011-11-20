@@ -31,7 +31,7 @@ in head
 lex S0 ./
 
 let init_cycle i j
-    be snd <* init_record head.ev <| (that : ∀ψ. reflens.r ψ δ → effect ψ α)
+    be snd @ init_record head.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
 	which! at head
 
     let node0 do alloc_record node.ev

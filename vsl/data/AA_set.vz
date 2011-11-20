@@ -48,7 +48,7 @@ let singleton k be M.singleton k ()
 let contains be M.contains
 let add k be M.add k ()
 let remove be M.remove
-let pop k s be M.pop k s |> (none% ↦ none; some ((), s) ↦ some s)
+let pop k be option.map snd ∘ M.pop k
 
 let map be M.scheme.map
 let filter be M.scheme.filter

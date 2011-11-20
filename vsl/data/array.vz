@@ -136,7 +136,7 @@ let count f a
 	be loop (i + 1) accu
     be loop 0 0
 
-let foldi f a y be fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y) |> (_, y) ↦ y
+let foldi f a y be snd @ fold (x ↦ (i, y) ↦ (i + 1, f i x y)) a (0, y)
 
 let iter k a be fold (x +> m +> m >> k x) a (return ())
 
@@ -160,7 +160,7 @@ let locate_optimum leq a
     let loop i (xO, iO)
 	if i = n be iO
 	let x be get i a
-	be loop (i + 1) (leq x xO ⇒ xO, iO; x, i)
+	be loop (i + 1) (leq x xO ⇒ (xO, iO); (x, i))
     be loop 1 (get 0 a, 0)
 
 let zip (a0, a1)

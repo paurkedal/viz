@@ -58,7 +58,8 @@ let catch be __builtin_catch
 
 let mask be __builtin_mask
 
-let bracket init finit thunk be mask <| (restore : ∀α. io α → io α) ↦ what!
+let bracket init finit thunk be mask that which!
+    at restore : ∀α. io α → io α
     let x do init
     let r upon e do finit x
 		 raise e

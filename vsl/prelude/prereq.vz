@@ -24,10 +24,11 @@ include signatures
 in combinators
     let ident x be x
     let konst x y be x
-    let (g <* f) x be g (f x)  # also g ∘ f
-    let (f *> g) x be g (f x)
-    let f <| x be f x  # f "at" x
-    let x |> f be f x  # x "under" f
+    let ∘ (f : α → β) be f
+    let (g ∘ f) x be g (f x)
+    let f @ x be f x
+    let curry f x y be f (x, y)
+    let uncurry f (x, y) be f x y
 
 include combinators
 

@@ -91,14 +91,14 @@ let singleton k d be Y k d 1 O O
 
 let contains k'
     at O% be false
-    at Y k d l tL tR be I.cmp k' k |> what
+    at Y k d l tL tR taken I.cmp k' k
 	at tprec% be contains k' tL
 	at tsucc% be contains k' tR
 	at tcoin% be true
 
 let find k'
     at O% be none
-    at Y k d l tL tR be I.cmp k' k |> what
+    at Y k d l tL tR taken I.cmp k' k
 	at tprec% be find k' tL
 	at tsucc% be find k' tR
 	at tcoin% be some d
@@ -150,7 +150,7 @@ let _skew_after_remove
 let add k' d'
     at O% be Y k' d' 1 O O
     at Y k d l tL tR
-	be I.cmp k' k |> what
+	taken I.cmp k' k
 	at tprec% be _skew (Y k d l (add k' d' tL) tR)
 	at tsucc% be _split (Y k d l tL (add k' d' tR))
 	at tcoin% be Y k' d' l tL tR
@@ -233,28 +233,29 @@ let _scheme_pop_max
 
 let pop k'
     at O% be none
-    at Y k d l tL tR be I.cmp k' k |> what
+    at Y k d l tL tR
+	taken I.cmp k' k
 	at tprec% be option.map that (pop k' tL) which
 		  at (dX, tL') be (dX, _postrmL_Y k d l tL' tR)
 	at tsucc% be option.map that (pop k' tR) which
 		  at (dX, tR') be (dX, _postrmR_Y k d l tL tR')
 	at tcoin%
-	    be _tagged_pop_max tL |> what
+	    taken _tagged_pop_max tL
 	    at some (kP, dP, tL')
 		be some (d, _postrmL_Y kP dP l tL' tR)
 	    at none%
 		be option.map that (_tagged_pop_min tR) which
 		at (kS, dS, tR') be (d, _postrmR_Y kS dS l tL tR')
 
-let remove k' t be pop k' t |> (none% ↦ t; some (_, t) ↦ t)
+let remove k' t taken pop k' t be none% ↦ t; some (_, t) ↦ t
 
 let fold f
     at O% be ident
-    at Y _ d _ tL tR be fold f tL *> f d *> fold f tR
+    at Y _ d _ tL tR be fold f tR ∘ f d ∘ fold f tL
 
 let foldr f
     at O% be ident
-    at Y _ d _ tL tR be foldr f tR *> f d *> foldr f tL
+    at Y _ d _ tL tR be foldr f tL ∘ f d ∘ foldr f tR
 
 let for_all f
     at O% be true
@@ -282,7 +283,7 @@ let iterr f
 
 let _tagged_fold f
     at O% be ident
-    at Y k d _ tL tR be _tagged_fold f tL *> f (k, d) *> _tagged_fold f tR
+    at Y k d _ tL tR be _tagged_fold f tR ∘ f (k, d) ∘ _tagged_fold f tL
 
 # TODO:  Optimize filter, union, isecn, etc.
 
@@ -293,26 +294,26 @@ let _tagged_filter f t
     be _tagged_fold ((k, v) ↦ (f (k, v) ⇒ add k v; ident)) t empty
 
 let _tagged_map f t
-    be _tagged_fold (f *> (k', v') ↦ add k' v') t empty
+    be _tagged_fold (uncurry add ∘ f) t empty
 
 let _tagged_filter_map f t
-    be _tagged_fold (f *> (none% ↦ ident; some (k', v') ↦ add k' v')) t empty
+    be _tagged_fold (option.fold (uncurry add) ∘ f) t empty
 
 let _scheme_filter f t
     be _tagged_fold ((k, v) ↦ (f k ⇒ add k v; ident)) t empty
 
 let _scheme_map f t
-    be _tagged_fold ((k, v) ↦ f k |> k' ↦ add k' v) t empty
+    be _tagged_fold ((k, v) ↦ add (f k) v) t empty
 
 let _scheme_filter_map f t
-    be _tagged_fold ((k, v) ↦ f k |> (none% ↦ ident; some k' ↦ add k' v))
-		    t empty
+    be _tagged_fold ((k, v) ↦ option.fold (k' ↦ add k' v) (f k)) t empty
 
 let _scheme_subeq
     at O% at _ be true
     at Y kt _ _ tL tR
 	at O% be false
-	at u@(Y ku _ _ uL uR) be I.cmp kt ku |> what
+	at u@(Y ku _ _ uL uR)
+	    taken I.cmp kt ku
 	    at tcoin% be _scheme_subeq tL uL ∧ _scheme_subeq tR uR
 	    at tprec% be contains kt uL
 		       ∧ _scheme_subeq tL uL ∧ _scheme_subeq tR u
@@ -323,7 +324,8 @@ let subeq_for f
     at O% at _ be true
     at Y kt dt _ tL tR
 	at O% be false
-	at u@(Y ku du _ uL uR) be I.cmp kt ku |> what
+	at u@(Y ku du _ uL uR)
+	    taken I.cmp kt ku
 	    at tcoin% be f dt du
 		       ∧ subeq_for f tL uL ∧ subeq_for f tR uR
 	    at tprec% be option.for_some (f dt) (find kt uL)
@@ -352,7 +354,7 @@ in tagged
 
     let foldr f
 	at O% be ident
-	at Y k d _ tL tR be foldr f tR *> f (k, d) *> foldr f tL
+	at Y k d _ tL tR be foldr f tL ∘ f (k, d) ∘ foldr f tR
 
     let for_all f
 	at O% be true
@@ -392,11 +394,11 @@ in scheme
 
     let fold f
 	at O% be ident
-	at Y k _ _ tL tR be fold f tL *> f k *> fold f tR
+	at Y k _ _ tL tR be fold f tR ∘ f k ∘ fold f tL
 
     let foldr f
 	at O% be ident
-	at Y k _ _ tL tR be foldr f tR *> f k *> foldr f tL
+	at Y k _ _ tL tR be foldr f tL ∘ f k ∘ foldr f tR
 
     let for_all f
 	at O% be true

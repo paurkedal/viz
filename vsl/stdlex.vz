@@ -39,9 +39,9 @@ lex alias |- ⊢  -| ⊣  |= ⊧  |== ⊨
 # levels contain suffix and right associative infix operators.
 
 lex L1	; : := ≡
-lex L2	<+>   <| <*
-lex L3	↦ ⇒ ⇔ |> *> >>= >>
-lex L4	,
+lex L2	, <+>
+lex L3	↦ ⇒ ⇔ >>= >>
+lex L4	@
 lex L6	∨ ∨* ∨** ⊻
 lex L7
 lex L8	∧ ∧* ∧**
@@ -83,7 +83,7 @@ lex alias <: ∈
 lex A1	→ →? ↔
 lex A2	+ − /~
 lex A4	∪ ∖
-lex A6	× ⋅ ∕ ∘ (12'<*) div mod quo rem
+lex A6	× ⋅ ∕ ∘ div mod quo rem
 lex A8	∩
 lex alias -> →  ->? →?  <-> ↔
 lex alias - −
@@ -94,7 +94,7 @@ lex alias * ×  / ∕  o` ∘
 
 lex S0	^ ↑ ↓
 lex S2S	! ?
-lex S2	# @
+lex S2	#
 
 
 # Z.7.  Parentheses
