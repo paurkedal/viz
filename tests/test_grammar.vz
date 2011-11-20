@@ -31,13 +31,23 @@ val lt1 : a: α →? unit → option α
 
 let lt0 a:x be x
 let lt1 a:x? () be x
-let lt2 a:x?(0) () be x
+let lt2 a:x?(-1) () be x
 let lt3 a:* be a
 let lt4 a:*? () be a
-let lt5 a:*?(0) () be a
+let lt5 a:*?(-1) () be a
 let lp0
     at a:false be "false"
     at a:_     be "true"
 let lp1
     at a:* be () ↦ a
     at a:none%? be () ↦ 0
+
+let main
+    assert lt0 a:11 = 11
+    assert lt1 a:23 () = some 23
+    assert lt1 a:none? () = none
+    assert lt1 a:(some 13)? () = some 13
+    assert lt2 () = -1
+    assert lt2 a:17 () = 17
+    assert lt2 a:none? () = -1
+    assert lt2 a:(some 19)? () = 19

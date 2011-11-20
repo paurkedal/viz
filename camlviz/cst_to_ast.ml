@@ -428,7 +428,18 @@ and build_aval_expr = function
 	    when cidr_is_2o_colon colon ->
 	Aval_intype (loc, build_atyp ct, build_aval_expr cx)
     | Ctrm_apply (loc, cx, cy) ->
-	Aval_apply (loc, Alabel_none, build_aval_expr cx, build_aval_expr cy)
+	let alab, cy =
+	    match cy with
+	    | Ctrm_label (lloc, Cidr (_, l), cy) ->
+		begin match cy with
+		| Ctrm_apply (_, Ctrm_ref (qmark, _), cy)
+			when cidr_is_1o_qmark qmark ->
+		    Alabel_optional l, replace_star l cy
+		| _ ->
+		    Alabel_labelled l, replace_star l cy
+		end
+	    | _ -> Alabel_none, cy in
+	Aval_apply (loc, alab, build_aval_expr cx, build_aval_expr cy)
     | Ctrm_array (loc, cxs) ->
 	Aval_array (loc, List.map build_aval_expr cxs)
     | Ctrm_rel (loc, cx, (_, cf, cy) :: rest) ->

@@ -115,7 +115,7 @@ let of_idr_list = List.rev
 let to_string_list = List.rev_map idr_to_string
 let of_string_list = List.rev_map idr_of_string
 
-let t_of_sexp sx = of_string (Sexp.to_string sx)
-let sexp_of_t p = (Sexp.of_string (to_string p))
+let t_of_sexp sx = of_string (Conv.string_of_sexp sx)
+let sexp_of_t p = (Conv.sexp_of_string (to_string p))
 
 module Set = Set.Make (struct type t = idr list let compare = compare end)

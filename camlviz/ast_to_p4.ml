@@ -268,10 +268,10 @@ let rec emit_aval ec = function
 	<:expr< $emit_aval ec x$ $emit_aval ec y$ >>
     | Aval_apply (loc, Alabel_labelled l, x, y) ->
 	let _loc = p4loc loc in
-	<:expr< ~ $lid: idr_to_lid l$: $emit_aval ec x$ $emit_aval ec y$ >>
+	<:expr< $emit_aval ec x$ ~ $lid: idr_to_lid l$: $emit_aval ec y$ >>
     | Aval_apply (loc, Alabel_optional l, x, y) ->
 	let _loc = p4loc loc in
-	<:expr< ? $lid: idr_to_lid l$: $emit_aval ec x$ $emit_aval ec y$ >>
+	<:expr< $emit_aval ec x$ ? $lid: idr_to_lid l$: $emit_aval ec y$ >>
     | Aval_array (loc, xs) ->
 	let _loc = p4loc loc in
 	<:expr< [| $list: List.map (emit_aval ec) xs$ |] >>

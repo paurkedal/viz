@@ -79,16 +79,16 @@ let rec print_apat fo p = function
     | Apat_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
     | Apat_ref qn -> print_apath fo qn
     | Apat_uvar v -> print_avar fo v
-    | Apat_apply (_, alab, x, y) ->
+    | Apat_apply (_, alab, f, x) ->
 	if p > p_apply then Fo.put fo `Operator "(";
+	print_apat fo (p_apply + 1) f;
+	Fo.space fo;
 	let r = match alab with
 	| Alabel_none -> true
 	| Alabel_labelled (Idr l) -> Fo.put fo `Label (l ^ ":"); true
 	| Alabel_optional (Idr l) -> Fo.put fo `Label (l ^ ":"); false in
 	if r then print_apat fo p_apply x else
 	(print_apat fo (p_script 2) x; Fo.put fo `Operator "?");
-	Fo.space fo;
-	print_apat fo (p_apply + 1) y;
 	if p > p_apply then Fo.put fo `Operator ")"
     | Apat_as (_, v, x) ->
 	print_avar fo v;
@@ -105,16 +105,16 @@ let rec print_apat fo p = function
 let rec print_aval fo p = function
     | Aval_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
     | Aval_ref qn -> print_apath fo qn
-    | Aval_apply (_, alab, x, y) ->
+    | Aval_apply (_, alab, f, x) ->
 	if p > p_apply then Fo.put fo `Operator "(";
+	print_aval fo (p_apply + 1) f;
+	Fo.space fo;
 	let r = match alab with
 	| Alabel_none -> true
 	| Alabel_labelled (Idr l) -> Fo.put fo `Label (l ^ ":"); true
 	| Alabel_optional (Idr l) -> Fo.put fo `Label (l ^ ":"); false in
 	if r then print_aval fo p_apply x else
 	(print_aval fo (p_script 2) x; Fo.put fo `Operator "?");
-	Fo.space fo;
-	print_aval fo (p_apply + 1) y;
 	if p > p_apply then Fo.put fo `Operator ")"
     | Aval_array (_, xs) ->
 	Fo.put fo `Operator "#[";
