@@ -482,6 +482,8 @@ let scan_string_literal state =
 		| None ->
 		    let loc = Location.between loc_lb loc_lb in
 		    raise (Error_at (loc, "Unterminated string escape."))
+		| Some ch' when ch' == UChar.ch_nl ->
+		    next ()
 		| Some ch' ->
 		    try
 			let ch'' = UChar_map.find ch' escape_map in

@@ -27,8 +27,6 @@ in combinators
     let ∘ (f : α → β) be f
     let (g ∘ f) x be g (f x)
     let f @ x be f x
-    let curry f x y be f (x, y)
-    let uncurry f (x, y) be f x y
 
 include combinators
 
@@ -36,9 +34,19 @@ in basics
     type line_location := string * int
     inj failure : line_location → string → exception
 
+    let curry f x y be f (x, y)
+    let uncurry f (x, y) be f x y
+
     let fst (x, _) be x
     let snd (_, y) be y
     let swp (x, y) be (y, x)
+
+    type α + β
+     inj inl : α → α + β
+     inj inr : β → α + β
+
+    let inll x be inl (inl x)
+    let inlr x be inl (inr x)
 
     sig a_total_order
 	type t

@@ -332,9 +332,7 @@ let rec emit_aval ec = function
     | Aval_seq (loc, op, x, y) when op = Idr "__trace" ->
 	let _loc = p4loc loc in
 	let mkarg = function
-	    | Aval_apply (_, Alabel_none,
-		Aval_apply (_, Alabel_none, Aval_ref colon, x), Aval_ref t)
-		    when apath_eq_idr idr_2o_colon colon ->
+	    | Aval_intype (_, Atyp_ref t, x) ->
 		<:expr< (__string_of_utf8 $str: Ast_print.aval_to_string x$,
 			 $id: emit_apath_uid t$.show $emit_aval ec x$)
 		>>

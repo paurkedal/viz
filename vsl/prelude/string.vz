@@ -25,6 +25,8 @@ type t := string
 in buf
     #?ffoc include compat.ocaml_unicode.string_buf
 
+let of_char ch be init 1 (_ ↦ ch)
+
 let cat x y
     let nx be length x
     let n be nx + length y

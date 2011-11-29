@@ -115,6 +115,7 @@ if !exists('viz_disable_types')
     \ contains=@VizTypeExpr
 endif
 syn match VizOperatorName '\<[0-2]\'[^ \t()\[\]{}]\+'
+syn keyword VizOperator div mod quo rem
 
 " Patterns and Constructor Names
 "
@@ -140,7 +141,7 @@ syn keyword VizInjName true false
 "
 syn cluster VizModuleCommon
   \ contains=VizSctPrefix,VizSigPrefix,VizSctPath,VizSigPath
-syn match VizSctPrefix '\.\?\K\k*\(\s*\.\(\K\|(\)\)\@='
+syn match VizSctPrefix '\.\?\K\k*\(\s*\.\(([^()]*)\.\)\?\K\)\@='
 syn match VizSigPrefix '\.\?\K\k*\(\s*\.\[\)\@='
 syn region VizSctPath matchgroup=VizPathOperator start='\.(' end=')'
   \ fold transparent contains=@VizSctExpr
@@ -152,7 +153,7 @@ hi link VizSctPrefix VizSctName
 " Labels
 "
 syn match VizLabel '\K\k*:' nextgroup=VizSameIdentifier
-syn match VizSameIdentifier '\*'
+syn match VizSameIdentifier contained '\*'
 
 " Keywords
 "
@@ -210,7 +211,8 @@ syn match VizNumber '-\?\<\d\+\(\.\d\+\)\?\>'
 syn match VizNumber '-\?\<0b[01]\+\>' contains=ffBasePrefix
 syn match VizNumber '-\?\<0o[0-7]\+\>' contains=ffBasePrefix
 syn match VizNumber '-\?\<0x\x\+\>' contains=ffBasePrefix
-syn match VizNumber '[⁰¹²³⁴-⁹₀-₉]\+'
+syn match VizNumber '\([⁰ⁱ¹²³⁴⁻⁹⁺⁻⁼⁽⁾ⁿ]\@<!⁻\)\?[⁰¹²³⁴-⁹]\+'
+syn match VizNumber '[₀-₉]\+'
 syn match VizNumberBase contained '\<0[bvx]'
 
 syn region VizString start='"' end='"' skip='\\.' extend contains=@VizString
@@ -272,9 +274,9 @@ hi def link VizStringEscape Special
 
 hi def link VizComment Comment
 hi def link VizCommentHeader Comment
-hi def link VizCommentSectionNumber SpecialComment
-hi def link VizCommentSectionSpacer VizComment
-hi def link VizCommentSectionTitle VizCommentHeader
+hi def link VizCommentSectionNumber Title
+hi def link VizCommentSectionSpacer Title
+hi def link VizCommentSectionTitle Title
 hi def link VizCommentSpecial SpecialComment
 hi def link VizCommentURL SpecialComment
 hi def link VizCommentError Error

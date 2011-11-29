@@ -64,6 +64,8 @@ val cmp : t → t → torder
 val as_utf8 : t → UTF8string
 val of_utf8 : UTF8string → t
 
+val of_char : char → string
+
 
 # Z.Z.  Concatenation
 
