@@ -27,10 +27,8 @@ module Pervasive = struct
     type string = UText.t
 
     let __string_of_utf8 = UString_encoding.decode CharEncoding.utf8
-    let __char_of_utf8 bs =
-	let s = __string_of_utf8 bs in
-	assert (UText.length s = 1);
-	UText.get s 0
+    let __char_of_code i = UChar.chr i
+    let __char_code ch = UChar.code ch
 end
 open Pervasive
 

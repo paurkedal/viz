@@ -1,0 +1,7 @@
+let fs at "\\,\\" be true
+       at _ be false
+let fc at c"\\" be true
+       at _ be false
+let ()
+    assert fs "\\,\\"
+    assert fc c"\\"
