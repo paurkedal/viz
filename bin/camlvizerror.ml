@@ -54,12 +54,12 @@ let show_error ich och mlpath mlline msg =
 	    (demangle msg);
 	true in
     begin try
-	for i = 3 to mlline do ignore (input_line mlch) done;
+	for i = 4 to mlline do ignore (input_line mlch) done;
 	if not begin
-	    if mlline < 2 then match_locline (input_line mlch) else
-	    let locln1 = input_line mlch in
+	    let locln2 = if mlline < 3 then "" else input_line mlch in
+	    let locln1 = if mlline < 2 then "" else input_line mlch in
 	    let locln0 = input_line mlch in
-	    match_locline locln0 || match_locline locln1
+	    match_locline locln0 || match_locline locln1 || match_locline locln2
 	end then begin
 	    flush och;
 	    if msg <> "Error: Preprocessor error" then begin
