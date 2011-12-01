@@ -19,6 +19,7 @@
 # Z.  Strings
 
 open prelude.ubiquitous
+open effect
 
 sealed with
 
@@ -66,6 +67,9 @@ val of_utf8 : UTF8string → t
 
 val of_char : char → string
 
+val show : string → string
+ ## Quote a string.
+
 
 # Z.Z.  Concatenation
 
@@ -95,6 +99,8 @@ val of_list : list char → t
 val fold : (char → α → α) → t → α → α
 
 val foldr : (char → α → α) → t → α → α
+
+val iter : (char → ψ/~ unit) → t → ψ/~ unit
 
 val map : (char → char) → t → t
 
@@ -158,9 +164,16 @@ val strip_right : t → t
 
 # Z.Z.  Splitting
 
+val split_where : (char → bool) → t → list t
+ ## (split_where f s) splits (s) on characters on which (f) is true.  Empty
+ ## components are kept, and the empty string is mapped to ([""]).
+
+val split_on : char → t → list t
+ ## (split_on ch f s ≡ split_where (char.eq ch) f s).
+
 val csplit_where : (char → bool) → t → list t
  ## (csplit_where f s) splits (s) on contiguous characters where (f) is true,
- ## and strips out any contigous prefix or suffix where (f) is true.  That is,
+ ## and strips out any continuous prefix or suffix where (f) is true.  That is,
  ## no empty strings are returned.
 
 val csplit_on_space : t → list t

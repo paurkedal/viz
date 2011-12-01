@@ -23,6 +23,8 @@ val of_int : int → t
 
 val as_int : t → int
 
+val show : t → string
+
 val eq : t → t → bool
 
 val cmp : t → t → torder
@@ -30,3 +32,5 @@ val cmp : t → t → torder
 val is_space : t → bool
 
 include prelude.char
+
+let show ch be prelude.string.cat "c" (prelude.string.show (string.of_char ch))

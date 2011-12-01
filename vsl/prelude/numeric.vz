@@ -18,8 +18,8 @@
 open prereq
 open effect
 
-in extend_basic_numeric.(Num : a_basic_numeric)
-    open Num
+in extend_basic_numeric.(basic_numeric : a_basic_numeric)
+    open basic_numeric
 
     let two be add one one
 
@@ -43,10 +43,10 @@ in extend_basic_numeric.(Num : a_basic_numeric)
 	    be (0'div x' a, int.add (int.mul y 2) 1)
 	be snd (iloga' a)
 
-in extend_basic_nat_or_int.(Nat : a_basic_nat)
+in extend_basic_nat_or_int.(basic_nat : a_basic_nat)
     open compat.ocaml_miscints
-    open Nat
-    include extend_basic_numeric.(Nat)
+    open basic_nat
+    include extend_basic_numeric.(basic_nat)
 
     let ipow be _ipow
 
@@ -81,22 +81,35 @@ in extend_basic_nat_or_int.(Nat : a_basic_nat)
 	    do loop (ipow a (iloga a x))
 	    do string.buf.contents buf
 
-in extend_basic_nat.(Nat : a_basic_nat)
-    open Nat
-    include extend_basic_nat_or_int.(Nat)
+in extend_basic_nat.(basic_nat : a_basic_nat)
+    open basic_nat
+    include extend_basic_nat_or_int.(basic_nat)
 
-    in ops include nat_ops.(Nat)
+    in ops include nat_ops.(basic_nat)
     open ops
 
-    let cdiv x y be (x + y - Nat.one) div y
+    let cdiv x y be (x + y - one) div y
 
     let show base:*?(of_int 10) x be _show "" base x
 
-in extend_basic_int.(Int : a_basic_int)
-    open Int
-    include extend_basic_nat_or_int.(Int)
+    let see base:a?(of_int 10) s
+	let n be string.length s
+	let i be string.skip_space s 0
+	if i = n be none
+	let loop j x
+	    if j = n be some x
+	    taken char.digit_value (as_int a) (string.get j s)
+	    at none%
+		if string.skip_space s j = n be some x
+		be none
+	    at some c be loop (int.add j 1) (x * a + (of_int c))
+	be loop 0 zero
 
-    in ops include int_ops.(Int)
+in extend_basic_int.(basic_int : a_basic_int)
+    open basic_int
+    include extend_basic_nat_or_int.(basic_int)
+
+    in ops include int_ops.(basic_int)
     open ops
 
     let cdiv x y be - x div (- y)
@@ -108,9 +121,25 @@ in extend_basic_int.(Int : a_basic_int)
 	let s be _show "-" base (abs (0'quo x base))
 	be _show s base (abs (0'rem x base))
 
-in extend_basic_float.(Float : a_basic_float)
-    open Float
-    include extend_basic_numeric.(Float)
+    let see base:a?(of_int 10) s
+	let n be string.length s
+	let i' be string.skip_space s 0
+	if i' = n be none
+	let i, pm if string.get i' s ≠ c"-" be i', 1
+		  be int.add i' 1, -1
+	if i = n be none
+	let loop j x
+	    if j = n be some x
+	    taken char.digit_value (as_int a) (string.get j s)
+	    at none%
+		if string.skip_space s j = n be some x
+		be none
+	    at some c be loop (int.add j 1) (x * a + (of_int (int.mul pm c)))
+	be loop 0 zero
+
+in extend_basic_float.(basic_float : a_basic_float)
+    open basic_float
+    include extend_basic_numeric.(basic_float)
 
     let one_half be 0'div one two
 

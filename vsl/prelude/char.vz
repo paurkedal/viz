@@ -24,3 +24,10 @@ let cmp x y be __generic_cmp x y
 
 # FIXME
 let is_space be c" " ↦ true; c"\n" ↦ true; c"\t" ↦ true; _ ↦ false
+
+let digit_value a ch
+    let c be as_int ch
+    if 0x30 ≤ c ≤ 0x39          be some (c - 0x30)
+    if 0x61 ≤ c ≤ 0x7a + a - 10 be some (c - 0x61)
+    if 0x41 ≤ c ≤ 0x5a + a - 10 be some (c - 0x41)
+    be none

@@ -27,6 +27,20 @@ in buf
 
 let of_char ch be init 1 (_ ↦ ch)
 
+let show s be observe (that : ∀ψ. effect ψ α) which!
+    let buf do buf.create
+    let! put_escaped
+	at c"\\" do buf.put_string buf "\\\\"
+	at c"\t" do buf.put_string buf "\\t"
+	at c"\n" do buf.put_string buf "\\n"
+	at c"\r" do buf.put_string buf "\\r"
+	# FIXME: Use char.is_print.
+	at ch do buf.put_char buf ch
+    do buf.put_char buf c"\""
+    do iter put_escaped s
+    do buf.put_char buf c"\""
+    do buf.contents buf
+
 let cat x y
     let nx be length x
     let n be nx + length y
@@ -82,6 +96,14 @@ let foldr f x
 	if i < 0 be accu
 	be foldr_from (i - 1) (f (get i x) accu)
     be foldr_from (length x - 1)
+
+let! iter f x
+    let n be length x
+    let! iter_from i
+	if i ≥ n be ()
+	do f (get i x)
+	do iter_from (i + 1)
+    do iter_from 0
 
 let map f x be init (length x) (i ↦ f (get i x))
 
@@ -202,6 +224,16 @@ let strip_right s
     let j be rskip_space s (length s)
     be slice 0 j s
 
+
+let split_where f s
+    let loop j accu
+	if j < 0 be accu
+	if j = 0 be [""; accu]
+	let i be rskip_while (¬* f) s j
+	be loop (i - 1) [slice i j s; accu]
+    be loop (length s) []
+
+let split_on ch be split_where (char.eq ch)
 
 let csplit_where f s
     let loop j accu
