@@ -60,6 +60,14 @@ in basics
 	let x < y be (tprec% ↦ true; _ ↦ false) (Ord.cmp x y)
 	let x > y be (tsucc% ↦ true; _ ↦ false) (Ord.cmp x y)
 
+    let min_of_cmp cmp x y
+	taken cmp x y at tprec% be x
+		      at _ be y
+
+    let max_of_cmp cmp x y
+	taken cmp x y at tsucc% be x
+		      at _ be y
+
 include basics
 
 in bool_ops
@@ -108,3 +116,6 @@ in effect
     let observe (m : ∀ψ. effect ψ α) be __builtin_effect_run m
     let unsafe_observe be __builtin_effect_run
     let! repeat n m when n > 0 do m >> repeat (n - 1) m
+
+# Preliminary.
+let __builtin_toplevel_run be __builtin_effect_run

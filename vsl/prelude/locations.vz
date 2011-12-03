@@ -1,0 +1,240 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open numeric.pervasive
+open effect
+
+sealed with
+
+# 0.  References to Parts of Text Files
+#
+# 0.0.  Locations of Single Lines
+#
+in lineloc
+
+    type t
+
+    val init_full : string → int → int → t
+    val init_bof : string → t
+    val dummy : t
+
+    val fpath : t → string
+    val line_num : t → int
+    val line_pos : t → int
+
+    val skip_line : int → t → t
+
+    val eq : t → t → bool
+    val cmp : t → t → torder
+    val min : t → t → t
+    val max : t → t → t
+
+    val show : t → string
+
+# 0.0.  Locations to Single Characters or Positions
+#
+in charloc
+
+    type t
+
+    val init_full : string → int → int → int → int → t
+    val init_bof : string → t
+    val dummy : t
+
+    val line_loc : t → lineloc.t
+    val fpath : t → string
+    val line_num : t → int
+    val line_pos : t → int
+    val column_num : t → int
+    val char_pos : t → int
+
+    val skip_n : int → t → t
+    val skip_zerowidth : t → t
+    val skip_Tab : t → t
+    val skip_NL : t → t
+    val skip_CR : t → t
+    val skip_char : char → t → t
+
+    val eq : t → t → bool
+    val cmp : t → t → torder
+    val min : t → t → t
+    val max : t → t → t
+
+    val show : t → string
+
+# 0.0.  Locations of Continuous Text Fragments
+#
+in textloc
+
+    type t
+
+    val 0'at : charloc.t → t
+    val between : charloc.t → charloc.t → t
+    val around : list charloc.t → t
+
+    val lower : t → charloc.t
+    val upper : t → charloc.t
+
+    val eq : t → t → bool
+    val cmp : t → t → torder
+
+    val show : t → string
+
+end
+# END OF INTERFACE
+
+let line_origin, column_origin
+    be __builtin_effect_run what!
+    let origin_opt do libc.getenv "VIZ_LOCATION_ORIGIN"
+    taken origin_opt
+	at none% be (1, 0)
+	at some s
+	    taken string.split_on c"," s
+	    at [sl; sc;]
+		taken int.see sl, int.see sc
+		at some l, some c be l, c
+		at _, _ be 1, 0
+	    at _ be 1, 0
+
+in lineloc
+
+    type t
+     inj init_full : string → int → int → t
+
+    let init_bof fp be init_full fp 0 0
+
+    let dummy be init_full "" -1 -1
+
+    let fpath    (init_full fp ln lp) be fp
+    let line_num (init_full _  ln _ ) be ln
+    let line_pos (init_full _  _  lp) be lp
+
+    let skip_line n
+	at init_full fp -1 -1 fail "Cannot skip_line on dummy location."
+	at init_full fp ln lp be init_full fp (ln + 1) (lp + n)
+
+    let eq (init_full fpA lnA lpA) (init_full fpB lnB lpB)
+	be string.eq fpA fpB ∧ int.eq lnA lnB ∧ int.eq lpA lpB
+    let cmp (init_full fpA lnA lpA) (init_full fpB lnB lpB)
+	taken string.cmp fpA fpB
+	at tcoin% be int.cmp lnA lnB
+	at c be c
+
+    let min be min_of_cmp cmp
+    let max be max_of_cmp cmp
+
+    let show (init_full fp ln lp)
+	be string.cat_list [fp; ":"; int.show (ln + line_origin);]
+
+in charloc
+
+    type t
+     inj init : lineloc.t → int → int → t
+
+    let init_full fp ln lp cn cp be init (lineloc.init_full fp ln lp) cn cp
+
+    let init_bof fp be init (lineloc.init_bof fp) 0 0
+    let dummy be init lineloc.dummy -1 -1
+
+    let line_loc   (init ll _ _) be ll
+    let fpath      (init ll _ _) be lineloc.fpath ll
+    let line_num   (init ll _ _) be lineloc.line_num ll
+    let line_pos   (init ll _ _) be lineloc.line_pos ll
+    let column_num (init _ cn _) be cn
+    let char_pos   (init _ _ cp) be cp
+
+    let skip_n n
+	at init ll -1 -1 fail "Cannot skip_n on dummy location."
+	at init ll cn cp be init ll (cn + n) (cp + n)
+    let skip_zerowidth
+	at init ll -1 -1 fail "Cannot skip_zerowidth on dummy location."
+	at init ll cn cp be init ll cn (cp + 1)
+    let skip_Tab
+	at init ll -1 -1 fail "Cannot skip_Tab on dummy location."
+	at init ll cn cp be init ll (8 * (cn div 8 + 1)) (cp + 1)
+    let skip_NL
+	at init ll -1 -1 fail "Cannot skip_NL on dummy location."
+	at init (lineloc.init_full fp ln lp) cn cp
+	    be init (lineloc.init_full fp (ln + 1) (cp + 1)) 0 (cp + 1)
+    let skip_CR
+	at init ll -1 -1 fail "Cannot skip_CR on dummy location."
+	at init ll cn cp be init ll 0 (cp + 1)
+    let skip_char
+	at c"\t" be skip_Tab
+	at c"\n" be skip_NL
+	at c"\r" be skip_CR
+	# FIXME: Use Unicode properties for the rest when implemented.
+	at _ be skip_n 1
+
+    let eq (init llA cnA cpA) (init llB cnB cpB)
+	be lineloc.eq llA llB ∧ int.eq cnA cnB ∧ int.eq cpA cpB
+    let cmp (init llA cnA cpA) (init llB cnB cpB)
+	taken lineloc.cmp llA llB
+	at tcoin% be int.cmp cpA cpB
+	at c be c
+
+    let min be min_of_cmp cmp
+    let max be max_of_cmp cmp
+
+    let show (init ll cn cp)
+	be string.cat_list [lineloc.show ll; ",";
+			    int.show (cn + column_origin);]
+
+in textloc
+
+    type t := charloc.t × charloc.t
+
+    let dummy be (charloc.dummy, charloc.dummy)
+
+    let 0'at ll be (ll, ll)
+
+    let between lb ub
+	if ¬ string.eq (charloc.fpath lb) (charloc.fpath ub)
+	    fail "textloc.between expects positions from the same file."
+	taken charloc.cmp lb ub
+	at tsucc% fail "Arguments to textloc.between must be ordered."
+	at _ be (lb, ub)
+
+    let around
+	at [] be dummy
+	at [ll; lls]
+	    let lb be list.fold charloc.min lls ll
+	    let ub be list.fold charloc.max lls ll
+	    be between lb ub
+
+    let lower (lb, ub) be lb
+    let upper (lb, ub) be ub
+
+    let eq (lbA, ubA) (lbB, ubB) be charloc.eq lbA lbB ∧ charloc.eq ubA ubB
+
+    let cmp (lbA, ubA) (lbB, ubB)
+	taken charloc.cmp lbA lbB
+	at tcoin% be charloc.cmp ubA ubB
+	at c be c
+
+    let show (lb, ub)
+	if charloc.eq lb ub be charloc.show lb
+	if lineloc.eq (charloc.line_loc lb) (charloc.line_loc ub)
+	    be string.cat_list
+		[charloc.show lb; "-";
+		 int.show (charloc.column_num ub + column_origin);]
+	else
+	    be string.cat_list
+		[charloc.show lb; "-";
+		 int.show (charloc.line_num ub + line_origin); ",";
+		 int.show (charloc.column_num ub + column_origin);]

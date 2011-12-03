@@ -3,6 +3,7 @@ vsl/foreign/cabi/utils_FFIS.o
 vsl/prelude/float_FFIS.o
 vsl/prelude/cabi/memory_ocaml.o
 vsl/prelude/cabi/memory_FFIS.o
+vsl/prelude/libc_FFIS.o
 vsl/system/posix/stdlib_FFIS.o
 vsl/system/posix/unistd_FFIS.o
 compiler/llvm/core_FFIS.o

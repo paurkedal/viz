@@ -2,7 +2,9 @@ vsl/prelude/cabi
 vsl/prelude/char_
 vsl/prelude/field_allocation
 vsl/prelude/float
+vsl/prelude/libc
 vsl/prelude/list_
+vsl/prelude/locations
 vsl/prelude/numeric
 vsl/prelude/option
 vsl/prelude/prereq
