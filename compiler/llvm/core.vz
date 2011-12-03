@@ -19,7 +19,7 @@ open:c "llvm-c/Core.h"
 open:c "compiler/llvm_suppl.h"
 open pervasive
 open effect
-open foreign.C.memory
+open foreign.cabi.memory
 
 
 # Z.  LLVM Core API
@@ -254,7 +254,7 @@ val function_type : ltype φ → array (ltype φ) → ltype φ
 val:c _function_type : ltype φ → ptr φ → int → bool → ltype φ
     := "LLVMFunctionType"
 let function_type rt ats be unsafe_observe what!
-    let cta do foreign.C.utils.malloc_ptrarray_of_array ats
+    let cta do foreign.cabi.utils.malloc_ptrarray_of_array ats
     let r be _function_type rt cta (array.length ats) false
     do unsafe_free cta
     be r
@@ -384,7 +384,7 @@ val:c build_unreachable : builder φ → φ /~ value φ := "LLVMBuildUnreachable
 val:c _build_aggregate_ret : builder φ → ptr φ → int → φ /~ value φ
     := "LLVMBuildAggregateRet"
 let! build_aggregate_ret b xa
-    let ca do foreign.C.utils.malloc_ptrarray_of_array xa
+    let ca do foreign.cabi.utils.malloc_ptrarray_of_array xa
     let r do _build_aggregate_ret b ca (array.length xa)
     do unsafe_free ca
     be r
@@ -393,7 +393,7 @@ val:c _build_invoke :
     builder φ → value φ → ptr φ → int → block φ → block φ → string → φ /~ value φ
     := "LLVMBuildInvoke"
 let! build_invoke b f args bb unwind_bb name
-    let cargs do foreign.C.utils.malloc_ptrarray_of_array args
+    let cargs do foreign.cabi.utils.malloc_ptrarray_of_array args
     let r do _build_invoke b f cargs (array.length args) bb unwind_bb name
     do unsafe_free cargs
     be r
@@ -507,7 +507,7 @@ val:c _build_call :
     builder φ → value φ → ptr φ → int → string → φ /~ value φ
     := "LLVMBuildCall"
 let! build_call b f args name
-    let cargs do foreign.C.utils.malloc_ptrarray_of_array args
+    let cargs do foreign.cabi.utils.malloc_ptrarray_of_array args
     let r do _build_call b f cargs (array.length args) name
     do unsafe_free cargs
     be r
@@ -516,9 +516,9 @@ val:c _add_incoming : value φ → ptr φ → ptr φ → int → φ /~ unit
     := "LLVMAddIncoming"
 let! add_incoming phi incoming
     let n be array.length incoming
-    let cva do foreign.C.utils.malloc_ptrarray_init n
+    let cva do foreign.cabi.utils.malloc_ptrarray_init n
 		(i ↦ unsafe_custom_load_ptr (fst (array.get i incoming)))
-    let cba do foreign.C.utils.malloc_ptrarray_init n
+    let cba do foreign.cabi.utils.malloc_ptrarray_init n
 		(i ↦ unsafe_custom_load_ptr (snd (array.get i incoming)))
     do _add_incoming phi cva cba n
 

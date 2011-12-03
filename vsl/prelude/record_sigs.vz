@@ -43,7 +43,7 @@
 # pointer is tagged as either internal or external.  During construction of a
 # record instance, instances pointed to by external pointers are immutable.
 
-open prelude.ubiquitous
+open ubiquitous
 
 # 0.0.  Phantom Types Used Below
 #

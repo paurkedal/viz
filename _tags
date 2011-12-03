@@ -17,10 +17,10 @@
 <vsl/compat/*.cmx>: for-pack(Compat)
 <vsl/control/*.cmx>: for-pack(Control)
 <vsl/foreign/*.cmx>: for-pack(Foreign)
-<vsl/foreign/intf/*.cmx>: for-pack(Foreign.Intf)
-<vsl/foreign/C/*.cmx>: for-pack(Foreign.C)
+<vsl/foreign/cabi/*.cmx>: for-pack(Foreign.Cabi)
 <vsl/data/*.cmx>: for-pack(Data)
 <vsl/prelude/*.cmx>: for-pack(Prelude)
+<vsl/prelude/cabi/*.cmx>: for-pack(Prelude.Cabi)
 <vsl/system/*.cmx>: for-pack(System)
 <vsl/system/posix/*.cmx>: for-pack(System.Posix)
 

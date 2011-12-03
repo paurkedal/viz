@@ -1,9 +1,12 @@
+vsl/prelude/cabi
 vsl/prelude/char_
+vsl/prelude/field_allocation
 vsl/prelude/float
 vsl/prelude/list_
 vsl/prelude/numeric
 vsl/prelude/option
 vsl/prelude/prereq
+vsl/prelude/record_sigs
 vsl/prelude/signatures
 vsl/prelude/string_
 vsl/prelude/ubiquitous

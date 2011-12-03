@@ -330,7 +330,8 @@ let () = dispatch begin function
 	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";
 	flag ["camlvizpp"; "compile"] & S[A"-R"; P"vsl"; A"-R"; P"compiler"];
 
-	Pathname.define_context "vsl/foreign/C" ["vsl/foreign"];
+	Pathname.define_context "vsl/foreign/cabi" ["vsl/foreign"];
+	Pathname.define_context "vsl/prelude/cabi" ["vsl/prelude"];
 
 	()
     | _ -> ()

@@ -19,8 +19,8 @@ open pervasive
 open effect
 open core
 open target
-open foreign.C.memory
-open foreign.C.utils
+open foreign.cabi.memory
+open foreign.cabi.utils
 open:c "llvm-c/ExecutionEngine.h"
 open:c "compiler/llvm_suppl.h"
 

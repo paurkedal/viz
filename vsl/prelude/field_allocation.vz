@@ -1,4 +1,4 @@
-open prelude.ubiquitous
+open ubiquitous
 
 sig a_field_allocator
     type alignment

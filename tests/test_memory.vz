@@ -1,4 +1,4 @@
-open foreign.C.memory
+open foreign.cabi.memory
 open effect
 open:c "stdio.h"
 open:c "tests/testutils.h"

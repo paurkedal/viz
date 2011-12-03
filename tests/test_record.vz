@@ -1,6 +1,6 @@
 open effect
-open foreign.C.memory
-open foreign.C.record
+open foreign.cabi.memory
+open foreign.cabi.record
 
 in simple
     in rep
