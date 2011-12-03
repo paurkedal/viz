@@ -203,7 +203,6 @@ let fold_atypinfo_paths f = function
     | Atypinfo_alias u -> fold_atyp_paths f u
     | Atypinfo_injs injs ->
 	List.fold (fun (_, _, u, _) -> fold_atyp_paths f u) injs
-    | Atypinfo_quant u -> fold_atyp_paths f u
 
 let fold_atypbind_paths f (_, _, us, ti) =
     List.fold (fold_atyp_paths (f `Type)) us *>

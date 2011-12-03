@@ -164,7 +164,6 @@ let _ =
 	    !strip_roots modpath in
     let module_name = Filename.chop_extension (Filename.basename in_path) in
     try
-	let quantmap = Quantmap.load_all !roots Quantmap.empty in
 	let term = Parser.parse_file ~roots: (!roots @ !nroots) in_path in
 	let term, () =
 	    Cst_rewrite.default_rewrite_ctrm
@@ -185,7 +184,7 @@ let _ =
 	if !do_depend then
 	    print_depend ~module_name !raw_deps !topdir !roots
 			 in_path amod else
-	let omod = Ast_to_p4.emit_toplevel ~modpath ~quantmap amod in
+	let omod = Ast_to_p4.emit_toplevel ~modpath amod in
 	if !add_loc then
 	    Ocaml_printer.print !out_path_opt
 		(fun o -> o#set_loc_and_comments#implem)

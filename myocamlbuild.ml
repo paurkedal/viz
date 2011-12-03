@@ -35,8 +35,7 @@ let split_on_space s =
 let camlviz_path = "../bin/camlviz"
 let camlvizpp_path = "bin/camlvizpp.native"
 let camlvizerror_path = "bin/camlvizerror.native"
-let camlvizpp_deps =
-    [camlvizpp_path; camlvizerror_path; "vsl/stdlex.vz"; "vsl/compat/quant.map"]
+let camlvizpp_deps = [camlvizpp_path; camlvizerror_path; "vsl/stdlex.vz"]
 let use_camlviz_wrapper = true
 let static = true
 
@@ -119,7 +118,7 @@ let custom_native_compile_ocaml_implem ?tag ?(cmx_ext = "cmx") ml env build =
 
 let camlviz_compile_flags tags =
     if Tags.does_match tags (Tags.of_list ["ocamlstdlib"]) then N
-    else A"-nostdlib"
+    else N (*A"-nostdlib"*)
 
 let camlviz_ocamlc_c tags vz out =
     let tags = tags ++ "ocaml" ++ "camlvizpp" ++ "byte" in

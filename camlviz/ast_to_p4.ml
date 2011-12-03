@@ -31,26 +31,9 @@ open Unicode
 type emit_context = {
     ec_module_name : string;
     ec_modpath : Modpath.t;
-    ec_quantdefs : Quantmap.t;
-    mutable ec_quantmap : Quantmap.t;
+    ec_utvars : Idr_set.t;
     mutable ec_stub_prefix : string;
 }
-
-let quantmap_lookup ec (alphas, t as tscm) =
-    match Quantmap.find tscm ec.ec_quantmap with
-    | Some p ->
-	let p' = Modpath.strip_common_prefix ec.ec_modpath p in
-	Some (Apath (atyp_loc t, p'))
-    | None -> None
-
-let quants mk ec =
-    let qm = Quantmap.filter_onelevel ec.ec_modpath ec.ec_quantdefs in
-    let loc = Location.dummy in
-    let mk1 (alphas, t) p specs =
-	let v = Avar (loc, Modpath.last_e p) in
-	let alphas' = List.map (fun v -> Atyp_uvar v) alphas in
-	(loc, v, alphas', Atypinfo_quant t) :: specs in
-    match Quantmap.fold mk1 qm [] with [] -> [] | specs -> [mk specs]
 
 let p4loc loc =
     let lb = Location.lbound loc in
@@ -77,7 +60,7 @@ let emit_apath_uid (Apath (loc, p)) =
     let cis = List.map (fun cn -> <:ident< $uid: idr_to_uid cn$ >>) cns in
     <:ident< $list: cis$ >>
 
-type typefor = Typefor_viz | Typefor_quant | Typefor_cabi | Typefor_cabi_io
+type typefor = Typefor_viz | Typefor_cabi | Typefor_cabi_io | Typefor_method
 
 let rec emit_atyp ec ?(typefor = Typefor_viz) = function
     | Atyp_uvar v ->
@@ -86,25 +69,11 @@ let rec emit_atyp ec ?(typefor = Typefor_viz) = function
     | Atyp_ref p ->
 	let _loc = p4loc (apath_loc p) in
 	<:ctyp< $id: emit_apath_lid p$ >>
-    | Atyp_A (loc, v, t) when typefor = Typefor_quant ->
+    | Atyp_A (loc, v, t) ->
 	let _loc = p4loc loc in
-	let strip_current_prefix (Apath (loc, p)) =
-	    Apath (loc, Modpath.strip_common_prefix ec.ec_modpath p) in
-	let t = atyp_map ~on_apath:strip_current_prefix t in
-	<:ctyp< ! '$lid: avar_to_lid v$ . $emit_atyp ec ~typefor t$ >>
-    | Atyp_A (loc, v', t') as t ->
-	let _loc = p4loc loc in
-	let avs, at = atyp_to_ascm t in
-	begin match quantmap_lookup ec (avs, at) with
-	| None ->
-	    warnf_at loc
-		"camlviz can only handle quantifiers which are listed \
-		 in compat/quant.map.";
-	    emit_atyp ec ~typefor t'
-	| Some p ->
-	    List.fold (fun av ot -> <:ctyp< $ot$ '$lid: avar_to_lid av$ >>)
-		avs <:ctyp< $id: emit_apath_lid p$ >>
-	end
+	if typefor = Typefor_method then
+	    <:ctyp< ! '$lid: avar_to_lid v$. $emit_atyp ec t$ >> else
+	<:ctyp< < __it : ! '$lid: avar_to_lid v$. $emit_atyp ec ~typefor t$ > >>
     | Atyp_E (loc, v, t) ->
 	warnf_at loc "Ignoring quantification of %s." (avar_name v);
 	emit_atyp ec ~typefor t
@@ -188,51 +157,56 @@ let emit_apat_fixed _loc default = function
     | _ -> default ()
 
 let rec emit_apat ec = function
-    | Apat_literal (loc, lit) -> fun ocond_opt ->
-	emit_apat_literal loc lit ocond_opt
-    | Apat_ref p -> fun ocond_opt ->
+    | Apat_literal (loc, lit) -> fun ocond_opt utvars ->
+	let opat, ocond_opt = emit_apat_literal loc lit ocond_opt in
+	(opat, ocond_opt, utvars)
+    | Apat_ref p -> fun ocond_opt utvars ->
 	let _loc = p4loc (apath_loc p) in
 	let default () = <:patt< $id: emit_apath_uid p$ >> in
 	begin match p with
 	| Apath (_, p) when Modpath.is_atom p ->
 	    emit_apat_fixed _loc default (idr_to_string (Modpath.last_e p))
 	| _ -> default ()
-	end, ocond_opt
+	end, ocond_opt, utvars
     | Apat_uvar v ->
 	let _loc = p4loc (avar_loc v) in
-	fun ocond_opt -> <:patt< $lid: avar_to_lid v$ >>, ocond_opt
+	fun ocond_opt utvars ->
+	<:patt< $lid: avar_to_lid v$ >>, ocond_opt, utvars
     | Apat_apply (loc, Alabel_none,
 	Apat_apply (_, Alabel_none, Apat_ref op, x), y)
-	    when apath_eq_idr Cst_core.idr_list_push op -> fun ocond_opt ->
+	    when apath_eq_idr Cst_core.idr_list_push op ->
+	fun ocond_opt utvars ->
 	let _loc = p4loc loc in
-	let ox, ocond_opt = emit_apat ec x ocond_opt in
-	let oy, ocond_opt = emit_apat ec y ocond_opt in
-	<:patt< [$ox$ :: $oy$] >>, ocond_opt
+	let ox, ocond_opt, utvars = emit_apat ec x ocond_opt utvars in
+	let oy, ocond_opt, utvars = emit_apat ec y ocond_opt utvars in
+	<:patt< [$ox$ :: $oy$] >>, ocond_opt, utvars
     | Apat_apply (loc, Alabel_none,
 	Apat_apply (_, Alabel_none, Apat_ref op, x), y)
-	    when apath_eq_idr Cst_core.idr_2o_comma op -> fun ocond_opt ->
+	    when apath_eq_idr Cst_core.idr_2o_comma op ->
+	fun ocond_opt utvars ->
 	let _loc = p4loc loc in
-	let ox, ocond_opt = emit_apat ec x ocond_opt in
-	let oy, ocond_opt = emit_apat ec y ocond_opt in
-	<:patt< ($ox$, $oy$) >>, ocond_opt
-    | Apat_apply (loc, Alabel_none, x, y) -> fun ocond_opt ->
+	let ox, ocond_opt, utvars = emit_apat ec x ocond_opt utvars in
+	let oy, ocond_opt, utvars = emit_apat ec y ocond_opt utvars in
+	<:patt< ($ox$, $oy$) >>, ocond_opt, utvars
+    | Apat_apply (loc, Alabel_none, x, y) -> fun ocond_opt utvars ->
 	let _loc = p4loc loc in
-	let ox, ocond_opt = emit_apat ec x ocond_opt in
-	let oy, ocond_opt = emit_apat ec y ocond_opt in
-	<:patt< $ox$ $oy$ >>, ocond_opt
-    | Apat_apply (loc, _, _, _) -> fun ocond_opt ->
+	let ox, ocond_opt, utvars = emit_apat ec x ocond_opt utvars in
+	let oy, ocond_opt, utvars = emit_apat ec y ocond_opt utvars in
+	<:patt< $ox$ $oy$ >>, ocond_opt, utvars
+    | Apat_apply (loc, _, _, _) -> fun ocond_opt utvars ->
 	errf_at loc "Label not allowed here."
-    | Apat_as (loc, v, x) -> fun ocond_opt ->
+    | Apat_as (loc, v, x) -> fun ocond_opt utvars ->
 	let _loc = p4loc loc in
-	let ox, ocond_opt = emit_apat ec x ocond_opt in
-	<:patt< ($ox$ as $lid: avar_to_lid v$) >>, ocond_opt
-    | Apat_intype (loc, t, x) -> fun ocond_opt ->
+	let ox, ocond_opt, utvars = emit_apat ec x ocond_opt utvars in
+	<:patt< ($ox$ as $lid: avar_to_lid v$) >>, ocond_opt, utvars
+    | Apat_intype (loc, t, x) -> fun ocond_opt utvars ->
 	let _loc = p4loc loc in
-	let ox, ocond_opt = emit_apat ec x ocond_opt in
-	begin match quantmap_lookup ec (atyp_to_ascm t) with
-	| Some p -> <:patt< {$id: emit_apath_lid p$ = $ox$} >>
-	| None -> <:patt< ($ox$ : $emit_atyp ec t$) >>
-	end, ocond_opt
+	let ox, ocond_opt, utvars = emit_apat ec x ocond_opt utvars in
+	let utvars =
+	    match t, x with
+	    | Atyp_A _, Apat_uvar (Avar (_, idr)) -> Idr_set.add idr utvars
+	    | _ -> utvars in
+	<:patt< ($ox$ : $emit_atyp ec t$) >>, ocond_opt, utvars
 
 let emit_aval_fixed _loc default = function
     | "()" | "0'(')" -> <:expr< () >>
@@ -253,7 +227,10 @@ let rec emit_aval ec = function
 	let default () = <:expr< $id: emit_apath_lid p$ >> in
 	begin match p with
 	| Apath (_, p) when Modpath.is_atom p ->
-	    emit_aval_fixed _loc default (idr_to_string (Modpath.last_e p))
+	    let v = Modpath.last_e p in
+	    if Idr_set.mem v ec.ec_utvars then
+		<:expr< $lid: idr_to_string v$ # __it >> else
+	    emit_aval_fixed _loc default (idr_to_string v)
 	| _ -> default ()
 	end
     | Aval_apply (loc, Alabel_none,
@@ -299,9 +276,10 @@ let rec emit_aval ec = function
 		with [ $list: List.map (emit_match_case ec) cases$ ] >>
     | Aval_let (loc, p, x, body) ->
 	let _loc = p4loc loc in
-	let op, ocond_opt = emit_apat ec p None in
+	let op, ocond_opt, utvars = emit_apat ec p None ec.ec_utvars in
 	if ocond_opt <> None then
 	    errf_at loc "Cannot match string literals in let-binding.";
+	let ec = {ec with ec_utvars = utvars } in
 	<:expr< let $pat: op$ = $emit_aval ec x$ in $emit_aval ec body$ >>
     | Aval_letrec (loc, bindings, body) ->
 	let _loc = p4loc loc in
@@ -357,9 +335,12 @@ let rec emit_aval ec = function
     | Aval_intype (loc, t, x) ->
 	let _loc = p4loc loc in
 	let ox = emit_aval ec x in
-	begin match quantmap_lookup ec (atyp_to_ascm t) with
-	| Some p -> <:expr< {$id: emit_apath_lid p$ = $ox$} >>
-	| None -> <:expr< ($ox$ : $emit_atyp ec t$) >>
+	begin match t with
+	| Atyp_A _ ->
+	    let ot = emit_atyp ~typefor:Typefor_method ec t in
+	    <:expr< (object method __it : $ot$ = $ox$; end) >>
+	| _ ->
+	    <:expr< ($ox$ : $emit_atyp ec t$) >>
 	end
 and emit_aval_opt ec loc = function
     | None -> let _loc = p4loc loc in <:expr< () >>
@@ -374,16 +355,18 @@ and emit_match_case ?(have_vacuous = false) ec (pat, ocond_opt, body) =
 	match pat with
 	| Apat_apply (_, Alabel_none, Apat_ref qmark, pat)
 		when apath_eq_idr idr_1o_qmark qmark ->
-	    begin match emit_apat ec pat None with
-	    | opat, None ->
+	    begin match emit_apat ec pat None ec.ec_utvars with
+	    | opat, None, utvars ->
+		let ec = {ec with ec_utvars = utvars} in
 		let obody = emit_aval ec body in
 		<:match_case< $pat: opat$ -> $obody$ >>
 	    | _ -> errf_at (apat_loc pat) "A variable is expected before '?'."
 	    end
 	| _ -> errf_at (apat_loc pat) "Invalid pattern."
     end else
-    let opat, ocond_opt =
-	emit_apat ec pat (Option.map (emit_aval ec) ocond_opt) in
+    let opat, ocond_opt, utvars =
+	emit_apat ec pat (Option.map (emit_aval ec) ocond_opt) ec.ec_utvars in
+    let ec = {ec with ec_utvars = utvars} in
     let opat = if have_vacuous then <:patt< Some $opat$ >> else opat in
     let guard_opt, body = Ast_utils.extract_backtrack_guard body in
     let ocond_opt =
@@ -420,10 +403,7 @@ let emit_type_binding ec (loc, v, params, ti) =
 		let rt, ats = Ast_utils.flatten_arrows inj_type in
 		let ots = List.map (emit_atyp ec) ats in
 		<:ctyp< $uid: avar_to_uid v$ of $list: ots$ >> in
-	    <:ctyp< [ $list: List.map emit_inj injs$ ] >>
-	| Atypinfo_quant t ->
-	    <:ctyp< { $lid: avar_to_lid v$ :
-		      $emit_atyp ec ~typefor:Typefor_quant t$ } >> in
+	    <:ctyp< [ $list: List.map emit_inj injs$ ] >> in
     Ast.TyDcl (_loc, avar_to_lid v, List.map (emit_atyp ec) params, rhs, [])
 
 let emit_curried_inj _loc inj_type inj_var =
@@ -449,8 +429,7 @@ let emit_inj_aliases (loc, v, params, ti) =
 	    let ov = emit_curried_inj _loc inj_type v in
 	    <:binding< $lid: avar_to_lid v$ = $ov$ >> in
 	List.map emit_inj injs
-    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _
-    | Atypinfo_quant _ -> []
+    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
 let emit_inj_alias_decs ec (loc, v, params, ti) =
     match ti with
@@ -460,8 +439,7 @@ let emit_inj_alias_decs ec (loc, v, params, ti) =
 	    <:sig_item< value $lid: avar_to_lid v$ :
 			      $emit_atyp ec inj_type$ >> in
 	List.map emit_inj_dec injs
-    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _
-    | Atypinfo_quant _ -> []
+    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
 let external_names stubname t =
     if Ast_utils.arity t <= 5 then Ast.LCons (stubname, Ast.LNil) else
@@ -473,8 +451,6 @@ let rec emit_asig ec = function
 	<:module_type< $id: emit_apath_uid p$ >>
     | Asig_decs (loc, decs) ->
 	let _loc = p4loc loc in
-	let decs_q = quants (fun tspec -> Adec_types tspec) ec in
-	let decs = List.fold Ast_utils.place_adec decs_q decs in
 	<:module_type< sig $list: List.map (emit_adec ec) decs$ end >>
     | Asig_product (loc, xv, xsig, ysig) ->
 	let _loc = p4loc loc in
@@ -503,7 +479,6 @@ and emit_adec ec = function
 	<:sig_item< include $emit_asig ec s$ >>
     | Adec_open (loc, (Apath (_, p) as ap)) ->
 	let _loc = p4loc loc in
-	ec.ec_quantmap <- Quantmap.open_module p ec.ec_quantmap;
 	<:sig_item< open $id: emit_apath_uid ap$ >>
     | Adec_use (loc, use) ->
 	begin match Ast_utils.interpret_use use with
@@ -575,8 +550,6 @@ let rec emit_amod ec = function
 	<:module_expr< $id: emit_apath_uid p$ >>
     | Amod_defs (loc, defs) ->
 	let _loc = p4loc loc in
-	let defs_q = quants (fun tspec -> Adef_types tspec) ec in
-	let defs = List.fold Ast_utils.place_adef defs_q defs in
 	<:module_expr< struct $list: List.map (emit_adef ec) defs$ end >>
     | Amod_apply (loc, x, y) ->
 	let _loc = p4loc loc in
@@ -605,7 +578,6 @@ and emit_adef ec = function
 	<:str_item< include $emit_amod ec m$ >>
     | Adef_open (loc, (Apath (_, p) as ap)) ->
 	let _loc = p4loc loc in
-	ec.ec_quantmap <- Quantmap.open_module p ec.ec_quantmap;
 	<:str_item< open $id: emit_apath_uid ap$ >>
     | Adef_use (loc, use) ->
 	begin match Ast_utils.interpret_use use with
@@ -645,7 +617,8 @@ and emit_adef ec = function
 	>>
     | Adef_let (loc, v, x) ->
 	let _loc = p4loc loc in
-	let ov, ocond_opt = emit_apat ec v None in
+	let ov, ocond_opt, utvars = emit_apat ec v None ec.ec_utvars in
+	let ec = {ec with ec_utvars = utvars} in
 	if ocond_opt <> None then
 	    errf_at loc "Cannot match string literal in let-binding.";
 	<:str_item< value $pat: ov$ = $emit_aval ec x$ >>
@@ -706,20 +679,14 @@ and emit_adef ec = function
     | Adef_cabi_open (loc, _) ->
 	let _loc = p4loc loc in <:str_item< >>
 
-let emit_toplevel ~modpath ~quantmap = function
+let emit_toplevel ~modpath = function
     | Amod_defs (loc, defs) ->
-	let quantdefs = Quantmap.filter_subhier modpath  quantmap in
-	let quantmap = Modpath.fold (Quantmap.open_module *< Modpath.atom)
-				    modpath quantmap in
 	let ec = {
 	    ec_stub_prefix = "_cviz_";
 	    ec_module_name = idr_to_string (Modpath.last_e modpath);
 	    ec_modpath = modpath;
-	    ec_quantdefs = quantdefs;
-	    ec_quantmap = quantmap;
+	    ec_utvars = Idr_set.empty;
 	} in
-	let defs_q = quants (fun tspec -> Adef_types tspec) ec in
-	let defs = List.fold Ast_utils.place_adef defs_q defs in
 	<:str_item< $list: List.map (emit_adef ec) defs$ >>
     | amod ->
 	errf_at (amod_loc amod) "Module expression not allowed at top-level."

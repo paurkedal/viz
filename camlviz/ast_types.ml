@@ -79,7 +79,6 @@ type atypinfo =
     | Atypinfo_alias of atyp
     | Atypinfo_injs of (loc * avar * atyp * ainjnum) list
     | Atypinfo_cabi of string
-    | Atypinfo_quant of atyp
     with sexp
 
 type asig =

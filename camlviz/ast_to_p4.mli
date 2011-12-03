@@ -21,5 +21,4 @@
 open Ast_types
 open Camlp4.PreCast
 
-val emit_toplevel :
-    modpath: Modpath.t -> quantmap: Quantmap.t -> amod -> Ast.str_item
+val emit_toplevel : modpath: Modpath.t -> amod -> Ast.str_item

@@ -26,7 +26,6 @@ camlviz/modpath
 camlviz/opkind
 camlviz/option
 camlviz/parser
-camlviz/quantmap
 camlviz/sequence
 camlviz/syn_print
 camlviz/trie

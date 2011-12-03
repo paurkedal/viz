@@ -22,7 +22,6 @@ external op2_U2228 : bool -> bool -> bool = "%sequor"
 
 (* Dark spells about the world state. *)
 type ('f, 'a) effect = { __unsafe_thunk : unit -> 'a; }
-type 'a _any_effect = { _any_effect : 'f. ('f, 'a) effect; }
 type world
 type 'a io = (world, 'a) effect
 let __builtin_effect f = { __unsafe_thunk = f; }
@@ -43,9 +42,9 @@ let __builtin_catch k m =
     let f () = try __builtin_effect_run m with e -> __builtin_effect_run (k e) in
     { __unsafe_thunk = f; }
 
-type _A_ioio = { _A_ioio : 'a. 'a io -> 'a io }
-
-let __builtin_mask f = f { _A_ioio = fun m -> m }  (* No async exceptions. *)
+let __builtin_mask f =
+    (* No async exceptions. *)
+    f (object method __it : 'a. 'a io -> 'a io = fun x -> x end)
 
 let __builtin_exit err = { __unsafe_thunk = (fun () -> exit err) }
 
