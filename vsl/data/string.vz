@@ -29,19 +29,19 @@ type t := string
 # Z.Z.  String Primitives
 
 in buf
-    type r φ
+    type r ψ
 
-    val create : effect φ (r φ)
+    val create : effect ψ (r ψ)
 
-    val clear : r φ → effect φ unit
+    val clear : r ψ → effect ψ unit
 
-    val contents : r φ → effect φ string
+    val contents : r ψ → effect ψ string
 
-    val length : r φ → effect φ int
+    val length : r ψ → effect ψ int
 
-    val put_char : r φ → char → effect φ unit
+    val put_char : r ψ → char → effect ψ unit
 
-    val put_string : r φ → string → effect φ unit
+    val put_string : r ψ → string → effect ψ unit
 
 val length : t → int
  ## (length x) is the number of characters used to represent (x), including

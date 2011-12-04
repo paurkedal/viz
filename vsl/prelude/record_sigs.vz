@@ -207,21 +207,21 @@ sig a_record_architecture
     # pure interface, or for implementing a monadic interface.
 
     in reflens
-	type r φ δ
+	type r ψ δ
 
-	val cmp : r φ δ → r φ δ → torder
+	val cmp : r ψ δ → r ψ δ → torder
 
-	val focus_field : has_field δ ε → r φ δ → r φ ε
-	val focus_component : has_components δ ε → int → r φ δ → r φ ε
-	val focus_element : has_elements σ ε → int → r φ σ → r φ ε
+	val focus_field : has_field δ ε → r ψ δ → r ψ ε
+	val focus_component : has_components δ ε → int → r ψ δ → r ψ ε
+	val focus_element : has_elements σ ε → int → r ψ σ → r ψ ε
 
-	val unsafe_defocus_field : has_field δ ε → r φ ε → r φ δ
+	val unsafe_defocus_field : has_field δ ε → r ψ ε → r ψ δ
 
-	val load_iptr : r φ (iptr_ph δ) → effect φ (r φ δ)
-	val load_xptr : r φ (xptr_ph δ) → effect φ (lens.t δ)
+	val load_iptr : r ψ (iptr_ph δ) → effect ψ (r ψ δ)
+	val load_xptr : r ψ (xptr_ph δ) → effect ψ (lens.t δ)
 
-	val store_iptr : r φ δ → r φ (iptr_ph δ) → effect φ unit
-	val store_xptr : lens.t δ → r φ (xptr_ph δ) → effect φ unit
+	val store_iptr : r ψ δ → r ψ (iptr_ph δ) → effect ψ unit
+	val store_xptr : lens.t δ → r ψ (xptr_ph δ) → effect ψ unit
 
 
     # 0.0.0.  Complete Objects
@@ -232,19 +232,19 @@ sig a_record_architecture
     type t δ
       ## A handle to a complete object.
 
-    val alloc_record : is_record δ → effect φ (reflens.r φ δ)
+    val alloc_record : is_record δ → effect ψ (reflens.r ψ δ)
 
-    val init_record : is_record δ → (∀φ. reflens.r φ δ → effect φ α) → α × t δ
+    val init_record : is_record δ → (∀ψ. reflens.r ψ δ → effect ψ α) → α × t δ
      ## (init_record ev f) allocates an instance of (ev) and passes a
      ## reference to (f) for initialization.  The value returned by (f) is
      ## paired with the object handle as the result.
 
     val alloc_spill :
-	is_record δ → int → is_record ε → effect φ (reflens.r φ (spill_ph δ ε))
+	is_record δ → int → is_record ε → effect ψ (reflens.r ψ (spill_ph δ ε))
 
     val init_spill :
 	is_record δ → int → is_record ε →
-	(∀φ. reflens.r φ (spill_ph δ ε) → effect φ α) → α × t (spill_ph δ ε)
+	(∀ψ. reflens.r ψ (spill_ph δ ε) → effect ψ α) → α × t (spill_ph δ ε)
      ## (init_spill ev n elt_ev f) allocates a spill with an instance of (ev)
      ## and (n) instances of (elt_ev), initialized by (f), which receives a
      ## reference lens to the newly allocated object.  The result of (f)
@@ -274,8 +274,8 @@ sig a_record_architecture
 	type ph
 	type t
 	val get : lens.t ph → t
-	val load : reflens.r φ ph → effect φ t
-	val store : t → reflens.r φ ph → effect φ unit
+	val load : reflens.r ψ ph → effect ψ t
+	val store : t → reflens.r ψ ph → effect ψ unit
 
     in int_as_int	include a_conversion.[ph = int]		.[t = int]
     in int8_as_intT	include a_conversion.[ph = int8_ph]	.[t = int]

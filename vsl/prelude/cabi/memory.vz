@@ -38,44 +38,44 @@ in offset
 
 # Z.Z.  Pointer Objects
 
-type:c ptr φ := "void *"
- ## The type of a generic pointer.  This is always local to some pocket (φ).
+type:c ptr ψ := "void *"
+ ## The type of a generic pointer.  This is always local to some pocket (ψ).
 
 in ptr
     use cabi.stub_prefix "cviz_ptr_"
 
-    val:cs cmp : ptr φ → ptr φ → torder
-    val:cs eq : ptr φ → ptr φ → bool
+    val:cs cmp : ptr ψ → ptr ψ → torder
+    val:cs eq : ptr ψ → ptr ψ → bool
 
-    val:cs is_zero : ptr φ → bool
+    val:cs is_zero : ptr ψ → bool
      ## (is_zero p) is true iff (p) represents the (NULL) pointer.
 
     #?ffoc {#
-    val zero : ptr φ
+    val zero : ptr ψ
      ## The null pointer.
     #?ffoc #}
 
-    val:cs get_zero : pocket_tag φ → ptr φ
+    val:cs get_zero : pocket_tag ψ → ptr ψ
      ## This is a variant of (zero) to work around the value restriction in
      ## Camlviz.
 
-    val:cs add : offset → ptr φ → ptr φ
+    val:cs add : offset → ptr ψ → ptr ψ
      ## (ptr_add n p) translates (p) across (n) bytes.  If (p) points to garbage
      ## collected memory, this may cause the object to be freed, making subsequent
      ## access unsafe.
 
-    val:cs diff : ptr φ → ptr φ → offset
+    val:cs diff : ptr ψ → ptr ψ → offset
      ## (ptr_diff p q) is the distance in bytes from (q) to (p).
 
-    val:cs show : ptr φ → string
+    val:cs show : ptr ψ → string
      ## (show p) is a textual representation of (p), conventionally hexadecimal
      ## including a "0x" prefix.
 
-val:cs unsafe_custom_address : α → effect φ (ptr φ)
+val:cs unsafe_custom_address : α → effect ψ (ptr ψ)
  ## Assuming (x) is a custom object, (unsafe_custom_address x) is a pointer to
  ## the start of the custom data.
 
-val:cs unsafe_custom_load_ptr : α → effect φ (ptr φ)
+val:cs unsafe_custom_load_ptr : α → effect ψ (ptr ψ)
  ## Assuming (x) is a custom object, (unsafe_custom_load_ptr x) loads a
  ## pointer from the first slot of the custom data.  This is just a shortcut
  ## for (unsafe_load_ptr ∘ unsafe_custom_address).
@@ -110,28 +110,28 @@ val:c sizeof_cintmax : size := "(intnat)sizeof(intmax_t)"
 
 # Z.Z.  Load and Store
 
-val:cs unsafe_load_ptr   : offset → ptr φ → effect φ (ptr φ)
-val:cs unsafe_load_u8    : offset → ptr φ → effect φ int
-val:cs unsafe_load_s8    : offset → ptr φ → effect φ int
-val:cs unsafe_load_u16   : offset → ptr φ → effect φ int
-val:cs unsafe_load_s16   : offset → ptr φ → effect φ int
-val:cs unsafe_load_int32 : offset → ptr φ → effect φ int32
-val:cs unsafe_load_int64 : offset → ptr φ → effect φ int64
+val:cs unsafe_load_ptr   : offset → ptr ψ → effect ψ (ptr ψ)
+val:cs unsafe_load_u8    : offset → ptr ψ → effect ψ int
+val:cs unsafe_load_s8    : offset → ptr ψ → effect ψ int
+val:cs unsafe_load_u16   : offset → ptr ψ → effect ψ int
+val:cs unsafe_load_s16   : offset → ptr ψ → effect ψ int
+val:cs unsafe_load_int32 : offset → ptr ψ → effect ψ int32
+val:cs unsafe_load_int64 : offset → ptr ψ → effect ψ int64
 
-val:cs unsafe_store_ptr   : offset → ptr φ → ptr φ → effect φ unit
-val:cs unsafe_store_8     : offset → ptr φ → int   → effect φ unit
-val:cs unsafe_store_16    : offset → ptr φ → int   → effect φ unit
-val:cs unsafe_store_int32 : offset → ptr φ → int32 → effect φ unit
-val:cs unsafe_store_int64 : offset → ptr φ → int64 → effect φ unit
+val:cs unsafe_store_ptr   : offset → ptr ψ → ptr ψ → effect ψ unit
+val:cs unsafe_store_8     : offset → ptr ψ → int   → effect ψ unit
+val:cs unsafe_store_16    : offset → ptr ψ → int   → effect ψ unit
+val:cs unsafe_store_int32 : offset → ptr ψ → int32 → effect ψ unit
+val:cs unsafe_store_int64 : offset → ptr ψ → int64 → effect ψ unit
 
 
 # Z.Z.  Auxiliary Functions
 
-val:c unsafe_malloc : size → effect φ (ptr φ) := "malloc"
-val:c unsafe_free : ptr φ → effect φ unit := "free"
+val:c unsafe_malloc : size → effect ψ (ptr ψ) := "malloc"
+val:c unsafe_free : ptr ψ → effect ψ unit := "free"
 
-val unsafe_lalloc : size → (ptr φ → effect φ α) → effect φ α
+val unsafe_lalloc : size → (ptr ψ → effect ψ α) → effect ψ α
 let unsafe_lalloc size f
     be unsafe_malloc size >>= p ↦ f p >>= r ↦ unsafe_free p >> return r
 
-val:c unsafe_copy_cstring : ptr φ → φ /~ string#v := "cviz_copy_ustring"
+val:c unsafe_copy_cstring : ptr ψ → ψ /~ string#v := "cviz_copy_ustring"

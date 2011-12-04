@@ -43,7 +43,7 @@ val foldr : (α → β → β) → t α → β → β
 
 val fold2 : (α0 × α1 → β → β) → t α0 × t α1 → β → β
 
-val iter : (α → effect φ unit) → t α → effect φ unit
+val iter : (α → effect ψ unit) → t α → effect ψ unit
  ## (iter f xs ≡ f x1 >> ... >> f xN) forms an effect-monad which iterates (f)
  ## over the elements of (xs)
 

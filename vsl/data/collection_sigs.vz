@@ -42,9 +42,9 @@ sig a_collection
 
     val card : t → int
 
-    val iter : (elt → effect φ unit) → t → effect φ unit
+    val iter : (elt → effect ψ unit) → t → effect ψ unit
 
-    val iterr : (elt → effect φ unit) → t → effect φ unit
+    val iterr : (elt → effect ψ unit) → t → effect ψ unit
 
 
 sig a_collection'
@@ -66,9 +66,9 @@ sig a_collection'
 
     val card : t α → int
 
-    val iter : (elt α → effect φ unit) → t α → effect φ unit
+    val iter : (elt α → effect ψ unit) → t α → effect ψ unit
 
-    val iterr : (elt α → effect φ unit) → t α → effect φ unit
+    val iterr : (elt α → effect ψ unit) → t α → effect ψ unit
 
 
 # Z.Z.  An Indexed Family
