@@ -37,11 +37,11 @@ sealed with
     val unsafe_conjecture_field : is_record ε → offset → has_field δ ε
 
     sig a_fabric
-	type self_ph := unit
-	val self_iptr_ev : is_record (iptr_ph self_ph)
-	val self_xptr_ev : is_record (xptr_ph self_ph)
-	val acquire : is_record δ → io (has_field self_ph δ)
-	val realize : io (is_record self_ph)
+	type ph := unit
+	val iptr_ev : is_record (iptr_ph ph)
+	val xptr_ev : is_record (xptr_ph ph)
+	val acquire : is_record δ → io (has_field ph δ)
+	val realize : io (is_record ph)
 
     in! make_fabric
 	.(F : a_field_allocator.[alignment = alignment].[offset = offset])
@@ -79,6 +79,12 @@ sealed with
     in uintptrT_as_nint	include a_conversion.[ph = uintptr_ph].[t = nint]
     in sintmaxT_as_nint	include a_conversion.[ph = sintmax_ph].[t = nint]
     in uintmaxT_as_nint	include a_conversion.[ph = uintmax_ph].[t = nint]
+
+    in ptr_as_ptr
+	type t ψ := memory.ptr ψ
+	val get : lens.t (ptr_ph δ χ) → t ψ
+	val load : reflens.r ψ (ptr_ph δ χ) → effect ψ (t ψ)
+	val unsafe_store : t ψ → reflens.r ψ (ptr_ph δ χ) → effect ψ unit
 
 type alignment := int
 type offset := int
@@ -147,19 +153,19 @@ let spill_iptr_ev _ _ be elem_record_sc memory.sizeof_ptr
 let spill_xptr_ev _ _ be elem_record_sc memory.sizeof_ptr
 
 sig a_fabric
-    type self_ph := unit
-    val self_iptr_ev : is_record (iptr_ph self_ph)
-    val self_xptr_ev : is_record (xptr_ph self_ph)
-    val acquire : is_record δ → io (has_field self_ph δ)
-    val realize : io (is_record self_ph)
+    type ph := unit
+    val iptr_ev : is_record (iptr_ph ph)
+    val xptr_ev : is_record (xptr_ph ph)
+    val acquire : is_record δ → io (has_field ph δ)
+    val realize : io (is_record ph)
 
 in! make_fabric.(A : a_field_allocator.[alignment = alignment]
 				      .[offset = offset])
-    type self_ph := unit
+    type ph := unit
     let _state do ref.init (A.empty, false)
 
-    let self_iptr_ev be record_iptr_ev ()
-    let self_xptr_ev be record_xptr_ev ()
+    let iptr_ev be record_iptr_ev ()
+    let xptr_ev be record_xptr_ev ()
 
     let! acquire (record_sc al sz)
 	let (state, complete) do ref.get _state
@@ -471,33 +477,41 @@ in uintmaxT_as_nint
     val:cs load : gptr → effect ψ t		:= "cviz_uintmax_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_uintmax_store_nint"
 
+in ptr_as_ptr
+    type t ψ := memory.ptr ψ
+    val:cs get : gptr → t ψ			:= "cviz_load_ptr"
+    val:cs load : gptr → effect ψ (t ψ)		:= "cviz_load_ptr"
+    val:cs unsafe_store : t ψ → gptr → effect ψ unit := "cviz_store_ptr"
+
 # 0.0.  Construction and Inspection
 
-type:c t δ
+in record
+    type:c t δ
 
-val:cs prim_alloc : offset → effect ψ (t δ) := "cviz_record_alloc"
-val:cs get_ref : t δ → effect ψ (reflens.r ψ δ) := "cviz_unsafe_custom_address"
-val:cs get_obj : t δ → lens.t δ := "cviz_unsafe_custom_address"
+    val:cs prim_alloc : offset → effect ψ (t δ) := "cviz_record_alloc"
+    val:cs get_ref : t δ → effect ψ (reflens.r ψ δ)
+	:= "cviz_unsafe_custom_address"
+    val:cs get_obj : t δ → lens.t δ := "cviz_unsafe_custom_address"
 
-let alloc_record (record_sc al sz) be prim_alloc sz >>= get_ref
+    let alloc (record_sc al sz) be prim_alloc sz >>= get_ref
 
-let init_record (record_sc al sz) (f : ∀ψ. reflens.r ψ δ → effect ψ α)
-    be observe (that : ∀ψ. effect ψ β) which!
-    let p do prim_alloc sz
-    let x do get_ref p >>= f
-    be (x, p)
+    let init (record_sc al sz) (f : ∀ψ. reflens.r ψ δ → effect ψ α)
+	be observe (that : ∀ψ. effect ψ β) which!
+	let p do prim_alloc sz
+	let x do get_ref p >>= f
+	be (x, p)
 
-let! alloc_spill (record_sc al sz) n (record_sc alE szE)
-    let offE be align alE sz
-    let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
-    do get_ref p
+    let! alloc_spilled (record_sc al sz) n (record_sc alE szE)
+	let offE be align alE sz
+	let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
+	do get_ref p
 
-let init_spill (record_sc al sz) n (record_sc alE szE)
-	       (f : ∀ψ. reflens.r ψ (spill_ph δ ε) → effect ψ α)
-    be observe (that : ∀ψ. effect ψ β) which!
-    let offE be align alE sz
-    let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
-    let x do get_ref p >>= f
-    be (x, p)
+    let init_spilled (record_sc al sz) n (record_sc alE szE)
+		     (f : ∀ψ. reflens.r ψ (spill_ph δ ε) → effect ψ α)
+	be observe (that : ∀ψ. effect ψ β) which!
+	let offE be align alE sz
+	let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
+	let x do get_ref p >>= f
+	be (x, p)
 
-let focus be get_obj
+    let focus be get_obj

@@ -174,11 +174,11 @@ sig a_record_architecture
 	has_field (spill_ph δ ε) δ × has_elements (spill_ph δ ε) ε
 
     in! fabric
-	type self_ph
-	val self_iptr_ev : is_record (iptr_ph self_ph)
-	val self_xptr_ev : is_record (xptr_ph self_ph)
-	val acquire : is_record δ → io (has_field self_ph δ)
-	val realize : io (is_record self_ph)
+	type ph
+	val iptr_ev : is_record (iptr_ph ph)
+	val xptr_ev : is_record (xptr_ph ph)
+	val acquire : is_record δ → io (has_field ph δ)
+	val realize : io (is_record ph)
 
 
     # 0.0.0.  Inspection
@@ -229,29 +229,31 @@ sig a_record_architecture
     # Safety Remark.  Implementations of memory-allocating functions may pass
     # uninitialized data to the client.  Make sure to initialize all pointers.
 
-    type t δ
-      ## A handle to a complete object.
+    in record
+	type t δ
+	  ## A handle to a complete object.
 
-    val alloc_record : is_record δ → effect ψ (reflens.r ψ δ)
+	val alloc : is_record δ → effect ψ (reflens.r ψ δ)
 
-    val init_record : is_record δ → (∀ψ. reflens.r ψ δ → effect ψ α) → α × t δ
-     ## (init_record ev f) allocates an instance of (ev) and passes a
-     ## reference to (f) for initialization.  The value returned by (f) is
-     ## paired with the object handle as the result.
+	val init : is_record δ → (∀ψ. reflens.r ψ δ → effect ψ α) → α × t δ
+	 ## (init_record ev f) allocates an instance of (ev) and passes a
+	 ## reference to (f) for initialization.  The value returned by (f) is
+	 ## paired with the object handle as the result.
 
-    val alloc_spill :
-	is_record δ → int → is_record ε → effect ψ (reflens.r ψ (spill_ph δ ε))
+	val alloc_spilled :
+	    is_record δ → int → is_record ε →
+	    effect ψ (reflens.r ψ (spill_ph δ ε))
 
-    val init_spill :
-	is_record δ → int → is_record ε →
-	(∀ψ. reflens.r ψ (spill_ph δ ε) → effect ψ α) → α × t (spill_ph δ ε)
-     ## (init_spill ev n elt_ev f) allocates a spill with an instance of (ev)
-     ## and (n) instances of (elt_ev), initialized by (f), which receives a
-     ## reference lens to the newly allocated object.  The result of (f)
-     ## paired with the constructed object is returned.
+	val init_spilled :
+	    is_record δ → int → is_record ε →
+	    (∀ψ. reflens.r ψ (spill_ph δ ε) → effect ψ α) → α × t (spill_ph δ ε)
+	 ## (init_spill ev n elt_ev f) allocates a spill with an instance of
+	 ## (ev) and (n) instances of (elt_ev), initialized by (f), which
+	 ## receives a reference lens to the newly allocated object.  The
+	 ## result of (f) paired with the constructed object is returned.
 
-    val focus : t δ → lens.t δ
-     ## Acquire read access to a constructed object.
+	val focus : t δ → lens.t δ
+	 ## Acquire read access to a constructed object.
 
 
     # 0.0.0.  Primitive Types

@@ -9,7 +9,7 @@ in simple
 	let b do acquire int32_ev
 	let ev do realize
     let make a b
-	be init_record rep.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
+	be record.init rep.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
 	    which! at r
 	do int32T_as_intT.store a (reflens.focus_field rep.a r)
 	do int32T_as_intT.store b (reflens.focus_field rep.b r)
@@ -19,23 +19,23 @@ in head_fw include! fabric
 in node
     include! fabric
     let id_ev do acquire int32_ev
-    let owner_ev do acquire head_fw.self_iptr_ev
-    let next_ev do acquire self_iptr_ev
+    let owner_ev do acquire head_fw.iptr_ev
+    let next_ev do acquire iptr_ev
     let ev do realize
 
 in head
     include head_fw
-    let cycle_ev do acquire node.self_iptr_ev
+    let cycle_ev do acquire node.iptr_ev
     let ev do realize
 
 lex S0 ./
 
 let init_cycle i j
-    be snd @ init_record head.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
+    be snd @ record.init head.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
 	which! at head
 
-    let node0 do alloc_record node.ev
-    let node1 do alloc_record node.ev
+    let node0 do record.alloc node.ev
+    let node1 do record.alloc node.ev
 
     let r./ev be reflens.focus_field ev r
 
@@ -50,7 +50,7 @@ let init_cycle i j
     do reflens.store_iptr node0 node1./node.next_ev
 
 let valid_cycle cyc i j
-    let head be focus cyc
+    let head be record.focus cyc
     let l./ev be lens.focus_field ev l
     let node0 be lens.get_ptr head./head.cycle_ev
     let node1 be lens.get_ptr node0./node.next_ev
@@ -64,7 +64,7 @@ in testrec
     let u2_ev do acquire node.ev
     let u3_ev do acquire nat8_ev
     let u4_ev do acquire int64_ev
-    let self_ev do realize
+    let ev do realize
 
 let! show_field s d
     do print "    " >> print s >> print "; offset = "
@@ -81,7 +81,7 @@ let! show_record name ev
 let main
     do show_record "head" head.ev
     do show_record "node" node.ev
-    do show_record "test" testrec.self_ev
+    do show_record "test" testrec.ev
     do show_field "u0 : head" testrec.u0_ev
     do show_field "u1 : nat8" testrec.u1_ev
     do show_field "u2 : node" testrec.u2_ev
