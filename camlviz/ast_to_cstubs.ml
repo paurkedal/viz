@@ -84,6 +84,7 @@ type cti =
 type state = {
     st_cti_map : cti String_map.t;
     st_cprefix : string;
+    st_function_prefix : string;
 }
 
 type conversion = {
@@ -205,7 +206,7 @@ let output_cstub och v t cn_opt is_fin state =
        | Atyp_ref p_unit when apath_eq_string "unit" p_unit -> true
        | _ -> false in
     let output_call () =
-	output_string och cn;
+	output_string och (state.st_function_prefix ^ cn);
 	match t with
 	| Atyp_arrow _ ->
 	    output_arglist och (output_arg och) args;
@@ -344,6 +345,8 @@ and output_adef_c och = function
 	begin match Ast_utils.interpret_use x with
 	| `Stub_prefix pfx ->
 	    fun state -> {state with st_cprefix = pfx}
+	| `Function_prefix pfx ->
+	    fun state -> {state with st_function_prefix = pfx}
 	| `type_c (v, name) -> declare_ctype och v name false
 	end
     | Adef_types defs ->
@@ -370,7 +373,11 @@ let output_cstubs och sname m =
     output_string och header;
     Ast_utils.fold_amod_cabi_open
 	(fun inc () -> fprintf och "#include <%s>\n" inc) m ();
-    let state = {st_cti_map = String_map.empty; st_cprefix = "_cviz_"} in
+    let state = {
+	st_cti_map = String_map.empty;
+	st_cprefix = "_cviz_";
+	st_function_prefix = "";
+    } in
     let state = output_amod_c och m state in
     String_map.iter (output_ctype och state.st_cprefix sname)
 	state.st_cti_map

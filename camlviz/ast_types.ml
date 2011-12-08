@@ -70,7 +70,8 @@ type aval =
     | Aval_intype of loc * atyp * aval
     with sexp
 
-type ause = [`Stub_prefix of string | `type_c of avar * string]
+type ause = [`Stub_prefix of string | `Function_prefix of string |
+	     `type_c of avar * string]
 
 type ainjnum = Ainjnum_auto | Ainjnum_cabi of string with sexp
 

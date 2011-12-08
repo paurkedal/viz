@@ -304,6 +304,12 @@ let interpret_use use =
 		`Stub_prefix (UString.to_utf8 pfx)
 	    | _ -> errf_at (aval_loc use) "Invalid stub prefix."
 	    end
+	| ["function_prefix"] ->
+	    begin match params with
+	    | [Aval_literal (_, Lit_string pfx)] ->
+		`Function_prefix (UString.to_utf8 pfx)
+	    | _ -> errf_at (aval_loc use) "Invalid function prefix."
+	    end
 	| ["type_c"] ->
 	    begin match params with
 	    | [Aval_ref (Apath (loc, p)); Aval_literal (_, Lit_string ctype)]

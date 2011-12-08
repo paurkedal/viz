@@ -483,6 +483,7 @@ and emit_adec ec = function
     | Adec_use (loc, use) ->
 	begin match Ast_utils.interpret_use use with
 	| `Stub_prefix pfx -> ec.ec_stub_prefix <- pfx
+	| `Function_prefix _ -> ()
 	| `type_c _ -> ()
 	end;
 	let _loc = p4loc loc in <:sig_item< >>
@@ -582,6 +583,7 @@ and emit_adef ec = function
     | Adef_use (loc, use) ->
 	begin match Ast_utils.interpret_use use with
 	| `Stub_prefix pfx -> ec.ec_stub_prefix <- pfx
+	| `Function_prefix _ -> ()
 	| `type_c _ -> ()
 	end;
 	let _loc = p4loc loc in <:str_item< >>
