@@ -528,6 +528,35 @@ let scan_int have_sign base state =
     let n = (f 0) in
     Lit_int (if have_sign then -n else n)
 
+let rec looking_at_float nLA state =
+    let rec loop = function
+	| [] -> if nLA < 80 then looking_at_float (nLA * 2) state else false
+	| ch :: chs ->
+	    if UChar.is_ascii_digit ch then loop chs else
+	    begin match UChar.code ch with
+	    | 0x2e (* '.' *) | 0x65 (* 'e' *) | 0x45 (* 'E' *) -> true
+	    | _ -> false
+	    end in
+    match LStream.peek_n nLA state.st_stream with
+    | ch :: chs when UChar.code ch = 0x2d (* '-' *) -> loop chs
+    | chs -> loop chs
+
+let scan_float state =
+    let buf = UString.Buf.create 8 in
+    UString.Buf.add_char buf (LStream.pop_e state.st_stream);
+    let rec loop () =
+	match LStream.peek state.st_stream with
+	| Some ch when UChar.is_ascii_digit ch
+		    || (match UChar.code ch with
+			| 0x2d | 0x2e | 0x65 | 0x45 -> true
+			| _ -> false) ->
+	    UString.Buf.add_char buf ch;
+	    LStream.skip state.st_stream;
+	    loop ()
+	| _ -> () in
+    loop ();
+    Lit_float (float_of_string (UString.to_utf8 (UString.Buf.contents buf)))
+
 let scan_literal state =
     let found lit =
 	Some (Grammar.LITERAL lit) in
@@ -541,11 +570,13 @@ let scan_literal state =
     | 0x30 :: 0x6f :: _ -> found_int 2 false 8
     | 0x30 :: 0x78 :: _ -> found_int 2 false 16
     | ch0 :: ch1 :: _ when 0x30 <= ch0 && ch0 <= 0x39 && ch1 != 0x27 ->
+	if looking_at_float 8 state then found (scan_float state) else
 	found_int 0 false 10
     | 0x2d :: 0x30 :: 0x62 :: _ -> found_int 3 true 2
     | 0x2d :: 0x30 :: 0x6f :: _ -> found_int 3 true 8
     | 0x2d :: 0x30 :: 0x78 :: _ -> found_int 3 true 16
     | 0x2d :: ch0 :: ch1 :: _ when 0x30 <= ch0 && ch0 <= 0x39 && ch1 != 0x27 ->
+	if looking_at_float 8 state then found (scan_float state) else
 	found_int 1 true 10
     | _ -> None
 

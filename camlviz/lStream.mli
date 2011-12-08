@@ -37,6 +37,8 @@ val pop_e : t -> elt
 
 val peek : t -> elt option
 
+val peek_e : t -> elt
+
 val peek_n : int -> t -> elt list
 
 val peek_at : int -> t -> elt option
