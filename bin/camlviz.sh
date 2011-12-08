@@ -29,6 +29,7 @@ EOF
 }
 
 [ x"$VIZ_SRCDIR" != x ] || die "Please run this script via a link to vizdev"
+builddir=$VIZ_SRCDIR/_build
 
 
 # Parse and Shift Wrapper Options
@@ -72,6 +73,12 @@ case "$1" in
 	;;
     ocamldep)
 	;;
+    cstubs)
+	shift
+	[ x$show_command != xtrue ] || set -x
+	$VIZ_SRCDIR/bin/camlvizpp --cstubs -I $builddir/vsl "$@"
+	exit $?
+	;;
     *)
 	usage
 	[ "$1" = "--help" ] && exit 0 || exit 64
@@ -82,7 +89,6 @@ shift
 
 # Scan through the Subcommand Parameters
 #
-builddir=$VIZ_SRCDIR/_build
 pp_opts=
 oc_args=
 have_c_flag=false

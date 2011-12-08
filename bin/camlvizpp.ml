@@ -178,7 +178,12 @@ let _ =
 		match !serid with
 		| Some serid -> serid
 		| None -> sprintf "org.vizlang.camlviz.%s." module_name in
-	    Ast_to_cstubs.output_cstubs stdout serid amod
+	    let with_out f =
+		match !out_path_opt with
+		| None -> f stdout
+		| Some path ->
+		    let och = open_out path in f och; close_out och in
+	    with_out (fun och -> Ast_to_cstubs.output_cstubs och serid amod)
 	end else
 	if !do_consts then Ast_to_consts.output_consts stdout amod else
 	if !do_depend then
