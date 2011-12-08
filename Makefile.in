@@ -1,6 +1,12 @@
+top_builddir = @top_builddir@
+abs_top_builddir = @abs_top_builddir@
+top_srcdir = @top_srcdir@
+
 OCAMLBUILD = ocamlbuild $(OCAMLBUILD_STDFLAGS) $(OCAMLBUILD_FLAGS)
 OCAMLBUILD_STDFLAGS = -no-links
 OCAMLBUILD_FLAGS =
+
+aclocal_SOURCES = aclocal/viz_llvm.m4 aclocal/viz_c_inline.m4
 
 -include Makefile.local
 
@@ -21,6 +27,15 @@ check: camlviz-check-vsl
 .PHONY: all byte native clean check install
 
 
+# Build Specifications
+# ====================
+
+%: $(top_srcdir)/%.in config.status
+	./config.status $@
+configure config.status: configure.ac $(aclocal_SOURCES)
+	./autogen.sh
+
+
 # The camlviz Preprocessor and Compatible Build of the Standard Library
 # =====================================================================
 
@@ -28,24 +43,24 @@ camlviz_PROGRAMS = bin/camlvizpp bin/camlvizerror
 camlviz_BYTE	= $(camlviz_PROGRAMS:%=%.byte) libvsl.a vsl.cma
 camlviz_NATIVE	= $(camlviz_PROGRAMS:%=%.native) libvsl.a vsl.cmxa
 
-camlviz-native:
+camlviz-native: myocamlbuild.ml
 	$(OCAMLBUILD) $(camlviz_NATIVE)
-camlviz-byte:
+camlviz-byte: myocamlbuild.ml
 	$(OCAMLBUILD) $(camlviz_BYTE)
-camlviz-all:
+camlviz-all: myocamlbuild.ml
 	$(OCAMLBUILD) $(camlviz_BYTE) $(camlviz_NATIVE)
 camlviz-clean:
 	$(OCAMLBUILD) -clean
 
 camlviz-check: camlviz-check-camlviz camlviz-check-vsl
 
-camlviz-check-camlviz:
+camlviz-check-camlviz: myocamlbuild.ml
 	$(OCAMLBUILD) camlviz-tests/test.byte -- -verbose
 
 camlviz-check-vsl:
 	/bin/sh tools/run_tests.sh tests/*.vz
 
-camlviz-doc:
+camlviz-doc: myocamlbuild.ml
 	$(OCAMLBUILD) camlviz.docdir/index.html
 
 .PHONY: camlviz-all camlviz-byte camlviz-native

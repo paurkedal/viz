@@ -32,6 +32,15 @@ let split_on_space s =
 	loop (rskip_while is_space s i) accu in
     loop (String.length s) []
 
+let cf_LLVM_LDFLAGS = "@LLVM_LDFLAGS@"
+let cf_LLVM_LIBS = "@LLVM_LIBS@"
+let cf_LLVM_CPPFLAGS = "@LLVM_CPPFLAGS@" (* Unused, cf #define in ast_to_* *)
+let cf_CC = "@CC@"
+let cf_CPPFLAGS = "@CPPFLAGS@"
+let cf_CFLAGS = "@CFLAGS@"
+let cf_LDFLAGS = "@LDFLAGS@"
+let cf_LIBS = "@LIBS@"
+
 let camlviz_path = "../bin/camlviz"
 let camlvizpp_path = "bin/camlvizpp.native"
 let camlvizerror_path = "bin/camlvizerror.native"
@@ -117,8 +126,18 @@ let custom_native_compile_ocaml_implem ?tag ?(cmx_ext = "cmx") ml env build =
 		       ++ "implem" +++ tag) ml cmx
 
 let camlviz_compile_flags tags =
-    if Tags.does_match tags (Tags.of_list ["ocamlstdlib"]) then N
-    else N (*A"-nostdlib"*)
+    let mk_ccopts s =
+	S (List.map (fun opt -> S[A"-ccopt"; A opt]) (split_on_space s)) in
+    let mk_cclibs s =
+	S (List.map (fun lib -> S[A"-cclib"; A lib]) (split_on_space s)) in
+    let ccopts = S (List.map mk_ccopts [cf_CPPFLAGS; cf_CFLAGS; cf_LDFLAGS]) in
+    let cclibs = mk_cclibs cf_LIBS in
+    let flags = [ccopts; cclibs] in
+    match split_on_space cf_CC with
+    | [] -> S flags
+    | prog :: progopts' ->
+	let progopts = List.map (fun opt -> S[A"-ccopt"; A opt]) progopts' in
+	S (A"-cc" :: A prog :: S progopts :: flags)
 
 let camlviz_ocamlc_c tags vz out =
     let tags = tags ++ "ocaml" ++ "camlvizpp" ++ "byte" in
@@ -286,11 +305,8 @@ let camlvizpp_include path =
     flag ["ocamldep"; "camlvizpp"]		& S[A"-I"; P path]
 
 let llvm_libs () =
-    let sL = run_and_read "llvm-config --ldflags" in
-    let sl = run_and_read "llvm-config --libs \
-			   jit interpreter native core ipo" in
-    S[S(List.map (fun l -> S[A"-ccopt"; A l]) (split_on_space sL));
-      S(List.map (fun l -> S[A"-cclib"; A l]) (split_on_space sl));
+    S[S(List.map (fun l -> S[A"-ccopt"; A l]) (split_on_space cf_LLVM_LDFLAGS));
+      S(List.map (fun l -> S[A"-cclib"; A l]) (split_on_space cf_LLVM_LIBS));
       A"-cclib"; A"-lstdc++"]
 
 let ocaml_cstubs name =

@@ -2,5 +2,13 @@
 *.native
 *.docdir
 /_build
+/aclocal.m4
+/autom4te.cache
+/config.h.in
+/config.log
+/config.status
+/configure
 /fform/grammar.automaton
+/Makefile
 /Makefile.local
+/myocamlbuild.ml
