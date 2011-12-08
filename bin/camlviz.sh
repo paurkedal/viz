@@ -73,10 +73,11 @@ case "$1" in
 	;;
     ocamldep)
 	;;
-    cstubs)
+    cstubs|consts)
+	subcommand="$1"
 	shift
 	[ x$show_command != xtrue ] || set -x
-	$VIZ_SRCDIR/bin/camlvizpp --cstubs -I $builddir/vsl "$@"
+	$VIZ_SRCDIR/bin/camlvizpp --$subcommand -I $builddir/vsl "$@"
 	exit $?
 	;;
     *)
@@ -91,11 +92,10 @@ shift
 #
 pp_opts=
 oc_args=
-have_c_flag=false
 seen_source=false
 extra_includes="-I $builddir/vsl -I $builddir"
 extra_packages="-package camomile"
-camlviz_error_pipe=
+mode=linkprog
 while [ $# -gt 0 ]; do
     arg="$1"
     shift
@@ -114,7 +114,11 @@ while [ $# -gt 0 ]; do
 	    oc_args="$oc_args -impl $arg"
 	    ;;
 	-c)
-	    have_c_flag=true
+	    mode=compile
+	    oc_args="$oc_args $arg"
+	    ;;
+	-a)
+	    mode=archive
 	    oc_args="$oc_args $arg"
 	    ;;
 	--no-vsl)
@@ -128,39 +132,56 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Determine and Run the Final Command
+# Error Filter and Verbosity
 #
-case "$command" in
-    ocamlopt|ocamlc)
-	if [ $have_c_flag = true ]; then
-	    oc_args="-nopervasives $oc_args"
-	elif [ $seen_source = true ]; then
-	    die "The -c flag is required for compiling Viz sources with" \
-		"ocamlopt."
-	fi
-	oc_args="$builddir/vsl$libext $oc_args"
-	;;
-    ocamldep)
-	extra_packages=
-	;;
-esac
+run() { echo "$*"; "$@"; }
 
 filter_error()
 {
     exitcode_file=`mktemp ${TMPDIR:-/tmp}/camlviz-subexitcode-XXXXXX`
+    [ x$show_command != xtrue ] || echo "$*"
     ( "$@"; echo $? >$exitcode_file ) 2>&1 | $VIZ_SRCDIR/bin/camlvizerror
     exitcode=`cat $exitcode_file`
     rm -f $exitcode_file
     exit $exitcode
 }
-
 if [ x$filter_errors = xtrue ]; then
     pp_opts="$pp_opts --add-locations"
     wrap=filter_error
+elif [ x$show_command = xtrue ]; then
+    wrap="exec run"
 else
     wrap=exec
 fi
+
+oc_args="$extra_includes $oc_args"
 pp_command="$VIZ_SRCDIR/bin/camlvizpp $extra_includes $pp_opts"
-[ x$show_command != xtrue ] || set -x
-$wrap ocamlfind "$command" -pp "$pp_command" \
-	$extra_includes $extra_packages $oc_args $camlviz_error_pipe
+
+# Determine and Run the Final Command
+#
+case "$command" in
+    ocamlopt|ocamlc)
+	case "$mode" in
+	    compile)
+		oc_args="-nopervasives $oc_args"
+		$wrap ocamlfind "$command" -pp "$pp_command" $oc_args
+		;;
+	    archive)
+		oc_args="-nopervasives $oc_args"
+		$wrap ocamlfind "$command" $extra_packages $oc_args
+		;;
+	    linkprog)
+		if [ $seen_source = true ]; then
+		    die "The -c flag is required for compiling Viz sources with" \
+			"ocamlopt."
+		fi
+		oc_args="$builddir/vsl$libext $oc_args -cclib -lvsl"
+		$wrap ocamlfind "$command" $extra_packages $oc_args
+		;;
+	esac
+	;;
+    ocamldep)
+	extra_packages=
+	$wrap ocamlfind ocamldep -pp "$pp_command" $extra_includes $oc_args
+	;;
+esac

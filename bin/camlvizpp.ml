@@ -164,6 +164,10 @@ let _ =
 	    !strip_roots modpath in
     let module_name = Filename.chop_extension (Filename.basename in_path) in
     try
+	let with_out f =
+	    match !out_path_opt with
+	    | None -> f stdout
+	    | Some path -> let och = open_out path in f och; close_out och in
 	let term = Parser.parse_file ~roots: (!roots @ !nroots) in_path in
 	let term, () =
 	    Cst_rewrite.default_rewrite_ctrm
@@ -178,14 +182,10 @@ let _ =
 		match !serid with
 		| Some serid -> serid
 		| None -> sprintf "org.vizlang.camlviz.%s." module_name in
-	    let with_out f =
-		match !out_path_opt with
-		| None -> f stdout
-		| Some path ->
-		    let och = open_out path in f och; close_out och in
 	    with_out (fun och -> Ast_to_cstubs.output_cstubs och serid amod)
 	end else
-	if !do_consts then Ast_to_consts.output_consts stdout amod else
+	if !do_consts then
+	    with_out (fun och -> Ast_to_consts.output_consts och amod) else
 	if !do_depend then
 	    print_depend ~module_name !raw_deps !topdir !roots
 			 in_path amod else

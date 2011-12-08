@@ -49,7 +49,7 @@ let rec output_const och state v t cx =
 	  (* TODO: Fix string quoting. *)
 	| _ -> errf_at (atyp_loc t) "Unsupported type %s for C constant." tn
 	end;
-	output_string stdout "; fputc('\\n', stdout);\n"
+	output_string och "; fputc('\\n', stdout);\n"
 	end
     | _ ->
 	errf_at (atyp_loc t) "Unsupported type for C constant."
@@ -62,7 +62,7 @@ let rec output_inj_check och i = function
 	    errf_at loc "A constant type is required for C enum."
 	| _ -> ()
 	end;
-	fprintf stdout "\tck_enum(%d, %s, \"%s\", \"%s\");\n"
+	fprintf och "\tck_enum(%d, %s, \"%s\", \"%s\");\n"
 	    i cn (Location.to_string loc) (avar_name v);
 	output_inj_check och (i + 1) injs
     | (loc, v, t, Ainjnum_auto) :: injs ->

@@ -92,7 +92,10 @@ let process_errors ich och =
 	    let msg = input_line ich in
 	    err := 1;
 	    if Str.string_match ingore_re msg 0 then () else
-	    show_error ich och mlpath mlline msg
+	    try
+		show_error ich och mlpath mlline msg
+	    with Sys_error _ ->
+		fprintf och "%s\n%s\n" ln msg
 	end else
 	fprintf och "%s\n" ln
     done with End_of_file -> () end;

@@ -87,7 +87,7 @@ val tile : int → t → t
  ## (tile n s) is the string containing (n) repetitions of (s).
 
 val slice : int → int → t → t
- ## (slice i j s) is the (n)-character substring of (s) starting at (i).
+ ## (slice i j s) is the (j - i)-character substring of (s) starting at (i).
 
 val as_list : t → list char
 
