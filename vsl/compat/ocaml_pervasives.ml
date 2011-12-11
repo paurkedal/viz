@@ -50,7 +50,7 @@ module Float_misc = struct
     let itrunc = Pervasives.truncate
     let of_int = Pervasives.float_of_int
 
-    let show x = UTF8string.as_string (Pervasives.string_of_float x)
+    let show x = Utf8_string.as_string (Pervasives.string_of_float x)
 end
 
 module Pervasive = struct
@@ -60,22 +60,22 @@ module Pervasive = struct
     let flush chan = __builtin_effect (fun () -> Pervasives.flush chan)
     let flush_all = __builtin_effect (fun () -> Pervasives.flush_all ())
     let print s = __builtin_effect
-	(fun () -> Pervasives.print_string (UTF8string.of_string s))
+	(fun () -> Pervasives.print_string (Utf8_string.of_string s))
     let eprint s = __builtin_effect
-	(fun () -> Pervasives.prerr_string (UTF8string.of_string s))
+	(fun () -> Pervasives.prerr_string (Utf8_string.of_string s))
     let fprint ochan s = __builtin_effect
-	(fun () -> Pervasives.output_string ochan (UTF8string.of_string s))
+	(fun () -> Pervasives.output_string ochan (Utf8_string.of_string s))
 
     let __failure loc msg =
-	Printf.eprintf "%s: %s\n" (UTF8string.of_string loc)
-	    (UTF8string.of_string msg);
+	Printf.eprintf "%s: %s\n" (Utf8_string.of_string loc)
+	    (Utf8_string.of_string msg);
 	Pervasives.flush_all ();
 	assert false
     let __trace loc bindings =
-	Printf.eprintf "%s: trace:" (UTF8string.of_string loc);
+	Printf.eprintf "%s: trace:" (Utf8_string.of_string loc);
 	let print_binding (v, x) =
-	    Printf.eprintf " %s = %s;" (UTF8string.of_string v)
-				       (UTF8string.of_string x) in
+	    Printf.eprintf " %s = %s;" (Utf8_string.of_string v)
+				       (Utf8_string.of_string x) in
 	List.iter print_binding bindings;
 	Printf.eprintf "\n"
 end

@@ -52,11 +52,11 @@ let! unsafe_ptrarray_free_elements p n
     do unsafe_ptrarray_load (n - 1) p >>= unsafe_free
     do unsafe_ptrarray_free_elements p (n - 1)
 
-val:c strcpy_UTF8string : ptr ψ → UTF8string → effect ψ unit := "strcpy"
+val:c strcpy_utf8_string : ptr ψ → utf8_string → effect ψ unit := "strcpy"
 
 let! malloc_strcpy_string s
-    let us be data.UTF8string.of_string s
-    let n be data.UTF8string.length us
+    let us be data.utf8_string.of_string s
+    let n be data.utf8_string.length us
     let p do unsafe_malloc (offset.of_int (n + 1))
-    do strcpy_UTF8string p us
+    do strcpy_utf8_string p us
     be p

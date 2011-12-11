@@ -23,7 +23,7 @@ module UString_encoding = CharEncoding.Make (UText)
 
 module Pervasive = struct
     type char = UChar.t
-    type uTF8string = string
+    type utf8_string = string
     type string = UText.t
 
     let __string_of_utf8 = UString_encoding.decode CharEncoding.utf8
@@ -61,7 +61,7 @@ module String_buf = struct
     let put_string buf s = __builtin_effect (fun () -> B.add_string buf s)
 end
 
-module UTF8string = struct
+module Utf8_string = struct
     let of_string = UString_encoding.encode CharEncoding.utf8
     let as_string = UString_encoding.decode CharEncoding.utf8
 
@@ -69,5 +69,5 @@ module UTF8string = struct
 end
 
 let () =
-    Callback.register "ustring_of_utf8" UTF8string.as_string;
-    Callback.register "ustring_to_utf8" UTF8string.of_string;
+    Callback.register "ustring_of_utf8" Utf8_string.as_string;
+    Callback.register "ustring_to_utf8" Utf8_string.of_string;

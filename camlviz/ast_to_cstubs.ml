@@ -126,7 +126,7 @@ let rec nonoption_conversion nparam state = function
 	| "int64"  -> ("int64", None, "Int64_val", "caml_copy_int64")
 	| "float"  -> ("double", None, "Double_val", "caml_copy_double")
 	| "octet"  -> ("char",  None, "Int_val",   "Val_int")
-	| "UTF8string" ->
+	| "utf8_string" ->
 	    ("char const *", None, "String_val", "caml_copy_string")
 	| "string" ->
 	    ("char const *", Some "cviz_ustring_to_utf8", "String_val",

@@ -62,8 +62,8 @@ val cmp : t → t → torder
  ## (cmp x y) provides lexicographic order of Unicode code points between (x)
  ## and (y).  This is a fast non-collating and non-normalizing comparison.
 
-val as_utf8 : t → UTF8string
-val of_utf8 : UTF8string → t
+val as_utf8 : t → utf8_string
+val of_utf8 : utf8_string → t
 
 val of_char : char → string
 

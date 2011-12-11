@@ -20,10 +20,10 @@
 
 open prelude.ubiquitous
 
-type t := UTF8string
+type t := utf8_string
 
 val of_string : string → t
 val as_string : t → string
 val length : t → int
 
-#?ffoc include compat.ocaml_unicode.UTF8string
+#?ffoc include compat.ocaml_unicode.utf8_string

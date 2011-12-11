@@ -8,7 +8,7 @@ vsl/data/char_
 vsl/data/free_semigroup
 vsl/data/free_monoid
 vsl/data/string_
-vsl/data/UTF8string
+vsl/data/utf8_string
 vsl/data/AA_map
 vsl/data/AA_set
 vsl/data/SL_stack

@@ -82,7 +82,6 @@ module type Ocaml_int = sig
     val abs : t -> t
     val of_int : int -> t
     val to_int : t -> int
-    val to_string : t -> uTF8string
 end
 
 module Adapt (M : Ocaml_int) = struct
