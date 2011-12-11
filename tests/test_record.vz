@@ -9,10 +9,10 @@ in simple
 	let b do acquire int32_ev
 	let ev do realize
     let make a b
-	be record.init rep.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
+	be record.init rep.ev (that : ∀ψ. lens.r ψ δ → effect ψ α)
 	    which! at r
-	do int32T_as_intT.store a (reflens.focus_field rep.a r)
-	do int32T_as_intT.store b (reflens.focus_field rep.b r)
+	do int32T_as_intT.store a (lens.focus_field rep.a r)
+	do int32T_as_intT.store b (lens.focus_field rep.b r)
 
 in head_fw include! fabric
 
@@ -31,23 +31,23 @@ in head
 lex S0 ./
 
 let init_cycle i j
-    be snd @ record.init head.ev (that : ∀ψ. reflens.r ψ δ → effect ψ α)
+    be snd @ record.init head.ev (that : ∀ψ. lens.r ψ δ → effect ψ α)
 	which! at head
 
     let node0 do record.alloc node.ev
     let node1 do record.alloc node.ev
 
-    let r./ev be reflens.focus_field ev r
+    let r./ev be lens.focus_field ev r
 
-    do reflens.store_iptr node0 head./head.cycle_ev
+    do lens.store_iptr node0 head./head.cycle_ev
 
-    do reflens.store_iptr head node0./node.owner_ev
+    do lens.store_iptr head node0./node.owner_ev
     do int32T_as_intT.store i node0./node.id_ev
-    do reflens.store_iptr node1 node0./node.next_ev
+    do lens.store_iptr node1 node0./node.next_ev
 
-    do reflens.store_iptr head node1./node.owner_ev
+    do lens.store_iptr head node1./node.owner_ev
     do int32T_as_intT.store j node1./node.id_ev
-    do reflens.store_iptr node0 node1./node.next_ev
+    do lens.store_iptr node0 node1./node.next_ev
 
 let valid_cycle cyc i j
     let head be record.focus cyc

@@ -68,6 +68,9 @@ in basics
 	taken cmp x y at tsucc% be x
 		      at _ be y
 
+    type cold inj _cold
+    type hot ψ inj _hot
+
 include basics
 
 in bool_ops
@@ -98,6 +101,7 @@ in int_ops.(Int : a_basic_int)
 in int include compat.ocaml_miscints.int
        in ops include int_ops.(compat.ocaml_miscints.int)
 include int.ops
+include compat.ocaml_miscints.pervasive
 
 in effect
     type ψ /~ α := effect ψ α

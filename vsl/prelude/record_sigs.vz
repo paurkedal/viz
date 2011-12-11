@@ -43,7 +43,7 @@
 # pointer is tagged as either internal or external.  During construction of a
 # record instance, instances pointed to by external pointers are immutable.
 
-open ubiquitous
+open prereq
 
 # 0.0.  Phantom Types Used Below
 #
@@ -181,47 +181,34 @@ sig a_record_architecture
 	val realize : io (is_record ph)
 
 
-    # 0.0.0.  Inspection
+    # 0.0.0.  Lenses
     #
-    # Lenses provides read-only, suitable for implementing a pure interface to
-    # objects after their construction.
+    # A lens can traverse the representation of an object, and provides
+    # constant or mutable access.
 
     in lens
-	type t δ
+	type R Ψ δ
+	type r ψ δ := R (hot ψ) δ
+	type t δ   := R cold δ
 
-	val cmp : t δ → t δ → torder
+	val cmp : R Ψ δ → R Ψ δ → torder
 
-	val focus_field : has_field δ ε → t δ → t ε
-	val focus_component : has_components α ε → int → t α → t ε
-	val focus_element : has_elements σ ε → int → t σ → t ε
+	val focus_field : has_field δ ε → R Ψ δ → R Ψ ε
+	val focus_component : has_components δ ε → int → R Ψ δ → R Ψ ε
+	val focus_element : has_elements σ ε → int → R Ψ σ → R Ψ ε
 
-	val unsafe_defocus_field : has_field δ ε → t ε → t δ
+	val unsafe_defocus_field : has_field δ ε → R Ψ ε → R Ψ δ
 
 	val get_ptr : t (ptr_ph δ χ) → t δ
 
-
-    # 0.0.0.  Mutable Access
-    #
-    # Reference lenses provide mutable access including to data pointed to by
-    # internal pointers.  This is suitable for implementing constructors of a
-    # pure interface, or for implementing a monadic interface.
-
-    in reflens
-	type r ψ δ
-
-	val cmp : r ψ δ → r ψ δ → torder
-
-	val focus_field : has_field δ ε → r ψ δ → r ψ ε
-	val focus_component : has_components δ ε → int → r ψ δ → r ψ ε
-	val focus_element : has_elements σ ε → int → r ψ σ → r ψ ε
-
-	val unsafe_defocus_field : has_field δ ε → r ψ ε → r ψ δ
-
 	val load_iptr : r ψ (iptr_ph δ) → effect ψ (r ψ δ)
-	val load_xptr : r ψ (xptr_ph δ) → effect ψ (lens.t δ)
+	val load_xptr : r ψ (xptr_ph δ) → effect ψ (t δ)
 
 	val store_iptr : r ψ δ → r ψ (iptr_ph δ) → effect ψ unit
-	val store_xptr : lens.t δ → r ψ (xptr_ph δ) → effect ψ unit
+	val store_xptr : t δ → r ψ (xptr_ph δ) → effect ψ unit
+
+	val unsafe_freeze : R Ψ δ → t δ
+	val unsafe_thaw : R Ψ δ → r ψ δ
 
 
     # 0.0.0.  Complete Objects
@@ -230,29 +217,29 @@ sig a_record_architecture
     # uninitialized data to the client.  Make sure to initialize all pointers.
 
     in record
-	type t δ
-	  ## A handle to a complete object.
+	type R Ψ δ
+	type r ψ δ := R (hot ψ) δ
+	type t δ := R cold δ
 
-	val alloc : is_record δ → effect ψ (reflens.r ψ δ)
+	val alloc : is_record δ → effect ψ (lens.r ψ δ)
 
-	val init : is_record δ → (∀ψ. reflens.r ψ δ → effect ψ α) → α × t δ
+	val init : is_record δ → (∀ψ. lens.r ψ δ → effect ψ α) → α × R Ψ δ
 	 ## (init_record ev f) allocates an instance of (ev) and passes a
 	 ## reference to (f) for initialization.  The value returned by (f) is
 	 ## paired with the object handle as the result.
 
 	val alloc_spilled :
-	    is_record δ → int → is_record ε →
-	    effect ψ (reflens.r ψ (spill_ph δ ε))
+	    is_record δ → int → is_record ε → effect ψ (lens.r ψ (spill_ph δ ε))
 
 	val init_spilled :
 	    is_record δ → int → is_record ε →
-	    (∀ψ. reflens.r ψ (spill_ph δ ε) → effect ψ α) → α × t (spill_ph δ ε)
+	    (∀ψ. lens.r ψ (spill_ph δ ε) → effect ψ α) → α × R Ψ (spill_ph δ ε)
 	 ## (init_spill ev n elt_ev f) allocates a spill with an instance of
 	 ## (ev) and (n) instances of (elt_ev), initialized by (f), which
 	 ## receives a reference lens to the newly allocated object.  The
 	 ## result of (f) paired with the constructed object is returned.
 
-	val focus : t δ → lens.t δ
+	val focus : R Ψ δ → lens.R Ψ δ
 	 ## Acquire read access to a constructed object.
 
 
@@ -276,8 +263,8 @@ sig a_record_architecture
 	type ph
 	type t
 	val get : lens.t ph → t
-	val load : reflens.r ψ ph → effect ψ t
-	val store : t → reflens.r ψ ph → effect ψ unit
+	val load : lens.r ψ ph → effect ψ t
+	val store : t → lens.r ψ ph → effect ψ unit
 
     in int_as_int	include a_conversion.[ph = int]		.[t = int]
     in int8_as_intT	include a_conversion.[ph = int8_ph]	.[t = int]
