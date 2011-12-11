@@ -40,14 +40,14 @@ lex alias |- ⊢  -| ⊣  |= ⊧  |== ⊨
 
 lex L1	; : := ≡
 lex L2	, <+>
-lex L3	↦ ⇒ ⇔ >>= >>
+lex L3	→ →? ↔ ↦ ⇒ ⇔ >>= >>
 lex L4	@
 lex L6	∨ ∨* ∨** ⊻
-lex L7
 lex L8	∧ ∧* ∧**
 lex L8	¬ ¬* ¬**
 lex alias == ≡
 lex alias +> ↦  => ⇒  <=> ⇔
+lex alias -> →  ->? →?  <-> ↔
 lex alias \/ ∨  \/* ∨*  \/** ∨**
 lex alias /\ ∧  /\* ∧*  /\** ∧**
 lex alias not ¬  not* ¬*  not** ¬**
@@ -80,12 +80,10 @@ lex alias <: ∈
 
 # Z.5.  Arithmetic and other Mid-Precedence Operators
 
-lex A1	→ →? ↔
 lex A2	+ − /~
 lex A4	∪ ∖
 lex A6	× ⋅ ∕ ∘ div mod quo rem
 lex A8	∩
-lex alias -> →  ->? →?  <-> ↔
 lex alias - −
 lex alias * ×  / ∕  o` ∘
 
