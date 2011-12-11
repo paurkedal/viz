@@ -23,8 +23,10 @@ open Camlviz.Unicode
 
 let rx = Str.regexp
 
-let uchar_re = rx "[uU]\\([0-9a-f][0-9a-f][0-9a-f][0-9a-f]\\)"
 let op_re = rx "\\bop\\([0-2]\\)_"
+let subst1_re = rx "'z__\\(U03\\)"
+let strip_re = rx "\\bz__"
+let uchar_re = rx "[uU]\\([0-9a-f][0-9a-f][0-9a-f][0-9a-f]\\)"
 
 let demangle =
     let replace_uchar ln =
@@ -32,6 +34,8 @@ let demangle =
 	let code = Scanf.sscanf codestr "%x" (fun n -> n) in
 	UChar.to_utf8 (UChar.chr code) in
     Str.global_replace op_re "\\1'" *>
+    Str.global_replace subst1_re "\\1" *>
+    Str.global_replace strip_re "" *>
     Str.global_substitute uchar_re replace_uchar
 
 let loc0_re =
@@ -97,7 +101,7 @@ let process_errors ich och =
 	    with Sys_error _ ->
 		fprintf och "%s\n%s\n" ln msg
 	end else
-	fprintf och "%s\n" ln
+	fprintf och "%s\n" (demangle ln)
     done with End_of_file -> () end;
     !err
 

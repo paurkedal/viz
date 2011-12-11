@@ -27,6 +27,9 @@ let avar_idr (Avar (_, idr)) = idr
 let avar_name (Avar (_, Idr s)) = s
 let avar_loc (Avar (loc, _)) = loc
 
+(* Keep bin/camlvizerror.ml in sync with the mangling done by the following
+ * three functions. *)
+
 let ascii_encode s =
     assert (s <> "*");  (* Asserts that "l:*" is replaced by "l:l", etc. *)
     let buf = UString.Buf.create 16 in
@@ -47,11 +50,15 @@ let ascii_encode s =
 	(UString.of_utf8 s');
     UString.to_utf8 (UString.Buf.contents buf)
 
-let str_to_lid s = String.uncapitalize (ascii_encode s)
+let str_to_lid s =
+    let s' = ascii_encode s in
+    if Char.is_upper s'.[0] then "z__" ^ s' else s'
+
 let str_to_uid s =
     assert (String.length s > 0);
     if String.get s 0 = '_' then "Z_" ^ s else
     String.capitalize (ascii_encode s)
+
 let idr_to_lid (Idr s) = str_to_lid s
 let idr_to_uid (Idr s) = str_to_uid s
 let avar_to_lid (Avar (_, idr)) = idr_to_lid idr
