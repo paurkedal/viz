@@ -45,28 +45,33 @@ sealed with
     val slonglong_ev : is_record slonglong_ph
     val ulonglong_ev : is_record ulonglong_ph
 
-    in sshort_as_intT	include a_conversion.[ph = sshort_ph].[t = int]
-    in ushort_as_intT	include a_conversion.[ph = ushort_ph].[t = int]
-    in sintT_as_intT	include a_conversion.[ph = sint_ph].[t = int]
-    in uintT_as_intT	include a_conversion.[ph = uint_ph].[t = int]
-    in slongT_as_intT	include a_conversion.[ph = slong_ph].[t = int]
-    in ulongT_as_intT	include a_conversion.[ph = ulong_ph].[t = int]
-    in slonglongT_as_intT include a_conversion.[ph = slonglong_ph].[t = int]
-    in ulonglongT_as_intT include a_conversion.[ph = ulonglong_ph].[t = int]
-    in sintptrT_as_int	include a_conversion.[ph = sintptr_ph].[t = int]
-    in uintptrT_as_int	include a_conversion.[ph = uintptr_ph].[t = int]
-    in sintmaxT_as_int	include a_conversion.[ph = sintmax_ph].[t = int]
-    in uintmaxT_as_int	include a_conversion.[ph = uintmax_ph].[t = int]
-    in sint_as_nintT	include a_conversion.[ph = sint_ph].[t = nint]
-    in uintT_as_nintT	include a_conversion.[ph = uint_ph].[t = nint]
-    in slong_as_nintT	include a_conversion.[ph = slong_ph].[t = nint]
-    in ulongT_as_nintT	include a_conversion.[ph = ulong_ph].[t = nint]
-    in slonglongT_as_nintT include a_conversion.[ph = slonglong_ph].[t = nint]
-    in ulonglongT_as_nintT include a_conversion.[ph = ulonglong_ph].[t = nint]
+    in sshort_as_int	include a_conversion.[ph = sshort_ph].[t = int]
+    in ushort_as_int	include a_conversion.[ph = ushort_ph].[t = int]
+
+    in sint_as_int	include a_conversion.[ph = sint_ph].[t = int]
+    in uint_as_int	include a_conversion.[ph = uint_ph].[t = int]
+    in sint_as_nint	include a_conversion.[ph = sint_ph].[t = nint]
+    in uint_as_nint	include a_conversion.[ph = uint_ph].[t = nint]
+
+    in slong_as_int	include a_conversion.[ph = slong_ph].[t = int]
+    in ulong_as_int	include a_conversion.[ph = ulong_ph].[t = int]
+    in slong_as_nint	include a_conversion.[ph = slong_ph].[t = nint]
+    in ulong_as_nint	include a_conversion.[ph = ulong_ph].[t = nint]
+
+    in slonglong_as_int include a_conversion.[ph = slonglong_ph].[t = int]
+    in ulonglong_as_int include a_conversion.[ph = ulonglong_ph].[t = int]
+    in slonglong_as_nint include a_conversion.[ph = slonglong_ph].[t = nint]
+    in ulonglong_as_nint include a_conversion.[ph = ulonglong_ph].[t = nint]
+
+    in sintptr_as_int	include a_conversion.[ph = sintptr_ph].[t = int]
+    in uintptr_as_int	include a_conversion.[ph = uintptr_ph].[t = int]
     in sintptr_as_nint	include a_conversion.[ph = sintptr_ph].[t = nint]
-    in uintptrT_as_nint	include a_conversion.[ph = uintptr_ph].[t = nint]
-    in sintmaxT_as_nint	include a_conversion.[ph = sintmax_ph].[t = nint]
-    in uintmaxT_as_nint	include a_conversion.[ph = uintmax_ph].[t = nint]
+    in uintptr_as_nint	include a_conversion.[ph = uintptr_ph].[t = nint]
+
+    in sintmax_as_int	include a_conversion.[ph = sintmax_ph].[t = int]
+    in uintmax_as_int	include a_conversion.[ph = uintmax_ph].[t = int]
+    in sintmax_as_nint	include a_conversion.[ph = sintmax_ph].[t = nint]
+    in uintmax_as_nint	include a_conversion.[ph = uintmax_ph].[t = nint]
 
     in ptr_as_ptr
 	type t ψ := memory.ptr ψ
@@ -250,19 +255,19 @@ in int_as_int
     val:cs get : gptr → t			:= "cviz_intnat_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_intnat_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_intnat_store_int"
-in int8_as_intT
+in int8_as_int
     type ph := int8_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_int8_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_int8_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_int8_store_int"
-in int16_as_intT
+in int16_as_int
     type ph := int16_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_int16_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_int16_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_int16_store_int"
-in int32T_as_intT
+in int32_as_int
     type ph := int32
     type t := int
     val:cs get : gptr → t			:= "cviz_int32_load_int"
@@ -274,7 +279,7 @@ in int32_as_int32
     val:cs get : gptr → t			:= "cviz_int32_load_int32"
     val:cs load : gptr → effect ψ t		:= "cviz_int32_load_int32"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_int32_store_int32"
-in int64T_as_intT
+in int64_as_int
     type ph := int64
     type t := int
     val:cs get : gptr → t			:= "cviz_int64_load_int"
@@ -286,19 +291,19 @@ in int64_as_int64
     val:cs get : gptr → int64			:= "cviz_int64_load_int64"
     val:cs load : gptr → effect ψ int64		:= "cviz_int64_load_int64"
     val:cs store : int64 → gptr → effect ψ unit	:= "cviz_int64_store_int64"
-in nat8_as_intT
+in nat8_as_int
     type ph := nat8_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_nat8_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_nat8_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_nat8_store_int"
-in nat16_as_intT
+in nat16_as_int
     type ph := nat16_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_nat16_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_nat16_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_nat16_store_int"
-in nat32T_as_intT
+in nat32_as_int
     type ph := nat32
     type t := int
     val:cs get : gptr → t			:= "cviz_nat32_load_int"
@@ -310,7 +315,7 @@ in nat32_as_nat32
     val:cs get : gptr → t			:= "cviz_int32_load_int32"
     val:cs load : gptr → effect ψ t		:= "cviz_int32_load_int32"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_int32_store_int32"
-in nat64T_as_intT
+in nat64_as_int
     type ph := nat64
     type t := int
     val:cs get : gptr → t			:= "cviz_nat64_load_int"
@@ -325,109 +330,109 @@ in nat64_as_nat64
 
 # 0.0.0.  C-Specific Types
 
-in sshort_as_intT
+in sshort_as_int
     type ph := sshort_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_sshort_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_sshort_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sshort_store_int"
-in ushort_as_intT
+in ushort_as_int
     type ph := ushort_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_ushort_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_ushort_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_ushort_store_int"
-in sintT_as_intT
+in sint_as_int
     type ph := sint_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_sint_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_sint_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sint_store_int"
-in uintT_as_intT
+in uint_as_int
     type ph := uint_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_uint_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_uint_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_uint_store_int"
-in slongT_as_intT
+in slong_as_int
     type ph := slong_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_slong_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_slong_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_slong_store_int"
-in ulongT_as_intT
+in ulong_as_int
     type ph := ulong_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_ulong_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_ulong_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_ulong_store_int"
-in slonglongT_as_intT
+in slonglong_as_int
     type ph := slonglong_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_slonglong_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_slonglong_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_slonglong_store_int"
-in ulonglongT_as_intT
+in ulonglong_as_int
     type ph := ulonglong_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_ulonglong_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_ulonglong_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_ulonglong_store_int"
-in sintptrT_as_int
+in sintptr_as_int
     type ph := sintptr_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_sintptr_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_sintptr_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sintptr_store_int"
-in uintptrT_as_int
+in uintptr_as_int
     type ph := uintptr_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_uintptr_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_uintptr_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_uintptr_store_int"
-in sintmaxT_as_int
+in sintmax_as_int
     type ph := sintmax_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_sintmax_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_sintmax_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sintmax_store_int"
-in uintmaxT_as_int
+in uintmax_as_int
     type ph := uintmax_ph
     type t := int
     val:cs get : gptr → t			:= "cviz_uintmax_load_int"
     val:cs load : gptr → effect ψ t		:= "cviz_uintmax_load_int"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_uintmax_store_int"
-in sint_as_nintT
+in sint_as_nint
     type ph := sint_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_sint_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_sint_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sint_store_nint"
-in uintT_as_nintT
+in uint_as_nint
     type ph := uint_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_uint_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_uint_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_uint_store_nint"
-in slong_as_nintT
+in slong_as_nint
     type ph := slong_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_slong_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_slong_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_slong_store_nint"
-in ulongT_as_nintT
+in ulong_as_nint
     type ph := ulong_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_ulong_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_ulong_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_ulong_store_nint"
-in slonglongT_as_nintT
+in slonglong_as_nint
     type ph := slonglong_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_slonglong_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_slonglong_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_slonglong_store_nint"
-in ulonglongT_as_nintT
+in ulonglong_as_nint
     type ph := ulonglong_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_ulonglong_load_nint"
@@ -439,19 +444,19 @@ in sintptr_as_nint
     val:cs get : gptr → t			:= "cviz_sintptr_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_sintptr_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sintptr_store_nint"
-in uintptrT_as_nint
+in uintptr_as_nint
     type ph := uintptr_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_uintptr_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_uintptr_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_uintptr_store_nint"
-in sintmaxT_as_nint
+in sintmax_as_nint
     type ph := sintmax_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_sintmax_load_nint"
     val:cs load : gptr → effect ψ t		:= "cviz_sintmax_load_nint"
     val:cs store : t → gptr → effect ψ unit	:= "cviz_sintmax_store_nint"
-in uintmaxT_as_nint
+in uintmax_as_nint
     type ph := uintmax_ph
     type t := nint
     val:cs get : gptr → t			:= "cviz_uintmax_load_nint"
