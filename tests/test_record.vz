@@ -19,13 +19,13 @@ in head_fw include! fabric
 in node
     include! fabric
     let id_ev do acquire int32_ev
-    let owner_ev do acquire head_fw.iptr_ev
-    let next_ev do acquire iptr_ev
+    let owner_ev do acquire head_fw.ptr_ev
+    let next_ev do acquire ptr_ev
     let ev do realize
 
 in head
     include head_fw
-    let cycle_ev do acquire node.iptr_ev
+    let cycle_ev do acquire node.ptr_ev
     let ev do realize
 
 lex S0 ./
@@ -34,20 +34,20 @@ let init_cycle i j
     be snd @ record.init head.ev (that : ∀ψ. lens.r ψ δ → effect ψ α)
 	which! at head
 
-    let node0 do record.alloc node.ev
-    let node1 do record.alloc node.ev
+    let node0 do record.alloc node.ev >>= return ∘ record.focus
+    let node1 do record.alloc node.ev >>= return ∘ record.focus
 
     let r./ev be lens.focus_field ev r
 
-    do lens.store_iptr node0 head./head.cycle_ev
+    do lens.store_ptr node0 head./head.cycle_ev
 
-    do lens.store_iptr head node0./node.owner_ev
+    do lens.store_ptr head node0./node.owner_ev
     do int32T_as_intT.store i node0./node.id_ev
-    do lens.store_iptr node1 node0./node.next_ev
+    do lens.store_ptr node1 node0./node.next_ev
 
-    do lens.store_iptr head node1./node.owner_ev
+    do lens.store_ptr head node1./node.owner_ev
     do int32T_as_intT.store j node1./node.id_ev
-    do lens.store_iptr node0 node1./node.next_ev
+    do lens.store_ptr node0 node1./node.next_ev
 
 let valid_cycle cyc i j
     let head be record.focus cyc

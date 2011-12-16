@@ -27,6 +27,13 @@
 # indicated by the function names.  Issues include uninitialized references,
 # unchecked array bounds, and over- and underflow during conversion.
 
+# 0.0.  Status
+#
+# This interface and its implementations are experimental, and have some
+# limitations.  In particular defining parametric types is currently
+# unsupported.  This issue may be revisited when we have a compiler which is
+# not subject to the value restriction.
+
 # 0.0.  Concepts
 #
 # A record here refers to a layout of data which itself can be embedded in
@@ -53,23 +60,11 @@ open prereq
 
 in phantoms
 
-    # 0.0.0.  Phantoms used to Express Type Compatibility
-
-    type TRUE		inj _TRUE
-    type FALSE		inj _FALSE
-    type ORD π π'	inj _ORD
-    type UN := ORD FALSE FALSE
-    type LE := ORD TRUE FALSE
-    type GE := ORD FALSE TRUE
-    type EQ := ORD TRUE TRUE
-
     # 0.0.0.  Phantoms for Pointers and Compounds
 
-    type internal	inj _internal
-    type external	inj _external
-    type ptr_ph δ χ	inj _ptr_ph	# χ ∈ {internal, external}
-    type iptr_ph δ := ptr_ph δ internal
-    type xptr_ph δ := ptr_ph δ external
+    type ptr_ph δ	inj _ptr_ph
+    type value_ph α	inj _value_ph
+    type param_ph π	inj _param_ph
     type array_ph δ	inj _array_ph
     type spill_ph δ ε	inj _spill_ph
     type pair_ph δ ε	inj _pair_ph
@@ -148,19 +143,12 @@ sig a_record_architecture
 
     # 0.0.0.0.  Pointers
 
-    val record_iptr_ev : is_record δ → is_record (iptr_ph δ)
+    val record_ptr_ev : is_record δ → is_record (ptr_ph δ)
      ## A pointer to an internal record is a record.
 
-    val record_xptr_ev : is_record δ → is_record (xptr_ph δ)
-     ## A pointer to an external record is a record.
-
-    val spill_iptr_ev :
-	is_record δ → is_record ε → is_record (iptr_ph (spill_ph δ ε))
+    val spill_ptr_ev :
+	is_record δ → is_record ε → is_record (ptr_ph (spill_ph δ ε))
      ## A pointer to an internal spill is a record.
-
-    val spill_xptr_ev :
-	is_record δ → is_record ε → is_record (xptr_ph (spill_ph δ ε))
-     ## A pointer to an external spill is a record.
 
 
     # 0.0.0.0.  Compound Types
@@ -175,8 +163,7 @@ sig a_record_architecture
 
     in! fabric
 	type ph
-	val iptr_ev : is_record (iptr_ph ph)
-	val xptr_ev : is_record (xptr_ph ph)
+	val ptr_ev : is_record (ptr_ph ph)
 	val acquire : is_record δ → io (has_field ph δ)
 	val realize : io (is_record ph)
 
@@ -199,13 +186,13 @@ sig a_record_architecture
 
 	val unsafe_defocus_field : has_field δ ε → R Ψ ε → R Ψ δ
 
-	val get_ptr : t (ptr_ph δ χ) → t δ
+	val get_ptr : t (ptr_ph δ) → t δ
+	val load_ptr : r ψ (ptr_ph δ) → effect ψ (r ψ δ)
+	val store_ptr : r ψ δ → r ψ (ptr_ph δ) → effect ψ unit
 
-	val load_iptr : r ψ (iptr_ph δ) → effect ψ (r ψ δ)
-	val load_xptr : r ψ (xptr_ph δ) → effect ψ (t δ)
-
-	val store_iptr : r ψ δ → r ψ (iptr_ph δ) → effect ψ unit
-	val store_xptr : t δ → r ψ (xptr_ph δ) → effect ψ unit
+	val get_value : t (value_ph α) → α
+	val load_value : r ψ (value_ph α) → effect ψ α
+	val store_value : α → r ψ (value_ph α) → effect ψ unit
 
 	val unsafe_freeze : R Ψ δ → t δ
 	val unsafe_thaw : R Ψ δ → r ψ δ
@@ -221,7 +208,7 @@ sig a_record_architecture
 	type r ψ δ := R (hot ψ) δ
 	type t δ := R cold δ
 
-	val alloc : is_record δ → effect ψ (lens.r ψ δ)
+	val alloc : is_record δ → effect ψ (r ψ δ)
 
 	val init : is_record δ → (∀ψ. lens.r ψ δ → effect ψ α) → α × R Ψ δ
 	 ## (init_record ev f) allocates an instance of (ev) and passes a
@@ -229,7 +216,7 @@ sig a_record_architecture
 	 ## paired with the object handle as the result.
 
 	val alloc_spilled :
-	    is_record δ → int → is_record ε → effect ψ (lens.r ψ (spill_ph δ ε))
+	    is_record δ → int → is_record ε → effect ψ (r ψ (spill_ph δ ε))
 
 	val init_spilled :
 	    is_record δ → int → is_record ε →
@@ -246,6 +233,8 @@ sig a_record_architecture
     # 0.0.0.  Primitive Types
 
     val unit_ev : is_record unit
+
+    val value_ev : is_record (value_ph α)
 
     val int_ev : is_record int
 

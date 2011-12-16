@@ -202,6 +202,10 @@ cviz_unsafe_custom_load_ptr(value obj)
 /* Stubs for record.vz
  * =================== */
 
+CAMLprim value cviz_load_value(value p)
+{ return *(value *)Voidp_val(p); }
+CAMLprim value cviz_store_value(value x, value p)
+{ *(value *)Voidp_val(p) = x; return Val_unit; }
 CAMLprim value cviz_load_ptr(value p)
 { return cviz_copy_ptr(*(void **)Voidp_val(p)); }
 CAMLprim value cviz_store_ptr(value x, value p)

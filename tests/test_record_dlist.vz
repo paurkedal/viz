@@ -1,0 +1,95 @@
+open foreign.record_sigs.phantoms
+open effect
+
+in dlist
+
+    sealed with
+	type r ψ
+
+	val empty : unit → ψ/~ r ψ
+	val append : int → r ψ → ψ/~ unit
+	val prepend : int → r ψ → ψ/~ unit
+	val concat : r ψ → r ψ → ψ/~ r ψ
+	val iter : (int → ψ/~ unit) → r ψ → ψ/~ unit
+	val dump : string → r world → io unit
+
+    in node_for.(A : foreign.record_sigs.a_record_architecture)
+	include! A.fabric
+	let prev_ev do acquire ptr_ev
+	let next_ev do acquire ptr_ev
+	let data_ev do acquire (A.value_ev : A.is_record (value_ph int))
+	let ev do realize
+
+    in node include node_for.(foreign.cabi.record)
+    open foreign.cabi.record
+
+    lex S2 .#
+    let lens.#field be lens.focus_field field lens
+
+    type r ψ := record.r ψ node.ph
+
+    let! empty ()
+	let new_r do record.alloc node.ev
+	let new be record.focus new_r
+	do lens.store_ptr new new.#node.prev_ev
+	do lens.store_ptr new new.#node.next_ev
+	do lens.store_value 0 new.#node.data_ev
+	be new_r
+
+    let! append' x a
+	let new do record.alloc node.ev >>= return ∘ record.focus
+	do lens.store_value x new.#node.data_ev
+	do lens.store_ptr a new.#node.next_ev
+	let last_a do lens.load_ptr a.#node.prev_ev
+	do lens.store_ptr last_a new.#node.prev_ev
+	do lens.store_ptr new last_a.#node.next_ev
+	do lens.store_ptr new a.#node.prev_ev
+
+    let! append x a do append' x (record.focus a)
+    let! prepend x a
+	let first do lens.load_ptr (record.focus a).#node.next_ev
+	do append' x first
+
+    let! concat a_r b_r
+	let a be record.focus a_r
+	let b be record.focus b_r
+	let last_a do lens.load_ptr a.#node.prev_ev
+	let first_b do lens.load_ptr b.#node.next_ev
+	do lens.store_ptr first_b last_a.#node.next_ev
+	do lens.store_ptr last_a first_b.#node.prev_ev
+	let last_b do lens.load_ptr b.#node.prev_ev
+	do lens.store_ptr a last_b.#node.next_ev
+	do lens.store_ptr last_b a.#node.prev_ev
+	do lens.store_ptr b b.#node.next_ev
+	do lens.store_ptr b b.#node.prev_ev
+	be a_r
+
+    let! iter_upto' f a b
+	if lens.cmp a b = tcoin be ()
+	let data do lens.load_value a.#node.data_ev
+	do f data
+	let next_a do lens.load_ptr a.#node.next_ev
+	do iter_upto' f next_a b
+
+    let! iter f a_r
+	let a be record.focus a_r
+	let first do lens.load_ptr a.#node.next_ev
+	do iter_upto' f first a
+
+    let! dump s a
+	do print s >> print " ="
+	do iter (x ↦ print " " >> print (int.show x)) a
+	do print "\n"
+
+let main
+    let a do dlist.empty ()
+    do dlist.append 10 a
+    do dlist.append 11 a
+    do dlist.append 12 a
+    do dlist.dump "a" a
+    let b do dlist.empty ()
+    do dlist.append 20 b
+    do dlist.append 21 b
+    do dlist.dump "b" b
+    let c do dlist.concat a b
+    do dlist.dump "c" c

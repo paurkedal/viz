@@ -36,18 +36,6 @@ sealed with
 
     val unsafe_conjecture_field : is_record ε → offset → has_field δ ε
 
-    sig a_fabric
-	type ph := unit
-	val iptr_ev : is_record (iptr_ph ph)
-	val xptr_ev : is_record (xptr_ph ph)
-	val acquire : is_record δ → io (has_field ph δ)
-	val realize : io (is_record ph)
-
-    in! make_fabric
-	.(F : a_field_allocator.[alignment = alignment].[offset = offset])
-	include a_fabric
-    in! monotonic_fabric include a_fabric
-
     val sshort_ev : is_record sshort_ph
     val ushort_ev : is_record ushort_ph
     val sint_ev : is_record sint_ph
@@ -82,10 +70,10 @@ sealed with
 
     in ptr_as_ptr
 	type t ψ := memory.ptr ψ
-	val get : lens.t (ptr_ph δ χ) → t ψ
-	val load : lens.r ψ (ptr_ph δ χ) → effect ψ (t ψ)
-	val unsafe_store : t ψ → lens.r ψ (ptr_ph δ χ) → effect ψ unit
-	val diff : lens.R Ψ (ptr_ph δ χ) → lens.R Ψ (ptr_ph δ χ) → int
+	val get : lens.t (ptr_ph δ) → t ψ
+	val load : lens.r ψ (ptr_ph δ) → effect ψ (t ψ)
+	val unsafe_store : t ψ → lens.r ψ (ptr_ph δ) → effect ψ unit
+	val diff : lens.R Ψ (ptr_ph δ) → lens.R Ψ (ptr_ph δ) → int
 
 type alignment := int
 type offset := int
@@ -134,12 +122,13 @@ let field_is_transitive (field_sc offA) (field_sc offB)
 let components_are_elements (components_sc n sz)
     be elements_sc offset.zero sz
 
-let record_iptr_ev r be elem_record_sc memory.sizeof_ptr
-let record_xptr_ev r be elem_record_sc memory.sizeof_ptr
-let forward_iptr_ev r be elem_record_sc memory.sizeof_ptr
-let forward_xptr_ev r be elem_record_sc memory.sizeof_ptr
+let record_ptr_ev r be elem_record_sc memory.sizeof_ptr
+let record_value_ev r be elem_record_sc memory.sizeof_ptr
+let forward_ptr_ev r be elem_record_sc memory.sizeof_ptr
+let forward_value_ev r be elem_record_sc memory.sizeof_ptr
 
 let unit_ev be record_sc alignment.one offset.zero
+let value_ev be elem_record_sc memory.sizeof_ptr
 
 let int_ev be elem_record_sc memory.sizeof_clong
 let nint_ev be elem_record_sc memory.sizeof_clong
@@ -150,23 +139,21 @@ let array_ev n (record_sc alE szE)
     be (record_sc alE (offset.mul (offset.of_int n) szE), components_sc n szE)
 let spill_ev (record_sc alM szM) (record_sc alS szS)
     be (field_sc offset.zero, elements_sc (align alS szM) szS)
-let spill_iptr_ev _ _ be elem_record_sc memory.sizeof_ptr
-let spill_xptr_ev _ _ be elem_record_sc memory.sizeof_ptr
+let spill_ptr_ev _ _ be elem_record_sc memory.sizeof_ptr
 
 sig a_fabric
     type ph := unit
-    val iptr_ev : is_record (iptr_ph ph)
-    val xptr_ev : is_record (xptr_ph ph)
+    val ptr_ev : is_record (ptr_ph ph)
+    val value_ev : is_record (value_ph ph)
     val acquire : is_record δ → io (has_field ph δ)
     val realize : io (is_record ph)
 
 in! make_fabric.(A : a_field_allocator.[alignment = alignment]
 				      .[offset = offset])
-    type ph := unit
     let _state do ref.init (A.empty, false)
 
-    let iptr_ev be record_iptr_ev ()
-    let xptr_ev be record_xptr_ev ()
+    let ptr_ev be record_ptr_ev ()
+    let value_ev be record_value_ev ()
 
     let! acquire (record_sc al sz)
 	let (state, complete) do ref.get _state
@@ -181,8 +168,9 @@ in! make_fabric.(A : a_field_allocator.[alignment = alignment]
 	do ref.set _state (state, true)
 	be record_sc (A.alignment state) (A.size state)
 
-in! monotonic_fabric include! make_fabric.(monotonic_field_allocator.(int))
-in! fabric include! monotonic_fabric
+in! fabric
+    type ph := unit
+    include! make_fabric.(monotonic_field_allocator.(int))
 
 
 # 0.0.  Lens
@@ -202,13 +190,16 @@ in lens
 
     let unsafe_defocus_field (field_sc off) p be gptr_sub off p
 
-    val:cs get_ptr : t (ptr_ph δ χ) → t δ := "cviz_load_ptr"
-    val:cs load_iptr : r ψ (iptr_ph δ) → effect ψ (r ψ δ) := "cviz_load_ptr"
-    val:cs load_xptr : r ψ (xptr_ph δ) → effect ψ (t δ) := "cviz_load_ptr"
-    val:cs store_iptr : r ψ δ → r ψ (iptr_ph δ) → effect ψ unit
+    val:cs get_ptr : t (ptr_ph δ) → t δ := "cviz_load_ptr"
+    val:cs load_ptr : r ψ (ptr_ph δ) → effect ψ (r ψ δ) := "cviz_load_ptr"
+    val:cs store_ptr : r ψ δ → r ψ (ptr_ph δ) → effect ψ unit
 	    := "cviz_store_ptr"
-    val:cs store_xptr : t δ → r ψ (xptr_ph δ) → effect ψ unit
-	    := "cviz_store_ptr"
+
+    val:cs get_value : t (value_ph α) → α := "cviz_load_value"
+    val:cs load_value : r ψ (value_ph α) → effect ψ α := "cviz_load_value"
+    val:cs store_value : α → r ψ (value_ph α) → effect ψ unit
+	    := "cviz_store_value"
+
     val:cs unsafe_freeze : R Ψ δ → t δ := "%identity"
     val:cs unsafe_thaw : R Ψ δ → r ψ δ := "%identity"
 
@@ -484,7 +475,7 @@ in record
     val:cs prim_alloc : offset → effect ψ (R Ψ δ) := "cviz_record_alloc"
     val:cs focus : R Ψ δ → lens.R Ψ δ := "cviz_unsafe_custom_address"
 
-    let alloc (record_sc al sz) be prim_alloc sz >>= (r ↦ return (focus r))
+    let alloc (record_sc al sz) be prim_alloc sz
 
     let init (record_sc al sz) (f : ∀ψ. lens.r ψ δ → effect ψ α)
 	be observe (that : ∀ψ. effect ψ (α × R Ψ δ)) which!
@@ -494,8 +485,7 @@ in record
 
     let! alloc_spilled (record_sc al sz) n (record_sc alE szE)
 	let offE be align alE sz
-	let p do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
-	be focus p
+	do prim_alloc (offset.add offE (offset.mul (offset.of_int n) szE))
 
     let init_spilled (record_sc al sz) n (record_sc alE szE)
 		     (f : ∀ψ. lens.r ψ (spill_ph δ ε) → effect ψ α)
