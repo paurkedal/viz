@@ -181,6 +181,45 @@ module Int = struct
     let abs = abs
 end
 
+module Nint = Adapt (Nativeint)
+
+module Nnat = struct
+    type t = nativeint
+
+    let eq x y = x = y
+    external cmp : t -> t -> torder = "cviz_nnat_cmp"
+    let op2_U2264 (* ≤ *) (x : t) (y : t) = cmp x y <> Tsucc
+    let op2_U2265 (* ≥ *) (x : t) (y : t) = cmp x y <> Tprec
+    let op2_U003c (* < *) (x : t) (y : t) = cmp x y = Tprec
+    let op2_U003e (* > *) (x : t) (y : t) = cmp x y = Tsucc
+
+    let width = Nint.width
+    let zero = Nativeint.zero
+    let one = Nativeint.one
+    let minimum = Nativeint.of_int 0
+    let maximum = Nativeint.of_int (- 1)
+
+    let add = Nativeint.add
+    let sub = Nativeint.sub
+    external mul : t -> t -> t = "cviz_nnat_mul"
+    external div : t -> t -> t = "cviz_nnat_div"
+    external (mod) : t -> t -> t = "cviz_nnat_mod"
+    let quo = div
+    let rem = (mod)
+    let abs x = x
+
+    let bitnot = Nativeint.lognot
+    let bitand = Nativeint.logand
+    let bitor = Nativeint.logor
+    let bitxor = Nativeint.logxor
+    let shift i x =
+	if i >= 0 then Nativeint.shift_left x i else
+	Nativeint.shift_right_logical x (- i)
+
+    external as_int : t -> int = "cviz_nnat_as_int"
+    external of_int : int -> t = "cviz_nnat_of_int"
+end
+
 module Nat32 = struct
     type t = int32
 
@@ -255,12 +294,12 @@ module Nat64 = struct
     external of_int : int -> t = "cviz_nat64_of_int"
 end
 
-module Nint = Adapt (Nativeint)
 module Int32 = Adapt (Int32)
 module Int64 = Adapt (Int64)
 
 module Pervasive = struct
     type nint = nativeint
+    type nnat = Nnat.t
     type nativeint = unit
     type nat32 = Nat32.t
     type nat64 = Nat64.t

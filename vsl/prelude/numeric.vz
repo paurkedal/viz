@@ -166,6 +166,9 @@ in pervasive
     in nint
 	include nint
 	include extend_basic_int.(nint)
+    in nnat
+	include nnat
+	include extend_basic_nat.(nnat)
     in int32
 	include int32
 	include extend_basic_int.(int32)

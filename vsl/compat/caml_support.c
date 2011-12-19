@@ -73,6 +73,19 @@ cviz_copy_ustring(char const *s)
     CAMLreturn (cviz_ustring_of_utf8(v));
 }
 
+value cviz_nnat_mul(value x, value y)
+{ return caml_copy_nativeint(
+	    (uintnat)Nativeint_val(x) * (uintnat)Nativeint_val(y)); }
+
+value cviz_nnat_div(value x, value y)
+{ return caml_copy_nativeint(
+	    (uintnat)Nativeint_val(x) / (uintnat)Nativeint_val(y)); }
+
+value cviz_nnat_mod(value x, value y)
+{ return caml_copy_nativeint(
+	    (uintnat)Nativeint_val(x) % (uintnat)Nativeint_val(y)); }
+
+
 value cviz_nat32_mul(value x, value y)
 { return caml_copy_int32((uint32_t)Int32_val(x) * (uint32_t)Int32_val(y)); }
 
@@ -81,6 +94,7 @@ value cviz_nat32_div(value x, value y)
 
 value cviz_nat32_mod(value x, value y)
 { return caml_copy_int32((uint32_t)Int32_val(x) % (uint32_t)Int32_val(y)); }
+
 
 value cviz_nat64_mul(value x, value y)
 { return caml_copy_int64((uint64_t)Int64_val(x) * (uint64_t)Int64_val(y)); }
@@ -91,17 +105,35 @@ value cviz_nat64_div(value x, value y)
 value cviz_nat64_mod(value x, value y)
 { return caml_copy_int64((uint64_t)Int64_val(x) % (uint64_t)Int64_val(y)); }
 
+
+value cviz_nnat_as_int(value x)
+{ return Val_int((uintnat)Nativeint_val(x)); }
+
 value cviz_nat32_as_int(value x)
 { return Val_int((uint32_t)Int32_val(x)); }
 
 value cviz_nat64_as_int(value x)
 { return Val_int((uint32_t)Int64_val(x)); }
 
+
+value cviz_nnat_of_int(value x)
+{ return caml_copy_nativeint((uintnat)Int_val(x)); }
+
 value cviz_nat32_of_int(value x)
 { return caml_copy_int32((uint32_t)Int_val(x)); }
 
 value cviz_nat64_of_int(value x)
 { return caml_copy_int64((uint64_t)Int_val(x)); }
+
+
+value cviz_nnat_cmp(value x_, value y_)
+{
+    uintnat x = Nativeint_val(x_);
+    uintnat y = Nativeint_val(y_);
+    if (x < y) return Val_int(0); /* tprec */
+    if (x > y) return Val_int(2); /* tsucc */
+    return Val_int(1);            /* tcoin */
+}
 
 value cviz_nat32_cmp(value x_, value y_)
 {

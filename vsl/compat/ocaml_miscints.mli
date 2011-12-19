@@ -62,6 +62,7 @@ end
 
 module Int : A_basic_int with type t = int
 module Nint : A_basic_int with type t = nativeint
+module Nnat : A_basic_nat
 module Int32 : A_basic_int with type t = int32
 module Int64 : A_basic_int with type t = int64
 module Nat32 : A_basic_nat
@@ -69,6 +70,7 @@ module Nat64 : A_basic_nat
 
 module Pervasive : sig
     type nint = nativeint
+    type nnat = Nnat.t
     type nativeint (* hidden *)
     type nat32 = Nat32.t
     type nat64 = Nat64.t
