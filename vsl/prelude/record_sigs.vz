@@ -158,7 +158,7 @@ sig a_record_architecture
 	is_record (array_ph δ) × has_components (array_ph δ) δ
 
     val spill_ev :
-	is_record δ → is_record σ →
+	is_record δ → is_record ε →
 	has_field (spill_ph δ ε) δ × has_elements (spill_ph δ ε) ε
 
     in! fabric
