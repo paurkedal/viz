@@ -64,35 +64,9 @@ in phantoms
 
     type ptr_ph δ	inj _ptr_ph
     type value_ph α	inj _value_ph
-    type param_ph π	inj _param_ph
     type array_ph δ	inj _array_ph
     type spill_ph δ ε	inj _spill_ph
-    type pair_ph δ ε	inj _pair_ph
 
-    # 0.0.0.  Phantoms for Fixed-Sized Integers
-    #
-    # The 32 and 64 bit variants are omitted, as we use the real types
-    # instead.
-
-    type int8_ph	inj _int8_ph
-    type int16_ph	inj _int16_ph
-    type nat8_ph	inj _nat8_ph
-    type nat16_ph	inj _nat16_ph
-
-    # 0.0.0.  Phantoms Specific to the C ABI
-
-    type sshort_ph	inj _sshort_ph
-    type ushort_ph	inj _ushort_ph
-    type sint_ph	inj _sint_ph
-    type uint_ph	inj _uint_ph
-    type slong_ph	inj _slong_ph
-    type ulong_ph	inj _ulong_ph
-    type slonglong_ph	inj _slonglong_ph
-    type ulonglong_ph	inj _ulonglong_ph
-    type sintptr_ph	inj _sintptr_ph
-    type uintptr_ph	inj _uintptr_ph
-    type sintmax_ph	inj _sintmax_ph
-    type uintmax_ph	inj _uintmax_ph
 
 # 0.0.  Record Architecture
 
@@ -236,35 +210,10 @@ sig a_record_architecture
 
     val value_ev : is_record (value_ph α)
 
-    val int_ev : is_record int
-
-    val int8_ev : is_record int8_ph
-    val int16_ev : is_record int16_ph
-    val int32_ev : is_record int32
-    val int64_ev : is_record int64
-
-    val nat8_ev : is_record nat8_ph
-    val nat16_ev : is_record nat16_ph
-    val nat32_ev : is_record nat32
-    val nat64_ev : is_record nat64
-
-    sig a_conversion
+    sig a_foreign_type
 	type ph
 	type t
+	val ev : is_record ph
 	val get : lens.t ph → t
 	val load : lens.r ψ ph → effect ψ t
 	val store : t → lens.r ψ ph → effect ψ unit
-
-    in int_as_int	include a_conversion.[ph = int]		.[t = int]
-    in int8_as_int	include a_conversion.[ph = int8_ph]	.[t = int]
-    in int16_as_int	include a_conversion.[ph = int16_ph]	.[t = int]
-    in int32_as_int	include a_conversion.[ph = int32]	.[t = int]
-    in int32_as_int32	include a_conversion.[ph = int32]	.[t = int32]
-    in int64_as_int	include a_conversion.[ph = int64]	.[t = int]
-    in int64_as_int64	include a_conversion.[ph = int64]	.[t = int64]
-    in nat8_as_int	include a_conversion.[ph = nat8_ph]	.[t = int]
-    in nat16_as_int	include a_conversion.[ph = nat16_ph]	.[t = int]
-    in nat32_as_int	include a_conversion.[ph = nat32]	.[t = int]
-    in nat32_as_nat32	include a_conversion.[ph = nat32]	.[t = nat32]
-    in nat64_as_int	include a_conversion.[ph = nat64]	.[t = int]
-    in nat64_as_nat64	include a_conversion.[ph = nat64]	.[t = nat64]

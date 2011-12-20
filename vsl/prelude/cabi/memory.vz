@@ -18,6 +18,7 @@
 open ubiquitous
 open effect
 open:c "stdint.h"
+open:c "stddef.h"
 use cabi.stub_prefix "cviz_"
 
 # Z.  Direct Memory Access
@@ -86,7 +87,10 @@ val:cs unsafe_custom_load_ptr : α → effect ψ (ptr ψ)
 val:c sizeof_ptr : size := "(intnat)sizeof(void *)"
  ## The size of a pointer.
 
-val:c sizeof_size : size := "(intnat)sizeof(size_t)"
+val:c sizeof_ptrdiff_t : size := "(intnat)sizeof(ptrdiff_t)"
+ ## The size of the ptrdiff_t type.
+
+val:c sizeof_size_t : size := "(intnat)sizeof(size_t)"
  ## The size of the size_t type.
 
 val:c sizeof_cshort : size := "(intnat)sizeof(short)"

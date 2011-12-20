@@ -223,19 +223,14 @@ CAMLprim value cviz_store_ptr(value x, value p)
 	*(t *)Voidp_val(p) = of_val(x);					\
 	return Val_unit;						\
     }
-CONV(intnat, int, intnat, Long_val, Val_long)
-CONV(int8,  int,   int8_t, Long_val, Val_long)
-CONV(nat8,  int,   uint8_t, Long_val, Val_long)
-CONV(int16, int,   int16_t, Long_val, Val_long)
-CONV(nat16, int,   uint16_t, Long_val, Val_long)
-CONV(int32, int,   int32_t, Long_val, Val_long)
-CONV(nat32, int,   uint32_t, Long_val, Val_long)
-CONV(int32, int32, int32_t, Int32_val, caml_copy_int32)
-CONV(int64, int,   int64_t, Long_val, Val_long)
-CONV(nat64, int,   uint64_t, Long_val, Val_long)
-CONV(int64, int64, int64_t, Int64_val, caml_copy_int64)
-CONV(sshort,	int, short, Long_val, Val_long)
-CONV(ushort,	int, unsigned short, Long_val, Val_long)
+/*CONV(intnat, int, intnat, Long_val, Val_long)*/
+CONV(int8_t,   int,   int8_t, Long_val, Val_long)
+CONV(uint8_t,  int,   uint8_t, Long_val, Val_long)
+CONV(int16_t,  int,   int16_t, Long_val, Val_long)
+CONV(uint16_t, int,   uint16_t, Long_val, Val_long)
+CONV(int32_t,  int32, int32_t, Int32_val, caml_copy_int32)
+CONV(int64_t,  int64, int64_t, Int64_val, caml_copy_int64)
+/*
 CONV(sint,	int, int, Long_val, Val_long)
 CONV(uint,	int, unsigned int, Long_val, Val_long)
 CONV(slong,	int, long, Long_val, Val_long)
@@ -246,16 +241,25 @@ CONV(sintptr,	int, intptr_t, Long_val, Val_long)
 CONV(uintptr,	int, uintptr_t, Long_val, Val_long)
 CONV(sintmax,	int, intmax_t, Long_val, Val_long)
 CONV(uintmax,	int, uintmax_t, Long_val, Val_long)
+*/
+CONV(sshort,	nint, short, Nativeint_val, caml_copy_nativeint)
+CONV(ushort,	nnat, unsigned short, Nativeint_val, caml_copy_nativeint)
 CONV(sint,	nint, int, Nativeint_val, caml_copy_nativeint)
-CONV(uint,	nint, unsigned int, Nativeint_val, caml_copy_nativeint)
+CONV(uint,	nnat, unsigned int, Nativeint_val, caml_copy_nativeint)
 CONV(slong,	nint, long, Nativeint_val, caml_copy_nativeint)
-CONV(ulong,	nint, unsigned long, Nativeint_val, caml_copy_nativeint)
+CONV(ulong,	nnat, unsigned long, Nativeint_val, caml_copy_nativeint)
+/*
 CONV(slonglong,	nint, long long, Nativeint_val, caml_copy_nativeint)
-CONV(ulonglong,	nint, unsigned long long, Nativeint_val, caml_copy_nativeint)
-CONV(sintptr,	nint, intptr_t, Nativeint_val, caml_copy_nativeint)
-CONV(uintptr,	nint, uintptr_t, Nativeint_val, caml_copy_nativeint)
+CONV(ulonglong,	nnat, unsigned long long, Nativeint_val, caml_copy_nativeint)
+*/
+CONV(ptrdiff_t,	nint, ptrdiff_t, Nativeint_val, caml_copy_nativeint)
+CONV(size_t,	nnat, size_t, Nativeint_val, caml_copy_nativeint)
+CONV(intptr_t,	nint, intptr_t, Nativeint_val, caml_copy_nativeint)
+CONV(uintptr_t,	nnat, uintptr_t, Nativeint_val, caml_copy_nativeint)
+/*
 CONV(sintmax,	nint, intmax_t, Nativeint_val, caml_copy_nativeint)
-CONV(uintmax,	nint, uintmax_t, Nativeint_val, caml_copy_nativeint)
+CONV(uintmax,	nnat, uintmax_t, Nativeint_val, caml_copy_nativeint)
+*/
 #undef CONV
 
 

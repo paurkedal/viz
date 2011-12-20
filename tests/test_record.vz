@@ -5,20 +5,20 @@ open foreign.cabi.record
 in simple
     in rep
 	include! fabric
-	let a do acquire int32_ev
-	let b do acquire int32_ev
+	let a do acquire int32_t.ev
+	let b do acquire int32_t.ev
 	let ev do realize
     let make a b
 	be record.init rep.ev (that : ∀ψ. lens.r ψ δ → effect ψ α)
 	    which! at r
-	do int32_as_int.store a (lens.focus_field rep.a r)
-	do int32_as_int.store b (lens.focus_field rep.b r)
+	do int32_t.store (int32.of_int a) (lens.focus_field rep.a r)
+	do int32_t.store (int32.of_int b) (lens.focus_field rep.b r)
 
 in head_fw include! fabric
 
 in node
     include! fabric
-    let id_ev do acquire int32_ev
+    let id_ev do acquire int32_t.ev
     let owner_ev do acquire head_fw.ptr_ev
     let next_ev do acquire ptr_ev
     let ev do realize
@@ -42,11 +42,11 @@ let init_cycle i j
     do lens.store_ptr node0 head./head.cycle_ev
 
     do lens.store_ptr head node0./node.owner_ev
-    do int32_as_int.store i node0./node.id_ev
+    do int32_t.store (int32.of_int i) node0./node.id_ev
     do lens.store_ptr node1 node0./node.next_ev
 
     do lens.store_ptr head node1./node.owner_ev
-    do int32_as_int.store j node1./node.id_ev
+    do int32_t.store (int32.of_int j) node1./node.id_ev
     do lens.store_ptr node0 node1./node.next_ev
 
 let valid_cycle cyc i j
@@ -54,16 +54,16 @@ let valid_cycle cyc i j
     let l./ev be lens.focus_field ev l
     let node0 be lens.get_ptr head./head.cycle_ev
     let node1 be lens.get_ptr node0./node.next_ev
-    be int32_as_int.get node0./node.id_ev = i
-     ∧ int32_as_int.get node1./node.id_ev = j
+    be (int32.as_int ∘ int32_t.get) node0./node.id_ev = i
+     ∧ (int32.as_int ∘ int32_t.get) node1./node.id_ev = j
 
 in testrec
     include! fabric
     let u0_ev do acquire head.ev
-    let u1_ev do acquire nat8_ev
+    let u1_ev do acquire uint8_t.ev
     let u2_ev do acquire node.ev
-    let u3_ev do acquire nat8_ev
-    let u4_ev do acquire int64_ev
+    let u3_ev do acquire uint8_t.ev
+    let u4_ev do acquire int64_t.ev
     let ev do realize
 
 let! show_field s d
