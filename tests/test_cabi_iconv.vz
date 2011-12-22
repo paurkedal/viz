@@ -1,0 +1,46 @@
+open effect
+open prelude
+open cabi.record
+open cabi.utils
+
+let main
+    let cd do libc.iconv_open "utf32" "utf8"
+    let err do libc.iconv cd lens.unsafe_null lens.unsafe_null
+			     lens.unsafe_null lens.unsafe_null
+
+    let idata be [0xe2;0x97;0xa6; 0x69; 0x63; 0x6f; 0x6e; 0x76; 0xe2;0x97;0xa7;]
+    let odata be [0xfeff; 0x25e6; 0x69; 0x63; 0x6f; 0x6e; 0x76; 0x25e7;]
+
+    let len be list.length idata
+    let ibuf do uint8_t_array.new len
+
+    let! init_loop i
+	at [] be ()
+	at [x; xs]
+	    do uint8_t_array.store i x ibuf
+	    do init_loop (i + 1) xs
+    do init_loop 0 idata
+
+    let iptr do ptr_ref.new uint8_t.ev (uint8_t_array.focus_at 0 ibuf)
+    let isize do size_t_ref.new (Nnat.of_int len)
+    let obuf do uint32_t_array.new 1024
+    let optr do ptr_ref.new uint32_t.ev (uint32_t_array.focus_at 0 obuf)
+    let osize do size_t_ref.new (Nnat.of_int 4096)
+    let iptr_lens be ptr_ref.arg iptr
+    let optr_lens be lens.unsafe_cast @ ptr_ref.arg optr
+    let nconv do libc.iconv cd iptr_lens (size_t_ref.arg isize)
+			       optr_lens (size_t_ref.arg osize)
+
+    assert Nint.eq nconv Nint.zero  # No irreversible conversions.
+    let osizeleft do size_t_ref.load osize
+    let olen be (4096 - (nnat.as_int osizeleft)) div 4
+    let! check_loop i
+	at [] assert i = olen
+	at [y; ys]
+	    let x do uint32_t_array.load i obuf
+	    assert (nat32.as_int x) = y
+	    do print (nat32.show base:(nat32.of_int 16) x) >> print " "
+	    do check_loop (i + 1) ys
+    do check_loop 0 odata >> print "\n"
+
+    do libc.iconv_close cd

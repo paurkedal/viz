@@ -18,5 +18,17 @@
 # This module will only contain libc bindings used in the prelude.
 
 open prereq
+open cabi.record
+open record_sigs.phantoms
+
+open:c "iconv.h"
 
 val:c getenv : string → io (option string)
+
+type:c iconv_t ψ := "iconv_t"
+val:c iconv_open : string → string → effect ψ (iconv_t ψ)
+val:c iconv_close : iconv_t ψ → effect ψ unit
+val:c iconv : iconv_t ψ →
+	lens.r ψ (ptr_ph uint8_t.ph) → lens.r ψ size_t.ph →
+	lens.r ψ (ptr_ph uint8_t.ph) → lens.r ψ size_t.ph →
+	effect ψ nint
