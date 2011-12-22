@@ -182,8 +182,12 @@ in lens
     val:cs store_value : α → r ψ (value_ph α) → effect ψ unit
 	    := "cviz_store_value"
 
+    val:cs unsafe_get_null : unit → R Ψ δ := "cviz_ptr_get_zero"
+    let unsafe_null be unsafe_get_null ()
+    val:cs unsafe_cast : R Ψ δ → R Ψ δ' := "%identity"
     val:cs unsafe_freeze : R Ψ δ → t δ := "%identity"
     val:cs unsafe_thaw : R Ψ δ → r ψ δ := "%identity"
+
 
 # 0.0.  Evidence for Primitive Types
 

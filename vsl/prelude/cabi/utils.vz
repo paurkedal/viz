@@ -1,0 +1,109 @@
+# Copyright 2011  Petter Urkedal
+#
+# This file is part of the Viz Standard Library <http://www.vizlang.org/>.
+#
+# The Viz Standard Library (VSL) is free software: you can redistribute it
+# and/or modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# The VSL is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the VSL.  If not, see <http://www.gnu.org/licenses/>.
+
+open prereq
+open record
+open effect
+open record_sigs.phantoms
+
+in ptr_ref
+    type r ψ δ := record.r ψ (ptr_ph δ)
+
+    let! new ev p
+	let r do record.alloc (record_ptr_ev ev)
+	do lens.store_ptr p (record.focus r)
+	be r
+
+    let! load r do lens.load_ptr (record.focus r)
+
+    let! store p r do lens.store_ptr p (record.focus r)
+
+    let arg be record.focus
+
+in cref.(ctype : a_foreign_type)
+
+    type r ψ := record.r ψ ctype.ph
+
+    let! new x
+	let r do record.alloc ctype.ev
+	do ctype.store x (record.focus r)
+	be r
+
+    let! load r do ctype.load (record.focus r)
+
+    let! store x r do ctype.store x (record.focus r)
+
+    let arg be record.focus
+
+in carray.(ctype : a_foreign_type)
+
+    type r ψ := record.r ψ (spill_ph unit ctype.ph)
+
+    let! new n do record.alloc_spilled unit_ev n ctype.ev
+
+    let _has_elt be snd @ spill_ev unit_ev ctype.ev
+    let focus_at i be lens.focus_element _has_elt i ∘ record.focus
+
+    let! load i r do ctype.load (focus_at i r)
+    let! store i x r do ctype.store x (focus_at i r)
+
+
+# 0.0.  Reference Instances
+
+in   int8_t_ref include cref.(int8_t)
+in  uint8_t_ref include cref.(uint8_t)
+in  int16_t_ref include cref.(int16_t)
+in uint16_t_ref include cref.(uint16_t)
+in  int32_t_ref include cref.(int32_t)
+in uint32_t_ref include cref.(uint32_t)
+in  int64_t_ref include cref.(int64_t)
+in uint64_t_ref include cref.(uint64_t)
+
+in sshort_ref include cref.(sshort)
+in ushort_ref include cref.(ushort)
+in   sint_ref include cref.(sint)
+in   uint_ref include cref.(uint)
+in  slong_ref include cref.(slong)
+in  ulong_ref include cref.(ulong)
+
+in ptrdiff_t_ref include cref.(ptrdiff_t)
+in    size_t_ref include cref.(size_t)
+in  intptr_t_ref include cref.(intptr_t)
+in uintptr_t_ref include cref.(uintptr_t)
+
+# 0.0.  Array Instances
+
+in   int8_t_array include carray.(int8_t)
+in  uint8_t_array include carray.(uint8_t)
+in  int16_t_array include carray.(int16_t)
+in uint16_t_array include carray.(uint16_t)
+in  int32_t_array include carray.(int32_t)
+in uint32_t_array include carray.(uint32_t)
+in  int64_t_array include carray.(int64_t)
+in uint64_t_array include carray.(uint64_t)
+
+in sshort_array include carray.(sshort)
+in ushort_array include carray.(ushort)
+in   sint_array include carray.(sint)
+in   uint_array include carray.(uint)
+in  slong_array include carray.(slong)
+in  ulong_array include carray.(ulong)
+
+in ptrdiff_t_array include carray.(ptrdiff_t)
+in    size_t_array include carray.(size_t)
+in  intptr_t_array include carray.(intptr_t)
+in uintptr_t_array include carray.(uintptr_t)

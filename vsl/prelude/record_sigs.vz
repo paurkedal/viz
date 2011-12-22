@@ -168,6 +168,8 @@ sig a_record_architecture
 	val load_value : r ψ (value_ph α) → effect ψ α
 	val store_value : α → r ψ (value_ph α) → effect ψ unit
 
+	val unsafe_null : R Ψ δ
+	val unsafe_cast : R Ψ δ → R Ψ δ'
 	val unsafe_freeze : R Ψ δ → t δ
 	val unsafe_thaw : R Ψ δ → r ψ δ
 

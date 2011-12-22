@@ -120,7 +120,7 @@ let rec nonoption_conversion nparam state = function
 	| "bool"   -> ("int",  None, "Bool_val",  "Val_bool")
 	| "int" | "size" | "offset" ->
 	    ("intnat",  None, "Long_val", "Val_long")
-	| "nativeint" ->
+	| "nativeint" | "nint" | "nnat" ->
 	    ("nativeint", None, "Nativeint_val", "caml_copy_nativeint")
 	| "int32"  -> ("int32", None, "Int32_val", "caml_copy_int32")
 	| "int64"  -> ("int64", None, "Int64_val", "caml_copy_int64")
@@ -135,6 +135,17 @@ let rec nonoption_conversion nparam state = function
 	    errf_at loc "Don't know how to pass values of type %s to \
 			 C functions." tname
 	end
+    | Atyp_apply (loc, Atyp_apply (_, Atyp_ref (Apath (_, lens)), _), _)
+	    when (match List.rev (Modpath.to_string_list lens) with
+		  | "r" :: "lens" :: _
+		  | "R" :: "lens" :: _ -> true
+		  | _ -> false) ->
+	("void *", None, "Voidp_val", "cviz_copy_ptr")
+    | Atyp_apply (loc, Atyp_ref (Apath (_, lens)), _)
+	    when (match List.rev (Modpath.to_string_list lens) with
+		  | "t" :: "lens" :: _ -> true
+		  | _ -> false) ->
+	("void *", None, "Voidp_val", "cviz_copy_ptr")
     | Atyp_apply (loc, Atyp_apply (_, Atyp_ref op_path, t),
 		       Atyp_ref (Apath (tag_loc, tag_path)))
 	    when apath_eq_idr idr_2o_index op_path ->
