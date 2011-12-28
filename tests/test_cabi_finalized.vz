@@ -1,0 +1,33 @@
+open prelude.cabi.record
+open effect
+
+in testrec
+    include! fabric
+    let fd do acquire sint.ev
+    let ev do realize
+
+let! fin o
+    let ol be record.focus o
+    let fd do sint.load (lens.focus_field testrec.fd ol)
+    do print "Closing " >> print (nint.show fd) >> print "\n"
+    do flush stdout
+
+let trigger_gc n accu
+    if n = 0 be accu
+    if n mod 1000 = 0 be trigger_gc (n - 1) []
+    be trigger_gc (n - 1) [n; accu]
+
+let! make_fd fd
+    let o do record.alloc_finalized testrec.ev fin
+    let ol be record.focus o
+    do sint.store (nint.of_int fd) (lens.focus_field testrec.fd ol)
+    be o
+
+let main
+    let _ do make_fd 2
+
+    # Trigger GC
+    let xs be list.init 100000 ident
+    let xs' be list.map (x ↦ x + 1) xs
+    let xs'' be list.map (x ↦ x + 1) xs
+    be ()

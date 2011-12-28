@@ -237,9 +237,14 @@ in record
     type t δ := R cold δ
 
     val:cs prim_alloc : offset → effect ψ (R Ψ δ) := "cviz_record_alloc"
-    val:cs focus : R Ψ δ → lens.R Ψ δ := "cviz_unsafe_custom_address"
+    val:cs prim_alloc_finalized :
+	    offset → (r ψ δ → unit) → effect ψ (r ψ δ) :=
+	    "cviz_record_alloc_finalized"
+    val:cs focus : R Ψ δ → lens.R Ψ δ := "cviz_record_focus"
 
     let alloc (record_sc al sz) be prim_alloc sz
+    let alloc_finalized (record_sc al sz) f
+	be prim_alloc_finalized sz (__builtin_effect_run ∘ f)
 
     let init (record_sc al sz) (f : ∀ψ. lens.r ψ δ → effect ψ α)
 	be observe (that : ∀ψ. effect ψ (α × R Ψ δ)) which!

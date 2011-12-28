@@ -186,6 +186,9 @@ sig a_record_architecture
 
 	val alloc : is_record δ → effect ψ (r ψ δ)
 
+	val alloc_finalized : is_record δ → (r ψ δ → effect ψ unit) →
+			      effect ψ (r ψ δ)
+
 	val init : is_record δ → (∀ψ. lens.r ψ δ → effect ψ α) → α × R Ψ δ
 	 ## (init_record ev f) allocates an instance of (ev) and passes a
 	 ## reference to (f) for initialization.  The value returned by (f) is

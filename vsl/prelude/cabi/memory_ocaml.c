@@ -20,6 +20,7 @@
 #include <caml/alloc.h>
 #include <caml/custom.h>
 #include <caml/memory.h>
+#include <caml/callback.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -276,4 +277,42 @@ CAMLprim value
 cviz_record_alloc(value size)
 {
     return caml_alloc_custom(&_record_ops, Offset_val(size), 0, 1);
+}
+
+static void _finalize_record(value v)
+{
+    value finalize = *(value *)Data_custom_val(v);
+    caml_callback(finalize, v);
+}
+
+static struct custom_operations _finalized_record_ops = {
+    "camlviz.finalized_record",
+    _finalize_record,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default,
+};
+
+CAMLprim value
+cviz_record_alloc_finalized(value size_, value finalize)
+{
+    CAMLparam2 (size_, finalize);
+    CAMLlocal1 (v);
+    size_t size = Offset_val(size_) + sizeof(value);
+    v = caml_alloc_custom(&_finalized_record_ops, size, 0, 1);
+    caml_modify((value *)Data_custom_val(v), finalize);
+    CAMLreturn (v);
+}
+
+CAMLprim value
+cviz_record_focus(value obj)
+{
+    CAMLparam1 (obj);
+    CAMLlocal1 (r);
+    if (Custom_ops_val(obj) == &_finalized_record_ops)
+	r = cviz_copy_ptr((value *)Data_custom_val(obj) + 1);
+    else
+	r = cviz_copy_ptr(Data_custom_val(obj));
+    CAMLreturn (r);
 }
