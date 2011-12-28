@@ -32,6 +32,11 @@ let split_on_space s =
 	loop (rskip_while is_space s i) accu in
     loop (String.length s) []
 
+let split_ccopts optstr =
+    S(List.map (fun s -> S[A"-ccopt"; A s]) (split_on_space optstr))
+let split_cclibs optstr =
+    S(List.map (fun s -> S[A"-cclib"; A s]) (split_on_space optstr))
+
 let cf_LLVM_LDFLAGS = "@LLVM_LDFLAGS@"
 let cf_LLVM_LIBS = "@LLVM_LIBS@"
 let cf_LLVM_CPPFLAGS = "@LLVM_CPPFLAGS@" (* Unused, cf #define in ast_to_* *)
@@ -52,7 +57,7 @@ let static = true
  * =============================================== *)
 
 (** A modified version of [Ocaml_compiler.ocamlc_c] which adds an "-impl"
-    option in front ofthe input file, so that ocamlc accepts a non-standard
+    option in front of the input file, so that ocamlc accepts a non-standard
     extension. *)
 let custom_ocamlc_c tags arg out =
     let tags = tags ++ "ocaml" ++ "byte" in
@@ -84,7 +89,8 @@ let custom_byte_compile_ocaml_interf vz cmi env build =
 let custom_byte_compile_ocaml_implem ?tag vz cmo env build =
     let vz = env vz and cmo = env cmo in
     Ocaml_compiler.prepare_compile build vz;
-    custom_ocamlc_c (tags_of_pathname vz ++ "implem" +++ tag) vz cmo
+    custom_ocamlc_c (Tags.union (tags_of_pathname vz) (tags_of_pathname cmo)
+		     ++ "implem" +++ tag) vz cmo
 
 (** A modified version of [Ocaml_compiler.prepare_link] for the .vz
     extension. *)
@@ -210,7 +216,8 @@ let camlvizconsts arg out env build =
 
 let compile_fficgen arg out env build =
     let arg = env arg and out = env out in
-    Cmd (S[A"cc"; A"-I"; P".."; A"-o"; Px out; A arg])
+    let tags = tags_of_pathname arg ++ "cc" ++ "compile" in
+    Cmd (S[A"cc"; A"-I"; P".."; A"-o"; Px out; A arg; T tags])
 
 let runprog arg out env build =
     let arg = env arg and out = env out in
@@ -259,11 +266,12 @@ rule "camlviz, C program to emit ML source defining constants: vz -> %_FFICgen.c
     (camlvizconsts "%.vz" "%_FFICgen.c");;
 
 rule "camlviz, Run C program to emit constant defs: %_FFICgen -> _FFIC.ml"
-    ~deps:["%_FFICgen"]
+    ~dep:"%_FFICgen"
     ~prod:"%_FFIC.ml"
     (runprog "%_FFICgen" "%_FFIC.ml");;
 
 rule "Compile and link the _FFICgen program"
+    ~tags:["cc"; "compile"; "link"]
     ~dep:"%_FFICgen.c"
     ~prod:"%_FFICgen"
     (compile_fficgen "%_FFICgen.c" "%_FFICgen");;
@@ -304,9 +312,8 @@ let camlvizpp_include path =
     flag ["ocaml"; "camlvizpp"; "pp"]		& S[A"-I"; P path];
     flag ["ocamldep"; "camlvizpp"]		& S[A"-I"; P path]
 
-let llvm_libs () =
-    S[S(List.map (fun l -> S[A"-ccopt"; A l]) (split_on_space cf_LLVM_LDFLAGS));
-      S(List.map (fun l -> S[A"-cclib"; A l]) (split_on_space cf_LLVM_LIBS));
+let llvm_libs =
+    S[split_cclibs cf_LLVM_LIBS; split_cclibs cf_LLVM_LDFLAGS;
       A"-cclib"; A"-lstdc++"]
 
 let ocaml_cstubs name =
@@ -337,10 +344,14 @@ let () = dispatch begin function
 	ocaml_lib "vsl";
 	ocaml_cstubs "vsl";
 	ocaml_cstubs "tests";
-	flag ["extension:c"; "compile"] & S[A"-ccopt"; A"-I.."];
+	flag ["c"; "compile"] (* stubs compiled by ocamlc *) &
+		S[A"-ccopt"; A"-I.."; split_ccopts cf_LLVM_CPPFLAGS];
+	flag ["cc"; "compile"; "use_llvm_libs"] (* *FFICgen.c comp. by cc *) &
+		S(List.map (fun a -> A a) (split_on_space cf_LLVM_CPPFLAGS));
 	dep ["ocaml"; "compile"; "byte"; "use_vsl"] ["vsl.cma"];
 	dep ["ocaml"; "compile"; "native"; "use_vsl"] ["vsl.cmxa"];
-	flag ["link"; "ocaml"; "library"; "use_llvm_libs"] & llvm_libs ();
+	flag ["ocaml"; "link"; "library"; "use_llvm_libs"] & llvm_libs;
+	flag ["ocaml"; "link"; "program"; "use_llvm_libs"] & llvm_libs;
 	if static then flag ["link"; "ocaml"; "byte"] (A"-custom");
 	flag ["ocamldep"; "camlvizpp"] & S[A"-N"; P"vsl"; A"-N"; P"compiler"];
 	flag ["camlvizpp"; "compile"; "no_vsl"] & A"--no-vsl";

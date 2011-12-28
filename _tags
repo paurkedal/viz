@@ -29,5 +29,6 @@
 <{examples,tests,tools}{,_local}/**/*.{vz,byte,native}>: use_vsl
 <tests/test_memory.{byte,native}>: use_libtests, use_libvsl
 
+<compiler/**/*>: use_llvm_libs
 <compiler/*.cmx>: for-pack(Compiler)
 <compiler/llvm/*.cmx>: for-pack(Compiler.Llvm)

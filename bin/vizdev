@@ -22,11 +22,11 @@ set -e
 #
 if [ x"$VIZ_SRCDIR" = x ]; then
     if have_command realpath; then
-	:
+	realpath=realpath
     elif have_command greadlink; then
-	alias realpath='greadlink -f'
+	realpath='greadlink -f'
     elif readlink --version 2>/dev/null | grep -q GNU; then
-	alias realpath='readlink -f'
+	realpath='readlink -f'
     else
 	cat 1>&2 <<EOF
 
@@ -37,7 +37,7 @@ directory of your Viz check-out.
 EOF
 	exit 69
     fi
-    mypath=`realpath $0`
+    mypath=`$realpath $0`
     VIZ_SRCDIR=${mypath%/bin/*}
 fi
 export VIZ_SRCDIR

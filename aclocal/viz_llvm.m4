@@ -5,7 +5,7 @@
 # with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([VIZ_LIB_LLVM],
-  [ AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [false])
+  [ AC_PATH_PROGS([LLVM_CONFIG], [llvm-config-2.9 llvm-config], [false])
     if test ${LLVM_CONFIG} != false; then
 	LLVM_VERSION=`${LLVM_CONFIG} --version`
 	LLVM_CPPFLAGS=`${LLVM_CONFIG} --cppflags | sed s/-DNDEBUG//g`
