@@ -1,3 +1,4 @@
+libvsl/inlined.o
 vsl/compat/caml_support.o
 vsl/foreign/cabi/utils_FFIS.o
 vsl/prelude/float_FFIS.o

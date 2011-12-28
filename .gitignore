@@ -9,6 +9,9 @@
 /config.status
 /configure
 /fform/grammar.automaton
+/libvsl/config.h
+/libvsl/config.h.in
+/libvsl/config.h.in~
 /Makefile
 /Makefile.local
 /myocamlbuild.ml
