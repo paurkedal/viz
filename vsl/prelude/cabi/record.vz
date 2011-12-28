@@ -63,11 +63,6 @@ in offset include int
 
 # 0.0.  Internal Helpers
 
-type:c gptr := "void *"
-val:cs gptr_cmp : gptr → gptr → torder := "cviz_ptr_cmp"
-val:cs gptr_add : offset → gptr → gptr := "cviz_ptr_add"
-val:cs gptr_sub : offset → gptr → gptr := "cviz_ptr_sub"
-
 let unbounded be -1
  ## The value used in place of the array size for spill-arrays.
 
@@ -158,31 +153,33 @@ in! fabric
 # 0.0.  Lens
 
 in lens
-    type R Ψ δ := gptr
+    # Should be abstract, but value restriction kicks in below.
+    type R Ψ δ := unit
     type r ψ δ := R (hot ψ) δ
     type t δ   := R cold δ
 
-    let cmp be gptr_cmp
+    val:cs cmp : R Ψ δ → R Ψ' δ → torder := "vsls_lens_cmp"
+    val:cs _focus : offset → R Ψ δ → R Ψ δ' := "vsls_lens_focus"
 
-    let focus_field (field_sc off) p be gptr_add off p
+    let focus_field (field_sc off) p be _focus off p
     let focus_component (components_sc _ sz) n p
-	be gptr_add (offset.mul sz (offset.of_int n)) p
+	be _focus (offset.mul sz (offset.of_int n)) p
     let focus_element (elements_sc off sz) n p
-	be gptr_add (offset.add off (offset.mul sz (offset.of_int n))) p
+	be _focus (offset.add off (offset.mul sz (offset.of_int n))) p
 
-    let unsafe_defocus_field (field_sc off) p be gptr_sub off p
+    let unsafe_defocus_field (field_sc off) p be _focus (offset.neg off) p
 
-    val:cs get_ptr : t (ptr_ph δ) → t δ := "cviz_load_ptr"
-    val:cs load_ptr : r ψ (ptr_ph δ) → effect ψ (r ψ δ) := "cviz_load_ptr"
+    val:cs get_ptr : t (ptr_ph δ) → t δ := "vsls_lens_load_ptr"
+    val:cs load_ptr : r ψ (ptr_ph δ) → effect ψ (r ψ δ) := "vsls_lens_load_ptr"
     val:cs store_ptr : r ψ δ → r ψ (ptr_ph δ) → effect ψ unit
-	    := "cviz_store_ptr"
+	    := "vsls_lens_store_ptr"
 
-    val:cs get_value : t (value_ph α) → α := "cviz_load_value"
-    val:cs load_value : r ψ (value_ph α) → effect ψ α := "cviz_load_value"
+    val:cs get_value : t (value_ph α) → α := "vsls_lens_load_value"
+    val:cs load_value : r ψ (value_ph α) → effect ψ α := "vsls_lens_load_value"
     val:cs store_value : α → r ψ (value_ph α) → effect ψ unit
-	    := "cviz_store_value"
+	    := "vsls_lens_store_value"
 
-    val:cs unsafe_get_null : unit → R Ψ δ := "cviz_ptr_get_zero"
+    val:cs unsafe_get_null : unit → R Ψ δ := "vsls_lens_get_null"
     let unsafe_null be unsafe_get_null ()
     val:cs unsafe_cast : R Ψ δ → R Ψ δ' := "%identity"
     val:cs unsafe_freeze : R Ψ δ → t δ := "%identity"
@@ -225,22 +222,23 @@ sig a_foreign_type
     type ph
     type t
     val ev : is_record ph
-    val get : gptr → t
-    val load : gptr → effect ψ t
-    val store : t → gptr → effect ψ unit
+    val get : lens.t ph → t
+    val load : lens.r ψ ph → effect ψ t
+    val store : t → lens.r ψ ph → effect ψ unit
 
 # 0.0.  Construction and Inspection
 
 in record
-    type:c R Ψ δ
+    # Should be abstract, but value restriction kicks in below.
+    type R Ψ δ := unit
     type r ψ δ := R (hot ψ) δ
     type t δ := R cold δ
 
-    val:cs prim_alloc : offset → effect ψ (R Ψ δ) := "cviz_record_alloc"
+    val:cs prim_alloc : offset → effect ψ (R Ψ δ) := "vsls_record_alloc"
     val:cs prim_alloc_finalized :
 	    offset → (r ψ δ → unit) → effect ψ (r ψ δ) :=
-	    "cviz_record_alloc_finalized"
-    val:cs focus : R Ψ δ → lens.R Ψ δ := "cviz_record_focus"
+	    "vsls_record_alloc_finalized"
+    val:cs focus : R Ψ δ → lens.R Ψ δ := "vsls_record_focus"
 
     let alloc (record_sc al sz) be prim_alloc sz
     let alloc_finalized (record_sc al sz) f
@@ -271,61 +269,61 @@ in int8_t
     type ph inj _int8_ph
     type t := int
     let ev be elem_record_sc (offset.of_int 1)
-    val:cs get : gptr → t			:= "cviz_int8_t_load_int"
-    val:cs load : gptr → effect ψ t		:= "cviz_int8_t_load_int"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_int8_t_store_int"
+    val:cs get : lens.t ph → t			:= "vsls_int8_t_load_int"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_int8_t_load_int"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_int8_t_store_int"
 in uint8_t
     type ph inj _nat8_ph
     type t := int
     let ev be elem_record_sc (offset.of_int 1)
-    val:cs get : gptr → t			:= "cviz_uint8_t_load_int"
-    val:cs load : gptr → effect ψ t		:= "cviz_uint8_t_load_int"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_uint8_t_store_int"
+    val:cs get : lens.t ph → t			:= "vsls_uint8_t_load_int"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uint8_t_load_int"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uint8_t_store_int"
 
 in int16_t
     type ph inj _int16_ph
     type t := int
     let ev be elem_record_sc (offset.of_int 2)
-    val:cs get : gptr → t			:= "cviz_int16_t_load_int"
-    val:cs load : gptr → effect ψ t		:= "cviz_int16_t_load_int"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_int16_t_store_int"
+    val:cs get : lens.t ph → t			:= "vsls_int16_t_load_int"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_int16_t_load_int"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_int16_t_store_int"
 in uint16_t
     type ph inj _nat16_ph
     type t := int
     let ev be elem_record_sc (offset.of_int 2)
-    val:cs get : gptr → t			:= "cviz_uint16_t_load_int"
-    val:cs load : gptr → effect ψ t		:= "cviz_uint16_t_load_int"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_uint16_t_store_int"
+    val:cs get : lens.t ph → t			:= "vsls_uint16_t_load_int"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uint16_t_load_int"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uint16_t_store_int"
 
 in int32_t
     type ph inj _int32_ph
     type t := int32
     let ev be elem_record_sc (offset.of_int 4)
-    val:cs get : gptr → t			:= "cviz_int32_t_load_int32"
-    val:cs load : gptr → effect ψ t		:= "cviz_int32_t_load_int32"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_int32_t_store_int32"
+    val:cs get : lens.t ph → t			:= "vsls_xint32_t_load_int32"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_xint32_t_load_int32"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint32_t_store_int32"
 in uint32_t
     type ph inj _nat32_ph
     type t := nat32
     let ev be elem_record_sc (offset.of_int 4)
-    val:cs get : gptr → t			:= "cviz_int32_t_load_int32"
-    val:cs load : gptr → effect ψ t		:= "cviz_int32_t_load_int32"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_int32_t_store_int32"
+    val:cs get : lens.t ph → t			:= "vsls_xint32_t_load_int32"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_xint32_t_load_int32"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint32_t_store_int32"
 
 in int64_t
     type ph inj _int64_ph
     type t := int64
     let ev be elem_record_sc (offset.of_int 8)
-    val:cs get : gptr → int64			:= "cviz_int64_t_load_int64"
-    val:cs load : gptr → effect ψ int64		:= "cviz_int64_t_load_int64"
-    val:cs store : int64 → gptr → effect ψ unit	:= "cviz_int64_t_store_int64"
+    val:cs get : lens.t ph → int64		:= "vsls_xint64_t_load_int64"
+    val:cs load : lens.r ψ ph → effect ψ int64	:= "vsls_xint64_t_load_int64"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint64_t_store_int64"
 in uint64_t
     type ph inj _nat64_ph
     type t := nat64
     let ev be elem_record_sc (offset.of_int 8)
-    val:cs get : gptr → t			:= "cviz_int64_t_load_int64"
-    val:cs load : gptr → effect ψ t		:= "cviz_int64_t_load_int64"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_int64_t_store_int64"
+    val:cs get : lens.t ph → t			:= "vsls_xint64_t_load_int64"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_xint64_t_load_int64"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint64_t_store_int64"
 
 # 0.0.0.  C-Specific Types
 
@@ -333,101 +331,101 @@ in sshort
     type ph inj _sshort_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
-    val:cs get : gptr → t			:= "cviz_sshort_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_sshort_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_sshort_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_sshort_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_sshort_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_sshort_store_nint"
 in ushort
     type ph inj _ushort_ph
     type t := nnat
     let ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
-    val:cs get : gptr → t			:= "cviz_ushort_load_nnat"
-    val:cs load : gptr → effect ψ t		:= "cviz_ushort_load_nnat"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_ushort_store_nnat"
+    val:cs get : lens.t ph → t			:= "vsls_ushort_load_nnat"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ushort_load_nnat"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ushort_store_nnat"
 in sint
     type ph inj _sint_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_cint)
-    val:cs get : gptr → t			:= "cviz_sint_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_sint_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_sint_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_sint_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_sint_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_sint_store_nint"
 in uint
     type ph inj _uint_ph
     type t := nnat
     let ev be elem_record_sc (offset.of_int memory.sizeof_cint)
-    val:cs get : gptr → t			:= "cviz_uint_load_nnat"
-    val:cs load : gptr → effect ψ t		:= "cviz_uint_load_nnat"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_uint_store_nnat"
+    val:cs get : lens.t ph → t			:= "vsls_uint_load_nnat"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uint_load_nnat"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uint_store_nnat"
 in slong
     type ph inj _slong_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_clong)
-    val:cs get : gptr → t			:= "cviz_slong_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_slong_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_slong_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_slong_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_slong_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_slong_store_nint"
 in ulong
     type ph inj _ulong_ph
     type t := nnat
     let ev be elem_record_sc (offset.of_int memory.sizeof_clong)
-    val:cs get : gptr → t			:= "cviz_ulong_load_nnat"
-    val:cs load : gptr → effect ψ t		:= "cviz_ulong_load_nnat"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_ulong_store_nnat"
+    val:cs get : lens.t ph → t			:= "vsls_ulong_load_nnat"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ulong_load_nnat"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ulong_store_nnat"
 {#
 in slonglong
     type ph inj _slonglong_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
-    val:cs get : gptr → t			:= "cviz_slonglong_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_slonglong_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_slonglong_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_slonglong_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_slonglong_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_slonglong_store_nint"
 in ulonglong
     type ph inj _ulonglong_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
-    val:cs get : gptr → t			:= "cviz_ulonglong_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_ulonglong_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_ulonglong_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_ulonglong_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ulonglong_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ulonglong_store_nint"
 #}
 in ptrdiff_t
     type ph inj _ptrdiff_t_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_ptrdiff_t)
-    val:cs get : gptr → t			:= "cviz_ptrdiff_t_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_ptrdiff_t_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_ptrdiff_t_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_ptrdiff_t_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ptrdiff_t_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ptrdiff_t_store_nint"
 in size_t
     type ph inj _size_t_ph
     type t := nnat
     let ev be elem_record_sc (offset.of_int memory.sizeof_size_t)
-    val:cs get : gptr → t			:= "cviz_size_t_load_nnat"
-    val:cs load : gptr → effect ψ t		:= "cviz_size_t_load_nnat"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_size_t_store_nnat"
+    val:cs get : lens.t ph → t			:= "vsls_size_t_load_nnat"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_size_t_load_nnat"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_size_t_store_nnat"
 in intptr_t
     type ph inj _sintptr_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
-    val:cs get : gptr → t			:= "cviz_intptr_t_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_intptr_t_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_intptr_t_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_intptr_t_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_intptr_t_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_intptr_t_store_nint"
 in uintptr_t
     type ph inj _uintptr_ph
     type t := nnat
     let ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
-    val:cs get : gptr → t			:= "cviz_uintptr_t_load_nnat"
-    val:cs load : gptr → effect ψ t		:= "cviz_uintptr_t_load_nnat"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_uintptr_t_store_nnat"
+    val:cs get : lens.t ph → t			:= "vsls_uintptr_t_load_nnat"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uintptr_t_load_nnat"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uintptr_t_store_nnat"
 {#
 in sintmax
     type ph inj _sintmax_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
-    val:cs get : gptr → t			:= "cviz_sintmax_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_sintmax_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_sintmax_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_sintmax_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_sintmax_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_sintmax_store_nint"
 in uintmax
     type ph inj _uintmax_ph
     type t := nint
     let ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
-    val:cs get : gptr → t			:= "cviz_uintmax_load_nint"
-    val:cs load : gptr → effect ψ t		:= "cviz_uintmax_load_nint"
-    val:cs store : t → gptr → effect ψ unit	:= "cviz_uintmax_store_nint"
+    val:cs get : lens.t ph → t			:= "vsls_uintmax_load_nint"
+    val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uintmax_load_nint"
+    val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uintmax_store_nint"
 #}

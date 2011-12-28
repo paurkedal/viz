@@ -32,6 +32,7 @@ let header = "\
 #define __STDC_LIMIT_MACROS 1
 #define __STDC_CONSTANT_MACROS 1
 
+#include <libvsl/cabi.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
@@ -140,12 +141,12 @@ let rec nonoption_conversion nparam state = function
 		  | "r" :: "lens" :: _
 		  | "R" :: "lens" :: _ -> true
 		  | _ -> false) ->
-	("void *", None, "Voidp_val", "cviz_copy_ptr")
+	("void *", None, "vsl_lensv_ptr", "vsl_lensv_of_ptr")
     | Atyp_apply (loc, Atyp_ref (Apath (_, lens)), _)
 	    when (match List.rev (Modpath.to_string_list lens) with
 		  | "t" :: "lens" :: _ -> true
 		  | _ -> false) ->
-	("void *", None, "Voidp_val", "cviz_copy_ptr")
+	("void *", None, "vsl_lensv_ptr", "vsl_lensv_of_ptr")
     | Atyp_apply (loc, Atyp_apply (_, Atyp_ref op_path, t),
 		       Atyp_ref (Apath (tag_loc, tag_path)))
 	    when apath_eq_idr idr_2o_index op_path ->

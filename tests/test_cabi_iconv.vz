@@ -7,6 +7,8 @@ let main
     let cd do libc.iconv_open "utf32" "utf8"
     let err do libc.iconv cd lens.unsafe_null lens.unsafe_null
 			     lens.unsafe_null lens.unsafe_null
+    be ()
+    {#
 
     let idata be [0xe2;0x97;0xa6; 0x69; 0x63; 0x6f; 0x6e; 0x76; 0xe2;0x97;0xa7;]
     let odata be [0xfeff; 0x25e6; 0x69; 0x63; 0x6f; 0x6e; 0x76; 0x25e7;]
@@ -44,3 +46,4 @@ let main
     do check_loop 0 odata >> print "\n"
 
     do libc.iconv_close cd
+    #}

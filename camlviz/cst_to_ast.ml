@@ -581,11 +581,7 @@ let rec build_atcases is_sig atcases algtb = function
 	    | loc, av, ats, Atypinfo_abstract ->
 		let typinfo =
 		    let ats, injs = Algt_builder.find_injs av algtb in
-		    if injs = [] then
-			if is_sig then Atypinfo_abstract else
-			errf_at loc
-				"The algebraic type %s needs at least one case."
-				(avar_name av)
+		    if injs = [] then Atypinfo_abstract
 		    else Atypinfo_injs (List.rev injs)
 		in (loc, av, ats, typinfo)
 	    | atcase -> atcase in
