@@ -2,6 +2,8 @@ top_builddir = @top_builddir@
 abs_top_builddir = @abs_top_builddir@
 top_srcdir = @top_srcdir@
 
+SHELL = @SHELL@
+
 OCAMLBUILD = ocamlbuild $(OCAMLBUILD_STDFLAGS) $(OCAMLBUILD_FLAGS)
 OCAMLBUILD_STDFLAGS = -no-links
 OCAMLBUILD_FLAGS =
@@ -31,10 +33,11 @@ check: camlviz-check-vsl
 # ====================
 
 %: $(top_srcdir)/%.in config.status
-	./config.status $@
-configure config.status: configure.ac $(aclocal_SOURCES)
-	./autogen.sh
-
+	$(SHELL) ./config.status $@
+$(top_srcdir)/configure: $(top_srcdir)/configure.ac $(aclocal_SOURCES)
+	$(SHELL) ./autogen.sh
+config.status: $(top_srcdir)/configure
+	$(SHELL) ./config.status --recheck
 
 # The camlviz Preprocessor and Compatible Build of the Standard Library
 # =====================================================================
