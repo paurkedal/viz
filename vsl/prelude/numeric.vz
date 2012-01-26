@@ -158,6 +158,14 @@ in extend_basic_float.(basic_float : a_basic_float)
 	    be int.neg (_iloga (0'div one a) x)
 	fail "iloga requires a base in (0, 1) ∪ (1, ∞)."
 
+    in ops
+	let 1'+. (x : t) be x
+	let 2'+. be add
+	let 1'−. be neg
+	let 2'−. be sub
+	let 2'×. be mul
+	let 2'∕. be 0'div
+
 in pervasive
     #?ffoc open compat.ocaml_miscints
     in int

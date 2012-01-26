@@ -31,6 +31,7 @@ include prereq.combinators
 include prereq.bool_ops
 include numeric.pervasive
 include numeric.pervasive.int.ops
+include numeric.pervasive.float.ops
 
 in effect include prereq.effect
 

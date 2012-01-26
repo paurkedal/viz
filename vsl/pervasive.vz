@@ -45,6 +45,7 @@ include prelude.prereq.combinators
 include prelude.prereq.bool_ops
 include prelude.numeric.pervasive
 include prelude.numeric.pervasive.int.ops
+include prelude.numeric.pervasive.float.ops
 
 in effect include prelude.prereq.effect
 
