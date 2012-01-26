@@ -45,10 +45,6 @@
 # the second record, indexed by an integer.  A spill encodes the common
 # C-idiom of adding variable sized arrays as the last field of a struct.  A
 # spill is not a record, since its size is unknown.
-#
-# A record can be a pointer to another record or to a spill.  In addition, a
-# pointer is tagged as either internal or external.  During construction of a
-# record instance, instances pointed to by external pointers are immutable.
 
 open prereq
 
@@ -118,11 +114,11 @@ sig a_record_architecture
     # 0.0.0.0.  Pointers
 
     val record_ptr_ev : is_record δ → is_record (ptr_ph δ)
-     ## A pointer to an internal record is a record.
+     ## A pointer to a record is a record.
 
     val spill_ptr_ev :
 	is_record δ → is_record ε → is_record (ptr_ph (spill_ph δ ε))
-     ## A pointer to an internal spill is a record.
+     ## A pointer to a spill is a record.
 
 
     # 0.0.0.0.  Compound Types

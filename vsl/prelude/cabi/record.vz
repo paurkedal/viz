@@ -34,6 +34,7 @@ sealed with
 
     val elements_offset : has_elements σ δ → offset
 
+    val unsafe_conjecture_etype : int → is_record δ
     val unsafe_conjecture_field : is_record ε → offset → has_field δ ε
 
     in int8_t   include a_foreign_type.[t = int]
@@ -83,7 +84,7 @@ type has_field δ ε       inj field_sc : offset → has_field δ ε
 type has_components δ ε  inj components_sc : int → offset → has_components δ ε
 type has_elements σ ε    inj elements_sc : offset → offset → has_elements σ ε
 
-let elem_record_sc s be record_sc (offset.as_int s) s
+let unsafe_conjecture_etype s be record_sc (offset.as_int s) s
 
 let record_size (record_sc al sz) be sz
 let record_alignment (record_sc al sz) be al
@@ -99,16 +100,16 @@ let field_is_transitive (field_sc offA) (field_sc offB)
 let components_are_elements (components_sc n sz)
     be elements_sc offset.zero sz
 
-let record_ptr_ev r be elem_record_sc memory.sizeof_ptr
-let record_value_ev r be elem_record_sc memory.sizeof_ptr
-let forward_ptr_ev r be elem_record_sc memory.sizeof_ptr
-let forward_value_ev r be elem_record_sc memory.sizeof_ptr
+let record_ptr_ev r be unsafe_conjecture_etype memory.sizeof_ptr
+let record_value_ev r be unsafe_conjecture_etype memory.sizeof_ptr
+let forward_ptr_ev r be unsafe_conjecture_etype memory.sizeof_ptr
+let forward_value_ev r be unsafe_conjecture_etype memory.sizeof_ptr
 
 let unit_ev be record_sc alignment.one offset.zero
-let value_ev be elem_record_sc memory.sizeof_ptr
+let value_ev be unsafe_conjecture_etype memory.sizeof_ptr
 
-let int_ev be elem_record_sc memory.sizeof_clong
-let nint_ev be elem_record_sc memory.sizeof_clong
+let int_ev be unsafe_conjecture_etype memory.sizeof_clong
+let nint_ev be unsafe_conjecture_etype memory.sizeof_clong
 
 # Compounds
 
@@ -116,7 +117,7 @@ let array_ev n (record_sc alE szE)
     be (record_sc alE (offset.mul (offset.of_int n) szE), components_sc n szE)
 let spill_ev (record_sc alM szM) (record_sc alS szS)
     be (field_sc offset.zero, elements_sc (align alS szM) szS)
-let spill_ptr_ev _ _ be elem_record_sc memory.sizeof_ptr
+let spill_ptr_ev _ _ be unsafe_conjecture_etype memory.sizeof_ptr
 
 sig a_fabric
     type ph := unit
@@ -186,36 +187,6 @@ in lens
     val:cs unsafe_thaw : R Ψ δ → r ψ δ := "%identity"
 
 
-# 0.0.  Evidence for Primitive Types
-
-# 0.0.0.  Generic Types
-
-let _int_ev   be elem_record_sc (offset.of_int memory.sizeof_cintptr)
-let _int8_ev  be elem_record_sc (offset.of_int 1)
-let _nat8_ev  be elem_record_sc (offset.of_int 1)
-let _int16_ev be elem_record_sc (offset.of_int 2)
-let _nat16_ev be elem_record_sc (offset.of_int 2)
-let _int32_ev be elem_record_sc (offset.of_int 4)
-let _nat32_ev be elem_record_sc (offset.of_int 4)
-let _int64_ev be elem_record_sc (offset.of_int 8)
-let _nat64_ev be elem_record_sc (offset.of_int 8)
-
-# 0.0.0.  C-Specific Types
-
-let _sshort_ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
-let _ushort_ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
-let _sint_ev be elem_record_sc (offset.of_int memory.sizeof_cint)
-let _uint_ev be elem_record_sc (offset.of_int memory.sizeof_cint)
-let _slong_ev be elem_record_sc (offset.of_int memory.sizeof_clong)
-let _ulong_ev be elem_record_sc (offset.of_int memory.sizeof_clong)
-let _slonglong_ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
-let _ulonglong_ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
-let _sintptr_ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
-let _uintptr_ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
-let _sintmax_ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
-let _uintmax_ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
-
-
 # 0.0.  Primitive Type Conversions
 
 sig a_foreign_type
@@ -225,6 +196,7 @@ sig a_foreign_type
     val get : lens.t ph → t
     val load : lens.r ψ ph → effect ψ t
     val store : t → lens.r ψ ph → effect ψ unit
+
 
 # 0.0.  Construction and Inspection
 
@@ -268,14 +240,14 @@ in record
 in int8_t
     type ph inj _int8_ph
     type t := int
-    let ev be elem_record_sc (offset.of_int 1)
+    let ev be unsafe_conjecture_etype (offset.of_int 1)
     val:cs get : lens.t ph → t			:= "vsls_int8_t_load_int"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_int8_t_load_int"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_int8_t_store_int"
 in uint8_t
     type ph inj _nat8_ph
     type t := int
-    let ev be elem_record_sc (offset.of_int 1)
+    let ev be unsafe_conjecture_etype (offset.of_int 1)
     val:cs get : lens.t ph → t			:= "vsls_uint8_t_load_int"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uint8_t_load_int"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uint8_t_store_int"
@@ -283,14 +255,14 @@ in uint8_t
 in int16_t
     type ph inj _int16_ph
     type t := int
-    let ev be elem_record_sc (offset.of_int 2)
+    let ev be unsafe_conjecture_etype (offset.of_int 2)
     val:cs get : lens.t ph → t			:= "vsls_int16_t_load_int"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_int16_t_load_int"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_int16_t_store_int"
 in uint16_t
     type ph inj _nat16_ph
     type t := int
-    let ev be elem_record_sc (offset.of_int 2)
+    let ev be unsafe_conjecture_etype (offset.of_int 2)
     val:cs get : lens.t ph → t			:= "vsls_uint16_t_load_int"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uint16_t_load_int"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uint16_t_store_int"
@@ -298,14 +270,14 @@ in uint16_t
 in int32_t
     type ph inj _int32_ph
     type t := int32
-    let ev be elem_record_sc (offset.of_int 4)
+    let ev be unsafe_conjecture_etype (offset.of_int 4)
     val:cs get : lens.t ph → t			:= "vsls_xint32_t_load_int32"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_xint32_t_load_int32"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint32_t_store_int32"
 in uint32_t
     type ph inj _nat32_ph
     type t := nat32
-    let ev be elem_record_sc (offset.of_int 4)
+    let ev be unsafe_conjecture_etype (offset.of_int 4)
     val:cs get : lens.t ph → t			:= "vsls_xint32_t_load_int32"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_xint32_t_load_int32"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint32_t_store_int32"
@@ -313,14 +285,14 @@ in uint32_t
 in int64_t
     type ph inj _int64_ph
     type t := int64
-    let ev be elem_record_sc (offset.of_int 8)
+    let ev be unsafe_conjecture_etype (offset.of_int 8)
     val:cs get : lens.t ph → int64		:= "vsls_xint64_t_load_int64"
     val:cs load : lens.r ψ ph → effect ψ int64	:= "vsls_xint64_t_load_int64"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint64_t_store_int64"
 in uint64_t
     type ph inj _nat64_ph
     type t := nat64
-    let ev be elem_record_sc (offset.of_int 8)
+    let ev be unsafe_conjecture_etype (offset.of_int 8)
     val:cs get : lens.t ph → t			:= "vsls_xint64_t_load_int64"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_xint64_t_load_int64"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_xint64_t_store_int64"
@@ -330,42 +302,42 @@ in uint64_t
 in sshort
     type ph inj _sshort_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cshort)
     val:cs get : lens.t ph → t			:= "vsls_sshort_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_sshort_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_sshort_store_nint"
 in ushort
     type ph inj _ushort_ph
     type t := nnat
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cshort)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cshort)
     val:cs get : lens.t ph → t			:= "vsls_ushort_load_nnat"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ushort_load_nnat"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ushort_store_nnat"
 in sint
     type ph inj _sint_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cint)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cint)
     val:cs get : lens.t ph → t			:= "vsls_sint_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_sint_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_sint_store_nint"
 in uint
     type ph inj _uint_ph
     type t := nnat
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cint)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cint)
     val:cs get : lens.t ph → t			:= "vsls_uint_load_nnat"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uint_load_nnat"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uint_store_nnat"
 in slong
     type ph inj _slong_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_clong)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_clong)
     val:cs get : lens.t ph → t			:= "vsls_slong_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_slong_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_slong_store_nint"
 in ulong
     type ph inj _ulong_ph
     type t := nnat
-    let ev be elem_record_sc (offset.of_int memory.sizeof_clong)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_clong)
     val:cs get : lens.t ph → t			:= "vsls_ulong_load_nnat"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ulong_load_nnat"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ulong_store_nnat"
@@ -373,14 +345,14 @@ in ulong
 in slonglong
     type ph inj _slonglong_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_clonglong)
     val:cs get : lens.t ph → t			:= "vsls_slonglong_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_slonglong_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_slonglong_store_nint"
 in ulonglong
     type ph inj _ulonglong_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_clonglong)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_clonglong)
     val:cs get : lens.t ph → t			:= "vsls_ulonglong_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ulonglong_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ulonglong_store_nint"
@@ -388,28 +360,28 @@ in ulonglong
 in ptrdiff_t
     type ph inj _ptrdiff_t_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_ptrdiff_t)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_ptrdiff_t)
     val:cs get : lens.t ph → t			:= "vsls_ptrdiff_t_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_ptrdiff_t_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_ptrdiff_t_store_nint"
 in size_t
     type ph inj _size_t_ph
     type t := nnat
-    let ev be elem_record_sc (offset.of_int memory.sizeof_size_t)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_size_t)
     val:cs get : lens.t ph → t			:= "vsls_size_t_load_nnat"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_size_t_load_nnat"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_size_t_store_nnat"
 in intptr_t
     type ph inj _sintptr_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cintptr)
     val:cs get : lens.t ph → t			:= "vsls_intptr_t_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_intptr_t_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_intptr_t_store_nint"
 in uintptr_t
     type ph inj _uintptr_ph
     type t := nnat
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cintptr)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cintptr)
     val:cs get : lens.t ph → t			:= "vsls_uintptr_t_load_nnat"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uintptr_t_load_nnat"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uintptr_t_store_nnat"
@@ -417,14 +389,14 @@ in uintptr_t
 in sintmax
     type ph inj _sintmax_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cintmax)
     val:cs get : lens.t ph → t			:= "vsls_sintmax_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_sintmax_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_sintmax_store_nint"
 in uintmax
     type ph inj _uintmax_ph
     type t := nint
-    let ev be elem_record_sc (offset.of_int memory.sizeof_cintmax)
+    let ev be unsafe_conjecture_etype (offset.of_int memory.sizeof_cintmax)
     val:cs get : lens.t ph → t			:= "vsls_uintmax_load_nint"
     val:cs load : lens.r ψ ph → effect ψ t	:= "vsls_uintmax_load_nint"
     val:cs store : t → lens.r ψ ph → effect ψ unit := "vsls_uintmax_store_nint"

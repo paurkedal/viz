@@ -17,8 +17,8 @@
 
 # 0.  Pervasive Structure for use in Library Code
 #
-# This is for our own use, an extended pervasive for client code is located
-# one level up.
+# This is for our own use, client code use the top-level pervasive structure,
+# which is automatically included.
 
 #?ffoc include compat.ocaml_prereq
 #?ffoc include compat.ocaml_unicode.pervasive
