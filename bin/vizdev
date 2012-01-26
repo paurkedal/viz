@@ -67,7 +67,7 @@ EOF
 	    echo "$VIZ_SRCDIR"
 	    exit 0
 	elif [ "$1" = "--includes" ]; then
-	    echo "-I $VIZ_SRCDIR/_build -I $VIZ_SRCDIR/_build/vsl"
+	    echo "-I $VIZ_SRCDIR/_build -I $VIZ_SRCDIR/_build/vsl -I $VIZ_SRCDIR"
 	    exit 0
 	fi
 	prog="$1"
