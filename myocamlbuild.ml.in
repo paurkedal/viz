@@ -339,7 +339,7 @@ let () = dispatch begin function
 	ocaml_pkg "menhirLib";
 	ocaml_pkg "camomile";
 	ocaml_pkg "camlp4";
-	ocaml_pp "type-conv" "pa_type_conv";
+	ocaml_pp "type_conv" "pa_type_conv";
 	ocaml_pp "sexplib" "pa_sexp_conv";
 	ocaml_lib "vsl";
 	ocaml_cstubs "vsl";
