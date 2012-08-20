@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2012  Petter Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -18,7 +18,7 @@
 
 (** Some Additions to the Camomile Unicode Library *)
 
-open CamomileLibrary.Default.Camomile
+open CamomileLibraryDefault.Camomile
 open Sexplib
 
 module UChar : sig

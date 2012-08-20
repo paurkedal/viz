@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2012  Petter Urkedal
  *
  * This file is part of the Viz Standard Library <http://www.vizlang.org/>.
  *
@@ -17,7 +17,7 @@
  *)
 
 open Ocaml_prereq
-open CamomileLibrary.Default.Camomile
+open CamomileLibraryDefault.Camomile
 
 module UString_encoding = CharEncoding.Make (UText)
 

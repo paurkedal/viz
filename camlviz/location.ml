@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2012  Petter Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -17,7 +17,7 @@
  *)
 
 open Lexing
-open CamomileLibrary.Default.Camomile.UPervasives
+open CamomileLibraryDefault.Camomile.UPervasives
 open FfPervasives
 
 let min_lnum, min_cnum =

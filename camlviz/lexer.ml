@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2012  Petter Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -18,7 +18,7 @@
 
 open FfPervasives
 open Unicode
-module UCharInfo = CamomileLibrary.Default.Camomile.UCharInfo
+module UCharInfo = CamomileLibraryDefault.Camomile.UCharInfo
 open Diag
 open Cst_types
 open Cst_core

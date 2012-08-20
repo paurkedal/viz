@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2012  Petter Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -16,7 +16,7 @@
  * with the Viz Compiler.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-open CamomileLibrary.Default
+open CamomileLibraryDefault
 include Camomile.UPervasives
 
 exception Unimplemented

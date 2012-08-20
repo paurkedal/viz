@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2012  Petter Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -17,7 +17,7 @@
  *)
 
 open Unicode
-open CamomileLibrary.Default.Camomile
+open CamomileLibraryDefault.Camomile
 
 type elt = UChar.t
 type t = {
