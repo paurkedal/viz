@@ -107,6 +107,7 @@ val:c assert_valid_module : module φ → φ /~ unit := "LLVMAssertValidModule"
 
 type lkind
  inj:c lkind_void	:= "LLVMVoidTypeKind"
+ inj:c lkind_half	:= "LLVMHalfTypeKind"
  inj:c lkind_float	:= "LLVMFloatTypeKind"
  inj:c lkind_double	:= "LLVMDoubleTypeKind"
  inj:c lkind_x86_fp80	:= "LLVMX86_FP80TypeKind"
@@ -118,13 +119,11 @@ type lkind
  inj:c lkind_struct	:= "LLVMStructTypeKind"
  inj:c lkind_array	:= "LLVMArrayTypeKind"
  inj:c lkind_pointer	:= "LLVMPointerTypeKind"
- inj:c lkind_opaque	:= "LLVMOpaqueTypeKind"
  inj:c lkind_vector	:= "LLVMVectorTypeKind"
  inj:c lkind_metadata	:= "LLVMMetadataTypeKind"
+ inj:c lkind_mmx	:= "LLVMX86_MMXTypeKind"
 
 type:c ltype φ := "LLVMTypeRef"
-
-type:c ltypehandle φ := "LLVMTypeHandleRef"
 
 val:c type_kind : ltype φ → lkind#e := "LLVMGetTypeKind"
 val:c type_context : ltype φ → context φ := "LLVMGetTypeContext"
@@ -376,7 +375,7 @@ val build_invoke :
     builder φ → value φ → array (value φ) → block φ → block φ → string →
     φ /~ value φ
 
-val:c build_unwind : builder φ → φ /~ value φ := "LLVMBuildUnwind"
+val:c build_resume : builder φ → value φ → φ /~ value φ := "LLVMBuildResume"
 
 val:c build_unreachable : builder φ → φ /~ value φ := "LLVMBuildUnreachable"
 

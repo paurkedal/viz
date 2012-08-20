@@ -29,20 +29,18 @@ in IPO
 			:= "LLVMAddConstantMergePass"
     val:c add_dead_arg_elimination_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddDeadArgEliminationPass"
-    val:c add_dead_type_elimination_pass : pass_manager μ ψ → ψ /~ unit
-			:= "LLVMAddDeadTypeEliminationPass"
     val:c add_function_attrs_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddFunctionAttrsPass"
     val:c add_function_inlining_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddFunctionInliningPass"
+    val:c add_always_inliner_pass : pass_manager μ ψ → ψ /~ unit
+			:= "LLVMAddAlwaysInlinerPass"
     val:c add_global_DCE_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddGlobalDCEPass"
     val:c add_global_optimizer_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddGlobalOptimizerPass"
     val:c add_IP_constant_propagation_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddIPConstantPropagationPass"
-    val:c add_lower_setjmp_pass : pass_manager μ ψ → ψ /~ unit
-			:= "LLVMAddLowerSetJmpPass"
     val:c add_prune_EH_pass : pass_manager μ ψ → ψ /~ unit
 			:= "LLVMAddPruneEHPass"
     val:c add_IP_SCCP_pass : pass_manager μ ψ → ψ /~ unit
