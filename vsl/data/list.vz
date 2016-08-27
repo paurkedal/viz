@@ -58,7 +58,7 @@ val count : (α → bool) → t α → int
  ## (count f xs) is the number of elements at which (f) returns true.
 
 val length : t α → int
- ## (length xs ≡ count (_ ↦ true) xs) is the number of elements is (xs).
+ ## (length xs ≡ count (_ ↦ true) xs) is the number of elements in (xs).
 
 val find : (α → bool) → t α → option α
  ## (find f xs) returns the first element (x) of (xs) such that (f x), or
