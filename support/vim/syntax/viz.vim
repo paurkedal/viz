@@ -162,7 +162,7 @@ syn cluster @VizKeyword contains=VizConditional,VizConnective,VizDeclarator,VizV
 let s:k_let = '\<let\>!\?'
 if exists("viz_disable_patterns")
   exe 'syn keyword VizConditional' join(s:conditionals)
-  exe 'syn match VizDeclarator' s:k_let
+  exe 'syn match VizDeclarator "'.s:k_let.'"'
 else
   exe 'syn keyword VizConditional' join(s:nonpattern_conditionals)
   call s:delimit_clauses('VizConditional', s:pattern_conditionals, '@VizPattern')
