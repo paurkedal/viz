@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -22,9 +22,9 @@ open Diag
 
 let rtok_token (token, loc) = token
 let rtok_bpos  (token, loc) =
-    Location.Bound.to_lexing_position (Location.lbound loc)
+    Textloc.Bound.to_lexing_position (Textloc.lbound loc)
 let rtok_epos  (token, loc) =
-    Location.Bound.to_lexing_position (Location.ubound loc)
+    Textloc.Bound.to_lexing_position (Textloc.ubound loc)
 
 let grammar_main =
     MenhirLib.Convert.traditional2revised
@@ -32,7 +32,7 @@ let grammar_main =
 	Grammar.main
 
 let print_error loc msg =
-    eprintf "%s: %s\n" (Location.to_string loc) msg
+    eprintf "%s: %s\n" (Textloc.to_string loc) msg
 
 let prune_path =
     String.strip_suffix "_FFIC" *> String.strip_suffix "_"
@@ -66,7 +66,7 @@ let load_stdlex root_paths =
 	let lexer = Lexer.lexer state in
 	grammar_main lexer
     with Not_found ->
-	errf_at Location.dummy "Cannot find the stdlex structure."
+	errf_at Textloc.dummy "Cannot find the stdlex structure."
 
 let parse_state ~roots state =
     Lexer.lexopen state (load_stdlex roots);
@@ -88,4 +88,4 @@ let find_and_parse_file ?exts ~roots path =
 	let path = locate_source ?exts ~roots path in
 	parse_file ~roots path
     with Not_found ->
-	errf_at Location.dummy "Could not find %s." path
+	errf_at Textloc.dummy "Could not find %s." path

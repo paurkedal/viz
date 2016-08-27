@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -65,7 +65,7 @@ let avar_to_lid (Avar (_, idr)) = idr_to_lid idr
 let avar_to_uid (Avar (_, idr)) = idr_to_uid idr
 
 let fresh_avar_at ?(prefix = "_x") loc =
-    let chno = Location.Bound.charno (Location.lbound loc) in
+    let chno = Textloc.Bound.charno (Textloc.lbound loc) in
     Avar (loc, Idr (prefix ^ (string_of_int chno)))
 
 let apath_loc (Apath (loc, _)) = loc
@@ -117,7 +117,7 @@ and adec_loc = function
     | Adec_types bs ->
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in
-	Location.span [lloc; uloc]
+	Textloc.span [lloc; uloc]
     | Adec_injx (loc, _, _) -> loc
     | Adec_val (loc, _, _) -> loc
     | Adec_cabi_val (loc, _, _, _, _) -> loc
@@ -139,13 +139,13 @@ and adef_loc = function
     | Adef_types bs ->
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in
-	Location.span [lloc; uloc]
+	Textloc.span [lloc; uloc]
     | Adef_injx (loc, _, _) -> loc
     | Adef_let (loc, _, _) -> loc
     | Adef_letrec bs ->
 	let (lloc, _, _, _) = List.hd bs in
 	let (uloc, _, _, _) = List.last bs in
-	Location.span [lloc; uloc]
+	Textloc.span [lloc; uloc]
     | Adef_cabi_val (loc, _, _, _, _) -> loc
     | Adef_cabi_open (loc, _) -> loc
 
@@ -171,7 +171,7 @@ let aval_apply2i loc idr x y =
 
 let aval_internal_error loc msg =
     aval_apply2i loc (Idr "__failure")
-		 (aval_string loc (Location.to_string loc))
+		 (aval_string loc (Textloc.to_string loc))
 		 (aval_string loc msg)
 
 let rec atyp_map ?(on_apath = ident) ?(on_avar = ident) ?on_atyp t =
@@ -276,7 +276,7 @@ let fresh_type_avar_next = ref 0
 let fresh_type_avar () =
     let i = !fresh_type_avar_next in
     fresh_type_avar_next := i + 1;
-    Avar (Location.dummy, Idr (Printf.sprintf "__fv%d" i))
+    Avar (Textloc.dummy, Idr (Printf.sprintf "__fv%d" i))
 
 let alabel_compare alaba alabb =
     match alaba, alabb with

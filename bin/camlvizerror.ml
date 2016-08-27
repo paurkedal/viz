@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -52,9 +52,9 @@ let show_error ich och mlpath mlline msg =
 	    if String.starts_with "Error: " msg then String.after 7 msg else
 	    msg in
 	fprintf och "%s:%s,%s-%s: %s\n" vzpath
-	    (Location.string_of_lineno vzline)
-	    (Location.string_of_colno scol)
-	    (Location.string_of_colno ecol)
+	    (Textloc.string_of_lineno vzline)
+	    (Textloc.string_of_colno scol)
+	    (Textloc.string_of_colno ecol)
 	    (demangle msg);
 	true in
     begin try

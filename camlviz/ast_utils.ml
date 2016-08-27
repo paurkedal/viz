@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -113,7 +113,7 @@ let atyp_unapply =
 
 let atyp_apply p tas =
     let apply ta t =
-	let loc = Location.span [atyp_loc t; atyp_loc ta] in
+	let loc = Textloc.span [atyp_loc t; atyp_loc ta] in
 	Atyp_apply (loc, t, ta) in
     List.fold apply tas (Atyp_ref p)
 
@@ -260,7 +260,7 @@ and fold_adef_paths ?module_name f = function
 	    | Some mname ->
 		let pM = Modpath.atom (Idr (mname ^ "_FFIC")) in
 		let p = Modpath.cat_last dfm pM in
-		f `Value (Apath (Location.dummy, p))
+		f `Value (Apath (Textloc.dummy, p))
 	    | None -> ident else
 	ident) *> fold_atyp_paths (f `Type) t
     | Adef_cabi_open _ -> ident
@@ -338,7 +338,7 @@ let extract_backtrack_guard x =
     let guards, y = rewrite x in
     let guard = List.combine
 	begin fun x y ->
-	    let loc = Location.span [aval_loc x; aval_loc y;] in
+	    let loc = Textloc.span [aval_loc x; aval_loc y;] in
 	    aval_apply2i loc idr_2o_or x y
 	end guards in
     (Some guard, y)

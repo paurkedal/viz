@@ -1,4 +1,4 @@
-/* Copyright 2010--2011  Petter Urkedal
+/* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -24,8 +24,8 @@ open Leaf_core
 open Unicode
 
 let mkloc lb ub =
-    Location.between (Location.Bound.of_lexing_position lb)
-		     (Location.Bound.of_lexing_position ub)
+    Textloc.between (Textloc.Bound.of_lexing_position lb)
+		     (Textloc.Bound.of_lexing_position ub)
 
 let rec quantify loc qs e =
     match qs with

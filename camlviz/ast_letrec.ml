@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -73,7 +73,7 @@ let collect_binding_components bindings adefs =
 	match vertex_bindings v with
 	| [binding] -> binding
 	| bindings ->
-	    let loc = Location.span (List.map binding_loc bindings) in
+	    let loc = Textloc.span (List.map binding_loc bindings) in
 	    errf_at loc "Mixing recursion and shadowing is not supported." in
     let push_component vs adefs =
 	match vs with

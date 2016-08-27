@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -20,7 +20,7 @@ TYPE_CONV_PATH "Camlviz.Cst_types"
 open Sexplib.Conv
 open Unicode
 
-type loc = Location.t
+type loc = Textloc.t
 
 type idr = Idr of string with sexp
 

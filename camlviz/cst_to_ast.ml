@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -148,7 +148,7 @@ let make_aval_chop loc decor ax ay =
     let af = aval_ref_of_idr loc (Idr ("2'>>" ^ decor)) in
     Aval_apply (loc, Alabel_none, Aval_apply (loc, Alabel_none, af, ax), ay)
 let idr_for_line loc =
-    let lineno = Location.Bound.lineno (Location.lbound loc) in
+    let lineno = Textloc.Bound.lineno (Textloc.lbound loc) in
     Idr (Printf.sprintf "_m%d" lineno)
 let avar_for_line loc = Avar (loc, idr_for_line loc)
 
@@ -160,7 +160,7 @@ let wrap_let = function
     | Adef_letrec bindings -> fun acont ->
 	let (loc_first, _, _, _) = List.hd bindings in
 	let (loc_last, _, _, _) = List.last bindings in
-	let loc = Location.span [loc_first; loc_last] in
+	let loc = Textloc.span [loc_first; loc_last] in
 	Aval_letrec (loc, bindings, acont)
     | _ -> assert false
 
@@ -444,7 +444,7 @@ and build_aval_expr = function
 	Aval_array (loc, List.map build_aval_expr cxs)
     | Ctrm_rel (loc, cx, (_, cf, cy) :: rest) ->
 	let build_aval_rel cf cx cy =
-	    let loc = Location.span [ctrm_loc cx; ctrm_loc cy] in
+	    let loc = Textloc.span [ctrm_loc cx; ctrm_loc cy] in
 	    let af = Aval_ref (cidr_to_apath cf) in
 	    let ax = build_aval_expr cx in
 	    let ay = build_aval_expr cy in
@@ -452,7 +452,7 @@ and build_aval_expr = function
 		Aval_apply (loc, Alabel_none, af, ax), ay) in
 	let rec build_conj aconj cx = function
 	    | (_, cf, cy) :: rest ->
-		let and_op = Aval_ref (Apath (Location.dummy,
+		let and_op = Aval_ref (Apath (Textloc.dummy,
 					      Modpath.atom idr_2o_and)) in
 		let arel = build_aval_rel cf cx cy in
 		build_conj

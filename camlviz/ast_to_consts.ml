@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -63,7 +63,7 @@ let rec output_inj_check och i = function
 	| _ -> ()
 	end;
 	fprintf och "\tck_enum(%d, %s, \"%s\", \"%s\");\n"
-	    i cn (Location.to_string loc) (avar_name v);
+	    i cn (Textloc.to_string loc) (avar_name v);
 	output_inj_check och (i + 1) injs
     | (loc, v, t, Ainjnum_auto) :: injs ->
 	output_inj_check och (i + 1) injs

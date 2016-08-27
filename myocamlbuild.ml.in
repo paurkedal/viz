@@ -178,24 +178,27 @@ let byte_compile_camlviz_interf vz cmi env build =
     Ocaml_compiler.prepare_compile build vz;
     camlviz_ocamlc_c (tags_of_pathname vz ++ "interf") vz cmi
 
-let byte_compile_camlviz_implem ?tag vz cmo env build =
+let byte_compile_camlviz_implem vz cmo env build =
     let vz = env vz and cmo = env cmo in
     Ocaml_compiler.prepare_compile build vz;
-    camlviz_ocamlc_c (tags_of_pathname vz ++ "implem" +++ tag) vz cmo
+    let tags = tags_of_pathname vz ++ "implem"
+            ++ "ocaml" ++ "byte" ++ "camlvizpp" in
+    camlviz_ocamlc_c tags vz cmo
 
-let native_compile_camlviz_implem ?tag vz env build =
+let native_compile_camlviz_implem vz env build =
     let vz = env vz in
     let cmi = Pathname.update_extensions "cmi" vz in
     let cmx = Pathname.update_extensions "cmx" vz in
     camlviz_prepare_link cmx cmi ["cmx"; "cmi"] build;
-    camlviz_ocamlopt_c
-	(Tags.union (tags_of_pathname vz) (tags_of_pathname cmx) ++
-	 "implem" +++ tag) vz cmx
+    let tags = Tags.union (tags_of_pathname vz) (tags_of_pathname cmx)
+            ++ "implem" ++ "ocaml" ++ "native" ++ "camlvizpp" in
+    camlviz_ocamlopt_c tags vz cmx
 
 (** Camlviz Stage 1 dependency analyzer. *)
 let camlvizdep arg out env build =
     let arg = env arg and out = env out in
-    let tags = tags_of_pathname arg ++ "camlvizpp" ++ "ocamldep" in
+    let tags = tags_of_pathname arg
+            ++ "ocaml" ++ "camlvizpp" ++ "ocamldep" in
     Cmd(S[P camlvizpp_path; T tags; A "--depend-modules"; A"-T"; P"..";
 	  Ocaml_utils.ocaml_include_flags arg;
 	  P arg; Sh ">"; Px out])
@@ -216,7 +219,8 @@ let camlvizconsts arg out env build =
 
 let compile_fficgen arg out env build =
     let arg = env arg and out = env out in
-    let tags = tags_of_pathname arg ++ "cc" ++ "compile" in
+    let tags = tags_of_pathname arg
+            ++ "cc" ++ "compile" ++ "cc" ++ "compile" ++ "link" in
     Cmd (S[A"cc"; A"-I"; P".."; A"-o"; Px out; A arg; T tags])
 
 let runprog arg out env build =
@@ -233,19 +237,16 @@ let camlvizpp tag vz vz_ml env build =
 
 ;;
 rule "camlviz Stage 1, Dependency Analysis"
-    ~tags:["ocaml"; "pp"; "camlvizpp"]
     ~prod:"%.vz.depends"
     ~deps:("%.vz" :: camlvizpp_deps)
     (camlvizdep "%.vz" "%.vz.depends");;
 
 rule "camlviz, byte compilation: vz -> cmo & cmi"
-    ~tags:["ocaml"; "byte"; "pp"; "camlvizpp"]
     ~prods:["%.cmo"; "%.cmi"]
     ~deps:["%.vz"; "%.vz.depends"; "vsl/stdlex.vz"]
     (byte_compile_camlviz_implem "%.vz" "%.cmo");;
 
 rule "camlviz, native compilation: vz & cmi -> cmx & o"
-    ~tags:["ocaml"; "native"; "pp"; "camlvizpp"]
     ~prods:["%.cmx"; "%.o"]
     ~deps:["%.vz"; "%.vz.depends"; "%.cmi"; "vsl/stdlex.vz"]
     (native_compile_camlviz_implem "%.vz");;
@@ -271,7 +272,6 @@ rule "camlviz, Run C program to emit constant defs: %_FFICgen -> _FFIC.ml"
     (runprog "%_FFICgen" "%_FFIC.ml");;
 
 rule "Compile and link the _FFICgen program"
-    ~tags:["cc"; "compile"; "link"]
     ~dep:"%_FFICgen.c"
     ~prod:"%_FFICgen"
     (compile_fficgen "%_FFICgen.c" "%_FFICgen");;
@@ -334,13 +334,7 @@ let () = dispatch begin function
 	flag ["ocaml"; "compile"; "use_threads"] & A"-thread";
 	flag ["ocaml"; "link";    "use_threads"] & A"-thread";
 
-	ocaml_pkg "oUnit";
-	ocaml_pkg "sexplib";
-	ocaml_pkg "menhirLib";
-	ocaml_pkg "camomile";
 	ocaml_pkg "camlp4";
-	ocaml_pp "type_conv" "pa_type_conv";
-	ocaml_pp "sexplib" "pa_sexp_conv";
 	ocaml_lib "vsl";
 	ocaml_cstubs "vsl";
 	ocaml_cstubs "tests";

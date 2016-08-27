@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -278,13 +278,13 @@ let cpred_if_ctrm loc cond cq ccq =
 	      Cpred_expr (ctrm_loc ccq, idr_kw_be, ccq))
 
 let cpred_failure loc msg_opt =
-    let loclb = Location.lbound loc in
-    let path_lit = Lit_string (UString.of_utf8 (Location.Bound.path loclb)) in
+    let loclb = Textloc.lbound loc in
+    let path_lit = Lit_string (UString.of_utf8 (Textloc.Bound.path loclb)) in
     let cloc =
 	Ctrm_apply (loc,
 	    Ctrm_apply (loc, Ctrm_ref (Cidr (loc, idr_2o_comma), Ih_none),
 		Ctrm_literal (loc, path_lit)),
-	    Ctrm_literal (loc, Lit_int (Location.Bound.lineno loclb))) in
+	    Ctrm_literal (loc, Lit_int (Textloc.Bound.lineno loclb))) in
     let msg =
 	match msg_opt with
 	| Some msg -> msg

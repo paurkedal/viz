@@ -1,4 +1,4 @@
-(* Copyright 2010--2012  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -22,12 +22,12 @@ open CamomileLibraryDefault.Camomile
 type elt = UChar.t
 type t = {
     stream : UChar.t Stream.t;
-    mutable locb : Location.Bound.t;
+    mutable locb : Textloc.Bound.t;
 }
 
-let null = {stream = Stream.of_list []; locb = Location.Bound.dummy}
+let null = {stream = Stream.of_list []; locb = Textloc.Bound.dummy}
 
-let of_string ?(locb = Location.Bound.dummy) s =
+let of_string ?(locb = Textloc.Bound.dummy) s =
     let utf8_stream = Stream.of_string s in
     let stm = CharEncoding.ustream_of CharEncoding.utf8 utf8_stream in
     {stream = stm; locb = locb}
@@ -35,14 +35,14 @@ let of_string ?(locb = Location.Bound.dummy) s =
 let open_in path =
     let utf8_stream = Stream.of_channel (open_in path) in
     let stm = CharEncoding.ustream_of CharEncoding.utf8 utf8_stream in
-    {stream = stm; locb = Location.Bound.init path}
+    {stream = stm; locb = Textloc.Bound.init path}
 
 let locbound stm = stm.locb
 
 let pop stm =
     try
 	let ch = Stream.next stm.stream in
-	stm.locb <- Location.Bound.skip_char ch stm.locb;
+	stm.locb <- Textloc.Bound.skip_char ch stm.locb;
 	Some ch
     with Stream.Failure -> None
 
@@ -81,7 +81,7 @@ let peek_n_code n stm =
 
 let skip stm =
     let ch = Stream.next stm.stream in
-    stm.locb <- Location.Bound.skip_char ch stm.locb
+    stm.locb <- Textloc.Bound.skip_char ch stm.locb
 
 let rec skip_n n stm =
     if n = 0 then () else
@@ -102,4 +102,4 @@ let scan_while f stm =
 	| Some ch -> f ch && (UString.Buf.add_char buf ch; true)
     do skip stm done;
     let loc_ub = locbound stm in
-    (UString.Buf.contents buf, Location.between loc_lb loc_ub)
+    (UString.Buf.contents buf, Textloc.between loc_lb loc_ub)

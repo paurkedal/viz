@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -25,11 +25,11 @@ type elt = UChar.t
 
 val null : t
 
-val of_string : ?locb: Location.Bound.t -> string -> t
+val of_string : ?locb: Textloc.Bound.t -> string -> t
 
 val open_in : string -> t
 
-val locbound : t -> Location.Bound.t
+val locbound : t -> Textloc.Bound.t
 
 val pop : t -> elt option
 
@@ -55,4 +55,4 @@ val skip_n : int -> t -> unit
 
 val skip_while : (elt -> bool) -> t -> unit
 
-val scan_while : (elt -> bool) -> t -> UString.t * Location.t
+val scan_while : (elt -> bool) -> t -> UString.t * Textloc.t

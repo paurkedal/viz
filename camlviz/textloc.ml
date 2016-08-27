@@ -1,4 +1,4 @@
-(* Copyright 2010--2012  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -145,7 +145,7 @@ let ubound loc =
     }, loc.loc_ub_col
 
 let span = function
-    | [] -> invalid_arg "Location.span"
+    | [] -> invalid_arg "Textloc.span"
     | loc :: locs ->
 	let rec loop lb ub = function
 	    | [] -> between lb ub

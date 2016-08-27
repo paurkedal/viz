@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -23,14 +23,14 @@ open Cst_types
 
 type state
 
-val last_location : state -> Location.t
+val last_location : state -> Textloc.t
 
 val create_from_lstream : LStream.t -> state
 
-val create_from_string : ?locb : Location.Bound.t -> string -> state
+val create_from_string : ?locb : Textloc.Bound.t -> string -> state
 
 val create_from_file : string -> state
 
-val lexer : state -> unit -> Grammar.token * Location.t
+val lexer : state -> unit -> Grammar.token * Textloc.t
 
 val lexopen : state -> ctrm -> unit

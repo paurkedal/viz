@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -36,16 +36,16 @@ type emit_context = {
 }
 
 let p4loc loc =
-    let lb = Location.lbound loc in
-    let ub = Location.ubound loc in
+    let lb = Textloc.lbound loc in
+    let ub = Textloc.ubound loc in
     Loc.of_tuple
-        (Location.path loc,
-         Location.Bound.lineno lb,
-         Location.Bound.bol_charno lb,
-         Location.Bound.charno lb,
-         Location.Bound.lineno ub,
-         Location.Bound.bol_charno ub,
-         Location.Bound.charno ub,
+        (Textloc.path loc,
+         Textloc.Bound.lineno lb,
+         Textloc.Bound.bol_charno lb,
+         Textloc.Bound.charno lb,
+         Textloc.Bound.lineno ub,
+         Textloc.Bound.bol_charno ub,
+         Textloc.Bound.charno ub,
          true)
 
 let emit_apath_lid (Apath (loc, p)) =
@@ -305,7 +305,7 @@ let rec emit_aval ec = function
 	    begin
 		if $lid: idr_to_lid idr_1o_not$ ($emit_aval ec x$) then
 		    __failure
-			(__string_of_utf8 $str: Location.to_string xloc$)
+			(__string_of_utf8 $str: Textloc.to_string xloc$)
 			(__string_of_utf8 $str: msg$)
 		else $emit_aval_opt ec loc y$
 	    end
@@ -323,7 +323,7 @@ let rec emit_aval ec = function
 			   (List.rev xs) <:expr< [] >> in
 	<:expr<
 	    begin
-		__trace (__string_of_utf8 $str: Location.to_string loc$) $os$;
+		__trace (__string_of_utf8 $str: Textloc.to_string loc$) $os$;
 		$emit_aval_opt ec loc y$
 	    end
 	>>
@@ -346,7 +346,7 @@ and emit_aval_opt ec loc = function
     | None -> let _loc = p4loc loc in <:expr< () >>
     | Some cx -> emit_aval ec cx
 and emit_match_case ?(have_vacuous = false) ec (pat, ocond_opt, body) =
-    let _loc = p4loc (Location.span [apat_loc pat; aval_loc body]) in
+    let _loc = p4loc (Textloc.span [apat_loc pat; aval_loc body]) in
     if apat_matches_vacuous pat then begin
 	Option.iter
 	    (fun cond ->
@@ -407,7 +407,7 @@ let emit_type_binding ec (loc, v, params, ti) =
     Ast.TyDcl (_loc, avar_to_lid v, List.map (emit_atyp ec) params, rhs, [])
 
 let emit_curried_inj _loc inj_type inj_var =
-    let locd = Location.dummy in
+    let locd = Textloc.dummy in
     let _, avars =
 	Ast_utils.fold_arg_types begin fun _ (i, avs) ->
 	    let name = Printf.sprintf "x%d" i in
@@ -429,7 +429,7 @@ let emit_inj_aliases (loc, v, params, ti) =
 	    let ov = emit_curried_inj _loc inj_type v in
 	    <:binding< $lid: avar_to_lid v$ = $ov$ >> in
 	List.map emit_inj injs
-    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
+    | Atypinfo_abstract | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
 let emit_inj_alias_decs ec (loc, v, params, ti) =
     match ti with
@@ -439,7 +439,7 @@ let emit_inj_alias_decs ec (loc, v, params, ti) =
 	    <:sig_item< value $lid: avar_to_lid v$ :
 			      $emit_atyp ec inj_type$ >> in
 	List.map emit_inj_dec injs
-    | Atypinfo_abstract _ | Atypinfo_alias _ | Atypinfo_cabi _ -> []
+    | Atypinfo_abstract | Atypinfo_alias _ | Atypinfo_cabi _ -> []
 
 let external_names stubname t =
     if Ast_utils.arity t <= 5 then Ast.LCons (stubname, Ast.LNil) else
@@ -504,7 +504,7 @@ and emit_adec ec = function
     | Adec_types bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
-	let _loc = p4loc (Location.span [lloc; uloc]) in
+	let _loc = p4loc (Textloc.span [lloc; uloc]) in
 	let otdec =
 	    <:sig_item< type $list: List.map (emit_type_binding ec)
 					     bindings$ >> in
@@ -601,7 +601,7 @@ and emit_adef ec = function
     | Adef_types bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
-	let _loc = p4loc (Location.span [lloc; uloc]) in
+	let _loc = p4loc (Textloc.span [lloc; uloc]) in
 	let odef =
 	    <:str_item< type $list: List.map (emit_type_binding ec)
 					     bindings$ >> in
@@ -627,7 +627,7 @@ and emit_adef ec = function
     | Adef_letrec bindings ->
 	let (lloc, _, _, _) = List.hd bindings in
 	let (uloc, _, _, _) = List.last bindings in
-	let _loc = p4loc (Location.span [lloc; uloc]) in
+	let _loc = p4loc (Textloc.span [lloc; uloc]) in
 	let emit_value_binding (loc, v, t_opt, x) =
 	    let _loc = p4loc loc in
 	    match t_opt with

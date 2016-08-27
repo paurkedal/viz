@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -18,11 +18,11 @@
 
 (** Diagnostic Functions and Exceptions *)
 
-exception Error_at of Location.t * string
+exception Error_at of Textloc.t * string
 
-val errf_at : Location.t -> ('b, unit, string, 'a) format4 -> 'b
-val warnf_at : Location.t -> ('b, unit, string, unit) format4 -> 'b
+val errf_at : Textloc.t -> ('b, unit, string, 'a) format4 -> 'b
+val warnf_at : Textloc.t -> ('b, unit, string, unit) format4 -> 'b
 
 val dlog_en_for : string -> bool
-val dlogf_for : string -> ?loc : Location.t
+val dlogf_for : string -> ?loc : Textloc.t
 	     -> ('a, unit, string, unit) format4 -> 'a

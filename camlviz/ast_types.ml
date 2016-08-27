@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -23,7 +23,7 @@ open Sexplib.Conv
 open Leaf_types
 open Cst_types
 
-let loc_of_sexp sx = Location.dummy
+let loc_of_sexp sx = Textloc.dummy
 let sexp_of_loc loc = sexp_of_unit ()
 
 type avar = Avar of loc * idr with sexp

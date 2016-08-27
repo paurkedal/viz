@@ -1,4 +1,4 @@
-(* Copyright 2010--2012  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -42,7 +42,7 @@ type pending_work =
 	 * the next intro-word.  That is, the next block will be wrapped
 	 * inside the current block.  This is used for "what", "which",
 	 * "where", and "with". *)
-    | Pending_END of Location.t * int * int
+    | Pending_END of Textloc.t * int * int
 	(* Emit an end-of-block when reaching an intro-word before the given
 	 * column. *)
 
@@ -53,13 +53,13 @@ type state = {
     mutable st_indent : int;
 
     (* A look-ahead token. *)
-    mutable st_holding : Location.t * Grammar.token * Opkind.lexical_role;
+    mutable st_holding : Textloc.t * Grammar.token * Opkind.lexical_role;
 
     (* Things to take into account before reading any further. *)
     mutable st_pending : pending_work list;
 
     (* The location and lexical role of the last seen introducer. *)
-    mutable st_last_lexical_role : Location.t * Opkind.lexical_role;
+    mutable st_last_lexical_role : Textloc.t * Opkind.lexical_role;
 
     (* The currently active keywords and operators. *)
     mutable st_keywords : tokeninfo UString_trie.t;
@@ -73,7 +73,7 @@ type state = {
     (* This is the location of the last emitted token.  It's used when the
      * grammar raises Grammar.Error, otherwise we pass along the location and
      * use Error_at. *)
-    mutable st_last_location : Location.t;
+    mutable st_last_location : Textloc.t;
 }
 
 let last_location state = state.st_last_location
@@ -193,14 +193,14 @@ let skip_space state =
 	    and stateLH n = match LStream.pop state.st_stream with
 		| None -> stateEOF n
 		| Some ch when ch = UChar.ch_rbrace ->
-		    let loc = Location.at (LStream.locbound state.st_stream) in
+		    let loc = Textloc.at (LStream.locbound state.st_stream) in
 		    raise (Error_at (loc, "Invalid {#} sequence in comment."))
 		| Some ch when ch = UChar.ch_hash -> stateH n
 		| Some ch when ch = UChar.ch_lbrace -> stateL n
 		| _ -> state0 n
 	    and stateHR n = if n > 0 then state0 (n - 1) else ()
 	    and stateEOF n =
-		let loc = Location.between com_loclb com_locub in
+		let loc = Textloc.between com_loclb com_locub in
 		raise (Error_at (loc, "Unterminated comment.")) in
 	    state0 0;
 	    loop ()
@@ -217,13 +217,13 @@ let skip_space state =
 	| _ -> () in
     loop ();
     let end_locb = LStream.locbound state.st_stream in
-    if Location.Bound.lineno start_locb < Location.Bound.lineno end_locb then
-	state.st_indent <- Location.Bound.column end_locb
+    if Textloc.Bound.lineno start_locb < Textloc.Bound.lineno end_locb then
+	state.st_indent <- Textloc.Bound.column end_locb
 
 let holding_column state =
     match state.st_holding with
     | (_, Grammar.EOF, _) -> -1
-    | (loc, _, _) -> Location.Bound.column (Location.lbound loc)
+    | (loc, _, _) -> Textloc.Bound.column (Textloc.lbound loc)
 
 let declare_operator state ok (Cidr (loc, op), names) =
     let op' = UString_sequence.create (idr_to_ustring op) in
@@ -276,7 +276,7 @@ let scan_lexops state =
     let rec scan_names (names : cidr list) =
 	if LStream.peek_code state.st_stream = 0x29 then names else
 	if not (skip_hspace state) then
-	    let loc = Location.at (LStream.locbound state.st_stream) in
+	    let loc = Textloc.at (LStream.locbound state.st_stream) in
 	    raise (Error_at (loc, "Missing end parenthesis.")) else
 	let f ch = not (UChar.is_space ch || UChar.code ch = 0x29) in
 	let s, loc = LStream.scan_while f state.st_stream in
@@ -312,7 +312,7 @@ let scan_lexdef state lex_loc =
     let ops = scan_lexops state in
     let okname = UString.to_utf8 okname_u in
     let loc_ub = LStream.locbound state.st_stream in
-    let loc = Location.between loc_lb loc_ub in
+    let loc = Textloc.between loc_lb loc_ub in
     let lexdef = Cdef_lex (loc, okname, ops) in
     let ok =
 	try Opkind.of_string okname
@@ -328,8 +328,8 @@ let scan_lexalias state lex_loc =
 	errf_at (cidr_loc op) "lex alias takes a even number of operators."
     | op_pairs, None ->
 	List.iter (alias_operator state) op_pairs;
-	let loc = Location.between
-		(Location.lbound lex_loc)
+	let loc = Textloc.between
+		(Textloc.lbound lex_loc)
 		(LStream.locbound state.st_stream) in
 	let lexalias = Cdef_lexalias (loc, op_pairs) in
 	(Grammar.PREPARED_DEF lexalias, loc)
@@ -369,7 +369,7 @@ let triescan state trie =
 	let loc_lb = LStream.locbound state.st_stream in
 	LStream.skip_n len state.st_stream;
 	let loc_ub = LStream.locbound state.st_stream in
-	Some (res, UString.of_sequence_n len la, Location.between loc_lb loc_ub)
+	Some (res, UString.of_sequence_n len la, Textloc.between loc_lb loc_ub)
 
 let scan_custom state =
     (* Special handling of ".<space>". *)
@@ -378,7 +378,7 @@ let scan_custom state =
     | [ch0; ch1] when UChar.code ch0 = 0x2e && UChar.is_space ch1 ->
 	LStream.skip state.st_stream;
 	let loc_ub = LStream.locbound state.st_stream in
-	Some (Location.between loc_lb loc_ub, Grammar.DOT, Opkind.Lr_inert)
+	Some (Textloc.between loc_lb loc_ub, Grammar.DOT, Opkind.Lr_inert)
     | _ -> None
     end
 
@@ -387,11 +387,11 @@ let scan_keyword state =
 	match ti with
 	| Ti_keyword (Grammar.LEX, lr) ->
 	    let (tok, loc_spec) = scan_lexdef state loc in
-	    let loc_full = Location.span [loc; loc_spec] in
+	    let loc_full = Textloc.span [loc; loc_spec] in
 	    (loc_full, tok, lr)
 	| Ti_keyword (Grammar.LEXALIAS, lr) ->
 	    let (tok, loc_spec) = scan_lexalias state loc in
-	    let loc_full = Location.span [loc; loc_spec] in
+	    let loc_full = Textloc.span [loc; loc_spec] in
 	    (loc_full, tok, lr)
 	| Ti_keyword (tok, lr) -> (loc, tok, lr)
 	| Ti_operator (tok, ok) -> (loc, tok, ok.Opkind.ok_lexical_role) in
@@ -474,13 +474,13 @@ let scan_string_literal state =
     let rec next () =
 	match LStream.pop state.st_stream with
 	| None ->
-	    let loc = Location.between loc_lb loc_lb in
+	    let loc = Textloc.between loc_lb loc_lb in
 	    raise (Error_at (loc, "Unterminated string literal."))
 	| Some ch ->
 	    if ch = UChar.of_char '\\' then
 		begin match LStream.pop state.st_stream with
 		| None ->
-		    let loc = Location.between loc_lb loc_lb in
+		    let loc = Textloc.between loc_lb loc_lb in
 		    raise (Error_at (loc, "Unterminated string escape."))
 		| Some ch' when ch' == UChar.ch_nl ->
 		    next ()
@@ -490,7 +490,7 @@ let scan_string_literal state =
 			UString.Buf.add_char buf ch'';
 			next ()
 		    with Not_found ->
-			let loc = Location.between loc_lb loc_lb in
+			let loc = Textloc.between loc_lb loc_lb in
 			raise (Error_at (loc, "Unterminated string escape."))
 		end
 	    else if ch <> UChar.of_char '"' then begin
@@ -508,7 +508,7 @@ let scan_char_literal state =
     | Lit_string s ->
 	if UString.length s <> 1 then
 	    let loc_ub = LStream.locbound state.st_stream in
-	    raise (Error_at (Location.between loc_lb loc_ub,
+	    raise (Error_at (Textloc.between loc_lb loc_ub,
 			     "Expecting a single character."))
 	else
 	    Lit_char (UString.get s 0)
@@ -587,13 +587,13 @@ let scan_special state =
 	| _ -> false in
     match LStream.peek_code state.st_stream with
     | 0 (* EOF *) ->
-	let loc = Location.at (LStream.locbound state.st_stream) in
+	let loc = Textloc.at (LStream.locbound state.st_stream) in
 	Some (loc, Grammar.EOF, Opkind.Lr_declarator)
     | 0x2a (* "*" *) when expecting_special_identifier () ->
 	let lb = LStream.locbound state.st_stream in
 	LStream.skip state.st_stream;
 	let ub = LStream.locbound state.st_stream in
-	Some (Location.between lb ub,
+	Some (Textloc.between lb ub,
 	      Grammar.IDENTIFIER (Idr "*"), Opkind.Lr_inert)
     | _ -> None
 
@@ -616,11 +616,11 @@ let pop_manifest_token state =
 		    raise Grammar.Error
 	    with Grammar.Error ->
 		let loc_ub = LStream.locbound state.st_stream in
-		let loc = Location.between loc_lb loc_ub in
+		let loc = Textloc.between loc_lb loc_ub in
 		raise (Error_at (loc, "Invalid literal."))
 	    in
 	let loc_ub = LStream.locbound state.st_stream in
-	let loc = Location.between loc_lb loc_ub in
+	let loc = Textloc.between loc_lb loc_ub in
 	if dlog_en then dlogf ~loc "Scanned regular token.";
 	state.st_holding <- (loc, tok, Opkind.Lr_inert)
     end;
@@ -633,11 +633,11 @@ let pop_manifest_token state =
 let pop_virtual_token state =
     let cur_col = holding_column state in
     let (loc, tok, lr) = state.st_holding in
-    let loc_lb = Location.lbound loc in
+    let loc_lb = Textloc.lbound loc in
     let follows_verb =
 	let loc', lr' = state.st_last_lexical_role in
-	let col = Location.Bound.column (Location.lbound loc) in
-	let col' = Location.Bound.column (Location.lbound loc') in
+	let col = Textloc.Bound.column (Textloc.lbound loc) in
+	let col' = Textloc.Bound.column (Textloc.lbound loc') in
 	col' <= col && lr' = Opkind.Lr_verb in
     let apply_connective () =
 	if Opkind.is_connective ~follows_verb lr then begin
@@ -653,7 +653,7 @@ let pop_virtual_token state =
 	    if col_ind > cur_col then (loc, Grammar.END) else
 	    pop_manifest_token state
 	| Pending_BEGIN :: pending ->
-	    let loc_begin = Location.at loc_lb in
+	    let loc_begin = Textloc.at loc_lb in
 	    state.st_pending <- Pending_END (loc_begin, cur_col, cur_col)
 			     :: pending;
 	    (loc_begin, Grammar.BEGIN)
@@ -675,7 +675,7 @@ let pop_virtual_token state =
     else
 	begin match state.st_pending with
 	| Pending_BEGIN :: pending ->
-	    let loc_begin = Location.between loc_lb loc_lb in
+	    let loc_begin = Textloc.between loc_lb loc_lb in
 	    state.st_pending <- Pending_END (loc_begin, cur_col, cur_col)
 			     :: pending;
 	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
@@ -696,7 +696,7 @@ let pop_virtual_token state =
 		| Pending_END (_, col_lim, _) :: _ -> col_lim
 		| [] -> 0 | _ -> assert false in
 	    if tok = Grammar.EOF then (loc, tok) else
-	    let loc_begin = Location.between loc_lb loc_lb in
+	    let loc_begin = Textloc.between loc_lb loc_lb in
 	    state.st_pending <- Pending_END (loc_begin, col_lim, cur_col)
 			     :: pending;
 	    if dlog_en then dlogf ~loc:loc_begin "BEGIN[col = %d]" cur_col;
@@ -706,14 +706,14 @@ let pop_virtual_token state =
 let default_state_template = {
     st_stream = LStream.null;
     st_indent = -1;
-    st_holding = (Location.dummy, Grammar.DEFAULT_START, Opkind.Lr_inert);
+    st_holding = (Textloc.dummy, Grammar.DEFAULT_START, Opkind.Lr_inert);
     st_pending = [];
-    st_last_lexical_role = (Location.dummy, Opkind.Lr_inert);
+    st_last_lexical_role = (Textloc.dummy, Opkind.Lr_inert);
     st_keywords = initial_keywords;
     st_renames = Idr_map.empty;
     st_lookahead = initial_lookahead;
     st_scanners = default_scanners;
-    st_last_location = Location.dummy;
+    st_last_location = Textloc.dummy;
 }
 
 let create_from_lstream st_stream =

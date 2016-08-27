@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright 2010--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -26,7 +26,7 @@ val locate_source :
     string -> string
 
 val parse_string :
-    ?locb : Location.Bound.t -> roots: string list -> string -> ctrm
+    ?locb : Textloc.Bound.t -> roots: string list -> string -> ctrm
 
 val parse_file : roots: string list -> string -> ctrm
 

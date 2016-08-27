@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright 2011--2016  Petter A. Urkedal
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -75,14 +75,14 @@ let print_cst term =
 let print_ast amod =
     printf "%s\n" (Ast_utils.amod_to_string amod)
 
-let pervasive_apath = Apath (Location.dummy, Modpath.atom (Idr "pervasive"))
+let pervasive_apath = Apath (Textloc.dummy, Modpath.atom (Idr "pervasive"))
 let add_pervasive_in_asig = function
     | Asig_decs (loc, decs) ->
-	Asig_decs (loc, Adec_open (Location.dummy, pervasive_apath) :: decs)
+	Asig_decs (loc, Adec_open (Textloc.dummy, pervasive_apath) :: decs)
     | _ -> assert false
 let rec add_pervasive_in_amod = function
     | Amod_defs (loc, defs) ->
-	Amod_defs (loc, Adef_open (Location.dummy, pervasive_apath) :: defs)
+	Amod_defs (loc, Adef_open (Textloc.dummy, pervasive_apath) :: defs)
     | Amod_coercion (loc, m, s) ->
 	Amod_coercion (loc, add_pervasive_in_amod m, add_pervasive_in_asig s)
     | _ -> assert false
@@ -197,5 +197,5 @@ let _ =
 	else
 	    Printers.OCaml.print_implem ?output_file:!out_path_opt omod
     with Error_at (loc, msg) ->
-	eprintf "%s: %s\n" (Location.to_string loc) msg;
+	eprintf "%s: %s\n" (Textloc.to_string loc) msg;
 	exit 65 (* EX_DATAERR *)
