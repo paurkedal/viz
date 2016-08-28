@@ -12,8 +12,8 @@ to bootstrap a full stand-alone implementation.
 
 See also:
 
-* The Viz Language Site <http://www.vizlang.org/>
-* The GitHub Wiki <https://github.com/paurkedal/viz/wiki.html>
+* [The Viz Language Site](http://www.vizlang.org/)
+* [The GitHub Wiki](https://github.com/paurkedal/viz/wiki.html)
 
 ## Quick Start
 
@@ -33,8 +33,8 @@ make
 There is nothing to install at the moment due to the early development
 stage.  You may run example programs with either of the commands
 ```sh
-    ocamlbuild examples/PROGNAME.byte --
-    ocamlbuild examples/PROGNAME.native --
+ocamlbuild examples/PROGNAME.byte --
+ocamlbuild examples/PROGNAME.native --
 ```
 A convenience wrapper is available for compiling code outside the
 repository.  To use it add the bin subdirectory to your $PATH, or create a
