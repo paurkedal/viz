@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -21,12 +21,12 @@ open Leaf_types
 open FfPervasives
 
 let lit_to_string = function
-    | Lit_unit -> "()"
-    | Lit_bool x -> if x then "true" else "false"
-    | Lit_int i -> string_of_int i
-    | Lit_float x -> string_of_float x
-    | Lit_char s -> "c\"" ^ String.escaped (UChar.to_utf8 s) ^ "\""
-    | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""
+  | Lit_unit -> "()"
+  | Lit_bool x -> if x then "true" else "false"
+  | Lit_int i -> string_of_int i
+  | Lit_float x -> string_of_float x
+  | Lit_char s -> "c\"" ^ String.escaped (UChar.to_utf8 s) ^ "\""
+  | Lit_string s -> "\"" ^ String.escaped (UString.to_utf8 s) ^ "\""
 
 let starts_with = String.starts_with
 
@@ -38,20 +38,20 @@ let idr_to_ustring (Idr name) = UString.of_utf8 name
 let idr_0o_c name = Idr ("0'" ^ name)
 let idr_0o (Idr name) = idr_0o_c name
 let idr_0o_symbol (Idr name) =
-    if starts_with "0'" name then String.sub name 2 (String.length name - 2)
-    else raise (Failure ("Expected a unary operator identifier: " ^ name))
+  if starts_with "0'" name then String.sub name 2 (String.length name - 2)
+  else raise (Failure ("Expected a unary operator identifier: " ^ name))
 
 let idr_1o_c name = Idr ("1'" ^ name)
 let idr_1o (Idr name) = idr_1o_c name
 let idr_1o_symbol (Idr name) =
-    if starts_with "1'" name then String.sub name 2 (String.length name - 2)
-    else raise (Failure ("Expected a unary operator identifier: " ^ name))
+  if starts_with "1'" name then String.sub name 2 (String.length name - 2)
+  else raise (Failure ("Expected a unary operator identifier: " ^ name))
 
 let idr_2o_c name = Idr ("2'" ^ name)
 let idr_2o (Idr name) = idr_2o_c name
 let idr_2o_symbol (Idr name) =
-    if starts_with "2'" name then String.sub name 2 (String.length name - 2)
-    else raise (Failure ("Expected a binary operator identifier: " ^ name))
+  if starts_with "2'" name then String.sub name 2 (String.length name - 2)
+  else raise (Failure ("Expected a binary operator identifier: " ^ name))
 
 let idr_0b_c lname rname = Idr ("0'" ^ lname ^ "'" ^ rname)
 let idr_0b (Idr lname) (Idr rname) = idr_0b_c lname rname
@@ -63,13 +63,13 @@ let idr_2b (Idr lname) (Idr rname) = idr_2b_c lname rname
 let idr_1q_c name = Idr ("1'" ^ name)
 let idr_1q (Idr name) = idr_1q_c name
 let idr_1q_symbol (Idr name) =
-    if starts_with "1'" name then String.sub name 2 (String.length name - 2)
-    else raise (Failure ("Expected a quantifier operator identifier: " ^ name))
+  if starts_with "1'" name then String.sub name 2 (String.length name - 2)
+  else raise (Failure ("Expected a quantifier operator identifier: " ^ name))
 
 module String_map = Map.Make (String)
 module Idr = struct
-    type t = idr
-    let compare (Idr x) (Idr y) = compare x y
+  type t = idr
+  let compare (Idr x) (Idr y) = compare x y
 end
 module Idr_set = Set.Make (Idr)
 module Idr_map = Map.Make (Idr)

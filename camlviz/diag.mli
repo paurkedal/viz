@@ -1,4 +1,4 @@
-(* Copyright 2010--2016  Petter A. Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -24,5 +24,5 @@ val errf_at : Textloc.t -> ('b, unit, string, 'a) format4 -> 'b
 val warnf_at : Textloc.t -> ('b, unit, string, unit) format4 -> 'b
 
 val dlog_en_for : string -> bool
-val dlogf_for : string -> ?loc : Textloc.t
-	     -> ('a, unit, string, unit) format4 -> 'a
+val dlogf_for : string -> ?loc : Textloc.t ->
+                ('a, unit, string, unit) format4 -> 'a

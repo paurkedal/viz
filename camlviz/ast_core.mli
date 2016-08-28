@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -61,10 +61,10 @@ val aval_apply2i : loc -> idr -> aval -> aval -> aval
 val aval_internal_error : loc -> string -> aval
 
 val atyp_map :
-    ?on_apath : (apath -> apath) ->
-    ?on_avar : (avar -> avar) ->
-    ?on_atyp : (atyp -> atyp) ->
-    atyp -> atyp
+  ?on_apath : (apath -> apath) ->
+  ?on_avar : (avar -> avar) ->
+  ?on_atyp : (atyp -> atyp) ->
+  atyp -> atyp
 
 val aval_map_subaval : (aval -> aval) -> aval -> aval
 val amod_map_subaval : (aval -> aval) -> amod -> amod

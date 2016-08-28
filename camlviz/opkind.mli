@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -25,11 +25,11 @@ exception Domain_error
 exception Invalid_definition of string
 
 type lexical_role =
-    | Lr_inert
-    | Lr_declarator
-    | Lr_verb
-    | Lr_connective
-    | Lr_conditional
+  | Lr_inert
+  | Lr_declarator
+  | Lr_verb
+  | Lr_connective
+  | Lr_conditional
 
 val is_introducer : lexical_role -> bool
 val is_connective : follows_verb: bool -> lexical_role -> bool
@@ -37,13 +37,13 @@ val is_connective : follows_verb: bool -> lexical_role -> bool
 type printer = int -> Formatter.t -> unit
 
 type t = {
-    ok_name : string;
-    ok_arities : int list;
-    ok_prec : int;
-    ok_print : t * string -> printer list -> printer;
-    ok_id : int;
-    ok_lexical_role : lexical_role;
-    ok_create : idr * idr list -> Grammar.token;
+  ok_name : string;
+  ok_arities : int list;
+  ok_prec : int;
+  ok_print : t * string -> printer list -> printer;
+  ok_id : int;
+  ok_lexical_role : lexical_role;
+  ok_create : idr * idr list -> Grammar.token;
 }
 
 (** The maximum ok_id assignment plus one. *)
@@ -85,4 +85,3 @@ val p_apply : int
 val p_script : int -> int
 val p_project : int
 val p_max : int
-

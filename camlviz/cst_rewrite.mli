@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -21,9 +21,9 @@ open Cst_types
 open Cst_core
 
 type 'a rewriter = {
-    rw_cpred : 'a rewriter -> stratum -> cpred * 'a -> cpred * 'a;
-    rw_ctrm  : 'a rewriter -> stratum -> ctrm  * 'a -> ctrm  * 'a;
-    rw_cdef  : 'a rewriter -> stratum -> cdef  * 'a -> cdef  * 'a;
+  rw_cpred : 'a rewriter -> stratum -> cpred * 'a -> cpred * 'a;
+  rw_ctrm  : 'a rewriter -> stratum -> ctrm  * 'a -> ctrm  * 'a;
+  rw_cdef  : 'a rewriter -> stratum -> cdef  * 'a -> cdef  * 'a;
 }
 
 val subterm_rewrite_cpred : 'a rewriter -> stratum -> cpred * 'a -> cpred * 'a

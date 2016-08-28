@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Standard Library <http://www.vizlang.org/>.
  *
@@ -57,10 +57,10 @@ val __builtin_mask : (<__it : 'a. 'a io -> 'a io> -> 'b io) -> 'b io
 val __builtin_exit : int -> 'a io
 
 module Ref : sig
-    type ('f, 'a) r
-    val init : 'a -> ('f, ('f, 'a) r) effect
-    val get : ('f, 'a) r -> ('f, 'a) effect
-    val set : ('f, 'a) r -> 'a -> ('f, unit) effect
+  type ('f, 'a) r
+  val init : 'a -> ('f, ('f, 'a) r) effect
+  val get : ('f, 'a) r -> ('f, 'a) effect
+  val set : ('f, 'a) r -> 'a -> ('f, unit) effect
 end
 
 val none : 'a option

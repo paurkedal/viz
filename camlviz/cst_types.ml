@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -32,40 +32,40 @@ type cidr = Cidr of loc * idr
 type cmonad = string
 
 type cpred =
-    | Cpred_let		of loc * cmonad option * ctrm * cpred * cpred
-    | Cpred_if		of loc * ctrm * cpred * cpred
-    | Cpred_back	of loc
-    | Cpred_at		of loc * (ctrm * cpred) list
-    | Cpred_expr0	of loc * idr
-    | Cpred_expr	of loc * idr * ctrm
-    | Cpred_expr_which	of loc * idr * ctrm * cwhich
-    | Cpred_seq		of loc * idr * ctrm * cpred option
-    | Cpred_seq_which	of loc * idr * ctrm * cwhich * cpred option
-    | Cpred_cond	of loc * idr * ctrm * cpred * cpred option
-    | Cpred_upon	of loc * ctrm * cpred * cpred
- and ctrm =
-    | Ctrm_ref		of cidr * idrhint
-    | Ctrm_literal	of loc * lit
-    | Ctrm_label	of loc * cidr * ctrm
-    | Ctrm_quantify	of loc * cidr * ctrm * ctrm
-    | Ctrm_rel		of loc * ctrm * (loc * cidr * ctrm) list
-    | Ctrm_apply	of loc * ctrm * ctrm
-    | Ctrm_project	of loc * cidr * ctrm
-    | Ctrm_array	of loc * ctrm list
-    | Ctrm_what		of loc * cmonad option * cpred
-    | Ctrm_where	of loc * cdef list
-    | Ctrm_with		of loc * ctrm option * cdef list
- and cdef =
-    | Cdef_include	of loc * bool * ctrm
-    | Cdef_open		of loc * abi * ctrm
-    | Cdef_use		of loc * ctrm
-    | Cdef_type		of loc * abi * ctrm * cdef list
-    | Cdef_in		of loc * bool * ctrm * ctrm
-    | Cdec_sig		of loc * cidr
-    | Cdef_sig		of loc * cidr * ctrm
-    | Cdef_val		of loc * val_info * ctrm
-    | Cdef_let		of loc * cmonad option * ctrm * cpred
-    | Cdef_inj		of loc * abi * ctrm
-    | Cdef_lex		of loc * string * (cidr * cidr list) list
-    | Cdef_lexalias	of loc * (cidr * cidr) list
- and cwhich = cmonad option * cpred
+  | Cpred_let           of loc * cmonad option * ctrm * cpred * cpred
+  | Cpred_if            of loc * ctrm * cpred * cpred
+  | Cpred_back          of loc
+  | Cpred_at            of loc * (ctrm * cpred) list
+  | Cpred_expr0         of loc * idr
+  | Cpred_expr          of loc * idr * ctrm
+  | Cpred_expr_which    of loc * idr * ctrm * cwhich
+  | Cpred_seq           of loc * idr * ctrm * cpred option
+  | Cpred_seq_which     of loc * idr * ctrm * cwhich * cpred option
+  | Cpred_cond          of loc * idr * ctrm * cpred * cpred option
+  | Cpred_upon          of loc * ctrm * cpred * cpred
+and ctrm =
+  | Ctrm_ref            of cidr * idrhint
+  | Ctrm_literal        of loc * lit
+  | Ctrm_label          of loc * cidr * ctrm
+  | Ctrm_quantify       of loc * cidr * ctrm * ctrm
+  | Ctrm_rel            of loc * ctrm * (loc * cidr * ctrm) list
+  | Ctrm_apply          of loc * ctrm * ctrm
+  | Ctrm_project        of loc * cidr * ctrm
+  | Ctrm_array          of loc * ctrm list
+  | Ctrm_what           of loc * cmonad option * cpred
+  | Ctrm_where          of loc * cdef list
+  | Ctrm_with           of loc * ctrm option * cdef list
+and cdef =
+  | Cdef_include        of loc * bool * ctrm
+  | Cdef_open           of loc * abi * ctrm
+  | Cdef_use            of loc * ctrm
+  | Cdef_type           of loc * abi * ctrm * cdef list
+  | Cdef_in             of loc * bool * ctrm * ctrm
+  | Cdec_sig            of loc * cidr
+  | Cdef_sig            of loc * cidr * ctrm
+  | Cdef_val            of loc * val_info * ctrm
+  | Cdef_let            of loc * cmonad option * ctrm * cpred
+  | Cdef_inj            of loc * abi * ctrm
+  | Cdef_lex            of loc * string * (cidr * cidr list) list
+  | Cdef_lexalias       of loc * (cidr * cidr) list
+and cwhich = cmonad option * cpred

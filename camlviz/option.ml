@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -23,8 +23,8 @@ let fold f = function None -> fun x -> x | Some x -> f x
 let iter f = function None -> () | Some x -> f x
 let map f = function None -> None | Some x -> Some (f x)
 let map_fold f = function
-    | None, accu -> None, accu
-    | Some x, accu -> let y, accu' = f (x, accu) in Some y, accu'
+  | None, accu -> None, accu
+  | Some x, accu -> let y, accu' = f (x, accu) in Some y, accu'
 let for_all f = function None -> true | Some x -> f x
 let exists f = function None -> false | Some x -> f x
 let filter f = function None -> None | Some x -> if f x then Some x else None

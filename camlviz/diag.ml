@@ -1,4 +1,4 @@
-(* Copyright 2010--2016  Petter A. Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -24,25 +24,24 @@ exception Error_at of Textloc.t * string
 let errf_at loc msg = ksprintf (fun s -> raise (Error_at (loc, s))) msg
 
 let warnf_at loc msg =
-    let fmt s = eprintf "%s: warning: %s\n" (Textloc.to_string loc) s in
-    ksprintf fmt msg
+  let fmt s = eprintf "%s: warning: %s\n" (Textloc.to_string loc) s in
+  ksprintf fmt msg
 
 module String_set = Set.Make(String)
 
 let dtags =
-    try
-	let xs = String.split_on_char ':' (Unix.getenv "VIZ_DTAGS") in
-	List.fold String_set.add xs String_set.empty
-    with Not_found ->
-	String_set.empty
+  try
+    let xs = String.split_on_char ':' (Unix.getenv "VIZ_DTAGS") in
+    List.fold String_set.add xs String_set.empty
+  with Not_found ->
+    String_set.empty
 
 let dlog_en_for tag = String_set.mem tag dtags
 
 let dlogf_for tag ?loc fmt =
-    let print msg =
-	let puts = output_string stderr in
-	Option.iter (fun loc -> puts (Textloc.to_string loc ^ ": ")) loc;
-	puts msg;
-	puts "\n" in
-    ksprintf print fmt
-
+  let print msg =
+    let puts = output_string stderr in
+    Option.iter (fun loc -> puts (Textloc.to_string loc ^ ": ")) loc;
+    puts msg;
+    puts "\n" in
+  ksprintf print fmt

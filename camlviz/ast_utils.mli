@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -39,9 +39,9 @@ val atyp_unapply : atyp -> apath * atyp list
 val atyp_apply : apath -> atyp list -> atyp
 
 type pocket =
-    | No_pocket
-    | Local_pocket of avar
-    | World_pocket
+  | No_pocket
+  | Local_pocket of avar
+  | World_pocket
 
 val atyp_is_const : atyp -> bool
 
@@ -61,7 +61,7 @@ val fold_apat_paths : (stratum -> apath -> 'a -> 'a) -> apat -> 'a -> 'a
 val fold_aval_paths : (stratum -> apath -> 'a -> 'a) -> aval -> 'a -> 'a
 val fold_asig_paths : (stratum -> apath -> 'a -> 'a) -> asig -> 'a -> 'a
 val fold_amod_paths : ?module_name: string ->
-		      (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a
+                      (stratum -> apath -> 'a -> 'a) -> amod -> 'a -> 'a
 
 val fold_amod_cabi_open : (string -> 'a -> 'a) -> amod -> 'a -> 'a
 val fold_adef_cabi_open : (string -> 'a -> 'a) -> adef -> 'a -> 'a

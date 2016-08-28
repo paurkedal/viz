@@ -1,4 +1,4 @@
-(* Copyright 2011--2016  Petter A. Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -25,13 +25,13 @@ type loc = Textloc.t
 type idr = Idr of string with sexp
 
 type lit =
-    | Lit_unit
-    | Lit_bool of bool
-    | Lit_int of int
-    | Lit_float of float
-    | Lit_char of UChar.t
-    | Lit_string of UString.t
-    with sexp
+  | Lit_unit
+  | Lit_bool of bool
+  | Lit_int of int
+  | Lit_float of float
+  | Lit_char of UChar.t
+  | Lit_string of UString.t
+  with sexp
 
 type stratum = [`Type | `Value | `Signature | `Structure]
 

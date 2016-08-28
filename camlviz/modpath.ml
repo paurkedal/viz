@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -24,8 +24,8 @@ open Sexplib
 type t = idr list
 
 let valid_idr (Idr s) =
-    not (String.contains s '.')
-    || Char.is_digit s.[0] && s.[1] = '\''
+  not (String.contains s '.')
+  || Char.is_digit s.[0] && s.[1] = '\''
 
 let empty = []
 
@@ -38,41 +38,40 @@ let is_atom = function [_] -> true | _ -> false
 let cat_last x xs = assert (valid_idr x); x :: xs
 
 let cut_last = function
-    | x :: xs -> Some (x, xs)
-    | [] -> None
+  | x :: xs -> Some (x, xs)
+  | [] -> None
 
 let last_e = function
-    | x :: xs -> x
-    | [] -> failwith "Modpath.last_e"
+  | x :: xs -> x
+  | [] -> failwith "Modpath.last_e"
 
 let strip_last_e = function
-    | x :: xs -> xs
-    | [] -> failwith "Modpath.strip_last_e"
+  | x :: xs -> xs
+  | [] -> failwith "Modpath.strip_last_e"
 
 let length = List.length
 
-let rec nth_last n =
-    function
-    | [] -> None
-    | x :: xs ->
-	if n = 0 then Some x else
-	nth_last (n - 1) xs
+let rec nth_last n = function
+  | [] -> None
+  | x :: xs ->
+      if n = 0 then Some x else
+      nth_last (n - 1) xs
 
 let rec has_suffix zs xs =
-    match zs, xs with
-    | [], _ -> true
-    | _ :: _, [] -> false
-    | z :: zs', x :: xs' -> z = x && has_suffix zs' xs'
+  match zs, xs with
+  | [], _ -> true
+  | _ :: _, [] -> false
+  | z :: zs', x :: xs' -> z = x && has_suffix zs' xs'
 
 let has_prefix zs xs = has_suffix (List.rev zs) (List.rev xs)
 
 let cat xs ys = ys @ xs
 
 let rec strip_suffix zs xs =
-    match zs, xs with
-    | [], _ -> Some xs
-    | _ :: _, [] -> None
-    | z :: zs', x :: xs' -> if z = x then strip_suffix zs' xs' else None
+  match zs, xs with
+  | [], _ -> Some xs
+  | _ :: _, [] -> None
+  | z :: zs', x :: xs' -> if z = x then strip_suffix zs' xs' else None
 
 let strip_prefix zs xs =
     Option.map List.rev (strip_suffix (List.rev zs) (List.rev xs))
@@ -81,32 +80,32 @@ let strip_suffix_e zs xs = Option.get (strip_suffix zs xs)
 let strip_prefix_e zs xs = Option.get (strip_prefix zs xs)
 
 let rec strip_common_suffix zs xs =
-    match zs, xs with
-    | [], _ -> xs
-    | _ :: _, [] -> []
-    | z :: zs', x :: xs' -> if z = x then strip_common_suffix zs' xs' else xs
+  match zs, xs with
+  | [], _ -> xs
+  | _ :: _, [] -> []
+  | z :: zs', x :: xs' -> if z = x then strip_common_suffix zs' xs' else xs
 let strip_common_prefix zs xs =
-    List.rev (strip_common_suffix (List.rev zs) (List.rev xs))
+  List.rev (strip_common_suffix (List.rev zs) (List.rev xs))
 
 let fold = List.fold_right
 
 let rfold = List.fold
 
 let rec iter f = function
-    | [] -> ()
-    | x :: xs -> iter f xs; f x
+  | [] -> ()
+  | x :: xs -> iter f xs; f x
 
 let riter = List.iter
 
 let compare xs ys =
-    match xs, ys with
-    | [], [] -> 0
-    | _, [] -> 1
-    | [], _ -> -1
-    | x :: xs', y :: ys' ->
-	let c = compare x y in
-	if c <> 0 then c else
-	compare xs' ys'
+  match xs, ys with
+  | [], [] -> 0
+  | _, [] -> 1
+  | [], _ -> -1
+  | x :: xs', y :: ys' ->
+      let c = compare x y in
+      if c <> 0 then c else
+      compare xs' ys'
 
 let to_string xs = String.join "." (List.rev_map idr_to_string xs)
 let of_string s = List.rev_map idr_of_string (String.split_on_char '.' s)

@@ -1,4 +1,4 @@
-(* Copyright 2010--2012  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -36,68 +36,68 @@ val ( |> ) : 'a -> ('a -> 'b) -> 'b
 val int_of_digit : char -> int
 
 module Bool : sig
-    val power : bool -> ('a -> 'a) -> 'a -> 'a
+  val power : bool -> ('a -> 'a) -> 'a -> 'a
 end
 
 module List : sig
-    include module type of List
+  include module type of List
 
-    val push : 'a -> 'a list -> 'a list
+  val push : 'a -> 'a list -> 'a list
 
-    val last : 'a list -> 'a
+  val last : 'a list -> 'a
 
-    val compare_with : ('a -> 'a -> int) -> 'a list -> 'a list -> int
+  val compare_with : ('a -> 'a -> int) -> 'a list -> 'a list -> int
 
-    val init : int -> (int -> 'a) -> 'a list
+  val init : int -> (int -> 'a) -> 'a list
 
-    val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
+  val fold : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
 
-    val fold2 : ('a * 'b -> 'g -> 'g) -> 'a list * 'b list -> 'g -> 'g
+  val fold2 : ('a * 'b -> 'g -> 'g) -> 'a list * 'b list -> 'g -> 'g
 
-    val map_fold : ('a * 'c -> 'b * 'c) -> 'a list * 'c -> 'b list * 'c
+  val map_fold : ('a * 'c -> 'b * 'c) -> 'a list * 'c -> 'b list * 'c
 
-    val combine : ('a -> 'a -> 'a) -> 'a list -> 'a
+  val combine : ('a -> 'a -> 'a) -> 'a list -> 'a
 
-    val rev_filter : ('a -> bool) -> 'a list -> 'a list
+  val rev_filter : ('a -> bool) -> 'a list -> 'a list
 
-    val find_image : ('a -> 'b option) -> 'a list -> 'b option
+  val find_image : ('a -> 'b option) -> 'a list -> 'b option
 
-    val split_before : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val split_before : ('a -> bool) -> 'a list -> 'a list * 'a list
 
-    val split_after : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val split_after : ('a -> bool) -> 'a list -> 'a list * 'a list
 
-    val map_while : ('a -> 'b option) -> 'a list -> 'a list * 'b list
+  val map_while : ('a -> 'b option) -> 'a list -> 'a list * 'b list
 
-    val drop_while : ('a -> bool) -> 'a list -> 'a list
+  val drop_while : ('a -> bool) -> 'a list -> 'a list
 
-    val even_odd_pairs : 'a list -> ('a * 'a) list * 'a option
+  val even_odd_pairs : 'a list -> ('a * 'a) list * 'a option
 end
 
 module Char : sig
-    include module type of Char
+  include module type of Char
 
-    val is_space : char -> bool
-    val is_digit : char -> bool
-    val is_lower : char -> bool
-    val is_upper : char -> bool
+  val is_space : char -> bool
+  val is_digit : char -> bool
+  val is_lower : char -> bool
+  val is_upper : char -> bool
 end
 
 module String : sig
-    include module type of String
+  include module type of String
 
-    val skip_while : (char -> bool) -> string -> int -> int
+  val skip_while : (char -> bool) -> string -> int -> int
 
-    val map_of_list : ('a -> char) -> 'a list -> string
+  val map_of_list : ('a -> char) -> 'a list -> string
 
-    val split_on_char : char -> string -> string list
+  val split_on_char : char -> string -> string list
 
-    val after : int -> string -> string
+  val after : int -> string -> string
 
-    val starts_with : string -> string -> bool
+  val starts_with : string -> string -> bool
 
-    val ends_with : string -> string -> bool
+  val ends_with : string -> string -> bool
 
-    val strip_suffix : string -> string -> string
+  val strip_suffix : string -> string -> string
 
-    val join : string -> string list -> string
+  val join : string -> string list -> string
 end

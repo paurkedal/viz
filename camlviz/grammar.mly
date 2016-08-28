@@ -1,4 +1,4 @@
-/* Copyright 2010--2016  Petter A. Urkedal
+/* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -24,33 +24,33 @@ open Leaf_core
 open Unicode
 
 let mkloc lb ub =
-    Textloc.between (Textloc.Bound.of_lexing_position lb)
-		     (Textloc.Bound.of_lexing_position ub)
+  Textloc.between (Textloc.Bound.of_lexing_position lb)
+                  (Textloc.Bound.of_lexing_position ub)
 
 let rec quantify loc qs e =
-    match qs with
-    | [] -> e
-    | (l, q, v) :: qs' -> Ctrm_quantify (loc, q, v, quantify l qs' e)
+  match qs with
+  | [] -> e
+  | (l, q, v) :: qs' -> Ctrm_quantify (loc, q, v, quantify l qs' e)
 let apply loc f x = Ctrm_apply (loc, f, x)
 let apply2 loc f x y = apply loc (apply loc f x) y
 
 let ctrm_idr loc name = Ctrm_ref (Cidr (loc, name), Ih_none)
 
 let apply_infix lb ub lbf ubf (_, f) =
-    apply2 (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+  apply2 (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 let apply_prefix lb ub lbf ubf (f, _) =
-    apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+  apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 let apply_suffix lb ub lbf ubf f =
-    apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+  apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 
 let apply_infix_script lb ub lbf ubf f =
-    apply2 (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+  apply2 (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 let apply_prefix_script lb ub lbf ubf f =
-    apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
+  apply (mkloc lb ub) (ctrm_idr (mkloc lbf ubf) f)
 
 let apply_fence loc name0 name1 =
-    assert (name0 = name1); (* FIXME *)
-    apply loc (Ctrm_ref (Cidr (loc, name0), Ih_none))
+  assert (name0 = name1); (* FIXME *)
+  apply loc (Ctrm_ref (Cidr (loc, name0), Ih_none))
 %}
 
 %token EOF
@@ -153,8 +153,8 @@ default_start:
 
 signature_block:
     BEGIN signature_clause_seq END {
-	let body_loc = mkloc $startpos($2) $endpos($2) in
-	Ctrm_with (body_loc, None, List.rev $2)
+      let body_loc = mkloc $startpos($2) $endpos($2) in
+      Ctrm_with (body_loc, None, List.rev $2)
     }
   ;
 signature_clause_seq:
@@ -165,20 +165,20 @@ signature_clause_seq:
 structure_block:
     BEGIN structure_clause_seq END
     {
-	let body_loc = mkloc $startpos($2) $endpos($2) in
-	Ctrm_where (body_loc, List.rev $2)
+      let body_loc = mkloc $startpos($2) $endpos($2) in
+      Ctrm_where (body_loc, List.rev $2)
     }
   | BEGIN structure_clause_seq SEALED expr structure_clause_seq END
     {
-	let loc = mkloc $startpos $endpos in
-	let sct1_loc = mkloc $startpos($5) $endpos($5) in
-	let sct1 = Ctrm_where (sct1_loc, List.rev $5) in
-	let op_loc = mkloc $startpos($3) $endpos($3) in
-	let op = Ctrm_ref (Cidr (op_loc, idr_2o_colon), Ih_none) in
-	let sct1_loc' = mkloc $startpos($3) $endpos($4) in
-	let sct1' = apply2 sct1_loc' op sct1 $4 in
-	let inc = Cdef_include (sct1_loc', false, sct1') in
-	Ctrm_where (loc, List.rev (inc :: $2))
+      let loc = mkloc $startpos $endpos in
+      let sct1_loc = mkloc $startpos($5) $endpos($5) in
+      let sct1 = Ctrm_where (sct1_loc, List.rev $5) in
+      let op_loc = mkloc $startpos($3) $endpos($3) in
+      let op = Ctrm_ref (Cidr (op_loc, idr_2o_colon), Ih_none) in
+      let sct1_loc' = mkloc $startpos($3) $endpos($4) in
+      let sct1' = apply2 sct1_loc' op sct1 $4 in
+      let inc = Cdef_include (sct1_loc', false, sct1') in
+      Ctrm_where (loc, List.rev (inc :: $2))
     }
   ;
 structure_clause_seq:
@@ -233,13 +233,13 @@ structure_pattern:
     expr { $1 }
   | structure_pattern DOT_AT identifier signature_block
     {
-	let loc = mkloc $startpos $endpos in
-	let loc_at = mkloc $startpos($2) $endpos($2) in
-	let loc_argdec = mkloc $startpos($3) $endpos($4) in
-	let dotparen = Ctrm_ref (Cidr (loc_at, idr_2b_dotparen), Ih_none) in
-	let colon = Ctrm_ref (Cidr (loc_at, idr_2o_colon), Ih_none) in
-	let argdec = apply2 loc_argdec colon (Ctrm_ref ($3, Ih_none)) $4 in
-	apply2 loc dotparen $1 argdec
+      let loc = mkloc $startpos $endpos in
+      let loc_at = mkloc $startpos($2) $endpos($2) in
+      let loc_argdec = mkloc $startpos($3) $endpos($4) in
+      let dotparen = Ctrm_ref (Cidr (loc_at, idr_2b_dotparen), Ih_none) in
+      let colon = Ctrm_ref (Cidr (loc_at, idr_2o_colon), Ih_none) in
+      let argdec = apply2 loc_argdec colon (Ctrm_ref ($3, Ih_none)) $4 in
+      apply2 loc dotparen $1 argdec
     }
   ;
 
@@ -277,13 +277,13 @@ nonfunction_predicate:
     { Cpred_upon (mkloc $startpos $endpos, $2, $3, $4) }
   | COND term predicate_block
     {
-	let loc = mkloc $startpos $endpos in
-	Cpred_cond (loc, $1, $2, $3, None)
+      let loc = mkloc $startpos $endpos in
+      Cpred_cond (loc, $1, $2, $3, None)
     }
   | COND term predicate_block nonfunction_predicate_with_participle
     {
-	let loc = mkloc $startpos $endpos in
-	Cpred_cond (loc, $1, $2, $3, Some $4)
+      let loc = mkloc $startpos $endpos in
+      Cpred_cond (loc, $1, $2, $3, Some $4)
     }
   ;
 nonfunction_predicate_with_participle:
@@ -514,9 +514,9 @@ application:
   | application script { apply (mkloc $startpos $endpos) $1 $2 }
   | application LABEL script
     {
-	let loc = mkloc $startpos $endpos in
-	let label = Cidr (mkloc $startpos($2) $endpos($2), $2) in
-	apply loc $1 (Ctrm_label (loc, label, $3))
+      let loc = mkloc $startpos $endpos in
+      let label = Cidr (mkloc $startpos($2) $endpos($2), $2) in
+      apply loc $1 (Ctrm_label (loc, label, $3))
     }
   | FENCE arith FENCE { apply_fence (mkloc $startpos $endpos) $1 $3 $2 }
   ;
@@ -550,11 +550,11 @@ projection:
       Ctrm_project (mkloc $startpos $endpos, p, $1) }
   | projection PROJECT_LBRACKET expr RBRACKET
     {
-	let locb = mkloc $startpos($2) $endpos($2) in
-	let f = Ctrm_ref (Cidr (locb, idr_2b $2 $4), Ih_none) in
-	let loc = mkloc $startpos $endpos in
-	let loc1 = mkloc $startpos($1) $endpos($2) in
-	Ctrm_apply (loc, Ctrm_apply (loc1, f, $1), $3)
+      let locb = mkloc $startpos($2) $endpos($2) in
+      let f = Ctrm_ref (Cidr (locb, idr_2b $2 $4), Ih_none) in
+      let loc = mkloc $startpos $endpos in
+      let loc1 = mkloc $startpos($1) $endpos($2) in
+      Ctrm_apply (loc, Ctrm_apply (loc1, f, $1), $3)
     }
   ;
 
@@ -568,9 +568,9 @@ atomic_expr:
     { Ctrm_ref (Cidr (mkloc $startpos $endpos, idr_0b $1 $2), Ih_inj) }
   | LBRACKET expr RBRACKET
     {
-	let locb = mkloc $startpos $endpos($1) in
-	let f = Ctrm_ref (Cidr (locb, idr_1b $1 $3), Ih_none) in
-	Ctrm_apply (mkloc $startpos $endpos, f, $2)
+      let locb = mkloc $startpos $endpos($1) in
+      let f = Ctrm_ref (Cidr (locb, idr_1b $1 $3), Ih_none) in
+      Ctrm_apply (mkloc $startpos $endpos, f, $2)
     }
   | WHERE structure_block { $2 }
   | WITH signature_block { $2 }

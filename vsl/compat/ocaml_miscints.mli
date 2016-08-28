@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Standard Library <http://www.vizlang.org/>.
  *
@@ -20,44 +20,44 @@ open Ocaml_prereq
 open Ocaml_unicode.Pervasive
 
 module type A_basic_nat = sig
-    type t
+  type t
 
-    val eq : t -> t -> bool
-    val cmp : t -> t -> torder
-    val op2_U2264 (* ≤ *) : t -> t -> bool
-    val op2_U2265 (* ≥ *) : t -> t -> bool
-    val op2_U003c (* < *) : t -> t -> bool
-    val op2_U003e (* > *) : t -> t -> bool
+  val eq : t -> t -> bool
+  val cmp : t -> t -> torder
+  val op2_U2264 (* ≤ *) : t -> t -> bool
+  val op2_U2265 (* ≥ *) : t -> t -> bool
+  val op2_U003c (* < *) : t -> t -> bool
+  val op2_U003e (* > *) : t -> t -> bool
 
-    val width : int
-    val zero : t
-    val one : t
-    val minimum : t
-    val maximum : t
+  val width : int
+  val zero : t
+  val one : t
+  val minimum : t
+  val maximum : t
 
-    val add : t -> t -> t
-    val sub : t -> t -> t
-    val mul : t -> t -> t
-    val div : t -> t -> t   (* if signed, floored division *)
-    val (mod) : t -> t -> t (* if signed, from floored division *)
-    val quo : t -> t -> t   (* if signed, truncated division *)
-    val rem : t -> t -> t   (* if signed, from truncated division *)
-    val abs : t -> t
+  val add : t -> t -> t
+  val sub : t -> t -> t
+  val mul : t -> t -> t
+  val div : t -> t -> t   (* if signed, floored division *)
+  val (mod) : t -> t -> t (* if signed, from floored division *)
+  val quo : t -> t -> t   (* if signed, truncated division *)
+  val rem : t -> t -> t   (* if signed, from truncated division *)
+  val abs : t -> t
 
-    val bitnot : t -> t
-    val bitand : t -> t -> t
-    val bitor : t -> t -> t
-    val bitxor : t -> t -> t
-    val shift : int -> t -> t
+  val bitnot : t -> t
+  val bitand : t -> t -> t
+  val bitor : t -> t -> t
+  val bitxor : t -> t -> t
+  val shift : int -> t -> t
 
-    val of_int : int -> t
-    val as_int : t -> int
+  val of_int : int -> t
+  val as_int : t -> int
 end
 
 module type A_basic_int = sig
-    include A_basic_nat
+  include A_basic_nat
 
-    val neg : t -> t
+  val neg : t -> t
 end
 
 module Int : A_basic_int with type t = int
@@ -69,9 +69,9 @@ module Nat32 : A_basic_nat
 module Nat64 : A_basic_nat
 
 module Pervasive : sig
-    type nint = nativeint
-    type nnat = Nnat.t
-    type nativeint (* hidden *)
-    type nat32 = Nat32.t
-    type nat64 = Nat64.t
+  type nint = nativeint
+  type nnat = Nnat.t
+  type nativeint (* hidden *)
+  type nat32 = Nat32.t
+  type nat64 = Nat64.t
 end

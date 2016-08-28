@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Standard Library <http://www.vizlang.org/>.
  *
@@ -20,62 +20,62 @@ open Ocaml_prereq
 open Ocaml_unicode
 
 module Bool_ops = struct
-    let op2_U003d = Pervasives.(=)
-    let op2_U2260 = Pervasives.(<>)
-    let op2_U003c = Pervasives.(<)
-    let op2_U003e = Pervasives.(>)
-    let op2_U2264 = Pervasives.(<=)
-    let op2_U2265 = Pervasives.(>=)
+  let op2_U003d = Pervasives.(=)
+  let op2_U2260 = Pervasives.(<>)
+  let op2_U003c = Pervasives.(<)
+  let op2_U003e = Pervasives.(>)
+  let op2_U2264 = Pervasives.(<=)
+  let op2_U2265 = Pervasives.(>=)
 end
 
 module Float_misc = struct
-    let op2_U003c = Pervasives.(<)
-    let op2_U003e = Pervasives.(>)
-    let op2_U2264 = Pervasives.(<=)
-    let op2_U2265 = Pervasives.(>=)
-    let cmp = __generic_cmp
-    let eq = __generic_eq
+  let op2_U003c = Pervasives.(<)
+  let op2_U003e = Pervasives.(>)
+  let op2_U2264 = Pervasives.(<=)
+  let op2_U2265 = Pervasives.(>=)
+  let cmp = __generic_cmp
+  let eq = __generic_eq
 
-    let zero = 0.0
-    let one = 1.0
-    let minimum = min_float
-    let maximum = max_float
+  let zero = 0.0
+  let one = 1.0
+  let minimum = min_float
+  let maximum = max_float
 
-    let neg = Pervasives.(~-.)
-    let add = Pervasives.(+.)
-    let sub = Pervasives.(-.)
-    let mul = Pervasives.( *. )
-    let div = Pervasives.(/.)
+  let neg = Pervasives.(~-.)
+  let add = Pervasives.(+.)
+  let sub = Pervasives.(-.)
+  let mul = Pervasives.( *. )
+  let div = Pervasives.(/.)
 
-    let itrunc = Pervasives.truncate
-    let of_int = Pervasives.float_of_int
+  let itrunc = Pervasives.truncate
+  let of_int = Pervasives.float_of_int
 
-    let show x = Utf8_string.as_string (Pervasives.string_of_float x)
+  let show x = Utf8_string.as_string (Pervasives.string_of_float x)
 end
 
 module Pervasive = struct
-    let stdin = Pervasives.stdin
-    let stdout = Pervasives.stdout
-    let stderr = Pervasives.stderr
-    let flush chan = __builtin_effect (fun () -> Pervasives.flush chan)
-    let flush_all = __builtin_effect (fun () -> Pervasives.flush_all ())
-    let print s = __builtin_effect
-	(fun () -> Pervasives.print_string (Utf8_string.of_string s))
-    let eprint s = __builtin_effect
-	(fun () -> Pervasives.prerr_string (Utf8_string.of_string s))
-    let fprint ochan s = __builtin_effect
-	(fun () -> Pervasives.output_string ochan (Utf8_string.of_string s))
+  let stdin = Pervasives.stdin
+  let stdout = Pervasives.stdout
+  let stderr = Pervasives.stderr
+  let flush chan = __builtin_effect (fun () -> Pervasives.flush chan)
+  let flush_all = __builtin_effect (fun () -> Pervasives.flush_all ())
+  let print s = __builtin_effect
+    (fun () -> Pervasives.print_string (Utf8_string.of_string s))
+  let eprint s = __builtin_effect
+    (fun () -> Pervasives.prerr_string (Utf8_string.of_string s))
+  let fprint ochan s = __builtin_effect
+    (fun () -> Pervasives.output_string ochan (Utf8_string.of_string s))
 
-    let __failure loc msg =
-	Printf.eprintf "%s: %s\n" (Utf8_string.of_string loc)
-	    (Utf8_string.of_string msg);
-	Pervasives.flush_all ();
-	assert false
-    let __trace loc bindings =
-	Printf.eprintf "%s: trace:" (Utf8_string.of_string loc);
-	let print_binding (v, x) =
-	    Printf.eprintf " %s = %s;" (Utf8_string.of_string v)
-				       (Utf8_string.of_string x) in
-	List.iter print_binding bindings;
-	Printf.eprintf "\n"
+  let __failure loc msg =
+    Printf.eprintf "%s: %s\n" (Utf8_string.of_string loc)
+        (Utf8_string.of_string msg);
+    Pervasives.flush_all ();
+    assert false
+  let __trace loc bindings =
+    Printf.eprintf "%s: trace:" (Utf8_string.of_string loc);
+    let print_binding (v, x) =
+      Printf.eprintf " %s = %s;" (Utf8_string.of_string v)
+                                 (Utf8_string.of_string x) in
+    List.iter print_binding bindings;
+    Printf.eprintf "\n"
 end

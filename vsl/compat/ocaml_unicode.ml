@@ -1,4 +1,4 @@
-(* Copyright 2011--2012  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Standard Library <http://www.vizlang.org/>.
  *
@@ -22,52 +22,52 @@ open CamomileLibraryDefault.Camomile
 module UString_encoding = CharEncoding.Make (UText)
 
 module Pervasive = struct
-    type char = UChar.t
-    type utf8_string = string
-    type string = UText.t
+  type char = UChar.t
+  type utf8_string = string
+  type string = UText.t
 
-    let __string_of_utf8 = UString_encoding.decode CharEncoding.utf8
-    let __char_of_code i = UChar.chr i
-    let __char_code ch = UChar.code ch
+  let __string_of_utf8 = UString_encoding.decode CharEncoding.utf8
+  let __char_of_code i = UChar.chr i
+  let __char_code ch = UChar.code ch
 end
 open Pervasive
 
 module Char_ = struct
-    let of_int = UChar.chr
-    let as_int = UChar.code
+  let of_int = UChar.chr
+  let as_int = UChar.code
 end
 
 module String_ = struct
-    let length = UText.length
-    let get i s = UText.get s i
-    let init = UText.init
+  let length = UText.length
+  let get i s = UText.get s i
+  let init = UText.init
 
-    let of_utf8 = UString_encoding.decode CharEncoding.utf8
-    let as_utf8 = UString_encoding.encode CharEncoding.utf8
+  let of_utf8 = UString_encoding.decode CharEncoding.utf8
+  let as_utf8 = UString_encoding.encode CharEncoding.utf8
 
-    let eq (x : string) (y : string) = x = y
-    let cmp (x : string) (y : string) = __generic_cmp x y
+  let eq (x : string) (y : string) = x = y
+  let cmp (x : string) (y : string) = __generic_cmp x y
 end
 
 module String_buf = struct
-    module B = UText.Buf
-    type 'f r = B.buf
+  module B = UText.Buf
+  type 'f r = B.buf
 
-    let create = __builtin_effect (fun () -> B.create 8)
-    let contents buf = __builtin_effect (fun () -> B.contents buf)
-    let length buf = __builtin_effect (fun () -> B.length buf)
-    let clear buf = __builtin_effect (fun () -> B.clear buf)
-    let put_char buf ch = __builtin_effect (fun () -> B.add_char buf ch)
-    let put_string buf s = __builtin_effect (fun () -> B.add_string buf s)
+  let create = __builtin_effect (fun () -> B.create 8)
+  let contents buf = __builtin_effect (fun () -> B.contents buf)
+  let length buf = __builtin_effect (fun () -> B.length buf)
+  let clear buf = __builtin_effect (fun () -> B.clear buf)
+  let put_char buf ch = __builtin_effect (fun () -> B.add_char buf ch)
+  let put_string buf s = __builtin_effect (fun () -> B.add_string buf s)
 end
 
 module Utf8_string = struct
-    let of_string = UString_encoding.encode CharEncoding.utf8
-    let as_string = UString_encoding.decode CharEncoding.utf8
+  let of_string = UString_encoding.encode CharEncoding.utf8
+  let as_string = UString_encoding.decode CharEncoding.utf8
 
-    let length = String.length
+  let length = String.length
 end
 
 let () =
-    Callback.register "ustring_of_utf8" Utf8_string.as_string;
-    Callback.register "ustring_to_utf8" Utf8_string.of_string;
+  Callback.register "ustring_of_utf8" Utf8_string.as_string;
+  Callback.register "ustring_to_utf8" Utf8_string.of_string;

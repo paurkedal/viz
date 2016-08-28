@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -21,27 +21,27 @@
 (** The signature of a "simply traversable" graph, without edges but with an
     associated map structure for the vertices. *)
 module type ST_GRAPH = sig
-    type graph
-    type vertex
+  type graph
+  type vertex
 
-    module Vertex_map : sig
-	type 'a t
-	val empty : 'a t
-	val add : vertex -> 'a -> 'a t -> 'a t
-	val mem : vertex -> 'a t -> bool
-	val find : vertex -> 'a t -> 'a
-    end
+  module Vertex_map : sig
+    type 'a t
+    val empty : 'a t
+    val add : vertex -> 'a -> 'a t -> 'a t
+    val mem : vertex -> 'a t -> bool
+    val find : vertex -> 'a t -> 'a
+  end
 
-    val fold_adjacent : graph -> (vertex -> 'a -> 'a) -> vertex -> 'a -> 'a
+  val fold_adjacent : graph -> (vertex -> 'a -> 'a) -> vertex -> 'a -> 'a
 end
 
 (** Functor to instantiate the algorithms on [ST_GRAPH]s. *)
 module ST_algo (G : ST_GRAPH) : sig
-    val fold_strongly_connected
-	: G.graph -> (G.vertex list -> 'a -> 'a) -> G.vertex list -> 'a -> 'a
-    (** [fold_strongly_connected g f vs] is the composition of [f us] for each
-	[us] in the partition of strongly connected components of [vs].  The
-	components are passed to [f] in topological order, starting with the
-	deepest vertices as the rightmost factor.  The implementation follows
-	the Cheriyan-Mehlhorn/Gabow algorithm. *)
+  val fold_strongly_connected
+      : G.graph -> (G.vertex list -> 'a -> 'a) -> G.vertex list -> 'a -> 'a
+  (** [fold_strongly_connected g f vs] is the composition of [f us] for each
+      [us] in the partition of strongly connected components of [vs].  The
+      components are passed to [f] in topological order, starting with the
+      deepest vertices as the rightmost factor.  The implementation follows
+      the Cheriyan-Mehlhorn/Gabow algorithm. *)
 end

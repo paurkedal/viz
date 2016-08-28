@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -38,208 +38,208 @@ let print_avar fo (Avar (_, v)) = Fo.put fo `Name (idr_to_string v)
 let print_apath fo (Apath (_, p)) = Fo.put fo `Name (Modpath.to_string p)
 
 let rec print_atyp fo p = function
-    | Atyp_ref qn -> print_apath fo qn
-    | Atyp_uvar v -> print_avar fo v
-    | Atyp_A (_, v, t) ->
-	Fo.put fo `Operator "∀";
-	print_avar fo v;
-	Fo.put fo `Operator ".";
-	Fo.space fo;
-	print_atyp fo p_qbody t
-    | Atyp_E (_, v, t) ->
-	Fo.put fo `Operator "∃";
-	print_avar fo v;
-	Fo.put fo `Operator ".";
-	Fo.space fo;
-	print_atyp fo p_qbody t
-    | Atyp_apply (_, t, u) ->
-	if p > p_apply then Fo.put fo `Operator "(";
-	print_atyp fo p_apply t;
-	Fo.space fo;
-	print_atyp fo (p_apply + 1) u;
-	if p > p_apply then Fo.put fo `Operator ")"
-    | Atyp_arrow (_, alab, t, u) ->
-	if p > p_arrow then Fo.put fo `Operator "(";
-	let put_label (Idr l) =
-	    Fo.put fo `Label (l ^ ":");
-	    Fo.space fo in
-	let r =
-	    match alab with
-	    | Alabel_none -> true
-	    | Alabel_labelled l -> put_label l; true
-	    | Alabel_optional l -> put_label l; false in
-	print_atyp fo (p_arrow + 1) t;
-	Fo.space fo;
-	Fo.put fo `Operator (if r then "→" else "→?");
-	Fo.space fo;
-	print_atyp fo p_arrow u;
-	if p > p_arrow then Fo.put fo `Operator ")"
+  | Atyp_ref qn -> print_apath fo qn
+  | Atyp_uvar v -> print_avar fo v
+  | Atyp_A (_, v, t) ->
+      Fo.put fo `Operator "∀";
+      print_avar fo v;
+      Fo.put fo `Operator ".";
+      Fo.space fo;
+      print_atyp fo p_qbody t
+  | Atyp_E (_, v, t) ->
+      Fo.put fo `Operator "∃";
+      print_avar fo v;
+      Fo.put fo `Operator ".";
+      Fo.space fo;
+      print_atyp fo p_qbody t
+  | Atyp_apply (_, t, u) ->
+      if p > p_apply then Fo.put fo `Operator "(";
+      print_atyp fo p_apply t;
+      Fo.space fo;
+      print_atyp fo (p_apply + 1) u;
+      if p > p_apply then Fo.put fo `Operator ")"
+  | Atyp_arrow (_, alab, t, u) ->
+      if p > p_arrow then Fo.put fo `Operator "(";
+      let put_label (Idr l) =
+        Fo.put fo `Label (l ^ ":");
+        Fo.space fo in
+      let r =
+        match alab with
+        | Alabel_none -> true
+        | Alabel_labelled l -> put_label l; true
+        | Alabel_optional l -> put_label l; false in
+      print_atyp fo (p_arrow + 1) t;
+      Fo.space fo;
+      Fo.put fo `Operator (if r then "→" else "→?");
+      Fo.space fo;
+      print_atyp fo p_arrow u;
+      if p > p_arrow then Fo.put fo `Operator ")"
 
 let rec print_apat fo p = function
-    | Apat_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
-    | Apat_ref qn -> print_apath fo qn
-    | Apat_uvar v -> print_avar fo v
-    | Apat_apply (_, alab, f, x) ->
-	if p > p_apply then Fo.put fo `Operator "(";
-	print_apat fo (p_apply + 1) f;
-	Fo.space fo;
-	let r = match alab with
-	| Alabel_none -> true
-	| Alabel_labelled (Idr l) -> Fo.put fo `Label (l ^ ":"); true
-	| Alabel_optional (Idr l) -> Fo.put fo `Label (l ^ ":"); false in
-	if r then print_apat fo p_apply x else
-	(print_apat fo (p_script 2) x; Fo.put fo `Operator "?");
-	if p > p_apply then Fo.put fo `Operator ")"
-    | Apat_as (_, v, x) ->
-	print_avar fo v;
-	Fo.put fo `Operator "@(";
-	print_apat fo p_min x;
-	Fo.put fo `Operator ")"
-    | Apat_intype (_, t, x) ->
-	if p > p_colon then Fo.put fo `Operator "(";
-	print_apat fo (p_colon + 1) x;
-	Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
-	print_atyp fo (p_colon + 1) t;
-	if p > p_colon then Fo.put fo `Operator ")"
+  | Apat_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
+  | Apat_ref qn -> print_apath fo qn
+  | Apat_uvar v -> print_avar fo v
+  | Apat_apply (_, alab, f, x) ->
+      if p > p_apply then Fo.put fo `Operator "(";
+      print_apat fo (p_apply + 1) f;
+      Fo.space fo;
+      let r = match alab with
+      | Alabel_none -> true
+      | Alabel_labelled (Idr l) -> Fo.put fo `Label (l ^ ":"); true
+      | Alabel_optional (Idr l) -> Fo.put fo `Label (l ^ ":"); false in
+      if r then print_apat fo p_apply x else
+      (print_apat fo (p_script 2) x; Fo.put fo `Operator "?");
+      if p > p_apply then Fo.put fo `Operator ")"
+  | Apat_as (_, v, x) ->
+      print_avar fo v;
+      Fo.put fo `Operator "@(";
+      print_apat fo p_min x;
+      Fo.put fo `Operator ")"
+  | Apat_intype (_, t, x) ->
+      if p > p_colon then Fo.put fo `Operator "(";
+      print_apat fo (p_colon + 1) x;
+      Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
+      print_atyp fo (p_colon + 1) t;
+      if p > p_colon then Fo.put fo `Operator ")"
 
 let rec print_aval fo p = function
-    | Aval_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
-    | Aval_ref qn -> print_apath fo qn
-    | Aval_apply (_, alab, f, x) ->
-	if p > p_apply then Fo.put fo `Operator "(";
-	print_aval fo (p_apply + 1) f;
-	Fo.space fo;
-	let r = match alab with
-	| Alabel_none -> true
-	| Alabel_labelled (Idr l) -> Fo.put fo `Label (l ^ ":"); true
-	| Alabel_optional (Idr l) -> Fo.put fo `Label (l ^ ":"); false in
-	if r then print_aval fo p_apply x else
-	(print_aval fo (p_script 2) x; Fo.put fo `Operator "?");
-	if p > p_apply then Fo.put fo `Operator ")"
-    | Aval_array (_, xs) ->
-	Fo.put fo `Operator "#[";
-	begin match xs with
-	| [] -> ()
-	| x :: xs ->
-	    print_aval fo (p_semi + 1) x;
-	    Fo.put fo `Operator ";";
-	    List.iter
-		begin fun x ->
-		    Fo.space fo;
-		    print_aval fo (p_semi + 1) x;
-		    Fo.put fo `Operator ";"
-		end  xs
-	end;
-	Fo.put fo `Operator "]"
-    | Aval_at (_, lopt, cases) ->
-	if p > p_semi then Fo.put fo `Operator "(";
-	let print_label =
-	    match lopt with
-	    | None -> fun () -> ()
-	    | Some (Idr l) -> fun () ->
-		Fo.put fo `Label (l ^ ":"); Fo.space fo in
-	let print_case (pat, cond, cq) =
-	    print_label ();
-	    print_apat fo (p_mapsto + 1) pat;
-	    begin match cond with
-	    | None -> ()
-	    | Some cond ->
-		Fo.space fo;
-		Fo.put fo `Operator "[";
-		print_aval fo p_min cond;
-		Fo.put fo `Operator "]"
-	    end;
-	    Fo.space fo; Fo.put fo `Operator "↦"; Fo.space fo;
-	    print_aval fo (p_mapsto + 1) cq in
-	begin match cases with
-	| [] -> assert false
-	| case :: cases ->
-	    print_case case;
-	    List.iter
-		begin fun case ->
-		    Fo.put fo `Operator ";";
-		    Fo.space fo;
-		    print_case case
-		end cases;
-	end;
-	if p > p_semi then Fo.put fo `Operator ")"
-    | Aval_match (loc, x, cases) ->
-	if p > p_passto then Fo.put fo `Operator "(";
-	print_aval fo (p_passto + 1) x;
-	Fo.space fo; Fo.put fo `Operator "@>"; Fo.space fo;
-	print_aval fo (p_passto + 1) (Aval_at (loc, None, cases));
-	if p > p_passto then Fo.put fo `Operator ")"
-    | Aval_let (_, pat, x, y) ->
-	if p > p_let then Fo.put fo `Operator "(";
-	Fo.put fo `Keyword "let"; Fo.space fo;
-	print_apat fo (p_eqdef + 1) pat;
-	Fo.space fo; Fo.put fo `Operator ":="; Fo.space fo;
-	print_aval fo (p_eqdef + 1) x;
-	Fo.space fo; Fo.put fo `Keyword "in"; Fo.space fo;
-	print_aval fo p_let y;
-	if p > p_let then Fo.put fo `Operator ")"
-    | Aval_letrec (_, bindings, body) ->
-	if p > p_let then Fo.put fo `Operator "(";
-	Fo.put fo `Keyword "letrec"; Fo.space fo;
-	let print_case (_, v, t_opt, x) =
-	    print_avar fo v;
-	    begin match t_opt with
-	    | None -> ()
-	    | Some t ->
-		Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
-		print_atyp fo (p_colon + 1) t
-	    end;
-	    Fo.space fo; Fo.put fo `Operator ":="; Fo.space fo;
-	    print_aval fo (p_eqdef + 1) x in
-	print_case (List.hd bindings);
-	List.iter
-	    begin fun case ->
-		Fo.space fo; Fo.put fo `Keyword "and"; Fo.space fo;
-		print_case case
-	    end (List.tl bindings);
-	if p > p_let then Fo.put fo `Operator ")"
-    | Aval_if (_, cond, cq, ccq) ->
-	if p > p_semi then Fo.put fo `Operator "(";
-	print_aval fo (p_implies + 1) cond;
-	Fo.space fo; Fo.put fo `Operator "⇒"; Fo.space fo;
-	print_aval fo p_implies cq;
-	Fo.put fo `Operator ";"; Fo.space fo;
-	print_aval fo p_semi ccq;
-	if p > p_semi then Fo.put fo `Operator ")"
-    | Aval_back _ ->
-	Fo.put fo `Keyword "backtrack"
-    | Aval_seq (_, op, x, y_opt) ->
-	if p > p_let then Fo.put fo `Operator "(";
-	Fo.put fo `Keyword (idr_to_string op); Fo.space fo;
-	print_aval fo p_min x;
-	begin match y_opt with
-	| None -> ()
-	| Some y ->
-	    Fo.space fo; Fo.put fo `Keyword "then"; Fo.space fo;
-	    print_aval fo p_let y;
-	end;
-	if p > p_let then Fo.put fo `Operator ")"
-    | Aval_raise (_, x) ->
-	if p > p_apply then Fo.put fo `Operator "(";
-	Fo.put fo `Keyword "raise"; Fo.space fo;
-	print_aval fo (p_apply + 1) x;
-	if p > p_apply then Fo.put fo `Operator ")"
-    | Aval_intype (_, t, x) ->
-	Fo.put fo `Operator "(";
-	print_atyp fo (p_colon + 1) t;
-	Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
-	print_aval fo (p_colon + 1) x;
-	Fo.put fo `Operator ")"
+  | Aval_literal (_, lit) -> Fo.put fo `Literal (lit_to_string lit)
+  | Aval_ref qn -> print_apath fo qn
+  | Aval_apply (_, alab, f, x) ->
+      if p > p_apply then Fo.put fo `Operator "(";
+      print_aval fo (p_apply + 1) f;
+      Fo.space fo;
+      let r = match alab with
+      | Alabel_none -> true
+      | Alabel_labelled (Idr l) -> Fo.put fo `Label (l ^ ":"); true
+      | Alabel_optional (Idr l) -> Fo.put fo `Label (l ^ ":"); false in
+      if r then print_aval fo p_apply x else
+      (print_aval fo (p_script 2) x; Fo.put fo `Operator "?");
+      if p > p_apply then Fo.put fo `Operator ")"
+  | Aval_array (_, xs) ->
+      Fo.put fo `Operator "#[";
+      begin match xs with
+      | [] -> ()
+      | x :: xs ->
+          print_aval fo (p_semi + 1) x;
+          Fo.put fo `Operator ";";
+          List.iter
+            begin fun x ->
+              Fo.space fo;
+              print_aval fo (p_semi + 1) x;
+              Fo.put fo `Operator ";"
+            end  xs
+      end;
+      Fo.put fo `Operator "]"
+  | Aval_at (_, lopt, cases) ->
+      if p > p_semi then Fo.put fo `Operator "(";
+      let print_label =
+          match lopt with
+          | None -> fun () -> ()
+          | Some (Idr l) -> fun () ->
+              Fo.put fo `Label (l ^ ":"); Fo.space fo in
+      let print_case (pat, cond, cq) =
+          print_label ();
+          print_apat fo (p_mapsto + 1) pat;
+          begin match cond with
+          | None -> ()
+          | Some cond ->
+              Fo.space fo;
+              Fo.put fo `Operator "[";
+              print_aval fo p_min cond;
+              Fo.put fo `Operator "]"
+          end;
+          Fo.space fo; Fo.put fo `Operator "↦"; Fo.space fo;
+          print_aval fo (p_mapsto + 1) cq in
+      begin match cases with
+      | [] -> assert false
+      | case :: cases ->
+          print_case case;
+          List.iter
+            begin fun case ->
+              Fo.put fo `Operator ";";
+              Fo.space fo;
+              print_case case
+            end cases;
+      end;
+      if p > p_semi then Fo.put fo `Operator ")"
+  | Aval_match (loc, x, cases) ->
+      if p > p_passto then Fo.put fo `Operator "(";
+      print_aval fo (p_passto + 1) x;
+      Fo.space fo; Fo.put fo `Operator "@>"; Fo.space fo;
+      print_aval fo (p_passto + 1) (Aval_at (loc, None, cases));
+      if p > p_passto then Fo.put fo `Operator ")"
+  | Aval_let (_, pat, x, y) ->
+      if p > p_let then Fo.put fo `Operator "(";
+      Fo.put fo `Keyword "let"; Fo.space fo;
+      print_apat fo (p_eqdef + 1) pat;
+      Fo.space fo; Fo.put fo `Operator ":="; Fo.space fo;
+      print_aval fo (p_eqdef + 1) x;
+      Fo.space fo; Fo.put fo `Keyword "in"; Fo.space fo;
+      print_aval fo p_let y;
+      if p > p_let then Fo.put fo `Operator ")"
+  | Aval_letrec (_, bindings, body) ->
+      if p > p_let then Fo.put fo `Operator "(";
+      Fo.put fo `Keyword "letrec"; Fo.space fo;
+      let print_case (_, v, t_opt, x) =
+          print_avar fo v;
+          begin match t_opt with
+          | None -> ()
+          | Some t ->
+              Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
+              print_atyp fo (p_colon + 1) t
+          end;
+          Fo.space fo; Fo.put fo `Operator ":="; Fo.space fo;
+          print_aval fo (p_eqdef + 1) x in
+      print_case (List.hd bindings);
+      List.iter
+        begin fun case ->
+          Fo.space fo; Fo.put fo `Keyword "and"; Fo.space fo;
+          print_case case
+        end (List.tl bindings);
+      if p > p_let then Fo.put fo `Operator ")"
+  | Aval_if (_, cond, cq, ccq) ->
+      if p > p_semi then Fo.put fo `Operator "(";
+      print_aval fo (p_implies + 1) cond;
+      Fo.space fo; Fo.put fo `Operator "⇒"; Fo.space fo;
+      print_aval fo p_implies cq;
+      Fo.put fo `Operator ";"; Fo.space fo;
+      print_aval fo p_semi ccq;
+      if p > p_semi then Fo.put fo `Operator ")"
+  | Aval_back _ ->
+      Fo.put fo `Keyword "backtrack"
+  | Aval_seq (_, op, x, y_opt) ->
+      if p > p_let then Fo.put fo `Operator "(";
+      Fo.put fo `Keyword (idr_to_string op); Fo.space fo;
+      print_aval fo p_min x;
+      begin match y_opt with
+      | None -> ()
+      | Some y ->
+          Fo.space fo; Fo.put fo `Keyword "then"; Fo.space fo;
+          print_aval fo p_let y;
+      end;
+      if p > p_let then Fo.put fo `Operator ")"
+  | Aval_raise (_, x) ->
+      if p > p_apply then Fo.put fo `Operator "(";
+      Fo.put fo `Keyword "raise"; Fo.space fo;
+      print_aval fo (p_apply + 1) x;
+      if p > p_apply then Fo.put fo `Operator ")"
+  | Aval_intype (_, t, x) ->
+      Fo.put fo `Operator "(";
+      print_atyp fo (p_colon + 1) t;
+      Fo.space fo; Fo.put fo `Operator ":"; Fo.space fo;
+      print_aval fo (p_colon + 1) x;
+      Fo.put fo `Operator ")"
 
 let atyp_to_string atyp =
-    let fo = Fo.create () in
-    print_atyp fo (p_semi + 1) atyp;
-    Fo.contents fo
+  let fo = Fo.create () in
+  print_atyp fo (p_semi + 1) atyp;
+  Fo.contents fo
 let apat_to_string apat =
-    let fo = Fo.create () in
-    print_apat fo (p_semi + 1) apat;
-    Fo.contents fo
+  let fo = Fo.create () in
+  print_apat fo (p_semi + 1) apat;
+  Fo.contents fo
 let aval_to_string aval =
-    let fo = Fo.create () in
-    print_aval fo (p_semi + 1) aval;
-    Fo.contents fo
+  let fo = Fo.create () in
+  print_aval fo (p_semi + 1) aval;
+  Fo.contents fo

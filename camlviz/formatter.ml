@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -19,16 +19,16 @@
 open FfPervasives
 
 type tag = [
-    `Comment | `Error | `Keyword | `Label | `Literal | `Name | `Operator
+  `Comment | `Error | `Keyword | `Label | `Literal | `Name | `Operator
 ]
 
 type t = {
-    fo_buf : Buffer.t;
-    mutable fo_indent : int;
-    mutable fo_column : int;
-    mutable fo_prev_char : char;
-    fo_enter : t -> tag -> unit;
-    fo_leave : t -> tag -> unit;
+  fo_buf : Buffer.t;
+  mutable fo_indent : int;
+  mutable fo_column : int;
+  mutable fo_prev_char : char;
+  fo_enter : t -> tag -> unit;
+  fo_leave : t -> tag -> unit;
 }
 
 let contents fo = Buffer.contents fo.fo_buf
@@ -39,66 +39,66 @@ let enter_indent fo = add_indent fo 4
 let leave_indent fo = add_indent fo (- 4)
 
 let do_indent fo =
-    let rec indent_1x n =
-	if n > 0 then begin
-	    Buffer.add_char fo.fo_buf ' ';
-	    indent_1x (n - 1)
-	end in
-    let rec indent_8x n =
-	if n >= 8 then begin
-	    Buffer.add_char fo.fo_buf '\t';
-	    indent_8x (n - 8)
-	end
-	else indent_1x n in
-    indent_8x fo.fo_indent;
-    fo.fo_column <- fo.fo_indent
+  let rec indent_1x n =
+    if n > 0 then begin
+      Buffer.add_char fo.fo_buf ' ';
+      indent_1x (n - 1)
+    end in
+  let rec indent_8x n =
+    if n >= 8 then begin
+      Buffer.add_char fo.fo_buf '\t';
+      indent_8x (n - 8)
+    end
+    else indent_1x n in
+  indent_8x fo.fo_indent;
+  fo.fo_column <- fo.fo_indent
 
 let create ?(indent = 0) ?enter ?leave () =
-    {
-	fo_buf = Buffer.create 80;
-	fo_indent = indent;
-	fo_column = 0;
-	fo_prev_char = ' ';
-	fo_enter = Option.default (fun _ _ -> ()) enter;
-	fo_leave = Option.default (fun _ _ -> ()) leave;
-    }
+  {
+    fo_buf = Buffer.create 80;
+    fo_indent = indent;
+    fo_column = 0;
+    fo_prev_char = ' ';
+    fo_enter = Option.default (fun _ _ -> ()) enter;
+    fo_leave = Option.default (fun _ _ -> ()) leave;
+  }
 
 let enter fo tag = fo.fo_enter fo tag
 let leave fo tag = fo.fo_leave fo tag
 
 let put_char fo ch =
-    Buffer.add_char fo.fo_buf ch;
-    fo.fo_column <- fo.fo_column + 1;
-    fo.fo_prev_char <- ch
+  Buffer.add_char fo.fo_buf ch;
+  fo.fo_column <- fo.fo_column + 1;
+  fo.fo_prev_char <- ch
 
 let space fo =
-    if not (Char.is_space fo.fo_prev_char) then
-	put_char fo ' '
+  if not (Char.is_space fo.fo_prev_char) then
+    put_char fo ' '
 
 let newline fo =
-    if fo.fo_prev_char <> '\n' then
-	put_char fo '\n';
-    do_indent fo
+  if fo.fo_prev_char <> '\n' then
+    put_char fo '\n';
+  do_indent fo
 
 let put_string fo s =
-    let n = String.length s in
-    if n > 0 then begin
-	Buffer.add_string fo.fo_buf s;
-	fo.fo_column <- fo.fo_column + n;
-	fo.fo_prev_char <- String.get s (n - 1)
-    end
+  let n = String.length s in
+  if n > 0 then begin
+    Buffer.add_string fo.fo_buf s;
+    fo.fo_column <- fo.fo_column + n;
+    fo.fo_prev_char <- String.get s (n - 1)
+  end
 
 let put fo tag s =
-    fo.fo_enter fo tag;
-    put_string fo s;
-    fo.fo_leave fo tag
+  fo.fo_enter fo tag;
+  put_string fo s;
+  fo.fo_leave fo tag
 
 let put_op fo op =
-    space fo;
-    put fo `Operator op;
-    space fo
+  space fo;
+  put fo `Operator op;
+  space fo
 
 let put_kw fo name =
-    space fo;
-    put fo `Keyword name;
-    space fo
+  space fo;
+  put fo `Keyword name;
+  space fo

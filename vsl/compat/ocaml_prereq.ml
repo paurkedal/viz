@@ -1,4 +1,4 @@
-(* Copyright 2011  Petter Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Standard Library <http://www.vizlang.org/>.
  *
@@ -29,8 +29,8 @@ let __builtin_effect_run m = m.__unsafe_thunk ()
 
 let __builtin_effect_return x = { __unsafe_thunk = fun () -> x; }
 let __builtin_effect_bind k m =
-    let f () = __builtin_effect_run (k (__builtin_effect_run m)) in
-    { __unsafe_thunk = f; }
+  let f () = __builtin_effect_run (k (__builtin_effect_run m)) in
+  { __unsafe_thunk = f; }
 
 type exception__ = exn
 
@@ -39,21 +39,21 @@ let __builtin_raise e = raise e
 let __builtin_effect_throw e = __builtin_effect (fun () -> raise e)
 
 let __builtin_catch k m =
-    let f () = try __builtin_effect_run m with e -> __builtin_effect_run (k e) in
-    { __unsafe_thunk = f; }
+  let f () = try __builtin_effect_run m with e -> __builtin_effect_run (k e) in
+  { __unsafe_thunk = f; }
 
 let __builtin_mask f =
-    (* No async exceptions. *)
-    f (object method __it : 'a. 'a io -> 'a io = fun x -> x end)
+  (* No async exceptions. *)
+  f (object method __it : 'a. 'a io -> 'a io = fun x -> x end)
 
 let __builtin_exit err = { __unsafe_thunk = (fun () -> exit err) }
 
 (* References *)
 module Ref = struct
-    type ('f, 'a) r = 'a ref
-    let init x = __builtin_effect (fun () -> ref x)
-    let get r = __builtin_effect (fun () -> !r)
-    let set r x = __builtin_effect (fun () -> r := x)
+  type ('f, 'a) r = 'a ref
+  let init x = __builtin_effect (fun () -> ref x)
+  let get r = __builtin_effect (fun () -> !r)
+  let set r x = __builtin_effect (fun () -> r := x)
 end
 
 (* Options *)
@@ -66,13 +66,13 @@ let tprec = Tprec
 let tcoin = Tcoin
 let tsucc = Tsucc
 let __adapt_cmp cmp x y =
-    match cmp x y with
-    | Tprec -> -1
-    | Tcoin -> 0
-    | Tsucc -> 1
+  match cmp x y with
+  | Tprec -> -1
+  | Tcoin -> 0
+  | Tsucc -> 1
 let __generic_cmp x y =
-    let cmp = Pervasives.compare x y in
-    if cmp < 0 then Tprec else
-    if cmp > 0 then Tsucc else
-    Tcoin
+  let cmp = Pervasives.compare x y in
+  if cmp < 0 then Tprec else
+  if cmp > 0 then Tsucc else
+  Tcoin
 let __generic_eq x y = x = y

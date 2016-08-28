@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -21,33 +21,33 @@ open FfPervasives
 type ('a, 'b) t = ('b -> ('a * 'b) option) * 'b
 
 let pop (g, xs) =
-    match g xs with
-    | None -> None
-    | Some (x, xs') -> Some (x, (g, xs'))
+  match g xs with
+  | None -> None
+  | Some (x, xs') -> Some (x, (g, xs'))
 
 let peek (g, xs) =
-    match g xs with
-    | None -> None
-    | Some (x, _) -> Some x
+  match g xs with
+  | None -> None
+  | Some (x, _) -> Some x
 
 let rec fold f (g, xs) accu =
-    match g xs with
-    | None -> accu
-    | Some (x, xs') -> fold f (g, xs') (f x accu)
+  match g xs with
+  | None -> accu
+  | Some (x, xs') -> fold f (g, xs') (f x accu)
 
 let rec iter f (g, xs) =
-    match g xs with
-    | None -> ()
-    | Some (x, xs') -> f x; iter f (g, xs')
+  match g xs with
+  | None -> ()
+  | Some (x, xs') -> f x; iter f (g, xs')
 
 let rec iter_n f n (g, xs) =
-    if n <= 0 then () else
-    match g xs with
-    | None -> ()
-    | Some (x, xs') -> f x; iter_n f (n - 1) (g, xs')
+  if n <= 0 then () else
+  match g xs with
+  | None -> ()
+  | Some (x, xs') -> f x; iter_n f (n - 1) (g, xs')
 
 let of_list xs =
-    let g = function [] -> None | x :: xs -> Some (x, xs) in
-    (g, xs)
+  let g = function [] -> None | x :: xs -> Some (x, xs) in
+  (g, xs)
 
 let to_list xseq = List.rev (fold List.push xseq [])

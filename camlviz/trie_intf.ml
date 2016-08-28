@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -19,27 +19,27 @@
 (** Interface for Tries *)
 
 module type S = sig
-    type 'r key
-    type 'a t
+  type 'r key
+  type 'a t
 
-    val empty : 'a t
+  val empty : 'a t
 
-    val is_empty : 'a t -> bool
+  val is_empty : 'a t -> bool
 
-    val head : 'a t -> 'a option
+  val head : 'a t -> 'a option
 
-    val walk : 'r key -> 'a t -> 'a t
+  val walk : 'r key -> 'a t -> 'a t
 
-    val find : 'r key -> 'a t -> 'a option
+  val find : 'r key -> 'a t -> 'a option
 
-    val singleton : 'r key -> 'a -> 'a t
+  val singleton : 'r key -> 'a -> 'a t
 
-    val add : 'r key -> 'a -> 'a t -> 'a t
+  val add : 'r key -> 'a -> 'a t -> 'a t
 
-    val remove : 'r key -> 'a t -> 'a t
+  val remove : 'r key -> 'a t -> 'a t
 
-    val prefix_fold : ('r key -> 'a -> 'b -> 'b) -> 'r key -> 'a t -> 'b -> 'b
+  val prefix_fold : ('r key -> 'a -> 'b -> 'b) -> 'r key -> 'a t -> 'b -> 'b
 
-    val prefix_optfold : ('r key -> 'a option -> 'b -> 'b)
-		      -> 'r key -> 'a t -> 'b -> 'b
+  val prefix_optfold : ('r key -> 'a option -> 'b -> 'b) ->
+                       'r key -> 'a t -> 'b -> 'b
 end

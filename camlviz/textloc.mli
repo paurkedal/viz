@@ -1,4 +1,4 @@
-(* Copyright 2010--2016  Petter A. Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -27,47 +27,47 @@ val string_of_colno : int -> string
 module Bound : sig
     (** A Source Code Location Boundary (Point) *)
 
-    type t
+  type t
 
-    val init : string -> t
+  val init : string -> t
 
-    val init_lc : string -> int -> int -> t
+  val init_lc : string -> int -> int -> t
 
-    val dummy : t
+  val dummy : t
 
-    val path : t -> string
+  val path : t -> string
 
-    val lineno : t -> int
+  val lineno : t -> int
 
-    val charno : t -> int
+  val charno : t -> int
 
-    val bol_charno : t -> int
+  val bol_charno : t -> int
 
-    val column : t -> int
+  val column : t -> int
 
-    val skip_n : int -> t -> t
+  val skip_n : int -> t -> t
 
-    val skip_tab : t -> t
+  val skip_tab : t -> t
 
-    val skip_newline : t -> t
+  val skip_newline : t -> t
 
-    val skip_char : UChar.t -> t -> t
+  val skip_char : UChar.t -> t -> t
 
-    val compare : t -> t -> int
+  val compare : t -> t -> int
 
-    val min : t -> t -> t
+  val min : t -> t -> t
 
-    val max : t -> t -> t
+  val max : t -> t -> t
 
-    val to_string : t -> string
+  val to_string : t -> string
 
-    (** Convert from [Lexing.position].  Note that the result will not have a
-	column number. *)
-    val of_lexing_position : Lexing.position -> t
+  (** Convert from [Lexing.position].  Note that the result will not have a
+      column number. *)
+  val of_lexing_position : Lexing.position -> t
 
-    (** Convert to [Lexing.position].  Not that this throws away the column
-	number. *)
-    val to_lexing_position : t -> Lexing.position
+  (** Convert to [Lexing.position].  Not that this throws away the column
+      number. *)
+  val to_lexing_position : t -> Lexing.position
 end
 
 type t

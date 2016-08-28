@@ -1,4 +1,4 @@
-(* Copyright 2010--2011  Petter Urkedal
+(* Copyright (C) 2010--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -24,10 +24,11 @@ type tag = [
 
 type t
 
-val create : ?indent : int
-    -> ?enter : (t -> tag -> unit)
-    -> ?leave : (t -> tag -> unit)
-    -> unit -> t
+val create :
+  ?indent : int ->
+  ?enter : (t -> tag -> unit) ->
+  ?leave : (t -> tag -> unit) ->
+  unit -> t
 
 val contents : t -> string
 
