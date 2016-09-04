@@ -18,7 +18,7 @@
 
 open Printf
 open Diag
-open FfPervasives
+open Prereq
 open Leaf_types
 open Leaf_core
 open Cst_types

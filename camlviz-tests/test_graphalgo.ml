@@ -1,6 +1,6 @@
 open OUnit
 open Camlviz
-open FfPervasives
+open Prereq
 open Printf
 
 module Vertex = struct

@@ -13,7 +13,7 @@ camlviz/cst_utils
 camlviz/cst_rewrite
 camlviz/cst_to_ast
 camlviz/diag
-camlviz/ffPervasives
+camlviz/prereq
 camlviz/formatter
 camlviz/grammar
 camlviz/graphalgo

@@ -20,7 +20,7 @@ open Printf
 open Camlviz
 open Diag
 open Camlp4.PreCast
-open FfPervasives
+open Prereq
 open Cst_types
 open Ast_types
 open Leaf_types

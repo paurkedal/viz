@@ -14,8 +14,6 @@
 "vsl": include
 
 <vsl/**/*>: no_pervasive, no_vsl
-<vsl/pervasive.vz>: ocamlstdlib
-<vsl/compat/ocaml_*.vz>: ocamlstdlib
 
 <vsl/compat/*.cmx>: for-pack(Compat)
 <vsl/control/*.cmx>: for-pack(Control)

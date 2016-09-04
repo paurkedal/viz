@@ -18,7 +18,7 @@
 
 open Unicode
 open Leaf_types
-open FfPervasives
+open Prereq
 
 let lit_to_string = function
   | Lit_unit -> "()"

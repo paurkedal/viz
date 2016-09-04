@@ -17,7 +17,7 @@
  *)
 
 open Printf
-open FfPervasives
+open Prereq
 open Diag
 
 let rtok_token (token, loc) = token

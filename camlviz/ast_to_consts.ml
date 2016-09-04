@@ -22,7 +22,7 @@ open Leaf_core
 open Ast_types
 open Ast_core
 open Printf
-open FfPervasives
+open Prereq
 
 type state = {
     mutable st_aliases : atyp String_map.t;

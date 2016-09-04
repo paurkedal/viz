@@ -18,7 +18,7 @@
 
 open Printf
 open Camlviz
-open Camlviz.FfPervasives
+open Camlviz.Prereq
 open Camlviz.Unicode
 
 let rx = Str.regexp

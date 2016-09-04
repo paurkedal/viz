@@ -16,7 +16,7 @@
  * with the Viz Compiler.  If not, see <http://www.gnu.org/licenses/>.
  *)
 
-open FfPervasives
+open Prereq
 
 type ('a, 'b) t = ('b -> ('a * 'b) option) * 'b
 

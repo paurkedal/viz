@@ -1,5 +1,5 @@
 open OUnit
-open Camlviz.FfPervasives
+open Camlviz.Prereq
 
 let test_list () =
   let xs = List.init 5 ident in

@@ -24,7 +24,7 @@ open Ast_letrec
 open Leaf_types
 open Leaf_core
 open Diag
-open FfPervasives
+open Prereq
 open Unicode
 
 let cidr_to_avar (Cidr (loc, idr)) = Avar (loc, idr)

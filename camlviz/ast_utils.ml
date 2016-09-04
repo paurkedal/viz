@@ -23,7 +23,7 @@ open Ast_core
 open Ast_types
 open Diag
 open Sexplib
-open FfPervasives
+open Prereq
 open Unicode
 
 let sexp_to_string sx =

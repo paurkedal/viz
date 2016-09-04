@@ -3,7 +3,7 @@ open OUnit
 let suite = "camlviz" >::: [
   Test_grammar.tests;
   Test_graphalgo.tests;
-  Test_pervasives.tests;
+  Test_prereq.tests;
   Test_unicode.tests;
 ]
 

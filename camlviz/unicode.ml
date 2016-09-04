@@ -17,7 +17,7 @@
  *)
 
 open CamomileLibraryDefault.Camomile
-open FfPervasives
+open Prereq
 open Sexplib
 
 module UString_encoding = CharEncoding.Make (UText)

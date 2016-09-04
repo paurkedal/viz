@@ -25,7 +25,7 @@ open Cst_core
 open Ast_types
 open Ast_core
 open Diag
-open FfPervasives
+open Prereq
 open Unicode
 
 type emit_context = {

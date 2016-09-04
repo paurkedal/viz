@@ -18,7 +18,7 @@
 
 (** A Trie Implementation *)
 
-open FfPervasives
+open Prereq
 
 module type S = Trie_intf.S
 

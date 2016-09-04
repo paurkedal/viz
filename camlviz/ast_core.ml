@@ -20,7 +20,7 @@ open Ast_types
 open Cst_types
 open Leaf_types
 open Leaf_core
-open FfPervasives
+open Prereq
 open Unicode
 
 let avar_idr (Avar (_, idr)) = idr

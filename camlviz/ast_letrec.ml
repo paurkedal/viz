@@ -19,7 +19,7 @@
 open Leaf_types
 open Leaf_core
 open Ast_types
-open FfPervasives
+open Prereq
 open Diag
 
 type binding = loc * avar * atyp option * aval

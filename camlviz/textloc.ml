@@ -18,7 +18,7 @@
 
 open Lexing
 open CamomileLibraryDefault.Camomile.UPervasives
-open FfPervasives
+open Prereq
 
 let min_lnum, min_cnum =
   try
