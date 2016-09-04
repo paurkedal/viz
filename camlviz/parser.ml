@@ -35,7 +35,7 @@ let print_error loc msg =
   eprintf "%s: %s\n" (Textloc.to_string loc) msg
 
 let prune_path =
-  String.strip_suffix "_FFIC" *> String.strip_suffix "_"
+  String.strip_suffix "_FFIC" @> String.strip_suffix "_"
 
 let locate_source ?(exts = [".vz"; ".viz"; ".ff"; ".ml"; ".mlpack"])
                 ?(strip_ext = false)

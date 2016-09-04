@@ -46,7 +46,7 @@ let rec result_type = function
   | rt -> rt
 
 let rec fold_arg_types f = function
-  | Atyp_arrow (_, _, at, rt) -> f at *> fold_arg_types f rt
+  | Atyp_arrow (_, _, at, rt) -> f at @> fold_arg_types f rt
   | rt -> ident
 
 let arity t = fold_arg_types (fun _ accu -> accu + 1) t 0
@@ -120,15 +120,15 @@ let atyp_apply p tas =
 let rec fold_apat_vars f = function
   | Apat_literal _ | Apat_ref _ -> ident
   | Apat_uvar v -> f v
-  | Apat_apply (_, _, p, q) -> fold_apat_vars f p *> fold_apat_vars f q
-  | Apat_as (_, v, p) -> f v *> fold_apat_vars f p
+  | Apat_apply (_, _, p, q) -> fold_apat_vars f p @> fold_apat_vars f q
+  | Apat_as (_, v, p) -> f v @> fold_apat_vars f p
   | Apat_intype (_, t, p) -> fold_apat_vars f p
 
 let rec fold_apat_typed_vars f = function
   | Apat_literal _ | Apat_ref _ -> ident
   | Apat_uvar v -> ident
   | Apat_apply (_, _, p, q) ->
-      fold_apat_typed_vars f p *> fold_apat_typed_vars f q
+      fold_apat_typed_vars f p @> fold_apat_typed_vars f q
   | Apat_as (_, v, p) -> fold_apat_typed_vars f p
   | Apat_intype (_, t, Apat_uvar v) -> f (t, v)
   | Apat_intype (_, _, p) -> fold_apat_typed_vars f p
@@ -151,50 +151,50 @@ let rec fold_atyp_paths f = function
   | Atyp_A (_, _, t) | Atyp_E (_, _, t) -> fold_atyp_paths f t
   | Atyp_uvar _ -> ident
   | Atyp_apply (_, u, v) | Atyp_arrow (_, _, u, v) ->
-      fold_atyp_paths f u *> fold_atyp_paths f v
+      fold_atyp_paths f u @> fold_atyp_paths f v
 
 let rec fold_apat_paths f = function
   | Apat_literal _ -> ident
   | Apat_ref p -> f `Value p
   | Apat_uvar _ -> ident
   | Apat_apply (_, _, p, q) ->
-      fold_apat_paths f p *> fold_apat_paths f q
+      fold_apat_paths f p @> fold_apat_paths f q
   | Apat_as (_, v, p) -> fold_apat_paths f p
   | Apat_intype (_, t, p) ->
-      fold_atyp_paths (f `Type) t *< fold_apat_paths f p
+      fold_atyp_paths (f `Type) t <@ fold_apat_paths f p
 
 let rec fold_aval_paths f =
   let fold_cases =
     List.fold
       begin fun (p, cond, cq) ->
-        fold_apat_paths f p *>
-        Option.fold (fold_aval_paths f) cond *>
+        fold_apat_paths f p @>
+        Option.fold (fold_aval_paths f) cond @>
         fold_aval_paths f cq
       end in
   function
   | Aval_literal _ -> ident
   | Aval_ref p -> f `Value p
-  | Aval_apply (_, _, x, y) -> fold_aval_paths f x *> fold_aval_paths f y
+  | Aval_apply (_, _, x, y) -> fold_aval_paths f x @> fold_aval_paths f y
   | Aval_array (_, xs) -> List.fold (fold_aval_paths f) xs
   | Aval_at (_, _, cases) -> fold_cases cases
-  | Aval_match (_, x, cases) -> fold_aval_paths f x *> fold_cases cases
+  | Aval_match (_, x, cases) -> fold_aval_paths f x @> fold_cases cases
   | Aval_let (_, p, rhs, body) ->
-      fold_apat_paths f p *> fold_aval_paths f rhs *> fold_aval_paths f body
+      fold_apat_paths f p @> fold_aval_paths f rhs @> fold_aval_paths f body
   | Aval_letrec (_, bindings, body) ->
       List.fold
           (fun (_, v, topt, x) ->
-              Option.fold (fold_atyp_paths (f `Type)) topt *>
+              Option.fold (fold_atyp_paths (f `Type)) topt @>
               fold_aval_paths f x)
-          bindings *>
+          bindings @>
       fold_aval_paths f body
   | Aval_if (_, c, cq, ccq) ->
-      fold_aval_paths f c *> fold_aval_paths f cq *> fold_aval_paths f ccq
+      fold_aval_paths f c @> fold_aval_paths f cq @> fold_aval_paths f ccq
   | Aval_back _ -> ident
   | Aval_seq (_, _, x, y) ->
-      fold_aval_paths f x *> Option.fold (fold_aval_paths f) y
+      fold_aval_paths f x @> Option.fold (fold_aval_paths f) y
   | Aval_raise (_, x) -> fold_aval_paths f x
   | Aval_intype (_, t, x) ->
-      fold_atyp_paths (f `Type) t *> fold_aval_paths f x
+      fold_atyp_paths (f `Type) t @> fold_aval_paths f x
 
 let fold_atypinfo_paths f = function
   | Atypinfo_abstract | Atypinfo_cabi _ -> ident
@@ -203,18 +203,18 @@ let fold_atypinfo_paths f = function
       List.fold (fun (_, _, u, _) -> fold_atyp_paths f u) injs
 
 let fold_atypbind_paths f (_, _, us, ti) =
-  List.fold (fold_atyp_paths (f `Type)) us *>
+  List.fold (fold_atyp_paths (f `Type)) us @>
   fold_atypinfo_paths (f `Type) ti
 
 let rec fold_asig_paths f = function
   | Asig_ref p -> f `Signature p
   | Asig_decs (_, decs) -> List.fold (fold_adec_paths f) decs
-  | Asig_product (_, _, r, s) -> fold_asig_paths f r *> fold_asig_paths f s
+  | Asig_product (_, _, r, s) -> fold_asig_paths f r @> fold_asig_paths f s
   | Asig_suspension (_, s) -> fold_asig_paths f s
   | Asig_with_type (_, s, _, u) ->
-      fold_asig_paths f s *> fold_atyp_paths (f `Type) u
+      fold_asig_paths f s @> fold_atyp_paths (f `Type) u
   | Asig_with_struct (_, s, _, p) ->
-      fold_asig_paths f s *> f `Structure p
+      fold_asig_paths f s @> f `Structure p
 and fold_adec_paths f = function
   | Adec_include (_, s) -> fold_asig_paths f s
   | Adec_open (_, p) -> f `Signature p
@@ -230,13 +230,13 @@ let rec fold_amod_paths ?module_name f = function
   | Amod_ref p -> f `Structure p
   | Amod_defs (_, defs) -> List.fold (fold_adef_paths ?module_name f) defs
   | Amod_apply (_, m0, m1) ->
-      fold_amod_paths ?module_name f m0 *> fold_amod_paths ?module_name f m1
+      fold_amod_paths ?module_name f m0 @> fold_amod_paths ?module_name f m1
   | Amod_lambda (_, _, s, m) ->
-      fold_asig_paths f s *> fold_amod_paths ?module_name f m
+      fold_asig_paths f s @> fold_amod_paths ?module_name f m
   | Amod_suspend (_, m) -> fold_amod_paths ?module_name f m
   | Amod_generate (_, m) -> fold_amod_paths ?module_name f m
   | Amod_coercion (_, m, s) ->
-      fold_amod_paths ?module_name f m *> fold_asig_paths f s
+      fold_amod_paths ?module_name f m @> fold_asig_paths f s
 and fold_adef_paths ?module_name f = function
   | Adef_include (_, m) -> fold_amod_paths ?module_name f m
   | Adef_open (_, p) -> f `Structure p
@@ -245,11 +245,11 @@ and fold_adef_paths ?module_name f = function
   | Adef_sig (_, _, s) -> fold_asig_paths f s
   | Adef_types bindings -> List.fold (fold_atypbind_paths f) bindings
   | Adef_injx (_, _, t) -> fold_atyp_paths (f `Type) t
-  | Adef_let (_, p, x) -> fold_apat_paths f p *> fold_aval_paths f x
+  | Adef_let (_, p, x) -> fold_apat_paths f p @> fold_aval_paths f x
   | Adef_letrec bindings ->
     List.fold
       (fun (_, _, t, x) ->
-        Option.fold (fold_atyp_paths (f `Type)) t *>
+        Option.fold (fold_atyp_paths (f `Type)) t @>
         fold_aval_paths f x)
       bindings
   | Adef_cabi_val (_, Avar (_, dfm), t, _, _) ->
@@ -263,14 +263,14 @@ and fold_adef_paths ?module_name f = function
           | None -> ident
         else
           ident
-      end *> fold_atyp_paths (f `Type) t
+      end @> fold_atyp_paths (f `Type) t
   | Adef_cabi_open _ -> ident
 
 let rec fold_amod_cabi_open f = function
   | Amod_ref _ -> ident
   | Amod_defs (_, defs) -> List.fold (fold_adef_cabi_open f) defs
   | Amod_apply (_, mf, ma) ->
-      fold_amod_cabi_open f mf *> fold_amod_cabi_open f ma
+      fold_amod_cabi_open f mf @> fold_amod_cabi_open f ma
   | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _)
   | Amod_suspend (_, m) | Amod_generate (_, m) ->
       fold_amod_cabi_open f m

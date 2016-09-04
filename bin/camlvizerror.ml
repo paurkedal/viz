@@ -1,4 +1,4 @@
-(* Copyright 2011--2016  Petter A. Urkedal
+(* Copyright (C) 2011--2016  Petter A. Urkedal <paurkedal@gmail.com>
  *
  * This file is part of the Viz Compiler <http://www.vizlang.org/>.
  *
@@ -33,9 +33,9 @@ let demangle =
 	let codestr = Str.matched_group 1 ln in
 	let code = Scanf.sscanf codestr "%x" (fun n -> n) in
 	UChar.to_utf8 (UChar.chr code) in
-    Str.global_replace op_re "\\1'" *>
-    Str.global_replace subst1_re "\\1" *>
-    Str.global_replace strip_re "" *>
+    Str.global_replace op_re "\\1'" @>
+    Str.global_replace subst1_re "\\1" @>
+    Str.global_replace strip_re "" @>
     Str.global_substitute uchar_re replace_uchar
 
 let loc0_re =

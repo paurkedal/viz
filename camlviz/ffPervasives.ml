@@ -22,14 +22,8 @@ include Camomile.UPervasives
 exception Unimplemented
 
 let ident x = x
-let konst x y = x
-let uncurry f (x, y) = f x y
-let curry f x y = f (x, y)
-let rec repeat n f x = if n = 0 then x else f (repeat (n - 1) f x)
-
-let ( *< ) f g x = f (g x)
-let ( *> ) f g x = g (f x)
-let ( |> ) x f = f x
+let (<@) f g x = f (g x)
+let (@>) f g x = g (f x)
 
 let int_of_digit ch =
   let i = Char.code ch in
@@ -159,7 +153,7 @@ module String = struct
 
   let map_of_list f xs =
     let buf = Buffer.create 8 in
-    List.iter (Buffer.add_char buf *< f) xs;
+    List.iter (Buffer.add_char buf <@ f) xs;
     Buffer.contents buf
 
   let rindex_from s i ch =

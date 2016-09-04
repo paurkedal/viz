@@ -255,7 +255,7 @@ let atyp_free_vars t =
         let skip', avs' = collect t0 (Idr_set.add x skip, avs) in
         (Idr_set.remove x skip', avs')
     | Atyp_apply (_, t0, t1) | Atyp_arrow (_, _, t0, t1) ->
-        collect t0 *> collect t1 in
+        collect t0 @> collect t1 in
   List.rev (snd (collect t (Idr_set.empty, [])))
 
 let atyp_to_ascm t = let alphas = atyp_free_vars t in (alphas, t)

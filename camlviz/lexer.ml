@@ -266,7 +266,7 @@ let scan_space_separated_identifiers state =
   let rec scan_names accu =
     if not (skip_hspace state) then List.rev accu else
     let name, name_loc =
-        LStream.scan_while (not *< UChar.is_space) state.st_stream in
+        LStream.scan_while (not <@ UChar.is_space) state.st_stream in
     let cidr = Cidr (name_loc, idr_of_ustring name) in
     scan_names (cidr :: accu) in
   scan_names []
@@ -286,7 +286,7 @@ let scan_lexops state =
     scan_names (name :: names) in
   let rec scan_ops ops =
     let opname, opname_loc =
-      LStream.scan_while (not *< UChar.is_space) state.st_stream in
+      LStream.scan_while (not <@ UChar.is_space) state.st_stream in
     let op = Cidr (opname_loc, idr_of_ustring opname) in
     if dlog_en then
       dlogf ~loc:opname_loc "Scanned operator %s in lexdef."
@@ -307,7 +307,7 @@ let scan_lexops state =
 let scan_lexdef state lex_loc =
   skip_space state;
   let okname_u, okname_loc =
-    LStream.scan_while (not *< UChar.is_space) state.st_stream in
+    LStream.scan_while (not <@ UChar.is_space) state.st_stream in
   let loc_lb = LStream.locbound state.st_stream in
   let ops = scan_lexops state in
   let okname = UString.to_utf8 okname_u in

@@ -210,7 +210,7 @@ let output_cstub och v t cn_opt is_fin state =
   fprintf och "CAMLprim value %s" stub_name;
   output_arglist och (fun (arg, _) -> fprintf och "value %s" arg) args;
   fprintf och "\n{\n\tCAMLparam%d " r;
-  output_arglist och (output_string och *< fst) args;
+  output_arglist och (output_string och <@ fst) args;
   output_string och ";\n";
   List.iter (output_arg_prep och) args;
   let is_unit =
@@ -349,7 +349,7 @@ let rec output_amod_c och = function
   | Amod_ref _ -> ident
   | Amod_defs (_, defs) -> List.fold (output_adef_c och) defs
   | Amod_apply (_, mf, ma) ->
-     output_amod_c och mf *> output_amod_c och ma
+     output_amod_c och mf @> output_amod_c och ma
   | Amod_lambda (_, _, _, m) | Amod_coercion (_, m, _)
   | Amod_suspend (_, m) | Amod_generate (_, m) ->
      output_amod_c och m

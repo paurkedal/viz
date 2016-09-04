@@ -24,14 +24,8 @@ include module type of UPervasives
 exception Unimplemented
 
 val ident : 'a -> 'a
-val konst : 'a -> 'b -> 'a
-val uncurry : ('a -> 'b -> 'g) -> 'a * 'b -> 'g
-val curry : ('a * 'b -> 'g) -> 'a -> 'b -> 'g
-val repeat : int -> ('a -> 'a) -> 'a -> 'a
-
-val ( *< ) : ('b -> 'g) -> ('a -> 'b) -> 'a -> 'g
-val ( *> ) : ('a -> 'b) -> ('b -> 'g) -> 'a -> 'g
-val ( |> ) : 'a -> ('a -> 'b) -> 'b
+val (<@) : ('b -> 'g) -> ('a -> 'b) -> 'a -> 'g
+val (@>) : ('a -> 'b) -> ('b -> 'g) -> 'a -> 'g
 
 val int_of_digit : char -> int
 

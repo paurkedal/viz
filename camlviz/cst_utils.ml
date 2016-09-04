@@ -24,28 +24,28 @@ open Cst_core
 open Diag
 
 let fold_cpred_sub fp ft fd = function
-  | Cpred_let (_, _, x, p, q) -> ft x *> fp p *> fp q
-  | Cpred_if (_, x, p, q) -> ft x *> fp q *> fp q
+  | Cpred_let (_, _, x, p, q) -> ft x @> fp p @> fp q
+  | Cpred_if (_, x, p, q) -> ft x @> fp q @> fp q
   | Cpred_back _ -> ident
-  | Cpred_at (_, bx) -> List.fold (fun (x, p) -> ft x *> fp p) bx
+  | Cpred_at (_, bx) -> List.fold (fun (x, p) -> ft x @> fp p) bx
   | Cpred_expr0 (_, _) -> ident
   | Cpred_expr (_, _, x) -> ft x
-  | Cpred_expr_which (_, _, x, (_, p)) -> ft x *> fp p
-  | Cpred_seq (_, _, x, p) -> ft x *> Option.fold fp p
-  | Cpred_seq_which (_, _, x, (_, p), q) -> ft x *> fp p *> Option.fold fp q
-  | Cpred_cond (_, _, x, p, q) -> ft x *> fp p *> Option.fold fp q
-  | Cpred_upon (_, x, p, q) -> ft x *> fp p *> fp q
+  | Cpred_expr_which (_, _, x, (_, p)) -> ft x @> fp p
+  | Cpred_seq (_, _, x, p) -> ft x @> Option.fold fp p
+  | Cpred_seq_which (_, _, x, (_, p), q) -> ft x @> fp p @> Option.fold fp q
+  | Cpred_cond (_, _, x, p, q) -> ft x @> fp p @> Option.fold fp q
+  | Cpred_upon (_, x, p, q) -> ft x @> fp p @> fp q
 let fold_ctrm_sub fp ft fd = function
   | Ctrm_ref _ | Ctrm_literal _ -> ident
   | Ctrm_label (_, _, x) -> ft x
-  | Ctrm_quantify (_, _, x, y) -> ft x *> ft y
-  | Ctrm_rel (_, x, rs) -> ft x *> List.fold (fun (_, _, x) -> ft x) rs
-  | Ctrm_apply (_, x, y) -> ft x *> ft y
+  | Ctrm_quantify (_, _, x, y) -> ft x @> ft y
+  | Ctrm_rel (_, x, rs) -> ft x @> List.fold (fun (_, _, x) -> ft x) rs
+  | Ctrm_apply (_, x, y) -> ft x @> ft y
   | Ctrm_project (_, _, x) -> ft x
   | Ctrm_array (_, xs) -> List.fold ft xs
   | Ctrm_what (_, _, p) -> fp p
   | Ctrm_where (_, ds) -> List.fold fd ds
-  | Ctrm_with (_, xo, ds) -> Option.fold ft xo *> List.fold fd ds
+  | Ctrm_with (_, xo, ds) -> Option.fold ft xo @> List.fold fd ds
 
 let for_all_cpred_sub fp ft fd = function
   | Cpred_let (_, _, x, p, q) -> ft x && fp p && fp q
@@ -73,10 +73,10 @@ let for_all_ctrm_sub fp ft fd = function
   | Ctrm_with (_, xo, ds) -> Option.for_all ft xo && List.for_all fd ds
 
 let for_some_cpred_sub fp ft fd p =
-  not (for_all_cpred_sub (fp *> not) (ft *> not) (fd *> not) p)
+  not (for_all_cpred_sub (fp @> not) (ft @> not) (fd @> not) p)
 
 let for_some_ctrm_sub fp ft fd x =
-  not (for_all_ctrm_sub (fp *> not) (ft *> not) (fd *> not) x)
+  not (for_all_ctrm_sub (fp @> not) (ft @> not) (fd @> not) x)
 
 let extract_ctrm_coercion = function
   | Ctrm_apply (_, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
@@ -182,9 +182,9 @@ let collect_pattern_vars x =
     | Ctrm_label (_, _, x) -> coll fpos x
     | Ctrm_quantify _ -> assert false (* unimplemented *)
     | Ctrm_rel (_, x, rys) ->
-        List.fold (fun (_, _, y) -> coll false y) rys *< coll false x
+        List.fold (fun (_, _, y) -> coll false y) rys <@ coll false x
     | Ctrm_apply (_, f, x) ->
-        coll true f *< coll false x
+        coll true f <@ coll false x
     | Ctrm_project (_, _, x) -> coll fpos x
     | Ctrm_array (_, xs) -> List.fold (coll false) xs
     | Ctrm_what _ | Ctrm_where _ | Ctrm_with _ ->
@@ -218,13 +218,13 @@ let rec flatten_arrow typ =
 let rec fold_on_semicolon f = function
   | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
           when cidr_is_2o_semicolon op ->
-      f x *> fold_on_semicolon f y
+      f x @> fold_on_semicolon f y
   | x -> f x
 
 let rec fold_on_comma f = function
   | Ctrm_apply (loc, Ctrm_apply (_, Ctrm_ref (op, _), x), y)
           when cidr_is_2o_comma op ->
-      fold_on_comma f x *> f y
+      fold_on_comma f x @> f y
   | x -> f x
 
 let rec cpred_is_pure = function
