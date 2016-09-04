@@ -271,23 +271,23 @@ let output_cstub och v t cn_opt is_fin state =
                 "Finalizer must return (io unit) or (effect φ unit)."
         end;
         begin try
-            let ftn = idr_to_string ftv in
-            match String_map.find ftn state.st_cti_map with
-            | Cti_custom (cprefix, tname, None, true) ->
-                let cti_map = String_map.add ftn
-                    (Cti_custom (cprefix, tname, Some (avar_name v), true))
-                    state.st_cti_map in
-                {state with st_cti_map = cti_map}
-            | Cti_custom (cprefix, tname, None, false) ->
-                errf_at (avar_loc v)
-                        "Cannot define finalizer for external type."
-            | Cti_custom (cprefix, tname, Some _, _) ->
-                errf_at (avar_loc v) "This type already has a finalizer."
-            | Cti_alias _ ->
-                errf_at (avar_loc v)
-                        "Cannot define finalizer for a type alias."
+          let ftn = idr_to_string ftv in
+          match String_map.find ftn state.st_cti_map with
+          | Cti_custom (cprefix, tname, None, true) ->
+              let cti_map = String_map.add ftn
+                  (Cti_custom (cprefix, tname, Some (avar_name v), true))
+                  state.st_cti_map in
+              {state with st_cti_map = cti_map}
+          | Cti_custom (cprefix, tname, None, false) ->
+              errf_at (avar_loc v)
+                      "Cannot define finalizer for external type."
+          | Cti_custom (cprefix, tname, Some _, _) ->
+              errf_at (avar_loc v) "This type already has a finalizer."
+          | Cti_alias _ ->
+              errf_at (avar_loc v)
+                      "Cannot define finalizer for a type alias."
         with Not_found ->
-            errf_at loc "Finalizer must receive a C type."
+          errf_at loc "Finalizer must receive a C type."
         end
     | _ ->
         errf_at (atyp_loc t)
