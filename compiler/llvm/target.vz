@@ -22,7 +22,10 @@ open:c "llvm-c/Target.h"
 type:c target_data ψ := "LLVMTargetDataRef"
 use cabi.type_c pass_manager "LLVMPassManagerRef"
 
-val:c initialize_native_target : ψ /~ unit := "LLVMInitializeNativeTarget"
+val:c initialize_native_target : ψ /~ unit
+  := "LLVMInitializeNativeTarget"
+val:c initialize_native_asm_printer : ψ /~ unit
+  := "LLVMInitializeNativeAsmPrinter"
 
 val:c add_target_data : target_data ψ → pass_manager μ ψ → ψ /~ unit
-					:= "LLVMAddTargetData"
+  := "LLVMAddTargetData"

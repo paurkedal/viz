@@ -32,7 +32,7 @@ use cabi.type_c target_data "LLVMTargetDataRef"
 
 type:c generic_value := "LLVMGenericValueRef"
 
-val:c link_in_jit : ψ /~ unit		:= "LLVMLinkInJIT"
+val:c link_in_mcjit : ψ /~ unit		:= "LLVMLinkInMCJIT"
 val:c link_in_interpreter : ψ /~ unit	:= "LLVMLinkInInterpreter"
 
 in generic_value

@@ -15,8 +15,9 @@ AC_PROG_CC_C99
 
 VIZ_C_INLINE
 
-VIZ_LIB_LLVM([jit interpreter native core ipo], [],
-    [AC_MSG_ERROR([The LLVM library is required.])])
+VIZ_LIB_LLVM(
+  [asmprinter bitwriter core executionengine interpreter ipo mcjit native],
+  [], [AC_MSG_ERROR([The LLVM library is required.])])
 
 AC_SEARCH_LIBS([setupterm], [ncurses curses])
 AC_CHECK_FUNCS([isatty setupterm tigetstr])

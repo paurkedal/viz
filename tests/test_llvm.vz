@@ -81,7 +81,8 @@ let main
 
     do ll.assert_valid_module mdl
 
-    do llexec.link_in_jit
+    do llexec.link_in_mcjit
+    do llvm.target.initialize_native_asm_printer
     do llvm.target.initialize_native_target
 
     let ee do llexec.engine.create_jit 2 mdl
